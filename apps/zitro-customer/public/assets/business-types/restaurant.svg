@@ -1,0 +1,7 @@
+<!-- This is a placeholder SVG for restaurant icon -->
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" r="60" fill="#FF6B35"/>
+<path d="M40 35V85H45V35H50V85H55V35H60V85H65V35H70V85H75V35H80V85V35Z" fill="white"/>
+<circle cx="60" cy="45" r="8" fill="white"/>
+<path d="M45 70H75C77.2091 70 79 71.7909 79 74V78C79 80.2091 77.2091 82 75 82H45C42.7909 82 41 80.2091 41 78V74C41 71.7909 42.7909 70 45 70Z" fill="white"/>
+</svg>
