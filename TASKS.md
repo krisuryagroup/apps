@@ -52,8 +52,9 @@
 | T016 | Evolve: address components | [ ] | T013, T010 |
 | T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | [ ] | T015 |
 | T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | [ ] | T013, T010 |
-| **Phase 8 — Security & Finalize** |
-| T019 | Finalize command + Husky + audit-ci | [ ] | MT002 |
+| **Phase 8 — SCSS Cleanup + Security & Finalize** |
+| T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [ ] | MT018 |
+| T019 | Finalize command + Husky + audit-ci | [ ] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
 | T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) alongside Firebase | [ ] | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | [ ] | T020 |
@@ -1193,6 +1194,52 @@ libs/ui/src/common/update-dialog/
 - [ ] Each order status maps to correct color
 - [ ] `BannerCarousel` skips inactive banners
 - [ ] `StarRating` emits on selection and supports read-only mode
+
+---
+
+### T019-scss — SCSS Refactoring (Migrated Components)
+
+**Status:** `[ ]`
+**Branch:** `feature/T019-scss-refactoring`
+**Depends on:** MT018
+
+**Why this exists:** All component stylesheets were copied verbatim during MT005–MT017 (migration rules forbade any changes). Several now exceed the `anyComponentStyle` production budget. This task slims them down — extract shared rules to `@zitro/theme`, remove dead/duplicate selectors, split very large sheets — without changing visible appearance.
+
+**Budget targets (after this task):**
+- Warning threshold (project.json): `50 kB`
+- Error threshold (project.json): `100 kB`
+- Practical goal: keep every migrated file under `25 kB` so there is headroom for T012–T029 evolution additions
+
+**Files exceeding 8 kB at time of MT018 (largest first):**
+```
+apps/zitro-customer/src/app/features/order-confirmation/order-confirmation.component.scss   — 20.25 kB
+apps/zitro-customer/src/app/layout/main-layout.component.scss                              — 16.87 kB
+apps/zitro-customer/src/app/features/cart/cart.component.scss                              — 18.28 kB
+apps/zitro-customer/src/app/features/order-tracking/order-tracking.component.scss          — 13.76 kB
+apps/zitro-customer/src/app/features/order-history/order-history.component.scss            — 12.19 kB
+apps/zitro-customer/src/app/features/add-address/add-address.component.scss                — 11.99 kB
+apps/zitro-customer/src/app/features/coupon-selection/coupon-selection.component.scss      — 10.74 kB
+libs/ui/src/components/item-details-dialog/item-details-dialog.component.scss              — 10.31 kB
+apps/zitro-customer/src/app/features/listing/listing.component.scss                        — 9.40 kB
+libs/ui/src/components/location-bottom-sheet/location-bottom-sheet.component.scss          — 8.52 kB
+libs/ui/src/components/item-slider/item-slider.component.scss                              — 8.83 kB
+libs/ui/src/components/coupon-selector/coupon-selector.component.scss                      — 8.21 kB
+apps/zitro-customer/src/app/features/home/home.component.scss                              — 8.64 kB
+apps/zitro-customer/src/app/features/game-2048/game-2048.component.scss                    — 8.32 kB
+apps/zitro-customer/src/app/features/business-selection/business-selection.component.scss  — 8.02 kB
+```
+
+**Rules — what is allowed:**
+- Remove duplicate/dead CSS rules and redundant media-query breakpoints
+- Extract repeated values to SCSS variables or `@zitro/theme` tokens (`@use 'theme' as *`)
+- Split one very large sheet into `_layout.scss` + `_mobile.scss` partials imported from the main file (no logic changes)
+- **DO NOT** change any selector names, class names, or visual appearance
+- **DO NOT** refactor to signals/Angular patterns — this task is CSS-only
+
+**Acceptance Criteria:**
+- [ ] `nx build zitro-customer --configuration=production` completes with zero `anyComponentStyle` **errors** (warnings at 50 kB threshold are acceptable)
+- [ ] Visual appearance unchanged — spot-check each affected page in the dev server
+- [ ] Each file listed above is under 25 kB after refactoring
 
 ---
 
