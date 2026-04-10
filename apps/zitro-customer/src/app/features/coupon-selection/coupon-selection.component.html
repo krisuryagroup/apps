@@ -1,0 +1,153 @@
+<!-- Header with back button -->
+<div class="coupon-page-header">
+  <button class="back-button" (click)="goBack()" type="button">
+    <span class="material-icons">arrow_back</span>
+    <span>Coupons</span>
+  </button>
+</div>
+
+<!-- Applied Coupon Banner (if any) -->
+<div class="applied-coupon-section" *ngIf="currentAppliedCoupon">
+  <div class="applied-coupon-banner">
+    <div class="success-indicator">
+      <div class="checkmark-icon">
+        <span class="material-icons">check_circle</span>
+      </div>
+      <div class="coupon-applied-info">
+        <div class="coupon-code-applied">{{ currentAppliedCoupon.coupon.code }}</div>
+        <div class="savings-amount">You saved ₹{{ currentAppliedCoupon.discountAmount }}</div>
+      </div>
+    </div>
+    <button class="remove-coupon-btn" (click)="removeCoupon()" type="button">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+</div>
+
+<!-- Eligibility Information Banner -->
+<div class="eligibility-banner" *ngIf="hasIneligibleItems()">
+  <div class="eligibility-info">
+    <span class="material-icons">info</span>
+    <span>{{ getEligibilityMessage() }}</span>
+  </div>
+</div>
+
+<!-- Coupon Input Section -->
+<div class="coupon-input-section">
+  <div class="section-header">
+    <h3>Have a coupon code?</h3>
+    <p>Enter your coupon code below to get instant discount</p>
+  </div>
+  
+  <div class="input-group">
+    <div class="input-prefix">
+      <span class="material-icons">confirmation_number</span>
+    </div>
+    <input
+      type="text"
+      class="coupon-input"
+      placeholder="Enter coupon code"
+      [(ngModel)]="couponCode"
+      (keyup.enter)="applyCoupon()"
+      [disabled]="isLoading"
+    />
+    <button
+      class="apply-button"
+      (click)="applyCoupon()"
+      [disabled]="isLoading || !couponCode.trim()"
+      type="button"
+    >
+      <span *ngIf="!isLoading" class="apply-text">APPLY</span>
+      <div *ngIf="isLoading" class="loading-spinner">
+        <span class="material-icons spinning">sync</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- Validation Message -->
+  <div class="validation-message" [class.error]="isValidationError" [class.success]="!isValidationError" *ngIf="validationMessage">
+    <span class="material-icons">{{ isValidationError ? 'error' : 'check_circle' }}</span>
+    <span>{{ validationMessage }}</span>
+  </div>
+</div>
+
+<!-- Available Offers Section -->
+<div class="offers-section" *ngIf="availableCoupons && availableCoupons.length > 0">
+  <div class="section-header">
+    <h3>Available Offers</h3>
+    <div class="offers-count">{{ availableCoupons.length }} offers</div>
+  </div>
+
+  <div class="offers-grid">
+    <div 
+      class="offer-card"
+      *ngFor="let coupon of availableCoupons"
+      [class.disabled]="!isCouponApplicable(coupon)"
+      [class.applied]="isCouponApplied(coupon)"
+      (click)="isCouponApplicable(coupon) && selectCoupon(coupon)"
+    >
+      <!-- Offer Type Badge -->
+      <div class="offer-badge" [class.percentage]="coupon.discountType === 'percentage'" [class.flat]="coupon.discountType === 'flat'">
+        <span class="material-icons">local_offer</span>
+        <span class="offer-type">{{ coupon.discountType === 'percentage' ? coupon.discountValue + '% OFF' : '₹' + coupon.discountValue + ' OFF' }}</span>
+      </div>
+
+      <!-- Offer Content -->
+      <div class="offer-content">
+        <div class="offer-title">{{ coupon.title }}</div>
+        <div class="offer-description">{{ coupon.description }}</div>
+        <div class="offer-code">Code: <span class="code">{{ coupon.code }}</span></div>
+        
+        <div class="offer-details">
+          <!-- Savings Info -->
+          <div class="savings" *ngIf="isCouponApplicable(coupon) && getCouponSavings(coupon) > 0">
+            <span class="material-icons">savings</span>
+            <span>Save ₹{{ getCouponSavings(coupon) }}</span>
+          </div>
+          
+          <!-- Requirement Info -->
+          <div class="requirement" *ngIf="coupon.minOrderAmount">
+            <span class="material-icons">shopping_cart</span>
+            <span>Min order ₹{{ coupon.minOrderAmount }}</span>
+          </div>
+        </div>
+
+        <!-- Validity -->
+        <div class="offer-validity" *ngIf="coupon.validTo">
+          <span class="material-icons">schedule</span>
+          <span>Valid till {{ coupon.validTo | date:'mediumDate' }}</span>
+        </div>
+      </div>
+
+      <!-- Apply Button -->
+      <div class="offer-action">
+        <button
+          class="apply-offer-btn"
+          [class.applied]="isCouponApplied(coupon)"
+          [class.applicable]="isCouponApplicable(coupon)"
+          [disabled]="!isCouponApplicable(coupon)"
+          (click)="isCouponApplicable(coupon) && selectCoupon(coupon); $event.stopPropagation()"
+          type="button"
+        >
+          <span *ngIf="isCouponApplied(coupon)">APPLIED</span>
+          <span *ngIf="isCurrentCouponDifferent(coupon) && isCouponApplicable(coupon)">APPLY</span>
+          <span *ngIf="!isCouponApplicable(coupon)">NOT APPLICABLE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Terms and Conditions -->
+<div class="terms-section">
+  <div class="terms-header">
+    <span class="material-icons">info</span>
+    <h4>Terms & Conditions</h4>
+  </div>
+  <ul class="terms-list">
+    <li>Coupons are applicable on eligible items only</li>
+    <li>Only one coupon can be applied per order</li>
+    <li>Coupons cannot be combined with other offers</li>
+    <li>Coupon validity is subject to terms mentioned</li>
+  </ul>
+</div>

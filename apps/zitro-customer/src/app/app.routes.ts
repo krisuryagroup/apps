@@ -22,8 +22,8 @@ import { CategoryListingComponent } from './features/category-listing/category-l
 import { ListingComponent } from './features/listing/listing.component';
 import { SearchComponent } from './features/search/search.component';
 // MT014: cart, coupons
-// import { CartComponent } from './features/cart/cart.component';
-// import { CouponSelectionComponent } from './features/coupon-selection/coupon-selection.component';
+import { CartComponent } from './features/cart/cart.component';
+import { CouponSelectionComponent } from './features/coupon-selection/coupon-selection.component';
 // MT015: account, addresses
 // import { AccountComponent } from './features/account/account.component';
 // import { ManageAddressesComponent } from './features/manage-addresses';
@@ -64,7 +64,9 @@ export const routes: Routes = [
       { path: 'listing', component: ListingComponent },
       { path: 'favorites', component: ListingComponent },
       { path: 'search', component: SearchComponent },
-      // MT014+: child routes added per feature task
+      { path: 'cart', component: CartComponent },
+      { path: 'coupons', component: CouponSelectionComponent },
+      // MT015+: child routes added per feature task
     ]
   },
 

@@ -1,0 +1,360 @@
+<div class="dh-main-content dh-cart-page">
+  <!-- Order Processing Loading Modal -->
+  <app-order-loading-modal 
+    [isVisible]="isProcessingOrder" 
+    [stage]="processingStage$ | async">
+  </app-order-loading-modal>
+
+  <div class="dh-cart-items">
+    <div *ngIf="!hasItems" class="dh-empty-cart">
+      <div class="empty-cart-icon">
+        <span class="material-icons">shopping_cart</span>
+      </div>
+      <h3 class="empty-cart-title">Your cart is empty</h3>
+      <p class="empty-cart-message">Add some delicious items to get started!</p>
+      <button class="empty-cart-btn" (click)="goToListing()">
+        <span class="material-icons">restaurant_menu</span>
+        Browse Menu
+      </button>
+    </div>
+    
+    <div *ngFor="let item of cart; let i = index" class="dh-cart-item">
+      <div class="dh-cart-img-wrapper" style="position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <app-loader 
+          [isLoading]="imageLoading[i]" 
+          [size]="40" 
+          type="spinner" 
+          color="#ff6b35">
+        </app-loader>
+        <img 
+          [cachedSrc]="item.imageURL || item.image" 
+          [alt]="item.name" 
+          class="dh-cart-img" 
+          [fallbackSrc]="'assets/foodCategories/default.png'"
+          (load)="onImageLoad(i)"
+          (error)="onImageError(i)" />
+      </div>
+      <div class="dh-cart-details">
+        <div class="dh-cart-item-title">
+          {{ item.name }}
+          <span *ngIf="item.selectedVariationId && getVariationLabel(item)" style="color: #666; font-size: 0.9em; font-weight: normal;"> - {{ getVariationLabel(item) }}</span>
+        </div>
+        <div class="dh-cart-item-meta">110 kcal · {{ item.weight }}</div>
+        <div class="dh-cart-item-price">₹{{ item.price }}</div>
+        <div class="dh-offer-status" *ngIf="item.isOfferDisabled === true">
+          <small class="dh-no-offer-message">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+              <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            No offer will be applicable for this item
+          </small>
+        </div>
+      </div>
+      <div class="dh-cart-qty">
+        <button class="qty-btn decrement" (click)="removeFromCart(item)">
+          <span class="material-icons">remove</span>
+        </button>
+        <span class="qty-value">{{ item.qty }}</span>
+        <button class="qty-btn increment" (click)="addToCart(item)">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coupon Selector - only show when cart has items -->
+  <!-- <app-coupon-selector-cart 
+    *ngIf="hasItems"
+    [orderAmount]="subtotal + currentDeliveryCharge"
+    [cartItems]="cart"
+    [appliedCoupon]="appliedCoupon"
+    (couponApplied)="onCouponApplied($event)"
+    (couponRemoved)="onCouponRemoved()">
+  </app-coupon-selector-cart> -->
+
+    <!-- Coupon Selector - only show when cart has items -->
+
+    <app-coupon-selector 
+    *ngIf="hasItems"
+    [orderAmount]="subtotal + currentDeliveryCharge"
+    [cartItems]="cart"
+    [appliedCoupon]="appliedCoupon"
+    (couponApplied)="onCouponApplied($event)"
+    (couponRemoved)="onCouponRemoved()">
+  </app-coupon-selector>
+
+  <!-- Cart Summary - only show when cart has items -->
+  <div class="dh-cart-summary" *ngIf="hasItems">
+    <div class="dh-cart-summary-row">
+      <span>Subtotal</span>
+      <span>₹{{ subtotal | number:'1.2-2' }}</span>
+    </div>
+    <div class="dh-cart-summary-row" *ngIf="couponDiscount > 0">
+      <span>Coupon Discount</span>
+      <span class="discount-amount">-₹{{ couponDiscount | number:'1.2-2' }}</span>
+    </div>
+    
+    <!-- Delivery Charge with strikethrough when free -->
+    <!-- Delivery (only show for delivery orders) -->
+    <div class="dh-cart-summary-row" *ngIf="selectedOrderType === 'delivery'">
+      <span>Delivery</span>
+      <span *ngIf="!isEligibleForFreeDelivery">₹{{ currentDeliveryCharge | number:'1.2-2' }}</span>
+      <span *ngIf="isEligibleForFreeDelivery" class="free-charge">
+        <span class="original-price">₹{{ originalDeliveryCharge | number:'1.2-2' }}</span>
+        <span class="free-text">FREE</span>
+      </span>
+    </div>
+    
+    <!-- Packaging Charges -->
+    <div class="dh-cart-summary-row" *ngIf="pricingBreakdown?.visibility?.showPackaging">
+      <span>Packaging Charges</span>
+      <span *ngIf="(pricingBreakdown?.charges?.packaging?.applied || 0) > 0">₹{{ pricingBreakdown!.charges.packaging.applied | number:'1.2-2' }}</span>
+      <span *ngIf="(pricingBreakdown?.charges?.packaging?.waived || 0) > 0" class="free-charge">
+        <span class="original-price">₹{{ pricingBreakdown!.charges.packaging.calculated | number:'1.2-2' }}</span>
+        <span class="free-text">FREE</span>
+      </span>
+    </div>
+    
+    <!-- Platform Fee -->
+    <div class="dh-cart-summary-row" *ngIf="pricingBreakdown?.visibility?.showPlatformFee">
+      <span>Platform Fee</span>
+      <span *ngIf="(pricingBreakdown?.charges?.platformFee?.applied || 0) > 0">₹{{ pricingBreakdown!.charges.platformFee.applied | number:'1.2-2' }}</span>
+      <span *ngIf="(pricingBreakdown?.charges?.platformFee?.waived || 0) > 0" class="free-charge">
+        <span class="original-price">₹{{ pricingBreakdown!.charges.platformFee.calculated | number:'1.2-2' }}</span>
+        <span class="free-text">FREE</span>
+      </span>
+    </div>
+    
+    <!-- GST -->
+    <div class="dh-cart-summary-row" *ngIf="pricingBreakdown?.visibility?.showGst">
+      <span>GST</span>
+      <span *ngIf="(pricingBreakdown?.charges?.gst?.applied || 0) > 0">₹{{ pricingBreakdown!.charges.gst.applied | number:'1.2-2' }}</span>
+      <span *ngIf="(pricingBreakdown?.charges?.gst?.waived || 0) > 0" class="free-charge">
+        <span class="original-price">₹{{ pricingBreakdown!.charges.gst.calculated | number:'1.2-2' }}</span>
+        <span class="free-text">FREE</span>
+      </span>
+    </div>
+    
+    <div class="dh-cart-delivery-message" *ngIf="!isEligibleForFreeDelivery">
+      <span class="material-icons delivery-info">info</span>
+      <span class="delivery-text">{{ deliveryMessage }}</span>
+    </div>
+    <div class="dh-cart-free-delivery" *ngIf="isEligibleForFreeDelivery">
+      <span class="material-icons free-delivery-icon">check_circle</span>
+      <span class="free-delivery-text">Yay! Free delivery applied!</span>
+    </div>
+    
+    <!-- Total Savings Section -->
+    <div class="dh-cart-savings" *ngIf="totalSavings > 0">
+      <span class="material-icons savings-icon">celebration</span>
+      <span class="savings-text">You're saving ₹{{ totalSavings | number:'1.2-2' }} on this order!</span>
+    </div>
+    
+    <div class="dh-cart-summary-divider"></div>
+    <div class="dh-cart-summary-row dh-cart-summary-total">
+      <span>Total</span>
+      <span>₹{{ total | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <!-- Order Type Selection - only show when cart has items and user is logged in -->
+  <div class="dh-order-type-selection" *ngIf="hasItems && isUserLoggedIn">
+    <h3 class="order-type-title">Select Order Type</h3>
+    <div class="order-type-options">
+      <div 
+        class="order-type-card" 
+        [class.selected]="selectedOrderType === 'dine-in'"
+        (click)="onOrderTypeChange('dine-in')">
+        <span class="material-icons order-type-icon">restaurant</span>
+        <span class="order-type-label">{{ orderConfig.orderTypes.dineIn.displayName }}</span>
+      </div>
+      <div 
+        class="order-type-card" 
+        [class.selected]="selectedOrderType === 'takeout'"
+        (click)="onOrderTypeChange('takeout')">
+        <span class="material-icons order-type-icon">shopping_bag</span>
+        <span class="order-type-label">{{ orderConfig.orderTypes.takeout.displayName }}</span>
+      </div>
+      <div 
+        class="order-type-card" 
+        [class.selected]="selectedOrderType === 'delivery'"
+        (click)="onOrderTypeChange('delivery')">
+        <span class="material-icons order-type-icon">delivery_dining</span>
+        <span class="order-type-label">{{ orderConfig.orderTypes.delivery.displayName }}</span>
+      </div>
+    </div>
+    <div class="order-type-error" *ngIf="orderTypeError">
+      <span class="material-icons error-icon">error</span>
+      <span>{{ orderTypeError }}</span>
+    </div>
+  </div>
+
+  <!-- Dine-in specific fields -->
+  <div class="dh-dinein-fields" *ngIf="hasItems && isUserLoggedIn && selectedOrderType === 'dine-in'">
+    <h3 class="section-title">{{ orderConfig.orderTypes.dineIn.displayName }} Details</h3>
+    <div class="form-group">
+      <label for="tableNumber">Table Number *</label>
+      <select 
+        id="tableNumber" 
+        class="form-input"
+        [(ngModel)]="selectedTable"
+        (change)="onTableSelect()"
+        required>
+        <option value="">Select a table</option>
+        <option *ngFor="let table of availableTables" [value]="table.id">
+          {{ table.displayName }} (Capacity: {{ table.capacity }})
+        </option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="numberOfGuests">Number of Guests *</label>
+      <div class="dh-guest-counter">
+        <button 
+          type="button" 
+          class="dh-counter-btn" 
+          (click)="decrementGuests()" 
+          [disabled]="numberOfGuests <= orderConfig.dineInConfig.minGuests"
+          [attr.aria-label]="'Decrease guests'">
+          <span class="material-icons">remove</span>
+        </button>
+        <div class="dh-guest-display">
+          <span class="dh-guest-count">{{ numberOfGuests }}</span>
+          <span class="dh-guest-label">{{ numberOfGuests === 1 ? 'Guest' : 'Guests' }}</span>
+        </div>
+        <button 
+          type="button" 
+          class="dh-counter-btn" 
+          (click)="incrementGuests()" 
+          [disabled]="numberOfGuests >= getSelectedTableCapacity()"
+          [attr.aria-label]="'Increase guests'">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+      <p class="dh-capacity-hint" *ngIf="selectedTable">
+        <span class="material-icons">info</span>
+        Table capacity: {{ getSelectedTableCapacity() }} guests
+      </p>
+      <p class="dh-capacity-hint" *ngIf="!selectedTable">
+        <span class="material-icons">info</span>
+        Range: {{ orderConfig.dineInConfig.minGuests }} - {{ orderConfig.dineInConfig.maxGuests }} guests
+      </p>
+    </div>
+  </div>
+
+  <!-- Takeout specific fields -->
+  <div class="dh-takeout-fields" *ngIf="hasItems && isUserLoggedIn && selectedOrderType === 'takeout'">
+    <h3 class="section-title">Pickup Details</h3>
+    <p class="info-text">{{ getPickupMessage() }}</p>
+  </div>
+
+  <!-- Address Selection - only show when cart has items and user is logged in and order type is delivery -->
+  <div class="dh-address-selection" *ngIf="hasItems && isUserLoggedIn && selectedOrderType === 'delivery'">
+    <h3 class="address-title">Delivery Address</h3>
+
+    <!-- Read-only display of the location selected from the home page header -->
+    <div class="address-readonly-card" [class.address-unset]="selectedLocationSnapshot.type === 'none'">
+      <span class="material-icons address-readonly-icon">location_on</span>
+      <div class="address-readonly-body">
+        <span class="address-readonly-label">{{ selectedLocationSnapshot.type !== 'none' ? selectedLocationSnapshot.label : 'No location selected' }}</span>
+        <ng-container *ngIf="selectedAddress">
+          <span class="address-readonly-name">{{ selectedAddress.name }} &bull; {{ selectedAddress.phone }}</span>
+          <span class="address-readonly-text">{{ selectedAddress.houseAndStreet }}{{ selectedAddress.landmark ? ', ' + selectedAddress.landmark : '' }}, {{ selectedAddress.town }}, {{ selectedAddress.state }} - {{ selectedAddress.pincode }}</span>
+        </ng-container>
+        <ng-container *ngIf="!selectedAddress">
+          <span class="address-readonly-text">{{ selectedLocationSnapshot.type !== 'none' ? selectedLocationSnapshot.address : 'Please select a delivery location from the home page' }}</span>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Add new address -->
+    <button class="add-address-btn-full" (click)="goToManageAddresses()">
+      <span class="material-icons">add</span>
+      Add New Address
+    </button>
+
+    <div class="address-validation-message" *ngIf="!isAddressSelected">
+      <span class="material-icons warning-icon">warning</span>
+      <span>Please select a delivery location from home page or add a new address</span>
+    </div>
+    <div class="loading-addresses" *ngIf="isLoadingAddresses">
+      <span class="material-icons loading-spinner">refresh</span>
+      <span>Loading addresses...</span>
+    </div>
+  </div>
+
+  <!-- Payment Options - only show when cart has items -->
+  <div class="dh-payment-options" *ngIf="hasItems && isUserLoggedIn">
+    <h3 class="payment-title">Payment Method</h3>
+    <div class="payment-methods">
+      <div class="payment-method" [class.active]="selectedPaymentMethod === 'cash'">
+        <input type="radio" id="cash" name="payment" value="cash" [(ngModel)]="selectedPaymentMethod">
+        <label for="cash" class="payment-label">
+          <span class="material-icons payment-icon">money</span>
+          <div class="payment-info">
+            <span class="payment-name">Cash on Delivery</span>
+            <span class="payment-desc">Pay when your order arrives</span>
+          </div>
+        </label>
+      </div>
+      <div class="payment-method" [class.active]="selectedPaymentMethod === 'online'">
+        <input type="radio" id="online" name="payment" value="online" [(ngModel)]="selectedPaymentMethod">
+        <label for="online" class="payment-label">
+          <span class="material-icons payment-icon">payment</span>
+          <div class="payment-info">
+            <span class="payment-name">Pay Online At The Time Of Delivery</span>
+            <span class="payment-desc">UPI Only</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login prompt for guest users -->
+  <div class="dh-login-prompt" *ngIf="hasItems && !isUserLoggedIn">
+    <div class="login-prompt-content">
+      <span class="material-icons login-icon">person</span>
+      <div class="login-message">
+        <h4>Login Required</h4>
+        <p>Please login to place your order</p>
+      </div>
+      <button class="login-prompt-btn" (click)="goToLogin()">
+        <span class="material-icons">login</span>
+        Login
+      </button>
+    </div>
+  </div>
+
+  <button  
+    class="dh-cart-checkout" 
+    *ngIf="isUserLoggedIn" 
+    [disabled]="!canPlaceOrder || !isRestaurantOpen" 
+    [class.disabled]="!canPlaceOrder || !isRestaurantOpen"
+    [class.processing]="isProcessingOrder"
+    (click)="placeOrder()">
+    <ng-container *ngIf="!hasItems">Cart is Empty</ng-container>
+    <ng-container *ngIf="isProcessingOrder">
+      <span class="loading-spinner"></span>
+      Processing Order...
+    </ng-container>
+    <ng-container *ngIf="!isRestaurantOpen && hasItems">
+      <span class="closed-message">{{ restaurantClosedMessage || 'The restaurant is currently closed.' }}</span>
+    </ng-container>
+    <ng-container *ngIf="hasItems && isUserLoggedIn && !isProcessingOrder && isRestaurantOpen && !selectedOrderType">
+      Select Order Type to Continue
+    </ng-container>
+    <ng-container *ngIf="hasItems && isUserLoggedIn && !isProcessingOrder && isRestaurantOpen && selectedOrderType === 'delivery' && !isAddressSelected">
+      Select Address to Continue
+    </ng-container>
+    <ng-container *ngIf="hasItems && isUserLoggedIn && !isProcessingOrder && isRestaurantOpen && selectedOrderType && (selectedOrderType !== 'delivery' || isAddressSelected)">
+      Place Order
+    </ng-container>
+  </button>
+
+  <!-- Call Restaurant Button - only show when cart has items -->
+  <div class="dh-call-restaurant-section" *ngIf="hasItems">
+    <app-call-restaurant-button></app-call-restaurant-button>
+  </div>
+</div>
+<app-bottom-nav [active]="'cart'"></app-bottom-nav>
