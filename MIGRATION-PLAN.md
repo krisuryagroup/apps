@@ -81,7 +81,7 @@ Within the same lib, relative imports are fine.
 | MT008 | Bootstrap `apps/zitro-customer` shell | [x] | MT007 |
 | MT009 | Copy app shell files (layout, guards, initializers, constants) | [x] | MT008 |
 | MT010 | Copy features: business-selection | [x] | MT009 |
-| MT011 | Copy features: auth (signin, signup, forgot-password) | [ ] | MT009 |
+| MT011 | Copy features: auth (signin, signup, forgot-password) | [x] | MT009 |
 | MT012 | Copy features: home + categories + category-listing | [ ] | MT009 |
 | MT013 | Copy features: listing + search | [ ] | MT009 |
 | MT014 | Copy features: cart + coupon-selection | [ ] | MT009 |

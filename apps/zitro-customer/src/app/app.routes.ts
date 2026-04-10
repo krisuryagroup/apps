@@ -11,9 +11,9 @@ import { MainLayoutComponent } from './layout/main-layout.component';
 // MT010: business-selection
 import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
 // MT011: auth features
-// import { SigninComponent } from './features/auth/signin.component';
-// import { SignupComponent } from './features/auth/signup.component';
-// import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+import { SigninComponent } from './features/auth/signin.component';
+import { SignupComponent } from './features/auth/signup.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
 // MT012: home
 // import { HomeComponent } from './features/home/home.component';
 // MT013: listing, search, categories
@@ -66,8 +66,9 @@ export const routes: Routes = [
     path: 'auth',
     canActivate: [LoginGuard],
     children: [
-      // MT011: auth routes added when auth feature is copied
-      { path: '**', component: PlaceholderComponent },
+      { path: 'signin', component: SigninComponent },
+      { path: 'signup', component: SignupComponent },
+      { path: 'forgot-password', component: ForgotPasswordComponent },
     ]
   },
 
