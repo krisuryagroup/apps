@@ -7,10 +7,9 @@ import { provideStorage, getStorage } from '@angular/fire/storage';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideMessaging, getMessaging } from '@angular/fire/messaging';
 import { provideDatabase, getDatabase } from '@angular/fire/database';
-// MT009: initializer imports added when core/initializers are copied
-// import { APP_SETTINGS_INITIALIZER } from './core/initializers/app-settings.initializer';
-// import { LOCATION_INITIALIZER } from './core/initializers/location.initializer';
-// import { APP_VERSION_INITIALIZER } from './core/initializers/app-version.initializer';
+import { APP_SETTINGS_INITIALIZER } from './core/initializers/app-settings.initializer';
+import { LOCATION_INITIALIZER } from './core/initializers/location.initializer';
+import { APP_VERSION_INITIALIZER } from './core/initializers/app-version.initializer';
 import { FIREBASE_CONFIG } from '@zitro/utils';
 import { ImageCacheService } from '@zitro/services';
 
@@ -35,10 +34,9 @@ export const appConfig: ApplicationConfig = {
     provideAuth(() => getAuth()),
     provideMessaging(() => getMessaging()), // Add FCM messaging provider
     provideDatabase(() => getDatabase()), // Add Firebase Realtime Database provider
-    // MT009: initializer providers added when core/initializers are copied
-    // APP_VERSION_INITIALIZER, // Add the app version checker (Android app only)
-    // APP_SETTINGS_INITIALIZER, // Add the APP_INITIALIZER provider for global settings
-    // LOCATION_INITIALIZER, // Add the location initializer for location services
+    APP_VERSION_INITIALIZER, // Add the app version checker (Android app only)
+    APP_SETTINGS_INITIALIZER, // Add the APP_INITIALIZER provider for global settings
+    LOCATION_INITIALIZER, // Add the location initializer for location services
     {
       provide: APP_INITIALIZER,
       useFactory: (imageCacheService: ImageCacheService) => {

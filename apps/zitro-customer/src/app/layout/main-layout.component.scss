@@ -1,0 +1,979 @@
+@use 'theme' as *;
+@use '../../styles/breakpoints' as *;
+
+// Force bottom nav to be fixed at the bottom of the viewport
+.dh-bottom-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  z-index: 9999 !important;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.03) !important;
+  height: 56px !important;
+  background: #fff !important;
+  border-top: 1px solid #eee !important;
+  max-width: 100vw !important;
+
+  @include respond-above(tablet) {
+    max-width: 768px !important;
+  }
+  
+  // Hide bottom nav only on large-desktop (1025px+)
+  @include respond-above(large-desktop) {
+    display: none !important;
+  }
+}
+
+.dh-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.25);
+  z-index: 150;
+  transition: opacity 0.2s;
+}
+
+.dh-sidebar-toggle {
+    background: transparent; // Changed from #ffffff to transparent
+    border: 0px;
+    color: var(--header-text-color, #{$secondary-color}); // Added white color for icon
+    
+    .material-icons {
+      color: var(--header-text-color, #{$secondary-color}); // Ensure icon is white
+    }
+}
+
+.dh-profile-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+
+  .material-icons {
+    font-size: 1.9rem;
+    color: var(--header-text-color, #{$secondary-color});
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.dh-back-btn {
+    background: rgba(255, 255, 255, 0.2); // Changed to semi-transparent white
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    .material-icons {
+      color: $secondary-color; // Changed from $primary-color to white
+      font-size: 1.5rem;
+    }
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+}
+
+  // Header styles with restaurant information
+.dh-header {
+  position: fixed;
+  top: 0;
+  left: 0!important;
+  right: 0!important;
+  margin: 0 auto !important;
+  width: 100%;
+  max-width: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $primary-color;
+  height: 70px;
+  padding: 0 1rem;
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: calc(70px + env(safe-area-inset-top, 0px));
+  transition: background-color 0.35s ease;
+
+  // Transparent variant — overlays banner on home before scroll
+  &.dh-header--transparent {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+    box-shadow: none;
+  }
+
+  @include respond-above(tablet) {
+    max-width: 768px;
+  }
+
+  // Desktop layout (769px+)
+  @include respond-above(desktop) {
+    max-width: 1200px;
+    padding: 0 2rem;
+    height: 70px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    &.dh-header--transparent { box-shadow: none; }
+  }
+
+  // Large desktop (1025px+)
+  @include respond-above(large-desktop) {
+    max-width: 1440px;
+    padding: 0 2.5rem;
+    height: 70px;
+  }
+
+  .dh-header-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin: 0 0.5rem;
+    position: relative;
+    
+    .dh-restaurant-dropdown-container {
+      position: relative;
+      width: 100%;
+      
+      .dh-restaurant-selector {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        &.disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          
+          &:hover {
+            background: none;
+          }
+        }
+        
+        .dh-restaurant-info {
+          text-align: left;
+          
+          .dh-restaurant-name {
+            font-size: 1.1rem;
+            color: $secondary-color;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0 0 0.1rem 0;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+          }
+          
+          .dh-restaurant-location {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.2rem;
+            
+            .dh-location-icon {
+              font-size: 0.8rem;
+              color: rgba(255, 255, 255, 0.8);
+            }
+            
+            .dh-location-text {
+              font-size: 0.75rem;
+              color: $secondary-color;
+              font-family: 'Roboto', 'Open Sans', sans-serif;
+              font-weight: 500;
+              line-height: 1.2;
+              opacity: 0.9;
+            }
+          }
+        }
+        
+        .dh-dropdown-arrow {
+          .material-icons {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+          }
+          
+          .rotating {
+            animation: spin 1s linear infinite;
+          }
+        }
+      }
+      
+      .dh-restaurant-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: $secondary-color;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        z-index: 3000;
+        margin-top: 0.5rem;
+        overflow: hidden;
+        animation: dropdownFadeIn 0.2s ease-out;
+        
+        .dh-dropdown-item {
+          padding: 1rem;
+          cursor: pointer;
+          border-bottom: 1px solid #f0f0f0;
+          transition: background-color 0.2s ease;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          &:hover {
+            background-color: #f8f9ff;
+          }
+          
+          &.selected {
+            background-color: rgba($primary-color, 0.1);
+            border-left: 3px solid $primary-color;
+          }
+          
+          .dh-dropdown-restaurant-info {
+            .dh-dropdown-restaurant-name {
+              font-size: 0.95rem;
+              font-weight: 600;
+              color: #333;
+              margin-bottom: 0.3rem;
+            }
+            
+            .dh-dropdown-restaurant-details {
+              display: flex;
+              align-items: center;
+              gap: 0.3rem;
+              font-size: 0.8rem;
+              color: $text-secondary-color;
+              margin-bottom: 0.3rem;
+              
+              .material-icons {
+                font-size: 0.8rem;
+                color: $primary-color;
+              }
+            }
+            
+            .dh-dropdown-restaurant-meta {
+              display: flex;
+              gap: 0.8rem;
+              font-size: 0.75rem;
+              
+              .rating {
+                color: #ff9800;
+              }
+              
+              .delivery-time {
+                color: $green-color;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    .dh-user-info {
+      margin-top: 0.5rem;
+      
+      .dh-user-name {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 400;
+      }
+    }
+  }
+
+  // Dropdown animation
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // Rotation animation for loading spinner
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .dh-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .dh-restaurant-status {
+      .dh-status-badge {
+        padding: 0.2rem 0.4rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        line-height: 1.2;
+        white-space: nowrap;
+        
+        &.dh-status-open {
+          background: linear-gradient(135deg, $green-color, #45a049);
+          color: $secondary-color;
+          box-shadow: 0 1px 4px rgba(76, 175, 80, 0.3);
+        }
+        
+        &.dh-status-closed {
+          background: linear-gradient(135deg, #f44336, #d32f2f);
+          color: $secondary-color;
+          box-shadow: 0 1px 4px rgba(244, 67, 54, 0.3);
+        }
+      }
+      .dh-status-time{
+        font-size: 0.8rem;
+        display: block;
+        margin-top: 10px;
+        color: var(--header-text-color, #{$secondary-color}); // Using the specified color
+        font-family: 'Roboto', 'Open Sans', sans-serif; // Added Roboto font family
+        opacity: 0.8; // Added opacity for subtle effect
+      }
+      
+      .dh-pure-veg-tag {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: #ffffff;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        
+        .dh-veg-icon {
+          width: 14px;
+          height: 14px;
+          border: 1.5px solid $green-color;
+          border-radius: 2px;
+          position: relative;
+          display: inline-block;
+          flex-shrink: 0;
+          
+          &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 7px;
+            height: 7px;
+            background: $green-color;
+            border-radius: 50%;
+          }
+        }
+        
+        .dh-veg-text {
+          font-size: 0.7rem;
+          color: $text-color;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+}
+
+
+// Responsive styles for restaurant header
+.dh-header {
+  .dh-header.hidden {
+    transform: translateY(-100%);
+    transition: transform 0.3s;
+  }
+  .dh-header-center {
+    .dh-restaurant-info {
+      .dh-restaurant-name {
+        font-size: 1.0rem;
+        font-weight: 700;
+        color: $secondary-color;
+        font-family: 'Montserrat', sans-serif;
+      }
+    }
+  }
+}
+
+
+// Responsive styles for restaurant header
+@media (max-width: 400px) {
+  .dh-header {
+    padding: 0 0.75rem;
+    padding-top: env(safe-area-inset-top, 0px);
+    min-height: calc(70px + env(safe-area-inset-top, 0px));
+    
+    .dh-header-center {
+      margin: 0 0.3rem;
+      
+      .dh-restaurant-info {
+        .dh-restaurant-name {
+          font-size: 1.0rem;
+          font-weight: 700;
+          color: $secondary-color;
+          font-family: 'Montserrat', sans-serif;
+        }
+        
+        .dh-restaurant-location {
+          .dh-location-icon {
+            font-size: 0.7rem;
+          }
+          
+          .dh-location-text {
+            font-size: 0.7rem;
+          }
+        }
+      }
+    }
+    
+    .dh-header-right {
+      gap: 0.3rem;
+      
+      .dh-restaurant-status {
+        .dh-status-badge {
+          font-size: 0.8rem;
+          padding: 0.15rem 0.3rem;       
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 600px) {
+  .dh-header {
+    padding: 0 1.5rem;
+    padding-top: env(safe-area-inset-top, 0px);
+    
+    .dh-header-center {
+      .dh-restaurant-info {
+        .dh-restaurant-name {
+          font-size: 1.15rem;
+        }
+        
+        .dh-restaurant-location {
+          .dh-location-text {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+    
+    .dh-header-right {
+      .dh-restaurant-status {
+        .dh-status-badge {
+          font-size: 0.9rem;
+          padding: 0.25rem 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+// Desktop Navigation Styles - Shows at 769px+
+.dh-desktop-nav {
+  display: none;
+  
+  @include respond-above(desktop) {
+    display: flex;
+    align-items: center;
+    gap: 0rem;
+    margin: 0 auto;
+    flex: 1;
+    justify-content: center;
+    max-width: 600px;
+  }
+  
+  .dh-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.25rem;
+    text-decoration: none;
+    color: $secondary-color;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+    
+    .material-icons {
+      font-size: 1.2rem;
+    }
+    
+    .dh-nav-label {
+      white-space: nowrap;
+    }
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+    
+    &.active {
+      background: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40%;
+        height: 2px;
+        background: $secondary-color;
+        border-radius: 2px 2px 0 0;
+      }
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+.dh-user-info-desktop {
+  display: none;
+  
+  @include respond-above(desktop) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    margin-right: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    
+    .material-icons {
+      font-size: 1.4rem;
+      color: $secondary-color;
+    }
+    
+    .dh-user-name {
+      color: $secondary-color;
+      font-size: 0.85rem;
+      font-weight: 500;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Hide mobile user info on desktop and above (769px+)
+.dh-user-info {
+  @include respond-above(desktop) {
+    display: none;
+  }
+}
+
+// Desktop header adjustments (769px+)
+@include respond-above(desktop) {
+  .dh-header {
+    .dh-header-center {
+      flex: 0;
+      margin: 0;
+      margin-right: 1.5rem;
+      
+      .dh-restaurant-info {
+        .dh-restaurant-name {
+          font-size: 1.5rem;
+          letter-spacing: -0.01em;
+          line-height: 1;
+          white-space: nowrap;
+        }
+      }
+      
+      .dh-user-info {
+        display: none;
+      }
+    }
+    
+    .dh-header-right {
+      gap: 0.75rem;
+      
+      .dh-restaurant-status {
+        margin-right: 0.5rem;
+        
+        .dh-status-badge {
+          font-size: 0.75rem;
+          padding: 0.25rem 0.6rem;
+        }
+        
+        .dh-status-time {
+          font-size: 0.7rem;
+        }
+      }
+    }
+  }
+  
+  .dh-sidebar-toggle,
+  .dh-back-btn {
+    display: none;
+  }
+  
+  .dh-cart-btn {
+    .material-icons {
+      font-size: 1.4rem;
+    }
+    
+    .cart-count {
+      font-size: 0.7rem;
+      min-width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+}
+
+  .dh-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid $primary-color;
+  }
+  .dh-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    .dh-header-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: $text-color;
+    }
+    .dh-header-wallet {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: $primary-color;
+      font-size: 1rem;
+      .material-icons {
+        font-size: 1.1rem;
+      }
+    }
+  }
+  .dh-header-center {
+    flex: 1;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    .dh-user-name {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: $secondary-color; // Using the specified color
+      font-family: 'Roboto', 'Open Sans', sans-serif; // Added Roboto font family
+      text-align: left; // Changed from center to left for consistency
+    }
+  }
+  .dh-header-btn {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: $card-shadow;
+    cursor: pointer;
+    position: relative;
+    margin-left: 0.5rem;
+    .material-icons {
+      color: $primary-color;
+      font-size: 1.5rem;
+    }
+  }
+  .dh-cart-btn {
+    position: relative;
+    .material-icons {
+      color: $text-color;
+      font-size: 2rem;
+    }
+    .cart-count {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: $accent-color;
+      color: #fff;
+      border-radius: 50%;
+      min-width: 18px;
+      height: 18px;
+      font-size: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      font-weight: 600;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      z-index: 2;
+    }
+  }
+
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+  // overflow-x: hidden;
+  position: relative;
+}
+
+.main-layout {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  display: flex;
+  flex-direction: column;
+  background: $background-color;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+  max-width: 100%;
+
+  @include respond-above(tablet) {
+    max-width: 768px;
+  }
+  
+  @include respond-above(desktop) {
+    max-width: 1200px;
+  }
+  
+  @include respond-above(large-desktop) {
+    max-width: 1440px;
+  }
+}
+
+// Removed duplicate .dh-header rule that was overriding the primary color background
+
+.dh-header-btn {
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $card-shadow;
+  cursor: pointer;
+  .material-icons {
+    color: $primary-color;
+    font-size: 1.5rem;
+  }
+}
+
+.dh-header-title {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: $text-color;
+}
+
+.dh-header-page-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: $secondary-color; // Using the specified color
+  font-family: 'Roboto', 'Open Sans', sans-serif; // Added Roboto font family
+  margin-top: 5px;
+}
+
+.dh-login-btn, .dh-logout-btn {
+  color: black !important;
+  background-color: $secondary-color;
+}
+
+.main-content {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 70px auto 56px auto; // Mobile & Tablet: header=70px, bottom nav=56px
+  padding-bottom: 20px;
+  background: $background-color;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: calc(100vh - 216px); // 160+56
+  min-height: calc(100dvh - 216px);
+  max-width: 100%;
+
+  @include respond-above(tablet) {
+    max-width: 768px;
+  }
+  
+  // Desktop-lite (769-1024px): same compact header, keeps bottom nav
+  @include respond-above(desktop) {
+    margin: 70px auto 56px auto; // top=70px, bottom=56px
+    min-height: calc(100vh - 126px); // 70+56
+    min-height: calc(100dvh - 126px);
+    max-width: 1200px;
+  }
+  
+  // Large desktop (1025px+): Minimal header, no bottom nav
+  @include respond-above(large-desktop) {
+    margin: 70px auto 0 auto; // top=70px, bottom=0, horizontal=auto
+    
+    min-height: calc(100vh - 70px);
+    min-height: calc(100dvh - 70px);
+    max-width: 1440px;
+  }
+}
+
+// Home route — main-content starts at top (y=0) so the banner fills behind the transparent header.
+// The search+VEG row overlays the banner absolutely — no coloured strip between header and banner.
+.dh-home-active {
+  .main-content {
+    margin-top: 0 !important;
+  }
+}
+
+
+// ---- Header left section -----------------------------------------------
+.dh-header .dh-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+// ---- Location display (home page) --------------------------------------
+.dh-header .dh-location-display {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+  min-width: 0;
+
+  &:active { background: rgba(255, 255, 255, 0.15); }
+
+  .dh-loc-pin {
+    font-size: 1.3rem;
+    color: var(--header-text-color, #{$secondary-color});
+    flex-shrink: 0;
+  }
+
+  .dh-loc-text {
+    min-width: 0;
+
+    .dh-loc-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--header-text-color, #{$secondary-color});
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
+
+      .dh-loc-chevron {
+        font-size: 1.1rem;
+        color: var(--header-text-color, rgba(255, 255, 255, 0.8));
+        margin-left: 1px;
+      }
+    }
+
+    .dh-loc-address {
+      font-size: 0.7rem;
+      color: var(--header-text-color, rgba(255, 255, 255, 0.8));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+      line-height: 1.2;
+    }
+  }
+}
+
+// ---- VEG toggle --------------------------------------------------------
+.dh-header .dh-veg-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+
+  .dh-veg-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: $secondary-color;
+    letter-spacing: 0.5px;
+  }
+
+  .dh-veg-toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.3);
+    position: relative;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+
+    &.dh-veg-on {
+      background: #4CAF50;
+    }
+
+    .dh-veg-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: $secondary-color;
+      transition: left 0.3s ease;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    &.dh-veg-on .dh-veg-knob {
+      left: 23px; // 44 - 18 - 3 = 23px
+    }
+  }
+}

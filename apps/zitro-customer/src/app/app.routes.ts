@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { Component } from '@angular/core';
 
-// MT009: guards uncommented when core/guards are copied
-// import { AuthGuard, LoginGuard } from './core/guards/auth.guard';
-// import { BusinessSelectionGuard } from './core/guards/business-selection.guard';
+// MT009: guards now available
+import { AuthGuard, LoginGuard } from './core/guards/auth.guard';
+import { BusinessSelectionGuard } from './core/guards/business-selection.guard';
 
-// MT009: layout uncommented when layout is copied
-// import { MainLayoutComponent } from './layout/main-layout.component';
+// MT009: layout now available
+import { MainLayoutComponent } from './layout/main-layout.component';
 
 // MT010: feature routes uncommented as each feature task completes
 // import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
@@ -47,6 +47,29 @@ import { Component } from '@angular/core';
 export class PlaceholderComponent {}
 
 export const routes: Routes = [
-  { path: '', component: PlaceholderComponent },
-  { path: '**', component: PlaceholderComponent },
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
+
+  // Business Selection Route (MT010)
+  // { path: 'business-selection', component: BusinessSelectionComponent },
+
+  {
+    path: '',
+    component: MainLayoutComponent,
+    canActivate: [],
+    children: [
+      { path: 'home', component: PlaceholderComponent },
+      // MT013+: child routes added per feature task
+    ]
+  },
+
+  {
+    path: 'auth',
+    canActivate: [LoginGuard],
+    children: [
+      // MT011: auth routes added when auth feature is copied
+      { path: '**', component: PlaceholderComponent },
+    ]
+  },
+
+  { path: '**', redirectTo: 'home' }
 ];
