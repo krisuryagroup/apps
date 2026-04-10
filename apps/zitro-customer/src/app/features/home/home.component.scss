@@ -1,0 +1,520 @@
+@use 'theme' as *;
+@use 'breakpoints' as *;
+@use 'sass:color';
+
+.dh-main-content {
+  width: 100%;
+  // max-width: 480px;
+  margin: 0 auto;
+  // Ensure content never scrolls under the bottom nav
+  padding-bottom: 70px;
+  background: $background-color;
+  
+  @include respond-above(tablet) {
+    // max-width: 768px;
+  }
+  
+  @include respond-above(desktop) {
+    // max-width: 2000px;
+    padding-bottom: 2rem;
+  }
+}
+
+// Hero wrapper — banner fills this area; header is transparent and floats over it
+.dh-hero-wrapper {
+  position: relative;
+  overflow: hidden;
+
+  app-banner {
+    display: block;
+    width: 100%;
+  }
+}
+
+// Row: search bar (flex-1) + VEG toggle — absolutely overlaid on the banner, transparent bg
+.dh-search-veg-row {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: transparent;
+  max-height: 100px;
+
+  @include respond-above(tablet) {
+    padding: 0 2rem;
+    bottom: 1.5rem;
+  }
+}
+
+// Content section below the hero
+.dh-scroll-content {
+  background: $background-color;
+  padding-top: 0.5rem;
+}
+
+// VEG toggle (label on top, toggle below)
+.dh-veg-toggle-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+
+  .dh-veg-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: $secondary-color;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .dh-veg-toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.3);
+    position: relative;
+    transition: background 0.3s ease;
+
+    &.dh-veg-on {
+      background: #4CAF50;
+    }
+
+    .dh-veg-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: $secondary-color;
+      transition: left 0.3s ease;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    &.dh-veg-on .dh-veg-knob {
+      left: 23px;
+    }
+  }
+}
+
+// Search bar — normal flow inside .dh-search-veg-row (NOT absolute)
+.dh-search-container {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: 0;
+  background: transparent;
+
+  .dh-search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: $secondary-color;
+    border-radius: 28px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    padding: 0.625rem 1rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    
+    @include respond-above(tablet) {
+      padding: 0.75rem 1.25rem;
+      border-radius: 30px;
+    }
+    
+    @include respond-above(desktop) {
+      margin: 0 auto;
+      padding: 0.875rem 1.5rem;
+      border-radius: 32px;
+      box-shadow: 0 3px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    @include respond-above(large-desktop) {
+      padding: 1rem 1.75rem;
+    }
+    
+    &:focus-within {
+      border-color: $primary-color;
+      box-shadow: 0 4px 20px rgba($primary-color, 0.2);
+      transform: translateY(-1px);
+      
+      @include respond-above(desktop) {
+        box-shadow: 0 6px 24px rgba($primary-color, 0.25);
+        transform: translateY(-2px);
+      }
+    }
+    
+    &:hover {
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.12);
+      
+      @include respond-above(desktop) {
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+      }
+    }
+    
+    .dh-search-icon {
+      color: #999;
+      font-size: 1.15rem;
+      margin-right: 0.625rem;
+      flex-shrink: 0;
+      
+      @include respond-above(tablet) {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+      }
+      
+      @include respond-above(desktop) {
+        font-size: 1.35rem;
+        margin-right: 1rem;
+        color: #777;
+      }
+    }
+    
+    .dh-search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+      color: $text-color;
+      background: transparent;
+      font-weight: 400;
+      line-height: 1.4;
+      
+      @include respond-above(tablet) {
+        font-size: 0.95rem;
+      }
+      
+      @include respond-above(desktop) {
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      
+      &::placeholder {
+        color: #999;
+        font-weight: 400;
+        
+        @include respond-above(desktop) {
+          color: #aaa;
+        }
+      }
+      
+      &:focus::placeholder {
+        color: #ccc;
+      }
+    }
+    
+    .dh-mic-btn {
+      background: none;
+      border: none;
+      color: $primary-color;
+      cursor: pointer;
+      padding: 0.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: -2rem;
+      flex-shrink: 0;
+      transition: color 0.2s ease;
+
+      .material-icons {
+        font-size: 1.1rem;
+      }
+
+      &.dh-mic-listening {
+        color: $primary-color;
+        animation: mic-pulse 0.9s ease-in-out infinite;
+      }
+
+      &:active {
+        transform: scale(0.9);
+      }
+    }
+
+    .dh-search-clear {
+      background: rgba(0, 0, 0, 0.04);
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 0.375rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 0.5rem;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      
+      @include respond-above(tablet) {
+        width: 30px;
+        height: 30px;
+        padding: 0.4rem;
+      }
+      
+      @include respond-above(desktop) {
+        width: 32px;
+        height: 32px;
+        margin-left: 0.75rem;
+      }
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.08);
+        color: $text-color;
+        transform: scale(1.05);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+      
+      .material-icons {
+        font-size: 1rem;
+        
+        @include respond-above(tablet) {
+          font-size: 1.1rem;
+        }
+        
+        @include respond-above(desktop) {
+          font-size: 1.15rem;
+        }
+      }
+    }
+  }
+}
+
+body, :host {
+  font-family: $font-family;
+  background: $background-color;
+}
+.dh-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0rem 1rem 0.5rem 1rem;
+  color: $text-color;
+}
+
+.dh-recommended-list {
+  display: flex;
+  gap: 1.2rem;
+  margin: 0 1rem 0rem 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+.dh-recommended-card {
+  background: #fff;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
+  min-width: 180px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  .dh-recommended-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+  }
+  .dh-recommended-info {
+    text-align: center;
+    .dh-recommended-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: $text-color;
+      margin-bottom: 0.2rem;
+    }
+    .dh-recommended-meta {
+      font-size: 0.95rem;
+      color: $primary-color;
+      span {
+        color: $text-color;
+        opacity: 0.7;
+        margin-left: 0.3rem;
+      }
+    }
+  }
+  .dh-recommended-add {
+    position: absolute;
+    right: 0.7rem;
+    bottom: 0.7rem;
+    background: $primary-color;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: $card-shadow;
+    cursor: pointer;
+    .material-icons {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+// Popular Items Section
+.popular-items-section {
+  margin: 0rem 1rem 0.5rem 1rem;
+  
+  // Override grid spacing for home page
+  ::ng-deep .products-grid.horizontal-layout {
+    gap: 0.75rem;
+  }
+  
+  ::ng-deep .product-card.horizontal {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+// Loading State
+.loading-products {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  margin: 1rem;
+  
+  .loading-spinner {
+    color: $primary-color;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    &::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid $primary-color;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mic-pulse {
+  0%, 100% { color: $primary-color; transform: scale(1); }
+  50%       { color: darken($primary-color, 15%); transform: scale(1.2); }
+}
+
+// Responsive adjustments for search bar
+@media (max-width: 400px) {
+  .dh-search-container {
+    background: transparent;
+    padding: 0.5rem;
+    
+    .dh-search-bar {
+      padding: 0.6rem 0.8rem;
+      
+      .dh-search-input {
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+@media (min-width: 600px) {
+  .dh-search-container {
+    background: transparent;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: block;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .dh-restaurant-header {
+    padding: 0.75rem 2rem;
+    min-height: 65px;
+    max-height: 65px;
+    
+    .dh-restaurant-info {
+      .dh-restaurant-name {
+        font-size: 1.25rem;
+      }
+      
+      .dh-location-text {
+        font-size: 0.85rem;
+      }
+    }
+    
+    .dh-restaurant-status {
+      .dh-status-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+      }
+    }
+  }
+}
+
+// Restaurant header responsive styles
+@media (max-width: 400px) {
+  .dh-restaurant-header {
+    padding: 0.6rem 0.75rem;
+    min-height: 55px;
+    max-height: 55px;
+    
+    .dh-restaurant-info {
+      min-height: 35px;
+      
+      .dh-restaurant-name {
+        font-size: 1rem;
+      }
+      
+      .dh-restaurant-location {
+        gap: 0.15rem;
+        
+        .dh-location-icon {
+          font-size: 0.8rem;
+        }
+        
+        .dh-location-text {
+          font-size: 0.75rem;
+        }
+      }
+    }
+    
+    .dh-restaurant-status {
+      margin-left: 0.5rem;
+      
+      .dh-status-badge {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        border-radius: 10px;
+      }
+    }
+  }
+}
+

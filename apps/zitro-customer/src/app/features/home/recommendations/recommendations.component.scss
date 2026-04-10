@@ -1,0 +1,75 @@
+@use 'theme' as *;
+
+.dh-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1.5rem 1rem 0.5rem 1rem;
+  color: $text-color;
+}
+
+.dh-recommended-list {
+  display: flex;
+  gap: 1.2rem;
+  margin: 0 1rem 5rem 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+.dh-recommended-card {
+  background: #fff;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
+  min-width: 180px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem 0.5rem 0.5rem;
+  position: relative;
+  .dh-recommended-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+  }
+  .dh-recommended-info {
+    text-align: center;
+    .dh-recommended-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: $text-color;
+      margin-bottom: 0.2rem;
+    }
+    .dh-recommended-meta {
+      font-size: 0.95rem;
+      color: $primary-color;
+      span {
+        color: $text-color;
+        opacity: 0.7;
+        margin-left: 0.3rem;
+      }
+    }
+  }
+  .dh-recommended-add {
+    position: absolute;
+    right: 0.7rem;
+    bottom: 0.7rem;
+    background: $primary-color;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: $card-shadow;
+    cursor: pointer;
+    .material-icons {
+      font-size: 1.3rem;
+    }
+  }
+}

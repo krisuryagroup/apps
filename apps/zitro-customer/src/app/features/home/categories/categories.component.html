@@ -1,0 +1,68 @@
+<!-- Horizontal Categories -->
+<div class="dh-categories">
+  <div class="dh-categories-title">We offer <span class="dh-categories-view" (click)="navigateToCategory()">View all <span class="material-icons">chevron_right</span></span></div>
+  
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="dh-categories-loading">
+    <div class="dh-category-skeleton" *ngFor="let item of [1,2,3,4,5,6,7,8]">
+      <div class="skeleton-image"></div>
+      <div class="skeleton-text"></div>
+    </div>
+  </div>
+  
+  <!-- Navigation Arrows -->
+  <button 
+    *ngIf="!isLoading && categories.length > 0"
+    class="dh-category-nav-btn dh-category-nav-left" 
+    (click)="scrollCategoriesLeft()"
+    [disabled]="isAtCategoryStart">
+    <span class="material-icons">chevron_left</span>
+  </button>
+  
+  <button 
+    *ngIf="!isLoading && categories.length > 0"
+    class="dh-category-nav-btn dh-category-nav-right" 
+    (click)="scrollCategoriesRight()"
+    [disabled]="isAtCategoryEnd">
+    <span class="material-icons">chevron_right</span>
+  </button>
+  
+  <!-- Categories two-row horizontal scroll -->
+  <div *ngIf="!isLoading" class="dh-category-scroll-wrapper" #categoryScrollWrapper>
+    <div class="dh-category-scroll">
+      <div class="dh-category-item" *ngFor="let category of categories.slice(0, 7); let i = index" (click)="navigateToCategory(category.name)">
+        <div class="dh-category-image-wrapper">
+          <app-loader 
+            [isLoading]="imageLoading[i]" 
+            [size]="50" 
+            type="spinner" 
+            color="#ff6b35">
+          </app-loader>
+          <img 
+               [cachedSrc]="category.imageURL || 'assets/foodCategories/default.png'" 
+               [alt]="category.name"
+               [fallbackSrc]="'assets/foodCategories/default.png'"
+               (load)="imageLoading[i] = false"
+               (error)="imageLoading[i] = false" />
+        </div>
+        <span class="dh-category-name">{{ category.name }}</span>
+      </div>
+      
+      <!-- View All Categories Item -->
+      <div class="dh-category-item">
+        <app-view-all-card
+          size="small"
+          variant="circular"
+          label="View All"
+          [showLabel]="true"
+          (clicked)="navigateToCategory()">
+        </app-view-all-card>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Empty state -->
+  <div *ngIf="!isLoading && categories.length === 0" class="dh-categories-empty">
+    <p>No categories available at the moment.</p>
+  </div>
+</div>
