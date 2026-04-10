@@ -1,0 +1,27 @@
+<div class="dh-main-content dh-contact-us">
+  <div class="dh-contact-card">
+    <div class="dh-contact-title">Contact Us</div>
+    <div class="dh-contact-info">
+      <div class="dh-contact-row">
+        <span class="material-icons dh-contact-icon">email</span>
+        <span class="dh-contact-label">Email:</span>
+        <div class="dh-contact-value-container">
+          <a [href]="emailHref" class="dh-contact-value dh-email-link">{{email}}</a>
+          <button class="dh-copy-btn" (click)="copyEmail()" [title]="emailCopied ? 'Copied!' : 'Copy email'">
+            <span class="material-icons">{{ emailCopied ? 'check' : 'content_copy' }}</span>
+          </button>
+        </div>
+      </div>
+      <div class="dh-contact-row">
+        <span class="material-icons dh-contact-icon">call</span>
+        <span class="dh-contact-label">Phone:</span>
+        <div class="dh-contact-value-container">
+          <a [href]="phoneHref" class="dh-contact-value dh-phone-link">{{phone}}</a>
+          <button class="dh-copy-btn" (click)="copyPhone()" [title]="phoneCopied ? 'Copied!' : 'Copy phone'">
+            <span class="material-icons">{{ phoneCopied ? 'check' : 'content_copy' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
