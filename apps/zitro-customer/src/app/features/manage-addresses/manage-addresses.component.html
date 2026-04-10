@@ -1,0 +1,147 @@
+<div class="manage-addresses-container">
+  <!-- Add Address Button -->
+  <button class="add-address-btn" (click)="openAddForm()" [disabled]="isLoading">
+    <span class="plus-icon">+</span> Add New Address
+  </button>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="errorMessage">
+    <span class="material-icons">error</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <span class="material-icons loading-spinner">refresh</span>
+    <span>Loading addresses...</span>
+  </div>
+
+  <!-- Address Form – Android Bottom Sheet -->
+  <div *ngIf="showForm" class="bottom-sheet-overlay" (click)="cancelForm()">
+    <div class="bottom-sheet" (click)="$event.stopPropagation()">
+
+      <div class="drag-handle"></div>
+
+      <div class="sheet-header">
+        <span class="sheet-title">{{ editIndex !== null ? 'Edit Address' : 'New Address' }}</span>
+        <button class="sheet-close-btn" type="button" (click)="cancelForm()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="sheet-body">
+        <form (ngSubmit)="saveAddress()">
+
+          <div class="md-field">
+            <input type="text" id="f-name" [(ngModel)]="form.name" name="name" required placeholder=" " autocomplete="name" [class.field-error]="fieldErrors['name']" />
+            <label for="f-name">Full Name <span class="req">*</span></label>
+            <div class="error-text" *ngIf="fieldErrors['name']">{{ fieldErrors['name'] }}</div>
+          </div>
+
+          <div class="md-field">
+            <input type="text" id="f-phone" [(ngModel)]="form.phone" name="phone" required placeholder=" " autocomplete="tel" [class.field-error]="fieldErrors['phone']" />
+            <label for="f-phone">Phone Number <span class="req">*</span></label>
+            <div class="error-text" *ngIf="fieldErrors['phone']">{{ fieldErrors['phone'] }}</div>
+          </div>
+
+          <div class="md-field">
+            <input type="text" id="f-street" [(ngModel)]="form.houseAndStreet" name="houseAndStreet" required placeholder=" " [class.field-error]="fieldErrors['houseAndStreet']" />
+            <label for="f-street">House No. &amp; Street <span class="req">*</span></label>
+            <div class="error-text" *ngIf="fieldErrors['houseAndStreet']">{{ fieldErrors['houseAndStreet'] }}</div>
+          </div>
+
+          <div class="md-field">
+            <input type="text" id="f-landmark" [(ngModel)]="form.landmark" name="landmark" placeholder=" " />
+            <label for="f-landmark">Landmark <span class="optional">(optional)</span></label>
+          </div>
+
+          <div class="md-field-row">
+            <div class="md-field">
+              <input type="text" id="f-pincode" [(ngModel)]="form.pincode" name="pincode" [value]="currentAddressConfig.pincode" readonly placeholder=" " />
+              <label for="f-pincode">Pincode</label>
+            </div>
+            <div class="md-field">
+              <input type="text" id="f-state" [(ngModel)]="form.state" name="state" [value]="currentAddressConfig.state" readonly placeholder=" " />
+              <label for="f-state">State</label>
+            </div>
+          </div>
+
+          <div class="md-field">
+            <input type="text" id="f-town" [(ngModel)]="form.town" name="town" [value]="currentAddressConfig.town" readonly placeholder=" " />
+            <label for="f-town">Town / District</label>
+          </div>
+
+          <div class="field-section">
+            <div class="field-section-label">Address Type <span class="req">*</span></div>
+            <div class="chip-group">
+              <button type="button" class="type-chip" [class.type-chip--active]="form.type === 'Home'" (click)="form.type = 'Home'">
+                <span class="material-icons">home</span> Home
+              </button>
+              <button type="button" class="type-chip" [class.type-chip--active]="form.type === 'Office'" (click)="form.type = 'Office'">
+                <span class="material-icons">business_center</span> Office
+              </button>
+              <button type="button" class="type-chip" [class.type-chip--active]="form.type === 'Other'" (click)="form.type = 'Other'">
+                <span class="material-icons">location_on</span> Other
+              </button>
+            </div>
+            <div class="error-text" *ngIf="fieldErrors['type']">{{ fieldErrors['type'] }}</div>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="material-icons toggle-icon">star</span>
+              <div>
+                <div class="toggle-label">Default Address</div>
+                <div class="toggle-sub">Used for all new orders</div>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="form.isDefault" name="isDefault" />
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
+
+          <button class="cta-btn" type="submit" [disabled]="isSaving">
+            <span *ngIf="isSaving" class="material-icons spin-icon">refresh</span>
+            <span *ngIf="!isSaving" class="material-icons">{{ editIndex !== null ? 'edit_location' : 'add_location_alt' }}</span>
+            {{ isSaving ? 'Saving…' : (editIndex !== null ? 'Update Address' : 'Save Address') }}
+          </button>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-addresses" *ngIf="addresses.length === 0 && !isLoading">
+    <span class="material-icons">location_off</span>
+    <h3>No addresses found</h3>
+    <p>Add your first address to get started with deliveries!</p>
+  </div>
+
+  <!-- Address List -->
+  <div class="address-list" *ngIf="addresses.length > 0">
+    <div class="address-card" *ngFor="let address of addresses; let i = index" [class.default-address]="address.isDefault">
+      <div class="address-header">
+        <div class="address-title">{{ address.name }}</div>
+        <div class="default-badge" *ngIf="address.isDefault">DEFAULT</div>
+      </div>
+      <div class="address-phone">{{ address.phone }}</div>
+      <div class="address-details">
+        <b>Address:</b> {{ address.houseAndStreet }}, {{ address.landmark }}, {{ address.town }}, {{ address.state }}, {{ address.pincode }}<br />
+        <span class="address-type">{{ address.type }} Address</span>
+      </div>
+      <div class="address-actions">
+        <span class="edit-btn" (click)="openEditForm(i)">
+          <span class="material-icons">edit</span> Edit
+        </span>
+        <span class="default-btn" *ngIf="!address.isDefault" (click)="setDefaultAddress(i)">
+          <span class="material-icons">star_border</span> Set Default
+        </span>
+        <span class="delete-btn" (click)="deleteAddress(i)">
+          <span class="material-icons">delete</span> Delete
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

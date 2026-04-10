@@ -1,0 +1,300 @@
+<div class="add-address-page">
+
+  <!-- ── Page Header ───────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <button class="back-btn" type="button" (click)="goBack()" aria-label="Go back">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1 class="page-title">Add Address</h1>
+  </div>
+  <!-- ── Place Search Bar ──────────────────────────────────────── -->
+  <div class="aa-search-wrap">
+    <span class="material-icons aa-search-icon">search</span>
+    <input
+      class="aa-search-input"
+      type="text"
+      placeholder="Search for area, street name..."
+      [value]="searchQuery"
+      (input)="onSearchInput($any($event.target).value)"
+      autocomplete="off"
+      autocorrect="off"
+    />
+    <button *ngIf="searchQuery" class="aa-clear-btn" type="button" (click)="clearSearch()" aria-label="Clear">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <!-- Search suggestions -->
+  <div class="aa-suggestions-wrap" *ngIf="searchQuery">
+    <div class="aa-searching-row" *ngIf="isSearching">
+      <span class="aa-spinner"></span>
+      <span>Searching...</span>
+    </div>
+    <div class="aa-no-results" *ngIf="!isSearching && searchSuggestions.length === 0">
+      No results found for "{{ searchQuery }}"
+    </div>
+    <ul class="aa-suggestion-list" *ngIf="!isSearching && searchSuggestions.length > 0">
+      <li
+        *ngFor="let s of searchSuggestions"
+        class="aa-suggestion-item"
+        (click)="selectSuggestion(s)"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="selectSuggestion(s)">
+        <span class="material-icons aa-suggestion-icon">location_on</span>
+        <div class="aa-suggestion-text">
+          <span class="aa-suggestion-name">{{ s.name }}</span>
+          <span class="aa-suggestion-addr">{{ s.fullAddress }}</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <!-- ── Map Section ───────────────────────────────────────────────────── -->
+  <div class="map-section">
+    <div #mapContainer class="map-container"></div>
+
+    <!-- Loading overlay -->
+    <div class="map-overlay map-loading-overlay" *ngIf="isMapLoading">
+      <span class="material-icons spin-icon-map">sync</span>
+      <span>Loading map…</span>
+    </div>
+
+    <!-- Unavailable fallback -->
+    <div class="map-overlay map-error-overlay" *ngIf="mapLoadError">
+      <span class="material-icons">map</span>
+      <span>Map unavailable — enter your area below</span>
+    </div>
+
+    <!-- Geocoding spinner -->
+    <div class="map-geocoding-overlay" *ngIf="isGettingLocation && !isMapLoading">
+      <span class="material-icons spin-icon-map">sync</span>
+    </div>
+
+    <!-- Drag hint tooltip -->
+    <div class="map-drag-tooltip" *ngIf="!isMapLoading && !mapLoadError">
+      Move pin to your exact delivery location
+    </div>
+
+    <!-- Use current location (overlaid) -->
+    <button
+      class="map-location-btn"
+      type="button"
+      (click)="useCurrentLocation()"
+      [disabled]="isGettingLocation"
+      aria-label="Use current location">
+      <span class="material-icons">my_location</span>
+      Use current location
+    </button>
+  </div>
+
+  <!-- ── Detected Area Card ────────────────────────────────────────────── -->
+  <div class="detected-address-card" *ngIf="mapAddress">
+    <span class="material-icons detected-icon">location_on</span>
+    <div class="detected-info">
+      <div class="detected-area">{{ mapAddress }}</div>
+      <div class="detected-pincode" *ngIf="form.pincode">Pincode: <strong>{{ form.pincode }}</strong></div>
+    </div>
+    <button class="change-location-btn" type="button" (click)="clearMapSelection()">Change</button>
+  </div>
+
+  <!-- ── Service NOT Available Banner ──────────────────────────────────── -->
+  <div class="unavailable-banner" *ngIf="pincodeRestricted && pincodeConfig.enabled">
+    <div class="unavailable-icon">
+      <span class="material-icons">location_off</span>
+    </div>
+    <div class="unavailable-body">
+      <h3>Service not available in your area</h3>
+      <p>
+        We currently deliver only to selected pincodes.
+        Pincode <strong>{{ form.pincode }}</strong> is not in our delivery zone.
+      </p>
+      <p class="contact-hint">Please contact the restaurant for more information.</p>
+    </div>
+    <button class="connect-btn" type="button" (click)="goToContact()">
+      <span class="material-icons">support_agent</span>
+      Connect with Restaurant
+    </button>
+  </div>
+
+  <!-- ── Address Form ───────────────────────────────────────────────────── -->
+  <div class="form-card" [class.form-restricted]="pincodeRestricted && pincodeConfig.enabled">
+
+    <!-- Error banner -->
+    <div class="error-banner" *ngIf="errorMessage">
+      <span class="material-icons">error_outline</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <form (ngSubmit)="saveAddress()" novalidate autocomplete="off">
+
+      <!-- ── Delivery Area ─────────────────────────────────────────────── -->
+      <div class="section-label">Delivery Area</div>
+
+      <div class="md-field-row">
+        <div class="md-field">
+          <input
+            type="text"
+            id="f-pincode"
+            [ngModel]="form.pincode"
+            (ngModelChange)="onPincodeChange($event)"
+            name="pincode"
+            required
+            placeholder=" "
+            inputmode="numeric"
+            maxlength="6"
+            readonly
+            [class.field-error]="fieldErrors['pincode']"
+            class="field-locked" />
+          <label for="f-pincode">Pincode <span class="req">*</span></label>
+          <span class="field-lock-icon"><span class="material-icons">lock</span></span>
+          <div class="error-text" *ngIf="fieldErrors['pincode']">{{ fieldErrors['pincode'] }}</div>
+        </div>
+
+        <div class="md-field">
+          <input
+            type="text"
+            id="f-state"
+            [(ngModel)]="form.state"
+            name="state"
+            placeholder=" "
+            readonly
+            class="field-locked" />
+          <label for="f-state">State</label>
+          <span class="field-lock-icon"><span class="material-icons">lock</span></span>
+        </div>
+      </div>
+
+      <div class="md-field">
+        <input
+          type="text"
+          id="f-town"
+          [(ngModel)]="form.town"
+          name="town"
+          required
+          placeholder=" "
+          readonly
+          [class.field-error]="fieldErrors['town']"
+          class="field-locked" />
+        <label for="f-town">Town / District <span class="req">*</span></label>
+        <span class="field-lock-icon"><span class="material-icons">lock</span></span>
+        <div class="error-text" *ngIf="fieldErrors['town']">{{ fieldErrors['town'] }}</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── Address Details ───────────────────────────────────────────── -->
+      <div class="section-label">Address Details</div>
+
+      <div class="md-field">
+        <input
+          type="text"
+          id="f-street"
+          [(ngModel)]="form.houseAndStreet"
+          name="houseAndStreet"
+          required
+          placeholder=" "
+          [class.field-error]="fieldErrors['houseAndStreet']" />
+        <label for="f-street">House No. &amp; Street <span class="req">*</span></label>
+        <div class="error-text" *ngIf="fieldErrors['houseAndStreet']">{{ fieldErrors['houseAndStreet'] }}</div>
+      </div>
+
+      <div class="md-field">
+        <input
+          type="text"
+          id="f-landmark"
+          [(ngModel)]="form.landmark"
+          name="landmark"
+          placeholder=" " />
+        <label for="f-landmark">Landmark <span class="optional">(optional)</span></label>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── Receiver Details ──────────────────────────────────────────── -->
+      <div class="section-label">Receiver Details</div>
+
+      <div class="md-field">
+        <input
+          type="text"
+          id="f-name"
+          [(ngModel)]="form.name"
+          name="name"
+          required
+          placeholder=" "
+          autocomplete="name"
+          [class.field-error]="fieldErrors['name']" />
+        <label for="f-name">Full Name <span class="req">*</span></label>
+        <div class="error-text" *ngIf="fieldErrors['name']">{{ fieldErrors['name'] }}</div>
+      </div>
+
+      <div class="md-field">
+        <input
+          type="tel"
+          id="f-phone"
+          [(ngModel)]="form.phone"
+          name="phone"
+          required
+          placeholder=" "
+          autocomplete="tel"
+          [class.field-error]="fieldErrors['phone']" />
+        <label for="f-phone">Phone Number <span class="req">*</span></label>
+        <div class="error-text" *ngIf="fieldErrors['phone']">{{ fieldErrors['phone'] }}</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── Save As ───────────────────────────────────────────────────── -->
+      <div class="field-section">
+        <div class="field-section-label">Save Address as <span class="req">*</span></div>
+        <div class="chip-group">
+          <button
+            type="button"
+            class="type-chip"
+            [class.type-chip--active]="form.type === 'Home'"
+            (click)="form.type = 'Home'">
+            <span class="material-icons">home</span> Home
+          </button>
+          <button
+            type="button"
+            class="type-chip"
+            [class.type-chip--active]="form.type === 'Office'"
+            (click)="form.type = 'Office'">
+            <span class="material-icons">business_center</span> Work
+          </button>
+          <button
+            type="button"
+            class="type-chip"
+            [class.type-chip--active]="form.type === 'Other'"
+            (click)="form.type = 'Other'">
+            <span class="material-icons">location_on</span> Other
+          </button>
+        </div>
+        <div class="error-text" *ngIf="fieldErrors['type']">{{ fieldErrors['type'] }}</div>
+      </div>
+
+      <!-- ── Default Address Toggle ────────────────────────────────────── -->
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <span class="material-icons toggle-icon">star</span>
+          <div>
+            <div class="toggle-label">Default Address</div>
+            <div class="toggle-sub">Used automatically for new orders</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" [(ngModel)]="form.isDefault" name="isDefault" />
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+
+      <!-- ── Save Button ───────────────────────────────────────────────── -->
+      <button class="cta-btn" type="submit" [disabled]="isSaveDisabled">
+        <span *ngIf="isSaving" class="material-icons spin-icon">refresh</span>
+        <span *ngIf="!isSaving" class="material-icons">add_location_alt</span>
+        {{ isSaving ? 'Saving…' : 'Save Address' }}
+      </button>
+
+    </form>
+  </div>
+
+</div>
