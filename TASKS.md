@@ -53,7 +53,7 @@
 | T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | [ ] | T015 |
 | T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | [ ] | T013, T010 |
 | **Phase 8 — SCSS Cleanup + Security & Finalize** |
-| T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [ ] | MT018 |
+| T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [x] | MT018 |
 | T019 | Finalize command + Husky + audit-ci | [ ] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
 | T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) alongside Firebase | [ ] | T008, T007, T009 |
@@ -1199,7 +1199,7 @@ libs/ui/src/common/update-dialog/
 
 ### T019-scss — SCSS Refactoring (Migrated Components)
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T019-scss-refactoring`
 **Depends on:** MT018
 
