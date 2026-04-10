@@ -761,11 +761,6 @@
   }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
 // ── SMALL PHONE ADJUSTMENTS ───────────────────────────────────────────────────
 @media (max-width: 380px) {
   .form-card        { margin: 10px 10px 0; padding: 16px 14px 24px; }
