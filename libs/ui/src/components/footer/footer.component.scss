@@ -1,5 +1,5 @@
 @use 'theme' as *;
-@use '../../../../styles/breakpoints' as *;
+@use 'breakpoints' as *;
 
 .app-footer {
   display: none; // Hidden by default (mobile/tablet)

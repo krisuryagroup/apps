@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dark theme with visible status bar -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand colors -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        
+        <!-- Status bar configuration for dark mode -->
+        <item name="android:statusBarColor">@color/statusBarColorDark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        
+        <!-- Navigation bar -->
+        <item name="android:navigationBarColor">@color/statusBarColorDark</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Other window properties -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+</resources>

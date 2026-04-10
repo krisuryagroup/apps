@@ -78,7 +78,7 @@ Within the same lib, relative imports are fine.
 | MT005 | Copy `@zitro/theme` | [x] | MT002 |
 | MT006 | Copy `@zitro/ui` (shared components + directives) | [x] | MT003 |
 | MT007 | Copy `@zitro/services` | [x] | MT003, MT004 |
-| MT008 | Bootstrap `apps/zitro-customer` shell | [ ] | MT007 |
+| MT008 | Bootstrap `apps/zitro-customer` shell | [x] | MT007 |
 | MT009 | Copy app shell files (layout, guards, initializers, constants) | [ ] | MT008 |
 | MT010 | Copy features: business-selection | [ ] | MT009 |
 | MT011 | Copy features: auth (signin, signup, forgot-password) | [ ] | MT009 |

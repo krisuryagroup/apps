@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme with visible status bar -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Primary brand colors -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        
+        <!-- Status bar configuration -->
+        <item name="android:statusBarColor">@color/statusBarColor</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        
+        <!-- Navigation bar -->
+        <item name="android:navigationBarColor">@color/navigationBarColor</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- Other window properties -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="AppTheme">
+        <!-- Inherits status bar visibility from AppTheme -->
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <!-- Show status bar even during splash -->
+        <item name="android:statusBarColor">@color/statusBarColor</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

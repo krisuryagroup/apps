@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand color -->
+    <color name="colorPrimary">#FF5722</color>
+    <color name="colorPrimaryDark">#D84315</color>
+    <color name="colorAccent">#FF5722</color>
+    
+    <!-- Status bar colors -->
+    <color name="statusBarColor">#FFFFFF</color>
+    <color name="statusBarColorDark">#000000</color>
+    
+    <!-- Navigation bar color -->
+    <color name="navigationBarColor">#FFFFFF</color>
+</resources>

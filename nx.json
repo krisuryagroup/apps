@@ -7,6 +7,11 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["default", "^default"]
+    },
+    "@angular/build:application": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^default"]
     }
   },
   "plugins": [
@@ -21,6 +26,12 @@
       "options": {
         "targetName": "test"
       }
+    },
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e"
+      }
     }
   ],
   "generators": {
@@ -30,6 +41,12 @@
     },
     "@nx/angular:component": {
       "style": "css"
+    },
+    "@nx/angular:application": {
+      "e2eTestRunner": "playwright",
+      "linter": "eslint",
+      "style": "scss",
+      "unitTestRunner": "jest"
     }
   }
 }

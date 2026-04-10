@@ -1,6 +1,6 @@
 @use 'theme' as *;
 @use "sass:color";
-@use '../../../../styles/breakpoints' as *;
+@use 'breakpoints' as *;
 
 .item-slider-container {
   margin: 1.5rem 0 1rem 0;

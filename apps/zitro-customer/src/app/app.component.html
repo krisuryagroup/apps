@@ -1,0 +1,14 @@
+<!-- Splash Screen -->
+<app-splash-screen 
+  *ngIf="showSplash" 
+  (splashComplete)="onSplashComplete()">
+</app-splash-screen>
+
+<!-- No Internet Screen -->
+<app-no-internet 
+  *ngIf="!showSplash && showNoInternet" 
+  (retry)="onRetryConnection()">
+</app-no-internet>
+
+<!-- Main App Content -->
+<router-outlet *ngIf="!showSplash && !showNoInternet"></router-outlet>
