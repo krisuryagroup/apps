@@ -71,8 +71,8 @@ Within the same lib, relative imports are fine.
 
 | ID | Title | Status | Depends on |
 |----|-------|--------|-----------|
-| MT001 | Bootstrap Nx workspace | [ ] | — |
-| MT002 | Create library scaffolds | [ ] | MT001 |
+| MT001 | Bootstrap Nx workspace | [x] | — |
+| MT002 | Create library scaffolds | [x] | MT001 |
 | MT003 | Copy `@zitro/models` | [ ] | MT002 |
 | MT004 | Copy `@zitro/utils` | [ ] | MT002 |
 | MT005 | Copy `@zitro/theme` | [ ] | MT002 |
@@ -148,7 +148,7 @@ npm install -D typescript
 
 ### MT002 — Create Library Scaffolds
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT002-lib-scaffolds`
 **Depends on:** MT001
 
