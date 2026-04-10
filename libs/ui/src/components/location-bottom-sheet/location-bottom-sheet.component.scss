@@ -1,0 +1,518 @@
+// ── Variables ────────────────────────────────────────────────────────────────
+$primary: #C73E3A;
+$text-dark: #1a1a1a;
+$text-medium: #555;
+$text-light: #888;
+$border-color: #e8e8e8;
+$bg-sheet: #f0f3f4;
+$bg-card: #ffffff;
+$bg-icon-gps: rgba($primary, 0.08);
+$color-gps: $primary;
+$bg-icon-add: #f0f0f0;
+$color-add: #555;
+$sheet-radius: 24px;
+$transition-speed: 380ms;
+$z-overlay: 9998;
+$z-panel: 9999;
+
+// ── Overlay ───────────────────────────────────────────────────────────────────
+.lbs-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: $z-overlay;
+  pointer-events: none;
+  transition: background $transition-speed cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--visible {
+    background: rgba(0, 0, 0, 0.45);
+    pointer-events: all;
+  }
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+.lbs-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  z-index: $z-panel;
+  background: $bg-sheet;
+  border-radius: $sheet-radius $sheet-radius 0 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+
+  // Hidden by default — translated off screen
+  transform: translateY(100%);
+  transition: transform $transition-speed cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  height: 70vh;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &--open {
+    transform: translateY(0);
+  }
+
+  &--animating {
+    transform: translateY(2%);
+  }
+}
+
+// ── Drag handle ───────────────────────────────────────────────────────────────
+.lbs-drag-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ccc;
+  margin: 10px auto 4px;
+  flex-shrink: 0;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.lbs-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px 10px;
+  flex-shrink: 0;
+
+  .lbs-back-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: $text-dark;
+
+    .material-icons { font-size: 1.8rem; }
+  }
+
+  .lbs-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $text-dark;
+    letter-spacing: -0.2px;
+  }
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+.lbs-search-wrap {
+  position: relative;
+  margin: 0 14px 12px;
+  flex-shrink: 0;
+  background: $bg-card;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+
+  .lbs-search-icon {
+    color: $color-gps;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .lbs-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: $text-dark;
+    padding: 13px 0;
+    font-family: inherit;
+
+    &::placeholder { color: #aaa; }
+  }
+
+  .lbs-clear-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+
+    .material-icons { font-size: 1.1rem; }
+    &:hover { color: $text-medium; }
+  }
+}
+
+// ── Scrollable body ───────────────────────────────────────────────────────────
+.lbs-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
+}
+
+.lbs-scrollable {
+  padding: 0 14px;
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+.lbs-card {
+  background: $bg-card;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+// ── Action rows (GPS, Add Address) ────────────────────────────────────────────
+.lbs-action-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:active { background: #f5f5f5; }
+
+  .lbs-action-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &--gps {
+      background: $bg-icon-gps;
+      .material-icons { color: $color-gps; font-size: 1.3rem; }
+    }
+
+    &--add {
+      background: $bg-icon-add;
+      .material-icons { color: $color-add; font-size: 1.4rem; }
+    }
+  }
+
+  .lbs-action-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .lbs-action-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: $color-gps;
+    }
+
+    .lbs-action-sub {
+      font-size: 0.8rem;
+      color: $text-light;
+
+      &--loading { color: $color-gps; }
+    }
+  }
+
+  .lbs-save-location-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 5px;
+    padding: 3px 10px 3px 7px;
+    background: rgba($primary, 0.09);
+    color: $primary;
+    border: 1px solid rgba($primary, 0.22);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    line-height: 1;
+
+    .material-icons { font-size: 0.95rem; }
+
+    &:active { background: rgba($primary, 0.17); }
+  }
+
+  .lbs-chevron {
+    color: #bbb;
+    font-size: 1.3rem;
+  }
+}
+
+.lbs-divider {
+  height: 1px;
+  background: $border-color;
+  margin: 0 16px;
+}
+
+// ── Error row ─────────────────────────────────────────────────────────────────
+.lbs-error-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  background: #fff5f5;
+
+  .lbs-error-icon { color: #e04545; font-size: 1.1rem; }
+  .lbs-error-text { flex: 1; font-size: 0.8rem; color: #c0392b; }
+  .lbs-retry-btn {
+    background: $primary;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+.lbs-section-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $text-light;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 14px 4px 8px;
+}
+
+// ── Saved address card ────────────────────────────────────────────────────────
+.lbs-addr-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 10px;
+
+  &:active { background: #f8f8f8; }
+
+  .lbs-addr-icon-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 40px;
+    padding-top: 2px;
+
+    .lbs-addr-type-icon { color: $text-medium; font-size: 1.4rem; }
+    .lbs-addr-distance { font-size: 0.68rem; color: $text-light; text-align: center; }
+  }
+
+  .lbs-addr-body {
+    flex: 1;
+
+    .lbs-addr-type  { font-weight: 700; font-size: 0.92rem; color: $text-dark; margin-bottom: 3px; }
+    .lbs-addr-full  { font-size: 0.83rem; color: $text-medium; line-height: 1.45; }
+    .lbs-addr-phone { font-size: 0.78rem; color: $text-light; margin-top: 4px; }
+  }
+
+  .lbs-addr-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+
+    .lbs-addr-btn {
+      background: transparent;
+      border: 1.5px solid $border-color;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: $text-medium;
+
+      .material-icons { font-size: 1rem; }
+    }
+  }
+}
+
+// ── Login nudge ───────────────────────────────────────────────────────────────
+.lbs-login-nudge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  gap: 8px;
+
+  .lbs-nudge-icon { font-size: 2.4rem; color: #ccc; }
+  .lbs-nudge-text { font-size: 0.88rem; color: $text-medium; text-align: center; margin: 0; }
+  .lbs-nudge-btn {
+    background: $primary;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 24px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+}
+
+// ── Nearby card ───────────────────────────────────────────────────────────────
+.lbs-nearby-card {
+  padding: 0;
+}
+
+.lbs-nearby-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child { border-bottom: none; }
+  &:active { background: #f8f8f8; }
+
+  .lbs-nearby-icon-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 44px;
+    gap: 2px;
+
+    .lbs-nearby-pin { color: $text-light; font-size: 1.3rem; }
+    .lbs-nearby-dist { font-size: 0.65rem; color: $text-light; text-align: center; }
+  }
+
+  .lbs-nearby-body {
+    flex: 1;
+
+    .lbs-nearby-name { font-weight: 600; font-size: 0.9rem; color: $text-dark; }
+    .lbs-nearby-addr { font-size: 0.78rem; color: $text-light; margin-top: 2px; line-height: 1.4; }
+  }
+
+  .lbs-chevron-sm { color: #d0d0d0; font-size: 1.1rem; }
+}
+
+// ── Search suggestion list ────────────────────────────────────────────────────
+.lbs-suggestion-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 14px 14px;
+}
+
+.lbs-suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: $bg-card;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:active { background: #f0f0f0; }
+
+  .lbs-suggestion-icon { color: $primary; font-size: 1.2rem; margin-top: 2px; flex-shrink: 0; }
+
+  .lbs-suggestion-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .lbs-suggestion-name { font-weight: 600; font-size: 0.9rem; color: $text-dark; }
+    .lbs-suggestion-addr { font-size: 0.78rem; color: $text-light; line-height: 1.4; }
+  }
+}
+
+// ── Loading / empty states ────────────────────────────────────────────────────
+.lbs-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px;
+  color: $text-light;
+  font-size: 0.85rem;
+}
+
+.lbs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  color: $text-light;
+  gap: 8px;
+
+  .material-icons { font-size: 2.5rem; color: #ccc; }
+  p { font-size: 0.9rem; text-align: center; margin: 0; }
+}
+
+.lbs-empty-small {
+  font-size: 0.83rem;
+  color: $text-light;
+  padding: 8px 4px 16px;
+
+  .lbs-link {
+    color: $primary;
+    cursor: pointer;
+    font-weight: 600;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+.lbs-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(27, 171, 109, 0.2);
+  border-top-color: $color-gps;
+  border-radius: 50%;
+  animation: lbs-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes lbs-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Bottom spacer ─────────────────────────────────────────────────────────────
+.lbs-bottom-space { height: 40px; }
+
+// ── Load more nearby ──────────────────────────────────────────────────────────
+.lbs-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 16px 12px;
+}
+
+.lbs-load-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid $border-color;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: $primary;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  .material-icons { font-size: 18px; }
+
+  &:hover {
+    background: rgba($primary, 0.05);
+    border-color: $primary;
+  }
+
+  &:active { background: rgba($primary, 0.1); }
+}

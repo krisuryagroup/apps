@@ -1,0 +1,9 @@
+<nav class="dh-bottom-nav">
+  <a *ngFor="let item of navItems"
+     [href]="item.route"
+     [ngClass]="{ 'dh-nav-item': true, active: active === item.key }"
+     (click)="navigate(item, $event)">
+    <span class="material-icons">{{ item.icon }}</span>
+    <span>{{ item.label }}</span>
+  </a>
+</nav>

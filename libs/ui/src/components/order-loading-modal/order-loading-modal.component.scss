@@ -1,0 +1,266 @@
+@use 'theme' as *;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: $secondary-color;
+  border-radius: 20px;
+  padding: 40px 30px;
+  max-width: 450px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.loading-container {
+  text-align: center;
+}
+
+.loading-animation {
+  position: relative;
+  height: 80px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e3f2fd;
+  border-top: 4px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.checkmark, .error-icon {
+  position: absolute;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.progress-container {
+  margin-bottom: 30px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2196f3, #21cbf3);
+  border-radius: 3px;
+  transition: width 0.8s ease;
+  animation: progressShimmer 2s infinite;
+
+  &.success {
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+  }
+
+  &.error {
+    background: linear-gradient(90deg, #f44336, #e57373);
+  }
+}
+
+@keyframes progressShimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-secondary-color;
+}
+
+.stage-info {
+  margin-bottom: 30px;
+}
+
+.stage-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.stage-message {
+  font-size: 16px;
+  color: $text-secondary-color;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.error-message {
+  font-size: 14px;
+  color: #f44336;
+  margin: 10px 0 0 0;
+  font-weight: 500;
+}
+
+.cancellation-policy {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  .policy-icon {
+    color: $primary-color;
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .policy-text {
+    font-size: 13px;
+    color: #495057;
+    line-height: 1.4;
+
+    strong {
+      color: #212529;
+      font-weight: 600;
+    }
+  }
+}
+
+.stage-indicators {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-top: 20px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    right: 12px;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+  }
+}
+
+.stage-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+
+  &.active {
+    .indicator-dot {
+      background: #2196f3;
+      transform: scale(1.2);
+    }
+
+    .indicator-label {
+      color: #2196f3;
+      font-weight: 600;
+    }
+  }
+
+  &.completed {
+    .indicator-dot {
+      background: #4caf50;
+    }
+
+    .indicator-label {
+      color: #4caf50;
+    }
+  }
+}
+
+.indicator-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  transition: all 0.3s ease;
+  border: 2px solid white;
+}
+
+.indicator-label {
+  font-size: 11px;
+  color: #999;
+  margin-top: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+
+  .stage-title {
+    font-size: 18px;
+  }
+
+  .stage-message {
+    font-size: 14px;
+  }
+
+  .indicator-label {
+    font-size: 10px;
+  }
+}

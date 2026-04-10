@@ -1,0 +1,58 @@
+<footer class="app-footer">
+  <div class="footer-container">
+    <!-- Brand Section -->
+    <div class="footer-section footer-brand">
+      <h2 class="footer-logo">Zitro</h2>
+      <p class="footer-tagline">Your favorite food, delivered to your doorstep</p>
+      <div class="footer-social">
+        <a *ngFor="let social of socialLinks" 
+           [href]="social.url" 
+           [attr.aria-label]="social.label"
+           class="social-link"
+           target="_blank"
+           rel="noopener noreferrer">
+          <span class="material-icons">{{ social.icon }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Company Links -->
+    <div class="footer-section">
+      <h3 class="footer-title">Company</h3>
+      <ul class="footer-links">
+        <li *ngFor="let link of footerLinks.company">
+          <a [routerLink]="link.route">{{ link.label }}</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Support Links -->
+    <div class="footer-section">
+      <h3 class="footer-title">Support</h3>
+      <ul class="footer-links">
+        <li *ngFor="let link of footerLinks.support">
+          <a [routerLink]="link.route">{{ link.label }}</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="footer-section">
+      <h3 class="footer-title">Quick Links</h3>
+      <ul class="footer-links">
+        <li *ngFor="let link of footerLinks.quickLinks">
+          <a [routerLink]="link.route">{{ link.label }}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Footer Bottom -->
+  <div class="footer-bottom">
+    <div class="footer-container">
+      <p class="footer-copyright">
+        &copy; {{ currentYear }} Zitro. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,265 @@
+@use 'sass:color';
+@use 'theme' as *;
+@use '../../../../styles/breakpoints' as *;
+
+.view-all-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    
+    @include respond-above(desktop) {
+      transform: translateY(-6px);
+      
+      .view-all-icon {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+.view-all-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $primary-color 0%, color.scale($primary-color, $lightness: -10%) 100%);
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .view-all-icon {
+    color: $secondary-color;
+    z-index: 1;
+  }
+}
+
+.view-all-content {
+  text-align: center;
+}
+
+.view-all-label {
+  font-weight: 500;
+  color: $text-color;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+}
+
+.view-all-description {
+  font-size: 0.75rem;
+  color: $text-secondary-color;
+  margin-top: 0.25rem;
+}
+
+// Size variants - matched to category item sizes exactly
+.size-small {
+  .view-all-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+    
+    &::before {
+      border-radius: 50%;
+    }
+    
+    @include respond-above(tablet) {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 0.6rem;
+    }
+    
+    @include respond-above(desktop) {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 0.8rem;
+    }
+    
+    @include respond-above(large-desktop) {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 1rem;
+    }
+  }
+  
+  .view-all-icon {
+    font-size: 28px;
+    
+    @include respond-above(tablet) {
+      font-size: 36px;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 64px;
+    }
+    
+    @include respond-above(large-desktop) {
+      font-size: 72px;
+    }
+  }
+  
+  .view-all-label {
+    font-size: 0.8rem;
+    max-width: 70px;
+    
+    @include respond-above(tablet) {
+      font-size: 0.9rem;
+      max-width: 100px;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1rem;
+      font-weight: 600;
+      max-width: 150px;
+    }
+    
+    @include respond-above(large-desktop) {
+      font-size: 1.05rem;
+      max-width: 180px;
+    }
+  }
+}
+
+.size-medium {
+  .view-all-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+    
+    &::before {
+      border-radius: 50%;
+    }
+    
+    @include respond-above(tablet) {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 0.6rem;
+    }
+    
+    @include respond-above(desktop) {
+      width: 180px;
+      height: 180px;
+      margin-bottom: 0.8rem;
+    }
+  }
+  
+  .view-all-icon {
+    font-size: 60px;
+    
+    @include respond-above(tablet) {
+      font-size: 52px;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 80px;
+    }
+  }
+  
+  .view-all-label {
+    font-size: 0.85rem;
+    
+    @include respond-above(tablet) {
+      font-size: 0.95rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+  }
+}
+
+.size-large {
+  width: 100%;
+  
+  .view-all-icon-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+    
+    &::before {
+      border-radius: 50%;
+    }
+    
+    @include respond-above(tablet) {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 0.6rem;
+    }
+    
+    @include respond-above(desktop) {
+      width: 200px;
+      height: 200px;
+      margin-bottom: 0.8rem;
+    }
+  }
+  
+  .view-all-icon {
+    font-size: 56px;
+    
+    @include respond-above(tablet) {
+      font-size: 68px;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 96px;
+    }
+  }
+  
+  .view-all-label {
+    font-size: 1rem;
+    font-weight: 600;
+    
+    @include respond-above(tablet) {
+      font-size: 1.1rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+// Style variants
+.style-circular {
+  .view-all-icon-wrapper {
+    border-radius: 50%;
+    
+    &::before {
+      border-radius: 50%;
+    }
+  }
+}
+
+.style-rounded {
+  .view-all-icon-wrapper {
+    border-radius: 12px;
+    
+    &::before {
+      border-radius: 12px;
+    }
+  }
+}
+
+.style-card {
+  .view-all-icon-wrapper {
+    border-radius: 50%;
+    
+    &::before {
+      border-radius: 50%;
+    }
+  }
+}

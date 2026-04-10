@@ -1,0 +1,62 @@
+<div class="zoomable-image-container" 
+     [class.zoomed]="imageZoomed"
+     [ngStyle]="getContainerStyle()">
+  
+  <!-- Loading Spinner -->
+  <div class="image-loading-spinner" *ngIf="imageLoading">
+    <span class="material-icons spinning">sync</span>
+  </div>
+  
+  <!-- Zoom Controls -->
+  <div class="zoom-controls" *ngIf="mergedConfig.showControls && !imageLoading">
+    <button class="zoom-btn" 
+            (click)="zoomIn()" 
+            [disabled]="zoomLevel >= maxZoom" 
+            title="Zoom In"
+            type="button">
+      <span class="material-icons">add</span>
+    </button>
+    <button class="zoom-btn" 
+            (click)="zoomOut()" 
+            [disabled]="zoomLevel <= minZoom" 
+            title="Zoom Out"
+            type="button">
+      <span class="material-icons">remove</span>
+    </button>
+    <button class="zoom-btn" 
+            (click)="resetZoom()" 
+            *ngIf="imageZoomed" 
+            title="Reset Zoom"
+            type="button">
+      <span class="material-icons">fullscreen_exit</span>
+    </button>
+  </div>
+  
+  <!-- Image -->
+  <img 
+    [cachedSrc]="src" 
+    [fallbackSrc]="fallbackSrc"
+    [alt]="alt" 
+    [class.image-hidden]="imageLoading"
+    [class.zoomable]="!imageLoading"
+    [ngStyle]="getImageStyle()"
+    [style.transform]="getImageTransform()"
+    [style.cursor]="getCursor()"
+    (load)="onImageLoad()"
+    (error)="onImageError($event)"
+    (click)="toggleImageZoom()"
+    (mousedown)="onImageMouseDown($event)"
+    (mousemove)="onImageMouseMove($event)"
+    (mouseup)="onImageMouseUp()"
+    (mouseleave)="onImageMouseUp()"
+    (touchstart)="onImageTouchStart($event)"
+    (touchmove)="onImageTouchMove($event)"
+    (touchend)="onImageTouchEnd()"
+  />
+  
+  <!-- Zoom Hint -->
+  <div class="zoom-hint" *ngIf="!imageLoading && !imageZoomed && mergedConfig.enableClickZoom">
+    <span class="material-icons">zoom_in</span>
+    <span>Click to zoom</span>
+  </div>
+</div>

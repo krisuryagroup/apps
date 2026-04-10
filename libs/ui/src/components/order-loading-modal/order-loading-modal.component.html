@@ -1,0 +1,91 @@
+<div class="modal-overlay" *ngIf="isVisible">
+  <div class="modal-content">
+    <div class="loading-container">
+      <!-- Loading Animation -->
+      <div class="loading-animation">
+        <div class="spinner"></div>
+        <div class="checkmark" *ngIf="stage?.stage === 'completed'">
+          <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="45" fill="#4CAF50" stroke="#4CAF50" stroke-width="2"/>
+            <path d="M30 50L42 62L70 34" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="error-icon" *ngIf="stage?.stage === 'error'">
+          <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="45" fill="#f44336" stroke="#f44336" stroke-width="2"/>
+            <path d="M35 35L65 65M65 35L35 65" stroke="white" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="stage?.progress || 0"
+            [class.success]="stage?.stage === 'completed'"
+            [class.error]="stage?.stage === 'error'"
+          ></div>
+        </div>
+        <div class="progress-text">{{ stage?.progress || 0 }}%</div>
+      </div>
+
+      <!-- Stage Information -->
+      <div class="stage-info">
+        <h3 class="stage-title">{{ getStageTitle() }}</h3>
+        <p class="stage-message">{{ stage?.message || 'Processing your order...' }}</p>
+        <p class="error-message" *ngIf="stage && stage?.error">{{ stage.error }}</p>
+        
+        <!-- Cancellation Policy Notice -->
+        <div class="cancellation-policy" *ngIf="policyNoticeMessage && stage?.stage !== 'error' && stage?.stage !== 'completed'">
+          <div class="policy-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 6v6m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="policy-text">
+            <strong>Cancellation Policy:</strong> {{ policyNoticeMessage }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage Indicators -->
+      <div class="stage-indicators">
+        <div 
+          class="stage-indicator" 
+          [class.active]="isStageActive('validating')"
+          [class.completed]="isStageCompleted('validating')"
+        >
+          <div class="indicator-dot"></div>
+          <span class="indicator-label">Validating</span>
+        </div>
+        <div 
+          class="stage-indicator" 
+          [class.active]="isStageActive('creating')"
+          [class.completed]="isStageCompleted('creating')"
+        >
+          <div class="indicator-dot"></div>
+          <span class="indicator-label">Creating</span>
+        </div>
+        <div 
+          class="stage-indicator" 
+          [class.active]="isStageActive('processing')"
+          [class.completed]="isStageCompleted('processing')"
+        >
+          <div class="indicator-dot"></div>
+          <span class="indicator-label">Processing</span>
+        </div>
+        <div 
+          class="stage-indicator" 
+          [class.active]="isStageActive('confirming')"
+          [class.completed]="isStageCompleted('confirming')"
+        >
+          <div class="indicator-dot"></div>
+          <span class="indicator-label">Confirming</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

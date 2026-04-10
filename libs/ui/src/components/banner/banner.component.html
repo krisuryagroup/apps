@@ -1,0 +1,62 @@
+<!-- Loading State -->
+<div *ngIf="isLoading" class="banner-loading">
+  <div class="banner-skeleton">
+    <div class="skeleton-image"></div>
+    <div class="skeleton-content">
+      <div class="skeleton-text-line"></div>
+      <div class="skeleton-text-line short"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div *ngIf="hasError && !isLoading" class="banner-error">
+  <p>Unable to load banners. Using default content.</p>
+</div>
+
+<!-- Banner Carousel -->
+<div *ngIf="!isLoading && banners.length > 0" class="banner-carousel">
+  <div class="banner-container"
+       (touchstart)="onTouchStart($event)"
+       (touchmove)="onTouchMove($event)"
+       (touchend)="onTouchEnd($event)"
+       (mousedown)="onMouseDown($event)"
+       (mouseup)="onMouseUp()"
+       (mouseleave)="onMouseLeave()">
+    <div class="banner-content" *ngFor="let banner of banners; let i = index" 
+         [class.active]="i === currentBanner"
+         (click)="onBannerClick(banner)">
+      
+      <!-- Background -->
+      <div class="banner-background"></div>
+      
+      <!-- Banner Image -->
+       <img src="assets/banners/1080_900_px.png"
+         [alt]="banner.title"
+         class="banner-image" />
+      <!-- <img src="'assets/banners/1080_900_px.png'" 
+           [alt]="banner.title"
+           class="banner-image" /> -->
+      
+      <!-- Banner Text Content -->
+      <div class="banner-text">
+        <h2 class="banner-title">{{ banner.title }}</h2>
+        <p class="banner-description" [innerHTML]="banner.description"></p>
+      </div>
+    </div>
+
+    <!-- Dots Indicator (only show if more than 1 banner) -->
+    <div *ngIf="banners.length > 1" class="banner-dots">
+      <span *ngFor="let banner of banners; let i = index" 
+            class="banner-dot" 
+            [class.active]="i === currentBanner" 
+            (click)="goToBanner(i)"
+            [attr.aria-label]="'Go to banner ' + (i + 1)"></span>
+    </div>
+
+    <!-- Long-press pause indicator -->
+    <div *ngIf="isPaused" class="banner-paused-indicator">
+      <span class="material-icons">pause_circle</span>
+    </div>
+  </div>
+</div>

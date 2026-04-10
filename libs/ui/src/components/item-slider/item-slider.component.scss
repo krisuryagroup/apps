@@ -1,0 +1,547 @@
+@use 'theme' as *;
+@use "sass:color";
+@use '../../../../styles/breakpoints' as *;
+
+.item-slider-container {
+  margin: 1.5rem 0 1rem 0;
+  position: relative;
+  
+  @include respond-above(tablet) {
+    margin: 2rem 0 1.5rem 0;
+  }
+  
+  @include respond-above(desktop) {
+    // max-width: 1400px;
+    margin: 2.5rem auto 2rem auto;
+    padding: 0 2rem;
+  }
+}
+
+// Header section
+.item-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+  
+  .item-slider-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0;
+    
+    @include respond-above(tablet) {
+      font-size: 1.3rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1.4rem;
+    }
+  }
+  
+  @include respond-above(tablet) {
+    padding: 0 2rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  @include respond-above(desktop) {
+    padding: 0;
+    margin-bottom: 1.5rem;
+  }
+  
+  .view-all-btn {
+    background: none;
+    border: none;
+    color: $primary-color;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    
+    .material-icons {
+      font-size: 1rem;
+      margin-left: 0.2rem;
+    }
+    
+    @include respond-above(tablet) {
+      font-size: 0.95rem;
+      
+      .material-icons {
+        font-size: 1.1rem;
+      }
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1rem;
+      
+      .material-icons {
+        font-size: 1.2rem;
+      }
+    }
+    
+    &:hover {
+      color: color.scale($primary-color, $lightness: -10%);
+    }
+  }
+}
+
+// Navigation arrows
+.item-slider-nav-btn {
+  display: none;
+  
+  @include respond-above(tablet) {
+    display: flex;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    z-index: 10;
+    
+    .material-icons {
+      color: $primary-color;
+      font-size: 1.5rem;
+    }
+    
+    &:hover {
+      background: $secondary-color;
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+    
+    &.item-slider-nav-left {
+      left: -18px;
+    }
+    
+    &.item-slider-nav-right {
+      right: -18px;
+    }
+    
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: translateY(-50%);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+  
+  @include respond-above(desktop) {
+    width: 44px;
+    height: 44px;
+    
+    .material-icons {
+      font-size: 1.8rem;
+    }
+    
+    &.item-slider-nav-left {
+      left: 0;
+    }
+    
+    &.item-slider-nav-right {
+      right: 0;
+    }
+  }
+  
+  @include respond-above(large-desktop) {
+    width: 48px;
+    height: 48px;
+    
+    .material-icons {
+      font-size: 2rem;
+    }
+  }
+}
+
+// Items list
+.item-slider-scroll-container {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none; // Hide scrollbar on mobile/tablet
+  -ms-overflow-style: none; // Hide scrollbar on IE/Edge
+  
+  &::-webkit-scrollbar {
+    display: none; // Hide scrollbar on Chrome/Safari/Opera for mobile/tablet
+  }
+  
+  @include respond-above(desktop) {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    
+    &::-webkit-scrollbar {
+      display: block;
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+  }
+}
+
+.item-slider-list {
+  display: flex;
+  gap: 1rem;
+  padding: 0 1rem;
+  
+  @include respond-above(tablet) {
+    gap: 1.25rem;
+    padding: 0 2rem;
+  }
+  
+  @include respond-above(desktop) {
+    gap: 1.5rem;
+    padding: 0;
+  }
+  
+  @include respond-above(large-desktop) {
+    gap: 2rem;
+  }
+  
+  // Prevent flex items from shrinking
+  .item-slider-card {
+    flex: 0 0 auto;
+  }
+}
+
+.item-slider-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  @include respond-above(tablet) {
+    width: 150px;
+  }
+  
+  @include respond-above(desktop) {
+    width: 170px;
+  }
+  
+  @include respond-above(large-desktop) {
+    width: 190px;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.item-slider-image-container {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f5f5f5;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+  @include respond-above(tablet) {
+    width: 150px;
+    height: 150px;
+    border-radius: 14px;
+    margin-bottom: 0.6rem;
+  }
+  
+  @include respond-above(desktop) {
+    width: 170px;
+    height: 170px;
+    border-radius: 16px;
+    margin-bottom: 0.75rem;
+  }
+  
+  @include respond-above(large-desktop) {
+    width: 190px;
+    height: 190px;
+    border-radius: 18px;
+    margin-bottom: 0.85rem;
+  }
+  
+  .item-slider-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .favorite-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    
+    @include respond-above(tablet) {
+      width: 26px;
+      height: 26px;
+      top: 6px;
+      right: 6px;
+    }
+    
+    @include respond-above(desktop) {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .material-icons {
+      font-size: 14px;
+      color: #999;
+      
+      @include respond-above(tablet) {
+        font-size: 16px;
+      }
+      
+      @include respond-above(desktop) {
+        font-size: 18px;
+      }
+    }
+    
+    &.active .material-icons {
+      color: #e53935;
+    }
+    
+    &:hover {
+      background: $secondary-color;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.item-slider-info {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0 0.25rem;
+  
+  @include respond-above(tablet) {
+    margin-bottom: 0.6rem;
+    padding: 0 0.5rem;
+  }
+  
+  @include respond-above(desktop) {
+    margin-bottom: 0.75rem;
+  }
+  
+  .item-slider-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $text-color;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    @include respond-above(tablet) {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+  }
+  
+  .item-slider-category {
+    font-size: 0.7rem;
+    color: #999;
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    @include respond-above(tablet) {
+      font-size: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 0.8rem;
+      margin-bottom: 0.4rem;
+    }
+  }
+  
+  .item-slider-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    
+    @include respond-above(tablet) {
+      font-size: 0.8rem;
+      gap: 0.35rem;
+    }
+    
+    @include respond-above(desktop) {
+      font-size: 0.85rem;
+      gap: 0.4rem;
+    }
+    
+    .item-slider-price {
+      color: $primary-color;
+      font-weight: 600;
+    }
+  }
+}
+
+.item-slider-actions {
+  width: 100%;
+  padding: 0 0.25rem;
+  
+  @include respond-above(tablet) {
+    padding: 0 0.5rem;
+  }
+  
+  .add-btn {
+    width: 100%;
+    background: $primary-color;
+    color: $secondary-color;
+    border: none;
+    border-radius: 8px;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    
+    @include respond-above(tablet) {
+      border-radius: 8px;
+      padding: 0.5rem 0.6rem;
+      font-size: 0.85rem;
+    }
+    
+    @include respond-above(desktop) {
+      padding: 0.55rem 0.7rem;
+      font-size: 0.9rem;
+    }
+    
+    &:hover {
+      background: color.scale($primary-color, $lightness: -10%);
+    }
+  }
+  
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: $secondary-color;
+    border: 1px solid $primary-color;
+    border-radius: 6px;
+    padding: 0.15rem;
+    
+    @include respond-above(tablet) {
+      border-radius: 8px;
+      padding: 0.2rem;
+    }
+    
+    .qty-btn {
+      background: transparent;
+      border: none;
+      color: $primary-color;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+      
+      @include respond-above(tablet) {
+        width: 24px;
+        height: 24px;
+      }
+      
+      @include respond-above(desktop) {
+        width: 26px;
+        height: 26px;
+      }
+      
+      .material-icons {
+        font-size: 14px;
+        
+        @include respond-above(tablet) {
+          font-size: 16px;
+        }
+        
+        @include respond-above(desktop) {
+          font-size: 18px;
+        }
+      }
+      
+      &:hover {
+        background: rgba($primary-color, 0.1);
+      }
+    }
+    
+    .qty-value {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $text-color;
+      min-width: 18px;
+      text-align: center;
+      
+      @include respond-above(tablet) {
+        font-size: 0.85rem;
+        min-width: 20px;
+      }
+      
+      @include respond-above(desktop) {
+        font-size: 0.9rem;
+        min-width: 22px;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 380px) {
+  .item-slider-card {
+    width: 120px;
+  }
+  
+  .item-slider-image-container {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .item-slider-list {
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+  }
+}

@@ -1,0 +1,229 @@
+@use 'theme' as *;
+@use '../../../../styles/breakpoints' as *;
+
+.banner-loading {
+  padding: 0;
+  margin: 0;
+
+  .banner-skeleton {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: rgba(0,0,0,0.15);
+    border-radius: 0;
+    position: relative;
+    overflow: hidden;
+
+    .skeleton-image {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    .skeleton-content {
+      position: absolute;
+      bottom: 4rem;
+      left: 1rem;
+      right: 1rem;
+
+      .skeleton-text-line {
+        height: 16px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+
+        &.short {
+          width: 60%;
+        }
+      }
+    }
+  }
+}
+
+.banner-error {
+  margin: 0.5rem 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  text-align: center;
+  
+  p {
+    margin: 0;
+    color: #856404;
+    font-size: 0.9rem;
+  }
+}
+
+.banner-carousel {
+  position: relative;
+  width: 100%;
+}
+
+.banner-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1080 / 900;
+  overflow: hidden;
+  background: $primary-color;
+}
+
+.banner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  cursor: pointer;
+  
+  &.active {
+    opacity: 1;
+  }
+  
+  &:hover {
+    .banner-image {
+      transform: scale(1.02);
+    }
+  }
+}
+
+.banner-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  // Bottom gradient only — header no longer overlays banner
+  background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 40%);
+  z-index: 1;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  
+  @include respond-above(desktop) {
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.banner-text {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  color: $secondary-color;
+  z-index: 2;
+  
+  .banner-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .banner-description {
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.4;
+    opacity: 0.95;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.banner-paused-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  pointer-events: none;
+  animation: fade-in-out 0.3s ease;
+
+  .material-icons {
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.85);
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+}
+
+@keyframes fade-in-out {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.banner-dots {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 3;
+  
+  .banner-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &.active {
+      background: $secondary-color;
+      transform: scale(1.2);
+    }
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.banner-empty {
+  margin: 0.5rem 1rem;
+  padding: 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 12px;
+  
+  p {
+    margin: 0;
+    color: #6c757d;
+    font-style: italic;
+  }
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Mobile responsive
+@media (max-width: 480px) {
+  .banner-text {
+    padding: 1.5rem 1rem 1rem 1rem;
+    
+    .banner-title {
+      font-size: 1.2rem;
+    }
+    
+    .banner-description {
+      font-size: 0.9rem;
+    }
+  }
+}

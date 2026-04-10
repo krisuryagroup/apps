@@ -1,0 +1,114 @@
+<div class="pricing-summary" *ngIf="hasPricing">
+  <!-- Header -->
+  <div class="pricing-header" *ngIf="showHeader" (click)="toggleExpanded()">
+    <h3>{{ headerTitle }}</h3>
+    <span class="toggle-icon" [class.expanded]="isExpanded">
+      {{ isExpanded ? '▼' : '▶' }}
+    </span>
+  </div>
+
+  <!-- Content -->
+  <div class="pricing-content" [class.collapsed]="!isExpanded">
+    <!-- Subtotal -->
+    <div class="pricing-row">
+      <span class="label">Item Total</span>
+      <span class="value">₹{{ pricing!.subtotal | number: '1.2-2' }}</span>
+    </div>
+
+    <!-- Delivery Charge -->
+    <div class="pricing-row" *ngIf="pricing!.visibility.showDelivery">
+      <span class="label">
+        Delivery Charge
+        <span class="free-badge" *ngIf="pricing!.charges.delivery.waived > 0">FREE</span>
+      </span>
+      <span class="value" [ngClass]="getStrikethroughClass(pricing!.charges.delivery.waived)">
+        <span *ngIf="pricing!.charges.delivery.waived > 0" class="original-price">
+          ₹{{ pricing!.charges.delivery.calculated | number: '1.2-2' }}
+        </span>
+        <span [class.free-text]="pricing!.charges.delivery.applied === 0">
+          {{ pricing!.charges.delivery.applied === 0 ? 'FREE' : '₹' + (pricing!.charges.delivery.applied | number: '1.2-2') }}
+        </span>
+      </span>
+    </div>
+
+    <!-- Packaging Charges -->
+    <div class="pricing-row" *ngIf="pricing!.visibility.showPackaging">
+      <span class="label">
+        Packaging Charges
+        <span class="free-badge" *ngIf="pricing!.charges.packaging.waived > 0">FREE</span>
+      </span>
+      <span class="value" [ngClass]="getStrikethroughClass(pricing!.charges.packaging.waived)">
+        <span *ngIf="pricing!.charges.packaging.waived > 0" class="original-price">
+          ₹{{ pricing!.charges.packaging.calculated | number: '1.2-2' }}
+        </span>
+        <span [class.free-text]="pricing!.charges.packaging.applied === 0">
+          {{ pricing!.charges.packaging.applied === 0 ? 'FREE' : '₹' + (pricing!.charges.packaging.applied | number: '1.2-2') }}
+        </span>
+      </span>
+    </div>
+
+    <!-- Platform Fee -->
+    <div class="pricing-row" *ngIf="pricing!.visibility.showPlatformFee">
+      <span class="label">
+        Platform Fee
+        <span class="free-badge" *ngIf="pricing!.charges.platformFee.waived > 0">FREE</span>
+      </span>
+      <span class="value" [ngClass]="getStrikethroughClass(pricing!.charges.platformFee.waived)">
+        <span *ngIf="pricing!.charges.platformFee.waived > 0" class="original-price">
+          ₹{{ pricing!.charges.platformFee.calculated | number: '1.2-2' }}
+        </span>
+        <span [class.free-text]="pricing!.charges.platformFee.applied === 0">
+          {{ pricing!.charges.platformFee.applied === 0 ? 'FREE' : '₹' + (pricing!.charges.platformFee.applied | number: '1.2-2') }}
+        </span>
+      </span>
+    </div>
+
+    <!-- GST -->
+    <div class="pricing-row" *ngIf="pricing!.visibility.showGst">
+      <span class="label">
+        GST ({{ pricing!.charges.gst.percentage }}%)
+        <span class="free-badge" *ngIf="pricing!.charges.gst.waived > 0">FREE</span>
+      </span>
+      <span class="value" [ngClass]="getStrikethroughClass(pricing!.charges.gst.waived)">
+        <span *ngIf="pricing!.charges.gst.waived > 0" class="original-price">
+          ₹{{ pricing!.charges.gst.calculated | number: '1.2-2' }}
+        </span>
+        <span [class.free-text]="pricing!.charges.gst.applied === 0">
+          {{ pricing!.charges.gst.applied === 0 ? 'FREE' : '₹' + (pricing!.charges.gst.applied | number: '1.2-2') }}
+        </span>
+      </span>
+    </div>
+
+    <!-- Coupon Discount -->
+    <div class="pricing-row discount-row" *ngIf="hasCoupon">
+      <span class="label">
+        Coupon Discount ({{ pricing!.discounts.couponCode }})
+        <button class="remove-coupon-btn" *ngIf="variant === 'cart'" (click)="onRemoveCouponClick()">✕</button>
+      </span>
+      <span class="value discount-value">-₹{{ pricing!.discounts.discountAmount | number: '1.2-2' }}</span>
+    </div>
+
+    <!-- Divider -->
+    <div class="pricing-divider"></div>
+
+    <!-- Total -->
+    <div class="pricing-row total-row">
+      <span class="label">Total Amount</span>
+      <span class="value total-value">₹{{ pricing!.total | number: '1.2-2' }}</span>
+    </div>
+
+    <!-- Total Savings -->
+    <div class="savings-banner" *ngIf="hasSavings && pricing!.visibility.showSavings">
+      <span class="savings-icon">🎉</span>
+      <span class="savings-text">You saved ₹{{ pricing!.savings.totalSavings | number: '1.2-2' }} on this order!</span>
+    </div>
+
+    <!-- Coupon Section -->
+    <div class="coupon-section" *ngIf="showCouponSection && variant === 'cart'">
+      <button class="apply-coupon-btn" (click)="onCouponClick()">
+        <span class="coupon-icon">🎟️</span>
+        {{ hasCoupon ? 'Change Coupon' : 'Apply Coupon' }}
+      </button>
+    </div>
+  </div>
+</div>
