@@ -1,0 +1,79 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <button class="auth-back" routerLink="/auth/signin"><span class="material-icons">arrow_back</span></button>
+
+    <h2>Sign Up</h2>
+    <form *ngIf="!signupWithPhone" #signupForm="ngForm" (ngSubmit)="onEmailSignup(signupForm)">
+      <div class="auth-input-group">
+        <span class="material-icons">person</span>
+        <input type="text" placeholder="Enter your name" [(ngModel)]="name" name="name" (blur)="validateName()" (input)="validateName()" />
+        <span class="material-icons auth-input-check" *ngIf="isNameValid()">check</span>
+        <span class="material-icons auth-input-error" *ngIf="isNameInvalid()">close</span>
+      </div>
+      <div class="auth-error" *ngIf="nameError">{{ nameError }}</div>
+      <div class="auth-input-group">
+        <span class="material-icons">mail</span>
+        <input type="email" placeholder="Enter your email" [(ngModel)]="email" name="email" (blur)="validateEmail()" (input)="validateEmail()" />
+        <span class="material-icons auth-input-check" *ngIf="isEmailValid()">check</span>
+        <span class="material-icons auth-input-error" *ngIf="isEmailInvalid()">close</span>
+      </div>
+      <div class="auth-error" *ngIf="emailError">{{ emailError }}</div>
+      <div class="auth-input-group">
+        <span class="material-icons">vpn_key</span>
+        <input type="password" placeholder="Enter your password" [(ngModel)]="password" name="password" (blur)="validatePassword()" (input)="validatePassword()" />
+        <span class="material-icons auth-input-check" *ngIf="isPasswordValid()">check</span>
+        <span class="material-icons auth-input-error" *ngIf="isPasswordInvalid()">close</span>
+        <span class="material-icons auth-input-eye">visibility_off</span>
+      </div>
+      <div class="auth-error" *ngIf="passwordError">{{ passwordError }}</div>
+      <div class="auth-input-group">
+        <span class="material-icons">vpn_key</span>
+        <input type="password" placeholder="confirm password" [(ngModel)]="confirmPassword" name="confirmPassword" (blur)="validateConfirmPassword()" (input)="validateConfirmPassword()" />
+        <span class="material-icons auth-input-check" *ngIf="isConfirmPasswordValid()">check</span>
+        <span class="material-icons auth-input-error" *ngIf="isConfirmPasswordInvalid()">close</span>
+        <span class="material-icons auth-input-eye">visibility_off</span>
+      </div>
+      <div class="auth-error" *ngIf="confirmPasswordError">{{ confirmPasswordError }}</div>
+      <button class="auth-btn primary" type="submit">Sign Up</button>
+      <div class="auth-bottom-link">No account? <a class="auth-link" href="/auth/signin">Sign in.</a></div>
+      <div class="auth-divider">or</div>
+      <div class="text-link" (click)="signupWithPhone = true">Back to Phone Signup</div>
+    </form>
+    <form *ngIf="signupWithPhone">
+      <div class="auth-input-group">
+        <span class="material-icons">phone</span>
+        <input type="tel" maxlength="10" placeholder="Enter phone number" [(ngModel)]="phone" name="phone" (input)="validatePhone()" />
+        <span class="material-icons auth-input-check" *ngIf="isPhoneValid()">check</span>
+        <span class="material-icons auth-input-error" *ngIf="isPhoneInvalid()">close</span>
+      </div>
+      <div class="auth-error" *ngIf="phoneError">{{ phoneError }}</div>
+      <button class="auth-btn primary" type="button" (click)="onPhoneSubmit()" *ngIf="!showOtp">Send OTP</button>
+      <div *ngIf="showOtp">
+        <div class="auth-input-group">
+          <span class="material-icons">lock</span>
+          <input type="tel" maxlength="6" placeholder="Enter 6-digit OTP" [(ngModel)]="otp" name="otp" (input)="onOtpInput($event)" (blur)="validateOtp()" />
+          <span class="material-icons auth-input-check" *ngIf="isOtpValid()">check</span>
+          <span class="material-icons auth-input-error" *ngIf="isOtpInvalid()">close</span>
+        </div>
+        <div class="auth-error" *ngIf="otpError">{{ otpError }}</div>
+        <button class="auth-btn primary" type="button" (click)="onOtpSubmit()">Verify OTP</button>
+      </div>
+      <div class="text-link" (click)="signupWithPhone = false">Back to Email Signup</div>
+    </form>
+    
+    <!-- Guest Access Section -->
+    <div class="auth-guest-section">
+      <div class="auth-divider">or</div>
+      <button class="auth-btn secondary" type="button" (click)="continueAsGuest()">
+        <span class="material-icons">person_outline</span>
+        Continue as Guest
+      </button>
+      <p class="auth-guest-note">Browse and explore our menu without creating an account</p>
+    </div>
+  </div>
+  <div class="auth-social-row">
+    <button class="auth-social-btn fb"><span class="material-icons">facebook</span></button>
+    <button class="auth-social-btn google"><span class="material-icons">google</span></button>
+  </div>
+  <div id="recaptcha-container"></div>
+</div>
