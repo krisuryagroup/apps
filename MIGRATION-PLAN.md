@@ -87,7 +87,7 @@ Within the same lib, relative imports are fine.
 | MT014 | Copy features: cart + coupon-selection | [x] | MT009 |
 | MT015 | Copy features: addresses (manage-addresses + add-address) | [x] | MT009 |
 | MT016 | Copy features: orders (order-history + order-confirmation + order-tracking) | [x] | MT009 |
-| MT017 | Copy features: account + contact + cache-management + game-2048 | [ ] | MT009 |
+| MT017 | Copy features: account + contact + cache-management + game-2048 | [x] | MT009 |
 | MT018 | Final verification — app runs end-to-end | [ ] | MT017 |
 
 ---
@@ -748,7 +748,7 @@ zitro-app/src/app/features/order-tracking/
 
 ### MT017 — Copy Features: Account + Remaining
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT017-feature-remaining`
 **Depends on:** MT009
 

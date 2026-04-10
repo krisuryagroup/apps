@@ -1,0 +1,169 @@
+<div class="game-2048-container">
+  <!-- Not Authenticated View -->
+  <div *ngIf="!isAuthenticated" class="auth-required">
+    <div class="auth-icon">🎮</div>
+    <h2>Login to play and win food coupons</h2>
+    <button class="btn-primary" (click)="goToLogin()">
+      Login Now
+    </button>
+  </div>
+
+  <!-- Not Test User View -->
+  <div *ngIf="isAuthenticated && !isTestUser" class="auth-required">
+    <div class="auth-icon">🔒</div>
+    <h2>Game Access Restricted</h2>
+    <p>This game is currently available only for test users.</p>
+    <p class="small-text">Contact support for more information.</p>
+  </div>
+
+  <!-- Authenticated & Test User View -->
+  <div *ngIf="isAuthenticated && isTestUser" class="game-content">
+    
+    <!-- Game Header -->
+    <div class="game-header">
+      <h1 class="game-title">2048</h1>
+      <div class="game-subtitle">Play and Win Food Coupons!</div>
+    </div>
+
+    <!-- Score Board -->
+    <div class="score-board">
+      <div class="score-item">
+        <div class="score-label">SCORE</div>
+        <div class="score-value">{{ formatScore(gameState?.score || 0) }}</div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">HIGHEST TILE</div>
+        <div class="score-value">{{ gameState?.highestTile || 0 }}</div>
+      </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="game-controls">
+      <button 
+        class="btn-status"
+        [disabled]="!isEligible || isPlaying"
+        (click)="!isPlaying && startGame()">
+        {{ isPlaying ? 'PLAYING...' : 'START' }}
+      </button>
+      
+      <button 
+        class="btn-restart"
+        [disabled]="!isPlaying"
+        (click)="restartGame()">
+        RESTART
+      </button>
+    </div>
+
+    <!-- Eligibility Message -->
+    <div *ngIf="!isEligible && eligibilityMessage" class="eligibility-message">
+      <span class="material-icons">schedule</span>
+      {{ eligibilityMessage }}
+    </div>
+
+    <!-- Game Board -->
+    <div *ngIf="isPlaying && gameState" class="game-board-wrapper">
+      <div class="game-board">
+        <!-- Grid Background -->
+        <div class="grid-container">
+          <div *ngFor="let row of [0,1,2,3]" class="grid-row">
+            <div *ngFor="let col of [0,1,2,3]" class="grid-cell"></div>
+          </div>
+        </div>
+
+        <!-- Tiles -->
+        <div class="tiles-container">
+          <div 
+            *ngFor="let tile of tiles; trackBy: trackByTileId"
+            class="tile"
+            [class]="getTileClass(tile.value)"
+            [class.tile-merged]="tile.merged"
+            [ngStyle]="getTilePosition(tile)">
+            
+            <!-- Show image for special tiles -->
+            <img 
+              *ngIf="shouldShowImage(tile.value)" 
+              [src]="getTileImage(tile.value)"
+              [alt]="tile.value"
+              class="tile-image">
+            
+            <!-- Show number for normal tiles -->
+            <span *ngIf="!shouldShowImage(tile.value)" class="tile-number">
+              {{ tile.value }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div *ngIf="gameState.isGameOver" class="game-overlay game-over">
+          <h2>Game Over!</h2>
+          <p>Final Score: {{ formatScore(gameState.score) }}</p>
+          <button class="btn-primary" (click)="restartGame()">Try Again</button>
+        </div>
+
+        <!-- Win Overlay -->
+        <div *ngIf="gameState.hasWon && gameState.canContinue" class="game-overlay game-won">
+          <h2>🎉 You Win!</h2>
+          <p>You reached {{ gameState.highestTile }}!</p>
+          <div class="win-buttons">
+            <button class="btn-primary" (click)="continueGame()">Keep Playing</button>
+            <button class="btn-secondary" (click)="restartGame()">New Game</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="game-instructions">
+        <p><span class="instruction-icon">🍔</span> Reach <strong>2048</strong> for a Burger Coupon</p>
+        <p><span class="instruction-icon">🍕</span> Reach <strong>32768</strong> for a Pizza Coupon</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reward Modal -->
+  <div *ngIf="showRewardModal" class="modal-overlay" (click)="closeRewardModal()">
+    <div class="modal-content reward-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeRewardModal()">
+        <span class="material-icons">close</span>
+      </button>
+      
+      <div class="reward-header">
+        <div class="reward-icon">
+          <img 
+            [src]="getTileImage(rewardTileValue)" 
+            [alt]="rewardCouponType"
+            class="reward-image">
+        </div>
+        <h2>🎉 Congratulations! 🎉</h2>
+        <p>You've earned a {{ rewardCouponType === 'couponTypeBurger' ? 'Burger' : 'Pizza' }} Coupon!</p>
+      </div>
+
+      <div class="reward-body">
+        <div class="coupon-code-container">
+          <div class="coupon-label">Your Coupon Code:</div>
+          <div class="coupon-code">{{ rewardCouponCode }}</div>
+          <button class="btn-copy" (click)="copyCouponCode()">
+            <span class="material-icons">content_copy</span>
+            Copy Code
+          </button>
+        </div>
+
+        <div class="next-play-info">
+          <span class="material-icons">info</span>
+          <p>You can play again on {{ formatDate(nextEligibleDate!) }}</p>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-close-modal" (click)="closeRewardModal()">
+        Got It!
+      </button>
+    </div>
+  </div>
+
+  <!-- Confetti Animation -->
+  <div *ngIf="showConfetti" class="confetti-container">
+    <div *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" 
+         class="confetti"
+         [style.left]="(i * 5) + '%'"
+         [style.animation-delay]="(i * 0.05) + 's'"></div>
+  </div>
+</div>

@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { Component } from '@angular/core';
 
 // MT009: guards now available
 import { AuthGuard, LoginGuard } from './core/guards/auth.guard';
@@ -32,19 +31,10 @@ import { OrderHistoryComponent } from './features/order-history';
 import { OrderConfirmationComponent } from './features/order-confirmation';
 import { OrderTrackingComponent } from './features/order-tracking/order-tracking.component';
 // MT017: misc pages
-// import { ContactUsComponent } from './features/contact-us.component';
-// import { CacheManagementComponent } from './shared/components/cache-management/cache-management.component';
-// import { Game2048Component } from './features/game-2048/game-2048.component';
-
-/** Placeholder shown until feature routes are wired in MT010–MT017 */
-@Component({
-  standalone: true,
-  template: `<div style="padding:2rem;font-family:sans-serif">
-    <h2>🚧 Zitro Customer</h2>
-    <p>App shell bootstrapped. Feature routes wired in MT010–MT017.</p>
-  </div>`,
-})
-export class PlaceholderComponent {}
+import { AccountComponent } from './features/account/account.component';
+import { ContactUsComponent } from './features/contact-us.component';
+import { CacheManagementComponent } from './shared/components/cache-management/cache-management.component';
+import { Game2048Component } from './features/game-2048/game-2048.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -65,12 +55,17 @@ export const routes: Routes = [
       { path: 'search', component: SearchComponent },
       { path: 'cart', component: CartComponent },
       { path: 'coupons', component: CouponSelectionComponent },
-      { path: 'addresses', component: ManageAddressesComponent },
-      { path: 'add-address', component: AddAddressComponent },
-      { path: 'orders', component: OrderHistoryComponent },
+      { path: 'contact', component: ContactUsComponent },
       { path: 'order-confirmation', component: OrderConfirmationComponent },
-      { path: 'track-order', component: OrderTrackingComponent },
-      // MT017+: child routes added per feature task
+      { path: 'order-confirmation/:orderId', component: OrderConfirmationComponent },
+      { path: 'addresses', component: ManageAddressesComponent, canActivate: [AuthGuard] },
+      { path: 'add-address', component: AddAddressComponent, canActivate: [AuthGuard] },
+      { path: 'orders', component: OrderHistoryComponent, canActivate: [AuthGuard] },
+      { path: 'track-order', component: OrderTrackingComponent, canActivate: [AuthGuard] },
+      { path: 'track-order/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard] },
+      { path: 'account', component: AccountComponent, canActivate: [AuthGuard] },
+      { path: 'cache-management', component: CacheManagementComponent }, // Development only
+      { path: 'game-2048', component: Game2048Component }, // 2048 Game with rewards
     ]
   },
 

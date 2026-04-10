@@ -1,0 +1,359 @@
+@use 'theme' as *;
+
+.dh-edit-profile {
+  padding: 0;
+  background: $background-color;
+  min-height: 100vh;
+
+  .dh-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 16px 16px;
+    background: $secondary-color;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    .dh-back-button {
+      background: none;
+      border: none;
+      padding: 8px;
+      margin-right: 12px;
+      cursor: pointer;
+      color: $text-color;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+
+      svg {
+        display: block;
+      }
+    }
+
+    .dh-page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: $text-color;
+      margin: 0;
+    }
+  }
+
+  .dh-profile-content {
+    padding: 0;
+    
+    .dh-profile-image-section {
+      background: $secondary-color;
+      padding: 24px 16px 32px;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+      .dh-profile-image-container {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+
+        .dh-profile-image {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 4px solid $secondary-color;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .dh-camera-overlay {
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          width: 36px;
+          height: 36px;
+          background: $primary-color;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease;
+
+          &:hover {
+            transform: scale(1.1);
+          }
+
+          svg {
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+
+    .dh-profile-form {
+      padding: 24px 16px;
+      background: $background-color;
+
+      .dh-form-field {
+        position: relative;
+        margin-bottom: 20px;
+
+        .dh-field-icon {
+          position: absolute;
+          left: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: $primary-color;
+          z-index: 2;
+
+          svg {
+            display: block;
+          }
+        }
+
+        .dh-input-field {
+          width: 100%;
+          padding: 16px 16px 16px 52px;
+          background: $secondary-color;
+          border: none;
+          border-radius: 12px;
+          font-size: 16px;
+          color: $text-color;
+          outline: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          transition: all 0.2s ease;
+
+          &::placeholder {
+            color: rgba($text-color, 0.5);
+          }
+
+          &:focus {
+            box-shadow: 0 4px 12px rgba($primary-color, 0.15);
+            transform: translateY(-1px);
+          }
+
+          &[readonly] {
+            background: rgba($text-color, 0.05);
+            color: rgba($text-color, 0.6);
+            cursor: not-allowed;
+            
+            &:focus {
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+              transform: none;
+            }
+          }
+        }
+
+        &.readonly-field .dh-field-icon {
+          color: rgba($text-color, 0.4);
+        }
+      }
+
+      .dh-save-button {
+        width: 100%;
+        padding: 16px;
+        background: $primary-color;
+        color: $secondary-color;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 24px;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          background: rgba($primary-color, 0.9);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+        }
+
+        &:disabled {
+          background: rgba($text-color, 0.3);
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 768px) {
+  .dh-edit-profile {
+    .dh-header {
+      padding: 16px 12px 12px;
+
+      .dh-page-title {
+        font-size: 18px;
+      }
+    }
+
+    .dh-profile-content {
+      .dh-profile-image-section {
+        padding: 20px 12px 28px;
+
+        .dh-profile-image-container {
+          .dh-profile-image {
+            width: 100px;
+            height: 100px;
+          }
+
+          .dh-camera-overlay {
+            width: 32px;
+            height: 32px;
+            bottom: 6px;
+            right: 6px;
+
+            svg {
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+      }
+
+      .dh-profile-form {
+        padding: 20px 12px;
+      }
+    }
+  }
+}
+
+.dh-input:focus {
+  border: 1.5px solid $primary-color;
+}
+.dh-input-disabled {
+  background: #f5f5f5;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.dh-btn.primary {
+  background: $primary-color;
+  color: $secondary-color;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dh-btn.primary:disabled {
+  background: #b2dfdb;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+.account-menu {
+  background: #fff;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
+  margin: 1rem;
+  padding: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    .account-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 1rem;
+      background: #eee;
+    }
+    .account-info {
+      .account-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      .account-email {
+        font-size: 0.95rem;
+        color: $text-color;
+        opacity: 0.7;
+      }
+    }
+          color: $text-color;
+  .account-list {
+    .account-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 1rem;
+      cursor: pointer;
+      &.toggle {
+        cursor: default;
+      }
+      &.signout {
+        color: $accent-color;
+        font-weight: 600;
+        border-bottom: none;
+      }
+          color: $accent-color;
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        border-radius: 22px;
+        transition: .4s;
+      }
+          background-color: $primary-color;
+        background-color: $primary-color;
+      }
+      .slider:before {
+        position: absolute;
+          background-color: $primary-color;
+        height: 18px;
+        width: 18px;
+        left: 2px;
+        bottom: 2px;
+        background-color: $secondary-color;
+        border-radius: 50%;
+        transition: .4s;
+      }
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
+    }
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #fff;
+  border-top: 1px solid #eee;
+  height: 60px;
+  z-index: 100;
+  .nav-item {
+    flex: 1;
+    text-align: center;
+    // color: $text-color;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    &.active {
+//   color: $text-color;
+    }
+  }
+}
