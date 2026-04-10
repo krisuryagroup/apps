@@ -73,7 +73,7 @@ Within the same lib, relative imports are fine.
 |----|-------|--------|-----------|
 | MT001 | Bootstrap Nx workspace | [x] | — |
 | MT002 | Create library scaffolds | [x] | MT001 |
-| MT003 | Copy `@zitro/models` | [ ] | MT002 |
+| MT003 | Copy `@zitro/models` | [x] | MT002 |
 | MT004 | Copy `@zitro/utils` | [ ] | MT002 |
 | MT005 | Copy `@zitro/theme` | [ ] | MT002 |
 | MT006 | Copy `@zitro/ui` (shared components + directives) | [ ] | MT003 |
@@ -191,7 +191,7 @@ Each generator creates sample files (`my-lib.ts`, `my-lib.spec.ts`, etc.). Delet
 
 ### MT003 — Copy `@zitro/models`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT003-copy-models`
 **Depends on:** MT002
 
