@@ -416,12 +416,6 @@ body, :host {
   }
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes mic-pulse {
   0%, 100% { color: $primary-color; transform: scale(1); }
   50%       { color: darken($primary-color, 15%); transform: scale(1.2); }

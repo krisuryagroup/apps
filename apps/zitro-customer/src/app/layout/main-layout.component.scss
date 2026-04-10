@@ -322,16 +322,6 @@
     }
   }
 
-  // Rotation animation for loading spinner
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   .dh-header-right {
     display: flex;
     align-items: center;
@@ -410,25 +400,6 @@
           text-transform: uppercase;
           white-space: nowrap;
         }
-      }
-    }
-  }
-}
-
-
-// Responsive styles for restaurant header
-.dh-header {
-  .dh-header.hidden {
-    transform: translateY(-100%);
-    transition: transform 0.3s;
-  }
-  .dh-header-center {
-    .dh-restaurant-info {
-      .dh-restaurant-name {
-        font-size: 1.0rem;
-        font-weight: 700;
-        color: $secondary-color;
-        font-family: 'Montserrat', sans-serif;
       }
     }
   }
@@ -788,25 +759,6 @@ html, body {
   
   @include respond-above(large-desktop) {
     max-width: 1440px;
-  }
-}
-
-// Removed duplicate .dh-header rule that was overriding the primary color background
-
-.dh-header-btn {
-  background: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: $card-shadow;
-  cursor: pointer;
-  .material-icons {
-    color: $primary-color;
-    font-size: 1.5rem;
   }
 }
 
