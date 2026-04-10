@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Zitro</string>
+    <string name="title_activity_main">Zitro</string>
+    <string name="package_name">com.krisurya.zitro</string>
+    <string name="custom_url_scheme">com.krisurya.zitro</string>
+    <!-- Google Maps Android SDK key (zitro-android-maps-sdk) -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyAQk0fS3Pa0y6F</string>
+</resources>
