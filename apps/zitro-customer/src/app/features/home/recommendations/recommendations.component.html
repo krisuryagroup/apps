@@ -1,0 +1,25 @@
+<div class="dh-section-title">Recommended for you</div>
+<div class="dh-recommended-list">
+  <div class="dh-recommended-card" *ngFor="let rec of recommendations; let i = index">
+    <div class="dh-recommended-img-wrapper" style="position: relative; min-height: 80px; display: flex; align-items: center; justify-content: center;">
+      <app-loader 
+        [isLoading]="imageLoading[i]" 
+        [size]="40" 
+        type="spinner" 
+        color="#ff6b35">
+      </app-loader>
+      <img 
+        [cachedSrc]="rec.image" 
+        [alt]="rec.name" 
+        class="dh-recommended-img" 
+        [fallbackSrc]="'assets/foodCategories/default.png'"
+        (load)="onImageLoad(i)"
+        (error)="onImageError(i)" />
+    </div>
+    <div class="dh-recommended-info">
+      <div class="dh-recommended-title">{{ rec.name }}</div>
+      <div class="dh-recommended-meta">{{ rec.price }} <span>· {{ rec.weight }}</span></div>
+    </div>
+    <button class="dh-recommended-add"><span class="material-icons">add</span></button>
+  </div>
+</div>

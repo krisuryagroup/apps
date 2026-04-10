@@ -14,12 +14,13 @@ import { BusinessSelectionComponent } from './features/business-selection/busine
 import { SigninComponent } from './features/auth/signin.component';
 import { SignupComponent } from './features/auth/signup.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
-// MT012: home
-// import { HomeComponent } from './features/home/home.component';
-// MT013: listing, search, categories
+// MT012: home + categories
+import { HomeComponent } from './features/home/home.component';
+import { CategoriesComponent } from './features/categories/categories.component';
+import { CategoryListingComponent } from './features/category-listing/category-listing.component';
+// MT013: listing, search
 // import { ListingComponent } from './features/listing/listing.component';
 // import { SearchComponent } from './features/search/search.component';
-// import { CategoriesComponent } from './features/categories/categories.component';
 // MT014: cart, coupons
 // import { CartComponent } from './features/cart/cart.component';
 // import { CouponSelectionComponent } from './features/coupon-selection/coupon-selection.component';
@@ -57,7 +58,9 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [],
     children: [
-      { path: 'home', component: PlaceholderComponent },
+      { path: 'home', component: HomeComponent },
+      { path: 'categories', component: CategoriesComponent },
+      { path: 'category-listing', component: CategoryListingComponent },
       // MT013+: child routes added per feature task
     ]
   },

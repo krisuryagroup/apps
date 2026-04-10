@@ -1,0 +1,102 @@
+<app-loader 
+  [isLoading]="isLoadingCategories || isLoadingProducts" 
+  [size]="100" 
+  type="spinner" 
+  color="#ff6b35">
+</app-loader>
+<div class="dh-main-content">
+
+  <!-- Hero: banner fills behind transparent header; search+VEG overlays the banner -->
+  <div class="dh-hero-wrapper">
+    <app-banner [autoScroll]="true" [scrollInterval]="4000"></app-banner>
+
+    <!-- Search + VEG toggle — overlaid on banner, transparent background -->
+    <div class="dh-search-veg-row">
+      <div class="dh-search-container">
+        <div class="dh-search-bar">
+          <span class="material-icons dh-search-icon">search</span>
+          <input
+            type="text"
+            class="dh-search-input"
+            placeholder="Search &quot;comfort food&quot;"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+          />
+          <button class="dh-mic-btn" [class.dh-mic-listening]="isListening" (click)="startVoiceSearch()">
+            <span class="material-icons">mic</span>
+          </button>
+          <button *ngIf="searchQuery" class="dh-search-clear" (click)="clearSearch()">
+            <span class="material-icons">clear</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VEG toggle: label on top, toggle below -->
+      <div class="dh-veg-toggle-wrap" (click)="togglePureVeg()">
+        <span class="dh-veg-label">VEG</span>
+        <div class="dh-veg-toggle" [class.dh-veg-on]="isPureVeg"
+             role="switch" [attr.aria-checked]="isPureVeg">
+          <div class="dh-veg-knob"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /dh-hero-wrapper -->
+
+  <!-- Scrollable white content -->
+  <div class="dh-scroll-content">
+
+    <!-- Categories Component -->
+    <app-categories
+      [categories]="categories"
+      [isLoading]="isLoadingCategories"
+      (categoryClick)="navigateToCategory($event)">
+    </app-categories>
+
+  <!-- Recommended Section -->
+  <app-item-slider
+    [products]="recommendedProducts"
+    [maxItems]="recommendedItemSlideCount"
+    [title]="'Recommended for you'"
+    [showViewAll]="true"
+    (productClick)="onProductClick($event)"
+    (viewAllClick)="onRecommendedViewAllClick()"
+    (cartUpdated)="onCartUpdated()"
+  ></app-item-slider>
+
+  <!-- Popular Items Section -->
+  <app-item-slider
+    [products]="popularProducts"
+    [maxItems]="popularItemSlideCount"
+    [title]="'Popular Items'"
+    [showViewAll]="true"
+    (productClick)="onProductClick($event)"
+    (viewAllClick)="onViewAllClick()"
+    (cartUpdated)="onCartUpdated()"
+  ></app-item-slider>
+
+  <!-- Loading state for products -->
+  <div *ngIf="isLoadingProducts" class="loading-products">
+    <div class="loading-spinner">Loading popular items...</div>
+  </div>
+
+  <!-- Category Cards Section -->
+  <app-category-cards
+    [products]="allProducts"
+    [title]="'Browse by Category'"
+    (productClick)="onProductClick($event)"
+    (categoryClick)="onCategoryCardClick($event)"
+    (cartUpdated)="onCartUpdated()"
+  ></app-category-cards>
+  </div><!-- /dh-scroll-content -->
+
+</div>
+
+<!-- Cart Summary -->
+<app-cart-summary></app-cart-summary>
+<!-- Item Details Dialog -->
+<app-item-details-dialog
+  [isOpen]="showItemDialog"
+  [item]="selectedItem"
+  (closeEvent)="onCloseItemDialog()"
+  (cartUpdated)="onCartUpdated()">
+</app-item-details-dialog>

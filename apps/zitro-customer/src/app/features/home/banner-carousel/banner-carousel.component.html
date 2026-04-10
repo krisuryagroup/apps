@@ -1,0 +1,21 @@
+<div class="dh-promo-carousel">
+  <div class="dh-promo-large" style="position: relative; min-height: 200px;">
+    <app-loader [isLoading]="isImageLoading" [size]="50" type="spinner" color="#ff6b35"></app-loader>
+    <img 
+         [cachedSrc]="banners[currentBanner].src" 
+         alt="Promo Banner" 
+         class="dh-promo-img" 
+         [fallbackSrc]="'assets/banners/banner1.jpg'"
+         (load)="onImageLoad()"
+         (error)="onImageError()" />
+    <button class="dh-promo-arrow dh-promo-arrow-left" (click)="prevBanner()">
+      <span class="material-icons">chevron_left</span>
+    </button>
+    <button class="dh-promo-arrow dh-promo-arrow-right" (click)="nextBanner()">
+      <span class="material-icons">chevron_right</span>
+    </button>
+    <div class="dh-promo-dots">
+      <span *ngFor="let b of banners; let i = index" class="dh-promo-dot" [class.active]="i === currentBanner" (click)="goToBanner(i)"></span>
+    </div>
+  </div>
+</div>
