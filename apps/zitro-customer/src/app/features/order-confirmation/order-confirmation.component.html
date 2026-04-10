@@ -1,0 +1,322 @@
+<div class="dh-main-content dh-order-confirmation">
+  <!-- Loading State -->
+  <div class="dh-loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading order details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="dh-error" *ngIf="error && !isLoading">
+    <div class="error-icon">⚠️</div>
+    <h2>{{ error }}</h2>
+    <button class="dh-btn dh-btn-primary" (click)="goToHome()">Go to Home</button>
+  </div>
+
+  <!-- Success Content -->
+  <ng-container *ngIf="orderDetails && !isLoading && !error">
+  <!-- Success Confirmation Header -->
+  <div class="dh-success-section" [ngClass]="getStatusClass()">
+    <div class="dh-success-icon">
+      <div class="dh-icon-wrapper" [style.background-color]="getStatusIconColor()">
+        <span class="material-icons dh-status-icon">{{ getStatusIcon() }}</span>
+      </div>
+    </div>
+    
+    <h1 class="dh-success-title">{{ getStatusTitle() }}</h1>
+    <p class="dh-success-subtitle">{{ getStatusSubtitle() }}</p>
+    
+    <!-- ETA Display -->
+    <div class="dh-eta-badge" *ngIf="orderDetails.status !== 'completed' && orderDetails.status !== 'delivered' && orderDetails.status !== 'cancelled'">
+      <span class="material-icons">schedule</span>
+      <span class="dh-eta-text">Estimated Time: <strong>{{ getEstimatedTimeDisplay() }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Status Timeline -->
+  <div class="dh-timeline-section">
+    <h3 class="dh-timeline-title">Order Status</h3>
+    <div class="dh-timeline">
+      <div class="dh-timeline-step" 
+           *ngFor="let step of getTimelineSteps(); let i = index"
+           [class.completed]="isStepCompleted(step.status)"
+           [class.current]="isStepCurrent(step.status)">
+        <div class="dh-step-icon">
+          <span class="material-icons">{{ step.icon }}</span>
+        </div>
+        <div class="dh-step-content">
+          <div class="dh-step-label">{{ step.label }}</div>
+          <div class="dh-step-timestamp" *ngIf="getStatusTimestamp(step.status)">
+            {{ formatTimestamp(getStatusTimestamp(step.status)) }}
+          </div>
+        </div>
+        <div class="dh-step-line" *ngIf="i < getTimelineSteps().length - 1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dine-in Specific Enhancements -->
+  <div class="dh-dine-in-section" *ngIf="orderDetails.orderType === 'dine-in'">
+    <div class="dh-section-card">
+      <div class="dh-dine-in-header">
+        <span class="material-icons">restaurant_menu</span>
+        <div>
+          <div class="dh-table-info">Table {{ orderDetails.tableNumber }} • {{ orderDetails.numberOfGuests }} Guest{{ orderDetails.numberOfGuests !== 1 ? 's' : '' }}</div>
+          <div class="dh-server-message">Your server will attend shortly</div>
+        </div>
+      </div>
+      <!-- <button class="dh-call-waiter-btn" (click)="callWaiter()">
+        <span class="material-icons">notifications_active</span>
+        Call Waiter
+      </button> -->
+    </div>
+  </div>
+
+  <!-- Call Restaurant & Help Section -->
+  <div class="dh-help-section">
+    <app-call-restaurant-button></app-call-restaurant-button>
+    <button class="dh-need-help-btn" (click)="needHelp()">
+      <span class="material-icons">help_outline</span>
+      Need Help?
+    </button>
+  </div>
+
+  <div class="dh-order-details-card">
+    <div class="dh-order-header">
+      <h2>Order Details</h2>
+    </div>
+    
+    <div class="dh-order-info">
+      <div class="dh-info-row">
+        <div class="dh-info-label">Order ID</div>
+        <div class="dh-info-value">#{{ orderDetails.orderId }}</div>
+      </div>
+      
+      <div class="dh-info-row">
+        <div class="dh-info-label">Date & Time</div>
+        <div class="dh-info-value">{{ orderDetails.date }} at {{ orderDetails.time }}</div>
+      </div>
+
+      <div class="dh-info-row">
+        <div class="dh-info-label">Order Type</div>
+        <div class="dh-info-value">
+          <span class="dh-order-type-badge">{{ orderDetails.orderTypeDisplay }}</span>
+        </div>
+      </div>
+
+      <!-- Dine-in specific details -->
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'dine-in' && orderDetails.tableNumber">
+        <div class="dh-info-label">Table Number</div>
+        <div class="dh-info-value">{{ orderDetails.tableNumber }}</div>
+      </div>
+
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'dine-in' && orderDetails.numberOfGuests">
+        <div class="dh-info-label">Number of Guests</div>
+        <div class="dh-info-value">{{ orderDetails.numberOfGuests }}</div>
+      </div>
+
+      <!-- Takeout specific details -->
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'takeout' && orderDetails.scheduledPickupTime">
+        <div class="dh-info-label">Scheduled Pickup</div>
+        <div class="dh-info-value">{{ orderDetails.scheduledPickupTime | date: 'short' }}</div>
+      </div>
+
+      <!-- Delivery specific details -->
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'delivery' && orderDetails.deliveryAddress">
+        <div class="dh-info-label">Contact Name</div>
+        <div class="dh-info-value">{{ orderDetails.deliveryAddress.name }}</div>
+      </div>
+
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'delivery' && orderDetails.deliveryAddress">
+        <div class="dh-info-label">Phone Number</div>
+        <div class="dh-info-value">
+          <a href="tel:{{ orderDetails.deliveryAddress.phone }}" class="dh-phone-link">
+            <span class="material-icons dh-phone-icon">call</span>
+            {{ orderDetails.deliveryAddress.phone }}
+          </a>
+        </div>
+      </div>
+
+      <div class="dh-info-row" *ngIf="orderDetails.orderType === 'delivery' && orderDetails.deliveryAddress">
+        <div class="dh-info-label">Delivery Address</div>
+        <div class="dh-info-value">
+          {{ orderDetails.deliveryAddress.street }}, {{ orderDetails.deliveryAddress.city }}, 
+          {{ orderDetails.deliveryAddress.state }} - {{ orderDetails.deliveryAddress.pincode }}
+        </div>
+      </div>
+      
+      <!-- Order Notes -->
+      <div class="dh-info-row dh-notes-row" *ngIf="hasNotes()">
+        <div class="dh-info-label">Special Instructions</div>
+        <div class="dh-info-value dh-notes-content">{{ orderDetails.customerNotes }}</div>
+      </div>
+    </div>
+
+    <!-- Enhanced Invoice Breakdown -->
+    <div class="dh-invoice-section">
+      <h3>Invoice Details</h3>
+      
+      <div class="dh-invoice-row">
+        <div class="dh-invoice-label">Item Total</div>
+        <div class="dh-invoice-value">₹{{ getItemTotal().toFixed(2) }}</div>
+      </div>
+
+      <!-- Packaging Charges - Only show if applicable to order type -->
+      <div class="dh-invoice-row" *ngIf="pricingBreakdown?.visibility?.showPackaging || (!pricingBreakdown && getCalculatedPackaging() > 0)">
+        <div class="dh-invoice-label">Packaging Charges</div>
+        <div class="dh-invoice-value">
+          <span *ngIf="getCalculatedPackaging() > 0 && getWaivedPackaging() > 0" class="dh-struck-amount">
+            ₹{{ getCalculatedPackaging().toFixed(2) }}
+          </span>
+          <span [class.dh-discounted]="getPackagingCharges() === 0" [class.dh-regular-amount]="getPackagingCharges() > 0">
+            ₹{{ getPackagingCharges().toFixed(2) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Platform Fee - Only show if applicable to order type -->
+      <div class="dh-invoice-row" *ngIf="pricingBreakdown?.visibility?.showPlatformFee || (!pricingBreakdown && getCalculatedPlatformFee() > 0)">
+        <div class="dh-invoice-label">Platform Fee</div>
+        <div class="dh-invoice-value">
+          <span *ngIf="getCalculatedPlatformFee() > 0 && getWaivedPlatformFee() > 0" class="dh-struck-amount">
+            ₹{{ getCalculatedPlatformFee().toFixed(2) }}
+          </span>
+          <span [class.dh-discounted]="getPlatformFee() === 0" [class.dh-regular-amount]="getPlatformFee() > 0">
+            ₹{{ getPlatformFee().toFixed(2) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- GST - Only show if applicable to order type -->
+      <div class="dh-invoice-row" *ngIf="pricingBreakdown?.visibility?.showGst || (!pricingBreakdown && getCalculatedGST() > 0)">
+        <div class="dh-invoice-label">GST (5%)</div>
+        <div class="dh-invoice-value">
+          <span *ngIf="getCalculatedGST() > 0 && getWaivedGST() > 0" class="dh-struck-amount">
+            ₹{{ getCalculatedGST().toFixed(2) }}
+          </span>
+          <span [class.dh-discounted]="getGSTAmount() === 0" [class.dh-regular-amount]="getGSTAmount() > 0">
+            ₹{{ getGSTAmount().toFixed(2) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Delivery Charge - Show only for delivery orders -->
+      <div class="dh-invoice-row" *ngIf="orderDetails.orderType === 'delivery'">
+        <div class="dh-invoice-label">Delivery Charge</div>
+        <div class="dh-invoice-value">
+          <span *ngIf="getCalculatedDeliveryCharge() > 0 && getWaivedDeliveryCharge() > 0" class="dh-struck-amount">
+            ₹{{ getCalculatedDeliveryCharge().toFixed(2) }}
+          </span>
+          <span [class.dh-free-delivery]="getDeliveryCharge() === 0" [class.dh-regular-amount]="getDeliveryCharge() > 0">
+            {{ getDeliveryCharge() === 0 ? 'FREE' : '₹' + getDeliveryCharge().toFixed(2) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Total Savings Banner -->
+      <div class="dh-savings-banner" *ngIf="getTotalSavings() > 0">
+        <span class="material-icons">celebration</span>
+        You're saving ₹{{ getTotalSavings().toFixed(2) }} on this order!
+      </div>
+
+      <!-- Coupon Discount -->
+      <div class="dh-invoice-row" *ngIf="hasCoupon()">
+        <div class="dh-invoice-label dh-discount-label">Discount ({{ getCouponCode() }})</div>
+        <div class="dh-invoice-value dh-discount-value">-₹{{ getCouponDiscount().toFixed(2) }}</div>
+      </div>
+
+      <!-- Grand Total -->
+      <div class="dh-invoice-row dh-invoice-total">
+        <div class="dh-invoice-label">Grand Total</div>
+        <div class="dh-invoice-value">₹{{ orderDetails.total.toFixed(2) }}</div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="dh-invoice-row">
+        <div class="dh-invoice-label">Payment Method</div>
+        <div class="dh-invoice-value">
+          <span class="dh-payment-method">
+            <span class="material-icons payment-icon">{{ orderDetails.paymentMethod === 'cash' ? 'money' : 'payment' }}</span>
+            {{ orderDetails.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Pay Online At The Time Of Delivery' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items Summary -->
+    <div class="dh-order-items">
+      <h3>Items Ordered ({{ orderDetails.items.length }})</h3>
+      <div class="dh-items-bill">
+        <div class="dh-bill-item" *ngFor="let item of orderDetails.items">
+          <span class="dh-item-name">{{ getItemName(item) }}</span>
+          <span class="dh-item-qty">{{ item.qty }}</span>
+          <span class="dh-item-price">₹{{ (item.price * item.qty).toFixed(0) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancellation Information -->
+  <div class="dh-cancellation-info" *ngIf="canCancelOrder()">
+    <div class="dh-cancel-notice">
+      <div class="dh-cancel-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 6v6m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="dh-cancel-text">
+        <p><strong>Order can be cancelled within {{ getRemainingCancellationTime() | async }} second{{ (getRemainingCancellationTime() | async) !== 1 ? 's' : '' }}</strong></p>
+        <p class="dh-cancel-subtext">No charges will be applied for cancellation within this time frame</p>
+      </div>
+    </div>
+    
+    <button class="dh-cancel-order-btn" (click)="cancelOrder()" [disabled]="!canCancelOrder()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Cancel Order
+    </button>
+  </div>
+
+  <div class="dh-action-buttons">
+    <button class="dh-btn dh-btn-primary" (click)="goToHome()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Go To Home
+    </button>
+    
+    <button class="dh-btn dh-btn-secondary" (click)="viewOrders()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="10,9 9,9 8,9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      View Orders
+    </button>
+    
+    <button class="dh-btn dh-btn-outline" (click)="needHelp()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="17" r=".5" fill="currentColor"/>
+      </svg>
+      Need Help
+    </button>
+  </div>
+  </ng-container>
+</div>
+
+<!-- Cancel Order Dialog -->
+<app-cancel-order-dialog
+  *ngIf="orderDetails"
+  [isOpen]="showCancelDialog"
+  [orderId]="orderDetails.orderId"
+  [timeRemaining]="(getRemainingCancellationTime() | async) || 0"
+  [isProcessing]="isProcessingCancel"
+  (closeEvent)="onCancelDialogClose()"
+  (confirmEvent)="onConfirmCancel()">
+</app-cancel-order-dialog>

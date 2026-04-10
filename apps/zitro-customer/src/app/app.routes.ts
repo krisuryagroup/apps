@@ -28,9 +28,9 @@ import { CouponSelectionComponent } from './features/coupon-selection/coupon-sel
 import { ManageAddressesComponent } from './features/manage-addresses';
 import { AddAddressComponent } from './features/add-address';
 // MT016: orders
-// import { OrderHistoryComponent } from './features/order-history';
-// import { OrderConfirmationComponent } from './features/order-confirmation';
-// import { OrderTrackingComponent } from './features/order-tracking/order-tracking.component';
+import { OrderHistoryComponent } from './features/order-history';
+import { OrderConfirmationComponent } from './features/order-confirmation';
+import { OrderTrackingComponent } from './features/order-tracking/order-tracking.component';
 // MT017: misc pages
 // import { ContactUsComponent } from './features/contact-us.component';
 // import { CacheManagementComponent } from './shared/components/cache-management/cache-management.component';
@@ -67,7 +67,10 @@ export const routes: Routes = [
       { path: 'coupons', component: CouponSelectionComponent },
       { path: 'addresses', component: ManageAddressesComponent },
       { path: 'add-address', component: AddAddressComponent },
-      // MT016+: child routes added per feature task
+      { path: 'orders', component: OrderHistoryComponent },
+      { path: 'order-confirmation', component: OrderConfirmationComponent },
+      { path: 'track-order', component: OrderTrackingComponent },
+      // MT017+: child routes added per feature task
     ]
   },
 
