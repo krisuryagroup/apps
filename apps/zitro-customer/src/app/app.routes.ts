@@ -8,8 +8,8 @@ import { BusinessSelectionGuard } from './core/guards/business-selection.guard';
 // MT009: layout now available
 import { MainLayoutComponent } from './layout/main-layout.component';
 
-// MT010: feature routes uncommented as each feature task completes
-// import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
+// MT010: business-selection
+import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
 // MT011: auth features
 // import { SigninComponent } from './features/auth/signin.component';
 // import { SignupComponent } from './features/auth/signup.component';
@@ -50,7 +50,7 @@ export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
   // Business Selection Route (MT010)
-  // { path: 'business-selection', component: BusinessSelectionComponent },
+  { path: 'business-selection', component: BusinessSelectionComponent },
 
   {
     path: '',
