@@ -1,0 +1,48 @@
+@use 'theme' as *;
+.search-bar {
+  display: flex;
+  align-items: center;
+  margin: 1rem;
+  background: #fff;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background: transparent;
+  }
+  .search-icon {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    color: $primary-color;
+  }
+}
+
+// ...existing code...
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #fff;
+  border-top: 1px solid #eee;
+  height: 60px;
+  z-index: 100;
+  .nav-item {
+    flex: 1;
+    text-align: center;
+    color: $text-color;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    &.active {
+      color: $primary-color;
+    }
+  }
+}

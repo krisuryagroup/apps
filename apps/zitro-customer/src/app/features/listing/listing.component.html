@@ -1,0 +1,124 @@
+<app-loader 
+  [isLoading]="loading" 
+  [size]="100" 
+  type="spinner" 
+  color="#ff6b35">
+</app-loader>
+<div class="dh-main-content">
+
+  <!-- Search Bar and Filters/Sort -->
+  <div style="height: 20px;"></div><!-- Spacer for header + fixed search bar -->
+  
+  <div class="dh-listing-searchbar-row">
+    <div class="dh-listing-searchbar">
+      <span class="material-icons dh-search-icon">search</span>
+      <input type="text" [(ngModel)]="search" (keyup.enter)="onSearchInput($event)" placeholder="Search ..." />
+    </div>
+    <button class="dh-filter-btn" (click)="showFilter = true">
+      <span class="material-icons">filter_alt</span>
+    </button>
+  </div>
+  
+  <!-- Filter Modal -->
+  <div class="dh-filter-modal" *ngIf="showFilter" (click)="showFilter = false">
+    <div class="dh-filter-modal-content" (click)="$event.stopPropagation()">
+      <div class="dh-filter-modal-header">
+        <span class="material-icons dh-filter-back" (click)="showFilter = false">arrow_back</span>
+        <span class="dh-filter-title">Filter</span>
+      </div>
+      <div class="dh-filter-section">
+        <!-- <div class="dh-filter-tags">
+          <button class="dh-filter-tag" [class.active]="filters.new" (click)="filters.new = !filters.new">New</button>
+          <button class="dh-filter-tag" [class.active]="filters.spicy" (click)="filters.spicy = !filters.spicy">Spicy</button>
+        </div> -->
+        <div class="dh-filter-label">Category</div>
+        <div class="dh-filter-tags">
+          <button *ngFor="let cat of filterCategories" class="dh-filter-tag" [class.active]="filters.categories.includes(cat.name.toLowerCase())" (click)="toggleCategory(cat)">{{ cat.name }}</button>
+        </div>
+        <!-- <div class="dh-filter-label">Dietary Preferences</div>
+        <div class="dh-filter-tags">
+          <button *ngFor="let pref of filterPreferences" class="dh-filter-tag" [class.active]="filters.preferences.includes(pref)" (click)="togglePreference(pref)">{{ pref }}</button>
+        </div> -->
+      </div>
+      <button class="dh-filter-apply" (click)="applyFilters()">Apply Filters</button>
+      <button class="dh-filter-reset" (click)="resetFilters()">Reset Filters</button>
+    </div>
+  </div>
+
+  <!-- Scrollable Content Area -->
+  <div class="scrollable-container" (scroll)="onScroll($event)">
+    <!-- Loading state (reuse existing pattern) -->
+    <div *ngIf="loading" class="loading-products" style="padding:24px; text-align:center;">
+      <div class="loading-spinner">Loading items...</div>
+    </div>
+    <!-- All the existing content goes here -->
+    <div *ngIf="!loading" class="dh-listing-grid-container">
+      <div class="dh-listing-grid">
+        <div *ngFor="let item of filteredItems; let i = index; trackBy: trackByItemId" class="dh-listing-card" (click)="onShowItemDialog(item)">
+          <div class="dh-listing-fav-icon" (click)="toggleFavorite(item); $event.stopPropagation()">
+            <span class="material-icons" [ngClass]="{'favorite': isFavorite(item)}">{{ isFavorite(item) ? 'favorite' : 'favorite_border' }}</span>
+          </div>
+          <div class="dh-listing-img-container" style="position: relative; min-height: 150px; display: flex; align-items: center; justify-content: center;">
+            <app-loader 
+              [isLoading]="imageLoading[item.id]" 
+              [size]="50" 
+              type="spinner" 
+              color="#ff6b35">
+            </app-loader>
+            <img 
+              [cachedSrc]="item.imageURL || 'assets/foodCategories/default.png'" 
+              [alt]="item.name" 
+              class="dh-listing-img" 
+              [fallbackSrc]="'assets/foodCategories/default.png'"
+              (load)="onImageLoad(item.id)"
+              (error)="onImageError2(item.id)" />
+          </div>
+          <div class="dh-listing-title">{{ item.name }}</div>
+          <div class="dh-listing-desc" *ngIf="item.description">
+            {{ item.description }}
+          </div>
+          <div class="dh-listing-price">{{ item.price }}</div>
+          <div class="dh-listing-cart-controls" *ngIf="getCartQty(item) > 0" (click)="$event.stopPropagation()">
+            <button class="qty-btn" (click)="decrement(i)">
+              <span class="material-icons">remove</span>
+            </button>
+            <span class="qty-value">{{ getCartQty(item) }}</span>
+            <button class="qty-btn" (click)="increment(i)">
+              <span class="material-icons">add</span>
+            </button>
+          </div>
+          <button class="dh-listing-add-btn" *ngIf="getCartQty(item) === 0" (click)="increment(i); $event.stopPropagation()">
+            <span class="material-icons">add</span>
+            <span class="dh-add-btn-text">Add to Cart</span>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="filteredItems.length === 0" class="dh-listing-empty">
+        No items found for this category/search.
+      </div>
+      
+      <!-- Scroll to top button -->
+      <div class="scroll-to-top" [class.hidden]="!showScrollTop" (click)="scrollToTop()">
+        <span class="material-icons">arrow_upward</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<app-bottom-nav></app-bottom-nav>
+<app-cart-summary></app-cart-summary>
+
+<!-- Description Dialog -->
+<app-description-dialog
+  [isOpen]="showDescriptionDialog"
+  [productName]="dialogProductName"
+  [description]="dialogDescription"
+  (closeEvent)="onCloseDescriptionDialog()">
+</app-description-dialog>
+
+<!-- Item Details Dialog -->
+<app-item-details-dialog
+  [isOpen]="showItemDialog"
+  [item]="selectedItem"
+  (closeEvent)="onCloseItemDialog()">
+</app-item-details-dialog>
