@@ -1,0 +1,34 @@
+<div class="product-grid-container" *ngIf="products.length > 0">
+  <!-- Section Title with exact same structure as categories -->
+  <div class="categories-title-style" *ngIf="title">
+    {{ title }} <span class="categories-view-style" (click)="onViewAllClick()" *ngIf="shouldShowViewAll">View all <span class="material-icons">chevron_right</span></span>
+  </div>
+
+  <!-- Products Grid -->
+  <div 
+    class="products-grid" 
+    [class.horizontal-layout]="displayStyle === 'horizontal'"
+    [class.vertical-layout]="displayStyle === 'vertical'"
+    [class.compact]="compactMode"
+    [style.--columns]="columns"
+  >
+    <app-product-card
+      *ngFor="let product of displayProducts; trackBy: trackByProductId"
+      [product]="product"
+      [displayStyle]="displayStyle"
+      [compactMode]="compactMode"
+      (productClick)="onProductClick($event)"
+      (quantityChange)="onQuantityChange()"
+    ></app-product-card>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="products.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+      </svg>
+    </div>
+    <p class="empty-message">{{NO_PRODUCTS_AVAILABLE}}</p>
+  </div>
+</div>

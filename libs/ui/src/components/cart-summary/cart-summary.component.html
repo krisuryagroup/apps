@@ -1,0 +1,23 @@
+<div class="cart-summary-container" *ngIf="isVisible">
+  <div class="cart-summary" (click)="onCartClick()">
+    <!-- Cart Icon and Item Count -->
+    <div class="cart-icon-section">
+      <div class="cart-icon">
+        <span class="material-icons">shopping_cart</span>
+        <div class="cart-badge" *ngIf="totalQuantity > 0">{{ totalQuantity }}</div>
+      </div>
+    </div>
+    
+    <!-- Cart Details -->
+    <div class="cart-details">
+      <div class="cart-items-text">{{ totalQuantity }} item{{ totalQuantity > 1 ? 's' : '' }}</div>
+      <div class="cart-total">{{ formatPrice(totalAmount) }}</div>
+    </div>
+    
+    <!-- View Cart Button -->
+    <div class="view-cart-section">
+      <span class="view-cart-text">View Cart</span>
+      <span class="material-icons">arrow_forward</span>
+    </div>
+  </div>
+</div>

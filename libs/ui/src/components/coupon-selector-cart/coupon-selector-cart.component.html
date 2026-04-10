@@ -1,0 +1,31 @@
+<!-- Applied Coupon Display -->
+<div class="coupon-cart-section" *ngIf="appliedCoupon">
+  <div class="applied-coupon-display">
+    <div class="coupon-success-indicator">
+      <span class="material-icons">check_circle</span>
+      <div class="coupon-info">
+        <div class="coupon-title">{{ appliedCoupon.coupon.code }} applied</div>
+        <div class="coupon-savings">You saved ₹{{ appliedCoupon.discountAmount }}</div>
+      </div>
+    </div>
+    <button class="remove-coupon" (click)="removeCoupon()" type="button">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+</div>
+
+<!-- View Coupons Link -->
+<div class="coupon-cart-section" *ngIf="!appliedCoupon">
+  <div class="view-coupons-container" (click)="viewAllCoupons()">
+    <div class="coupon-icon">
+      <span class="material-icons">local_offer</span>
+    </div>
+    <div class="coupon-text">
+      <span class="main-text">Apply Coupon</span>
+      <span class="sub-text">Get instant discounts</span>
+    </div>
+    <div class="arrow-icon">
+      <span class="material-icons">keyboard_arrow_right</span>
+    </div>
+  </div>
+</div>

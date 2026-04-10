@@ -1,0 +1,53 @@
+<div class="splash-screen" [class.fade-out]="!showSplash">
+  <div class="splash-content">
+    <!-- Animated Logo Container -->
+    <div class="logo-container">
+      <div class="logo-circle">
+        <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Pizza slice icon -->
+          <path d="M50 50 L85 25 A50 50 0 0 1 85 75 Z" fill="white" opacity="0.9"/>
+          <circle cx="65" cy="40" r="3" fill="#C73E3A"/>
+          <circle cx="70" cy="55" r="3" fill="#C73E3A"/>
+          <circle cx="60" cy="52" r="3" fill="#C73E3A"/>
+          
+          <!-- Fork and Spoon -->
+          <g transform="translate(25, 35)">
+            <!-- Fork -->
+            <path d="M5 5 L5 30 M3 5 L3 12 M7 5 L7 12 M5 12 L5 15" 
+                  stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- Spoon -->
+            <path d="M15 5 Q15 10 15 12 L15 30 M15 8 Q13 8 13 10 Q13 12 15 12 Q17 12 17 10 Q17 8 15 8" 
+                  stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      
+      <!-- Decorative elements -->
+      <div class="decoration-circle circle-1"></div>
+      <div class="decoration-circle circle-2"></div>
+      <div class="decoration-circle circle-3"></div>
+    </div>
+
+    <!-- Brand Name -->
+    <div class="brand-container">
+      <h1 class="brand-name">Zitro</h1>
+      <p class="brand-tagline">Delicious Food at Your Doorstep</p>
+    </div>
+
+    <!-- Loading Animation -->
+    <div class="loading-container">
+      <div class="loading-dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Pattern -->
+  <div class="background-pattern">
+    <div class="pattern-circle"></div>
+    <div class="pattern-circle"></div>
+    <div class="pattern-circle"></div>
+  </div>
+</div>

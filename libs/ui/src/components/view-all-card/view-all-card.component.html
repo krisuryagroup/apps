@@ -1,0 +1,23 @@
+<div 
+  class="view-all-card" 
+  [class.size-small]="size === 'small'"
+  [class.size-medium]="size === 'medium'"
+  [class.size-large]="size === 'large'"
+  [class.style-circular]="variant === 'circular'"
+  [class.style-rounded]="variant === 'rounded'"
+  [class.style-card]="variant === 'card'"
+  (click)="onClick()">
+
+  <div class="view-all-icon-wrapper">
+    <span class="material-icons view-all-icon">{{ icon }}</span>
+  </div>
+
+  @if (showLabel) {
+    <div class="view-all-content">
+      <div class="view-all-label">{{ label }}</div>
+      @if (description) {
+        <div class="view-all-description">{{ description }}</div>
+      }
+    </div>
+  }
+</div>

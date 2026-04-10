@@ -6,14 +6,14 @@ export * from './banner.model';
 export * from './cache-config.model';
 export * from './category-config.model';
 // coupon.model also declares OrderType (same as order.model) — export only coupon-specific types
-export { OnlineOrderCoupon, CouponValidationResult, AppliedCoupon } from './coupon.model';
+export type { OnlineOrderCoupon, CouponValidationResult, AppliedCoupon } from './coupon.model';
 export * from './fast2sms.model';
 export * from './item-slider.model';
 export * from './order-config.model';
 // order.model is the canonical source for OrderType and OrderCharges
 export * from './order.model';
 // pricing.model also declares OrderCharges (identical to order.model) — export only pricing-specific types
-export {
+export type {
   PricingConfig,
   DeliveryPricingConfig,
   PlatformFeePricingConfig,

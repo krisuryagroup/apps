@@ -1,0 +1,57 @@
+@use 'theme' as *;
+
+.dh-whatsapp-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: #25D366;
+  color: $secondary-color;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+  z-index: 9999;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.5);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  .dh-whatsapp-icon {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dh-whatsapp-float {
+    right: 16px;
+    bottom: 16px;
+    width: 52px;
+    height: 52px;
+    
+    .dh-whatsapp-icon {
+      width: 28px;
+      height: 28px;
+    }
+  }
+}
+
+// Adjust position when inside main-layout (with bottom nav)
+:host-context(.main-layout) .dh-whatsapp-float {
+  bottom: 140px;
+  
+  @media (max-width: 480px) {
+    bottom: 136px;
+  }
+}

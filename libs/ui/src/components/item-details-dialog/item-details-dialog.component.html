@@ -1,0 +1,148 @@
+<div class="item-details-dialog-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="item-details-dialog-modal" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="close()" title="Close (Esc)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    
+    <!-- Scrollable Content Wrapper -->
+    <div class="dialog-content-wrapper">
+      <!-- Zoomable Image Component -->
+      <app-zoomable-image
+        [src]="item?.imageURL ?? ''"
+        [fallbackSrc]="'assets/foodCategories/default.png'"
+        [alt]="item?.title ?? 'Product Image'"
+        [config]="imageZoomConfig"
+        (imageLoaded)="onImageLoad()">
+      </app-zoomable-image>
+      
+      <div class="item-details-content">
+        <h2 class="item-title">{{ item?.title }}</h2>
+        
+        <!-- Variations UI -->
+        <ng-container *ngIf="item?.hasVariations && item?.variations?.length">
+          <div class="variations-section">
+            <h3 class="variations-title">
+              <span class="material-icons">tune</span>
+              Choose Size
+            </h3>
+            <div class="item-variations">
+              <ng-container *ngIf="item">
+                <label *ngFor="let v of item.variations" class="variation-option" [class.selected]="item.selectedVariationId === v.id">
+                  <input type="radio" name="variation" [value]="v.id" [(ngModel)]="item.selectedVariationId" />
+                  <div class="variation-content">
+                    <span class="variation-check">
+                      <span class="material-icons">{{ item.selectedVariationId === v.id ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+                    </span>
+                    <div class="variation-details">
+                      <span class="variation-label">{{ v.label }}</span>
+                      <span class="variation-weight" *ngIf="v.weight">{{ v.weight }}</span>
+                    </div>
+                    <span class="variation-price">₹{{ v.price | number:'1.2-2' }}</span>
+                  </div>
+                </label>
+              </ng-container>
+            </div>
+          </div>
+          
+          <!-- Show selected variation details -->
+          <div *ngIf="selectedVariation" class="selected-variation-info">
+            <div class="item-price-row">
+              <span>Price:</span>
+              <span class="item-price">₹{{ selectedVariation.price | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ng-container>
+        
+        <!-- Fallback for non-variation products -->
+        <ng-container *ngIf="!item?.hasVariations">
+          <div class="item-price-row">
+            <span>Price:</span>
+            <span class="item-price">₹{{ item?.price | number:'1.2-2' }}</span>
+          </div>
+          <div class="item-weight" *ngIf="item?.weight">
+            <span class="material-icons">scale</span>
+            {{ item?.weight }}
+          </div>
+        </ng-container>
+        
+        <div class="item-offer" *ngIf="item?.offer">Offer: {{ item?.offer }}</div>
+        <div class="item-description" *ngIf="item?.description">{{ item?.description }}</div>
+        
+        <!-- Validation Error Message -->
+        <div *ngIf="validationError" class="validation-error">
+          {{ validationError }}
+        </div>
+        
+        <!-- Add to Cart Section -->
+        <div class="cart-controls">
+          <div *ngIf="getItemQuantity() === 0" class="add-to-cart-btn" (click)="incrementQuantity()">
+            <span class="material-icons">shopping_cart</span>
+            <span>Add to Cart</span>
+          </div>
+          
+          <div *ngIf="getItemQuantity() > 0" class="quantity-controls">
+            <button class="quantity-btn" (click)="decrementQuantity()">
+              <span class="material-icons">remove</span>
+            </button>
+            <span class="quantity-display">{{ getItemQuantity() }}</span>
+            <button class="quantity-btn" (click)="incrementQuantity()">
+              <span class="material-icons">add</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Related Products Section -->
+        <div class="related-products-section" *ngIf="relatedProducts.length > 0">
+          <h3 class="related-products-title">
+            <span class="material-icons">restaurant_menu</span>
+            Related Food Items
+          </h3>
+          
+          <div class="related-products-grid">
+            <div class="related-product-card" 
+                 *ngFor="let product of relatedProducts"
+                 (click)="onRelatedProductClick(product, $event)">
+              <div class="related-product-image">
+                <img [cachedSrc]="product.imageURL ?? 'assets/foodCategories/default.png'" 
+                     [fallbackSrc]="'assets/foodCategories/default.png'"
+                     [alt]="product.name" />
+              </div>
+              <div class="related-product-info">
+                <h4 class="related-product-name">{{ product.name }}</h4>
+                <p class="related-product-price">₹{{ product.price | number:'1.2-2' }}</p>
+              </div>
+              
+              <!-- Add to Cart for Related Products -->
+              <div class="related-product-cart">
+                <div *ngIf="getRelatedProductQuantity(product) === 0" 
+                     class="related-add-btn" 
+                     (click)="addRelatedProductToCart(product, $event)">
+                  <span class="material-icons">shopping_cart</span>
+                  <span >Add to Cart</span>
+                </div>
+                
+                <div *ngIf="getRelatedProductQuantity(product) > 0" 
+                     class="related-quantity-controls">
+                  <button class="related-qty-btn" (click)="decrementRelatedProduct(product, $event)">
+                    <span class="material-icons">remove</span>
+                  </button>
+                  <span class="related-qty-display">{{ getRelatedProductQuantity(product) }}</span>
+                  <button class="related-qty-btn" (click)="incrementRelatedProduct(product, $event)">
+                    <span class="material-icons">add</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="related-products-loading" *ngIf="isLoadingRelated">
+            <span class="material-icons spinning">sync</span>
+            <span>Loading related items...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

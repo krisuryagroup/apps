@@ -1,0 +1,82 @@
+<div class="no-internet-container">
+  <div class="content-wrapper">
+    <!-- Animated Icon -->
+    <div class="icon-container">
+      <svg class="wifi-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- WiFi waves (disconnected) -->
+        <g class="wifi-waves">
+          <path class="wave wave-1" 
+                d="M 50 60 Q 30 40, 10 30" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="4" 
+                stroke-linecap="round"/>
+          <path class="wave wave-2" 
+                d="M 50 60 Q 20 30, 5 15" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="4" 
+                stroke-linecap="round"/>
+          <path class="wave wave-3" 
+                d="M 50 60 Q 70 40, 90 30" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="4" 
+                stroke-linecap="round"/>
+          <path class="wave wave-4" 
+                d="M 50 60 Q 80 30, 95 15" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="4" 
+                stroke-linecap="round"/>
+        </g>
+        
+        <!-- WiFi base dot -->
+        <circle class="wifi-dot" cx="50" cy="70" r="6" fill="currentColor"/>
+        
+        <!-- Slash for disconnect -->
+        <line class="disconnect-slash" 
+              x1="20" y1="20" 
+              x2="80" y2="80" 
+              stroke="currentColor" 
+              stroke-width="5" 
+              stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- Message Content -->
+    <div class="message-content">
+      <h1 class="title">No Internet Connection</h1>
+      <p class="description">
+        Oops! It seems you're offline. Please check your internet connection and try again.
+      </p>
+    </div>
+
+    <!-- Retry Button -->
+    <button class="retry-button" (click)="onRetry()">
+      <span class="button-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+      </span>
+      <span class="button-text">Try Again</span>
+    </button>
+
+    <!-- Connection Tips -->
+    <div class="tips-container">
+      <p class="tips-title">Quick Tips:</p>
+      <ul class="tips-list">
+        <li>Check if your WiFi or mobile data is turned on</li>
+        <li>Try toggling airplane mode on and off</li>
+        <li>Move to an area with better signal</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Background Decoration -->
+  <div class="background-decoration">
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+  </div>
+</div>
