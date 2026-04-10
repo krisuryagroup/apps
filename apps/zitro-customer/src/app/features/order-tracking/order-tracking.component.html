@@ -1,0 +1,259 @@
+<div class="order-tracking-container">
+  <!-- Call Restaurant Button -->
+  <div class="dh-call-restaurant-section" *ngIf="orderDetails && !loading">
+    <app-call-restaurant-button></app-call-restaurant-button>
+  </div>
+
+  <div class="order-details" *ngIf="orderDetails && !loading">
+    <div class="order-header">
+      <div class="order-info">
+        <h2>Order #{{ orderDetails.orderId }}</h2>
+        <div class="order-meta">
+          <span class="order-date">{{ orderDetails.createdAt | date:'medium' }}</span>
+          <span class="order-total">₹{{ orderDetails.total }}</span>
+        </div>
+        <div class="order-type-info">
+          <span class="order-type-badge">{{ orderDetails.orderTypeDisplay }}</span>
+          <!-- Dine-in specific -->
+          <span *ngIf="orderDetails.orderType === 'dine-in' && orderDetails.tableNumber" class="table-info">
+            Table: {{ orderDetails.tableNumber }}
+          </span>
+          <span *ngIf="orderDetails.orderType === 'dine-in' && orderDetails.numberOfGuests" class="guests-info">
+            Guests: {{ orderDetails.numberOfGuests }}
+          </span>
+          <!-- Takeout specific -->
+          <span *ngIf="orderDetails.orderType === 'takeout' && orderDetails.scheduledPickupTime" class="pickup-info">
+            Pickup: {{ orderDetails.scheduledPickupTime | date:'short' }}
+          </span>
+        </div>
+      </div>
+      <div class="auto-refresh-toggle" *ngIf="orderDetails.status !== 'delivered' && orderDetails.status !== 'cancelled'">
+        <label class="toggle-switch">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="autoRefreshEnabled" 
+            (change)="toggleAutoRefresh()"
+          >
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Auto Refresh</span>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-header">
+        <div class="status-badge" [ngClass]="getStatusClass(orderDetails.status)">
+          {{ getLatestStatusDisplay() }}
+        </div>
+                <button class="refresh-btn" (click)="refreshOrder()" [disabled]="loading || orderDetails.status === 'cancelled' || orderDetails.status === 'delivered'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="loading">
+            <polyline points="23,4 23,10 17,10"/>
+            <polyline points="1,20 1,14 7,14"/>
+            <path d="M20.49,9A9,9,0,0,0,5.64,5.64L1,10m22,4a9,9,0,0,1-14.85,4.36L23,14"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="status-progress" *ngIf="orderDetails.status !== 'cancelled'">
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="getStatusProgress(orderDetails.status)"
+            [ngClass]="getStatusClass(orderDetails.status)"
+          ></div>
+        </div>
+        <div class="progress-text">
+          {{ getStatusProgress(orderDetails.status) }}% Complete
+        </div>
+      </div>
+
+      <!-- Show cancellation message for cancelled orders -->
+      <div class="cancellation-info" *ngIf="orderDetails.status === 'cancelled'">
+        <div class="cancellation-message">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <p>This order has been cancelled and will not be delivered.</p>
+        </div>
+      </div>
+
+      <div class="status-timeline" *ngIf="orderDetails.status !== 'cancelled'">
+        <div class="timeline-item" [class.active]="isStatusCompleted('pending')">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>Order Placed</h4>
+            <p>{{ getStatusNote('pending') || 'Your order has been received' }}</p>
+            <span class="timeline-timestamp" *ngIf="getStatusTimestamp('pending')">
+              {{ getStatusTimestamp('pending') | date:'MMM dd, yyyy - hh:mm a' }}
+            </span>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="isStatusCompleted('confirmed')">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>Order Confirmed</h4>
+            <p>{{ getStatusNote('confirmed') || 'Restaurant has confirmed your order' }}</p>
+            <span class="timeline-timestamp" *ngIf="getStatusTimestamp('confirmed')">
+              {{ getStatusTimestamp('confirmed') | date:'MMM dd, yyyy - hh:mm a' }}
+            </span>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="isStatusCompleted('preparing')">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>Preparing</h4>
+            <p>{{ getStatusNote('preparing') || 'Your food is being prepared' }}</p>
+            <span class="timeline-timestamp" *ngIf="getStatusTimestamp('preparing')">
+              {{ getStatusTimestamp('preparing') | date:'MMM dd, yyyy - hh:mm a' }}
+            </span>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="isStatusCompleted('shipped')">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>Out for Delivery</h4>
+            <p>{{ getStatusNote('shipped') || 'Your order is on the way' }}</p>
+            <span class="timeline-timestamp" *ngIf="getStatusTimestamp('shipped')">
+              {{ getStatusTimestamp('shipped') | date:'MMM dd, yyyy - hh:mm a' }}
+            </span>
+          </div>
+        </div>
+        <div class="timeline-item" [class.active]="isStatusCompleted('delivered')">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>Delivered</h4>
+            <p>{{ getStatusNote('delivered') || 'Order has been delivered' }}</p>
+            <span class="timeline-timestamp" *ngIf="getStatusTimestamp('delivered')">
+              {{ getStatusTimestamp('delivered') | date:'MMM dd, yyyy - hh:mm a' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delivery-info" *ngIf="orderDetails.estimatedDeliveryTime && orderDetails.status !== 'delivered' && orderDetails.status !== 'cancelled'">
+      <div class="delivery-card">
+        <div class="delivery-time">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+          <div>
+            <h4>Estimated Delivery</h4>
+            <p class="time">{{ getEstimatedTimeRemaining() }}</p>
+            <p class="exact-time">by {{ orderDetails.estimatedDeliveryTime | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-items">
+      <h3>Order Items</h3>
+      <div class="items-bill">
+        <div class="bill-item" *ngFor="let item of orderDetails.items">
+          <span class="item-name">{{ getItemName(item) }}</span>
+          <span class="item-qty">{{ item.qty }}</span>
+          <span class="item-price">₹{{ (item.price * item.qty) }}</span>
+        </div>
+      </div>
+      <div class="order-summary">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>₹{{ orderDetails.subtotal }}</span>
+        </div>
+
+        <!-- Coupon Discount -->
+        <div class="summary-row" *ngIf="hasCoupon()">
+          <span>Coupon Discount ({{ getCouponCode() }})</span>
+          <span class="coupon-discount">-₹{{ getCouponDiscount().toFixed(2) }}</span>
+        </div>
+
+        <!-- Packaging Charges -->
+        <div class="summary-row" *ngIf="getPackagingCharges() > 0 || getCalculatedPackaging() > 0">
+          <span>Packaging Charges</span>
+          <span>
+            <span *ngIf="getCalculatedPackaging() > 0 && getWaivedPackaging() > 0" class="dh-struck-amount">
+              ₹{{ getCalculatedPackaging().toFixed(2) }}
+            </span>
+            <span [class.dh-discounted]="getPackagingCharges() === 0">
+              ₹{{ getPackagingCharges().toFixed(2) }}
+            </span>
+          </span>
+        </div>
+
+        <!-- Platform Fee -->
+        <div class="summary-row" *ngIf="getPlatformFee() > 0 || getCalculatedPlatformFee() > 0">
+          <span>Platform Fee</span>
+          <span>
+            <span *ngIf="getCalculatedPlatformFee() > 0 && getWaivedPlatformFee() > 0" class="dh-struck-amount">
+              ₹{{ getCalculatedPlatformFee().toFixed(2) }}
+            </span>
+            <span [class.dh-discounted]="getPlatformFee() === 0">
+              ₹{{ getPlatformFee().toFixed(2) }}
+            </span>
+          </span>
+        </div>
+
+        <!-- GST -->
+        <div class="summary-row" *ngIf="getGSTAmount() > 0 || getCalculatedGST() > 0">
+          <span>GST ({{ getGSTPercentage() }}%)</span>
+          <span>
+            <span *ngIf="getCalculatedGST() > 0 && getWaivedGST() > 0" class="dh-struck-amount">
+              ₹{{ getCalculatedGST().toFixed(2) }}
+            </span>
+            <span [class.dh-discounted]="getGSTAmount() === 0">
+              ₹{{ getGSTAmount().toFixed(2) }}
+            </span>
+          </span>
+        </div>
+
+        <!-- Delivery Charge -->
+        <div class="summary-row" *ngIf="getDeliveryCharge() > 0 || getCalculatedDeliveryCharge() > 0">
+          <span>Delivery Charge</span>
+          <span>
+            <span *ngIf="getCalculatedDeliveryCharge() > 0 && getWaivedDeliveryCharge() > 0" class="dh-struck-amount">
+              ₹{{ getCalculatedDeliveryCharge().toFixed(2) }}
+            </span>
+            <span [class.dh-discounted]="getDeliveryCharge() === 0" [class.dh-free]="getDeliveryCharge() === 0 && getCalculatedDeliveryCharge() > 0">
+              {{ getDeliveryCharge() === 0 && getCalculatedDeliveryCharge() > 0 ? 'FREE' : '₹' + getDeliveryCharge().toFixed(2) }}
+            </span>
+          </span>
+        </div>
+
+        <div class="summary-row total">
+          <span>Total</span>
+          <span>₹{{ orderDetails.total }}</span>
+        </div>
+
+        <!-- Savings Banner -->
+        <div class="dh-savings-banner" *ngIf="getTotalSavings() > 0">
+          🎉 You're saving ₹{{ getTotalSavings().toFixed(2) }} on this order!
+        </div>
+      </div>
+    </div>
+
+    <div class="delivery-address" *ngIf="orderDetails.deliveryAddress">
+      <h3>Delivery Address</h3>
+      <div class="address-card">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <div>
+          <p>{{ orderDetails.deliveryAddress.street }}</p>
+          <p>{{ orderDetails.deliveryAddress.city }}, {{ orderDetails.deliveryAddress.state }}</p>
+          <p>{{ orderDetails.deliveryAddress.pincode }}</p>
+          <p *ngIf="orderDetails.deliveryAddress.landmark">{{ orderDetails.deliveryAddress.landmark }}</p>
+          <p *ngIf="orderDetails.userPhone"><strong>Phone:</strong> {{ orderDetails.userPhone }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading order details...</p>
+  </div>
+</div>

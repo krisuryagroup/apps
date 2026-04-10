@@ -1,0 +1,164 @@
+<div class="dh-main-content dh-order-history">
+  <!-- Call Restaurant Button -->
+  <div class="dh-call-restaurant-section" *ngIf="orders.length > 0">
+    <app-call-restaurant-button></app-call-restaurant-button>
+  </div>
+
+  <div class="dh-order-list">
+    <div class="dh-order-card" *ngFor="let order of paginatedOrders">
+      <!-- Header: Restaurant name and price -->
+      <div class="dh-order-header">
+        <h3 class="dh-restaurant-name">{{ getRestaurantName() }}</h3>
+        <div class="dh-order-total">₹{{ order.total.toFixed(2) }}</div>
+      </div>
+
+      <!-- Order Info: ID, Date, Status -->
+      <div class="dh-order-info">
+        <div class="dh-order-first-row">
+          <div class="dh-order-meta">
+            <div class="dh-order-id">ID: {{ order.orderId }}</div>
+            <div class="dh-order-type-badge">{{ order.orderTypeDisplay }}</div>
+          </div>
+          <div class="dh-order-status" [ngClass]="getStatusClass(order.status)">
+            {{ order.statusDisplay }}
+          </div>
+        </div>
+        <div class="dh-order-datetime">{{ order.date }}, {{ order.time }}</div>
+      </div>
+
+      <!-- Order Timeline -->
+      <div class="dh-order-timeline-section">
+        <h4 class="dh-timeline-title">Order Timeline</h4>
+        <div class="dh-timeline-steps">
+          <div 
+            *ngFor="let step of getTimelineSteps(order.orderType)" 
+            class="dh-timeline-step"
+            [class.completed]="isTimelineStepCompleted(order, step.status)">
+            <div class="dh-step-icon">
+              <span class="material-icons">{{ step.icon }}</span>
+            </div>
+            <div class="dh-step-label">{{ step.label }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETA and Notes -->
+      <div class="dh-order-extra-info">
+        <div class="dh-eta-section" *ngIf="order.status !== 'delivered' && order.status !== 'completed' && order.status !== 'cancelled'">
+          <span class="dh-label">ETA:</span>
+          <span class="dh-value">{{ getEstimatedTimeMinutes(order) }} mins</span>
+        </div>
+        <div class="dh-notes-section" *ngIf="order.customerNotes">
+          <span class="dh-label">Notes:</span>
+          <span class="dh-value">{{ order.customerNotes }}</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="dh-order-actions">
+        <button class="dh-btn-outline" (click)="trackOrder(order.orderId)">
+          View Details
+        </button>
+        <!-- <button class="dh-btn-filled" (click)="reorderOrder(order)">
+          Reorder
+        </button> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination controls -->
+  <div class="dh-pagination" *ngIf="orders.length > pageSize">
+    <button 
+      class="dh-pagination-btn" 
+      (click)="previousPage()" 
+      [disabled]="currentPage === 1"
+      title="Previous">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    
+    <div class="dh-pagination-pages">
+      <button 
+        *ngFor="let page of pageNumbers" 
+        class="dh-pagination-page" 
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+    </div>
+    
+    <button 
+      class="dh-pagination-btn" 
+      (click)="nextPage()" 
+      [disabled]="currentPage === totalPages"
+      title="Next">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Empty state if no orders -->
+  <div class="dh-empty-state" *ngIf="orders.length === 0">
+    <div class="dh-empty-illustration">
+      <svg width="240" height="200" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Tablet with charts -->
+        <rect x="60" y="40" width="120" height="80" rx="8" fill="#5DD5D9" stroke="#4ECDC4" stroke-width="2"/>
+        <rect x="68" y="48" width="104" height="64" rx="4" fill="#ffffff"/>
+        
+        <!-- Chart bars -->
+        <rect x="75" y="85" width="6" height="15" fill="#FF6B35"/>
+        <rect x="85" y="75" width="6" height="25" fill="#FF6B35"/>
+        <rect x="95" y="80" width="6" height="20" fill="#FF6B35"/>
+        <rect x="105" y="70" width="6" height="30" fill="#FF6B35"/>
+        
+        <rect x="120" y="88" width="6" height="12" fill="#FFE66D"/>
+        <rect x="130" y="82" width="6" height="18" fill="#FFE66D"/>
+        <rect x="140" y="85" width="6" height="15" fill="#FFE66D"/>
+        <rect x="150" y="78" width="6" height="22" fill="#FFE66D"/>
+        
+        <!-- Shopping cart -->
+        <g transform="translate(160, 120)">
+          <rect x="0" y="12" width="40" height="25" rx="4" fill="#FF6B35" stroke="#E55A2B" stroke-width="1.5"/>
+          <circle cx="10" cy="45" r="4" fill="#333"/>
+          <circle cx="30" cy="45" r="4" fill="#333"/>
+          <rect x="8" y="16" width="24" height="16" rx="2" fill="#FFE66D"/>
+          <!-- Cart handle -->
+          <path d="M-5 12 L-5 8 Q-5 6 -3 6 L2 6" stroke="#FF6B35" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Cart items -->
+          <rect x="10" y="18" width="6" height="4" fill="#FF6B35"/>
+          <rect x="18" y="18" width="6" height="4" fill="#5DD5D9"/>
+          <rect x="26" y="18" width="4" height="4" fill="#FFE66D"/>
+        </g>
+        
+        <!-- Floating elements -->
+        <circle cx="40" cy="60" r="3" fill="#FFE66D" opacity="0.7"/>
+        <circle cx="210" cy="45" r="2" fill="#FF6B35" opacity="0.7"/>
+        <circle cx="35" cy="140" r="2" fill="#5DD5D9" opacity="0.7"/>
+        <circle cx="200" cy="160" r="3" fill="#FFE66D" opacity="0.7"/>
+        
+        <!-- Additional small decorative elements -->
+        <rect x="25" y="100" width="4" height="4" fill="#5DD5D9" opacity="0.6" transform="rotate(45 27 102)"/>
+        <rect x="190" y="80" width="3" height="3" fill="#FF6B35" opacity="0.6" transform="rotate(45 191.5 81.5)"/>
+        <rect x="45" y="170" width="3" height="3" fill="#FFE66D" opacity="0.6" transform="rotate(45 46.5 171.5)"/>
+      </svg>
+    </div>
+    
+    <div class="dh-empty-content">
+      <h3>No Order History Yet!</h3>
+      <p>It looks like your order history is empty.<br>Place your order now to start building<br>your history!</p>
+      <button class="dh-explore-btn" (click)="exploreMenu()">Explore Our Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Order Dialog -->
+<app-cancel-order-dialog
+  [isOpen]="showCancelDialog"
+  [orderId]="selectedOrderId"
+  [timeRemaining]="selectedOrderRemainingTime"
+  [isProcessing]="isProcessingCancel"
+  (closeEvent)="onCancelDialogClose()"
+  (confirmEvent)="onConfirmCancel()">
+</app-cancel-order-dialog>
