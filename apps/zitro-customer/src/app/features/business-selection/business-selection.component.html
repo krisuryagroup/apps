@@ -1,0 +1,175 @@
+<div class="business-selection-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Setting up your experience...</p>
+    </div>
+  </div>
+
+  <!-- Location Permission Request -->
+  <div *ngIf="locationPermissionStatus !== 'granted' && !selectedType && !isLoading && isLocationInitialized" class="location-permission-banner">
+    <div class="permission-content">
+      <span class="icon">📍</span>
+      <div class="permission-text">
+        <h4>Location Access Needed</h4>
+        <p>Allow location access to see businesses in your area</p>
+      </div>
+      <button 
+        class="permission-btn" 
+        (click)="requestLocationPermission()"
+        [disabled]="locationPermissionStatus === 'checking'"
+      >
+        {{ locationPermissionStatus === 'checking' ? 'Checking...' : 'Enable Location' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Location Success Message -->
+  <div *ngIf="locationPermissionStatus === 'granted' && userPincode && !selectedType && !isLoading" class="location-success">
+    <span class="success-icon">✅</span>
+    <span>Location enabled! Showing businesses in your area.</span>
+  </div>
+
+  <!-- Location Error Message -->
+  <div *ngIf="locationError && locationPermissionStatus !== 'checking'" class="location-error">
+    <span class="warning-icon">⚠️</span>
+    <span>{{ locationError }}</span>
+  </div>
+
+  <!-- User Pincode Info -->
+  <div *ngIf="userPincode && !selectedType" class="pincode-info">
+    <span class="location-icon">📍</span>
+    <span>Showing businesses in pincode: {{ userPincode }}</span>
+  </div>
+
+  <!-- No Businesses Found in Area -->
+  <div *ngIf="showManualPincodeEntry && !selectedType && !isLoading" class="no-businesses-banner">
+    <div class="no-businesses-content">
+      <span class="icon">🏪</span>
+      <div class="no-businesses-text">
+        <h4>No businesses in your area</h4>
+        <p>We don't deliver to pincode {{ userPincode }} yet. Enter a pincode where we deliver:</p>
+        <div class="available-pincodes">
+          <small>Available areas: {{ getAvailablePincodes().join(', ') }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Pincode Entry -->
+  <div *ngIf="showManualPincodeEntry && !selectedType && !isLoading" class="manual-pincode-entry">
+    <div class="pincode-input-container">
+      <input 
+        type="text" 
+        class="pincode-input"
+        [(ngModel)]="manualPincode"
+        placeholder="Enter pincode (e.g., 209722)"
+        maxlength="6"
+      >
+      <button 
+        class="pincode-submit-btn" 
+        (click)="submitManualPincode()"
+        [disabled]="!manualPincode || manualPincode.length < 5"
+      >
+        Check Area
+      </button>
+    </div>
+  </div>
+
+  <!-- Business Type Selection -->
+  <div *ngIf="!selectedType && !isLoading" class="type-selection">
+    <div class="header">
+      <h1>Welcome!</h1>
+      <p>What are you looking for today?</p>
+    </div>
+
+    <div class="options-container">
+      <div 
+        *ngFor="let option of businessOptions; let i = index" 
+        class="business-option"
+        [style.background-color]="option.color"
+        (click)="selectBusinessType(option.type)"
+      >
+        <div class="option-content">
+          <div class="icon" style="position: relative; min-height: 80px;">
+            <app-loader [isLoading]="imageLoading[i]" [size]="50" type="spinner" color="#ff6b35"></app-loader>
+            <img 
+              [cachedSrc]="option.icon" 
+              [alt]="option.title" 
+              [fallbackSrc]="'assets/business-types/default.png'"
+              (load)="onImageLoad(i)"
+              (error)="onImageError(i)" />
+          </div>
+          <h3>{{ option.title }}</h3>
+          <p>{{ option.subtitle }}</p>
+          <div class="available-count">
+            {{ option.businesses.length }} {{ option.businesses.length === 1 ? 'option' : 'options' }} available
+          </div>
+        </div>
+        <div class="arrow">→</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Selection -->
+  <div *ngIf="selectedType && !isLoading" class="business-selection">
+    <div class="header">
+      <button class="back-btn" (click)="goBack()">
+        <span class="back-icon">←</span>
+        Back
+      </button>
+      <h1>Choose {{ selectedType === 'restaurant' ? 'Restaurant' : 'Store' }}</h1>
+      <p>Select from available {{ selectedType === 'restaurant' ? 'restaurants' : 'stores' }} near you</p>
+    </div>
+
+    <div class="business-list">
+      <div 
+        *ngFor="let business of availableBusinesses; let i = index" 
+        class="business-card"
+        [class.nearest]="i === 0"
+      >
+        <div class="business-info" (click)="selectBusiness(business)">
+          <div class="business-header">
+            <h3>{{ business.name }}</h3>
+            <div *ngIf="i === 0" class="nearest-badge">Nearest</div>
+          </div>
+          <p class="business-description">{{ business['description'] }}</p>
+          <div class="business-details">
+            <div class="detail">
+              <span class="icon">📍</span>
+              <span>{{ business['location'] }}</span>
+            </div>
+            <div class="detail">
+              <span class="icon">⭐</span>
+              <span>{{ business['rating'] }}</span>
+            </div>
+            <div class="detail">
+              <span class="icon">🕒</span>
+              <span>{{ business['deliveryTime'] }}</span>
+            </div>
+            <div class="detail">
+              <span class="icon">💰</span>
+              <span>Min ₹{{ business['minOrderAmount'] }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Default Business Actions -->
+        <div class="business-actions">
+          <button 
+            class="default-business-btn" 
+            (click)="setAsDefaultAndSelect(business)"
+            title="Set as default and continue"
+          >
+            <span class="star-icon">⭐</span>
+            Set as Default
+          </button>
+          <div class="select-arrow" (click)="selectBusiness(business)">
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

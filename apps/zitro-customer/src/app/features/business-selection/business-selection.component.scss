@@ -1,0 +1,630 @@
+@use 'theme' as *;
+
+.business-selection-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+// Debug info styles (remove in production)
+.debug-info {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: $secondary-color;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  z-index: 1000;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+// Location permission banner
+.location-permission-banner {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.permission-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .icon {
+    font-size: 24px;
+  }
+  
+  .permission-text {
+    flex: 1;
+    
+    h4 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: $text-secondary-color;
+    }
+  }
+  
+  .permission-btn {
+    background: #667eea;
+    color: $secondary-color;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    
+    &:hover:not(:disabled) {
+      background: #5a6fd8;
+    }
+    
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Location success message
+.location-success {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2e7d32;
+  font-size: 14px;
+  animation: fadeInUp 0.5s ease-out;
+  
+  .success-icon {
+    font-size: 16px;
+  }
+}
+
+// Location error message
+.location-error {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #856404;
+  font-size: 14px;
+  
+  .warning-icon {
+    font-size: 16px;
+  }
+}
+
+// Pincode info
+.pincode-info {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: $secondary-color;
+  font-size: 14px;
+  
+  .location-icon {
+    font-size: 16px;
+  }
+}
+
+// No businesses banner
+.no-businesses-banner {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.no-businesses-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  
+  .icon {
+    font-size: 24px;
+    margin-top: 4px;
+  }
+  
+  .no-businesses-text {
+    flex: 1;
+    
+    h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #856404;
+    }
+    
+    p {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #856404;
+      line-height: 1.4;
+    }
+    
+    .available-pincodes {
+      font-size: 12px;
+      color: #6c5700;
+      background: rgba(255, 193, 7, 0.2);
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+  }
+}
+
+// Manual pincode entry
+.manual-pincode-entry {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+.pincode-input-container {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pincode-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  
+  &:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  }
+  
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.pincode-submit-btn {
+  background: #667eea;
+  color: $secondary-color;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  
+  &:hover:not(:disabled) {
+    background: #5a6fd8;
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  text-align: center;
+  color: $secondary-color;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid $secondary-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: $secondary-color;
+  
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+  }
+}
+
+// Type Selection Styles
+.type-selection {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.business-option {
+  background: $secondary-color;
+  border-radius: 20px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.option-content {
+  flex: 1;
+  color: $secondary-color;
+  
+  .icon {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    
+    img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    opacity: 0.9;
+  }
+  
+  .available-count {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    font-weight: 500;
+  }
+}
+
+.arrow {
+  font-size: 1.5rem;
+  color: $secondary-color;
+  font-weight: bold;
+}
+
+// Business Selection Styles
+.business-selection {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: $secondary-color;
+  padding: 12px 20px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-bottom: 20px;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .back-icon {
+    font-size: 1.2rem;
+  }
+}
+
+.business-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.business-card {
+  background: $secondary-color;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+  
+  &.nearest {
+    border: 2px solid #4ecdc4;
+    background: linear-gradient(135deg, $secondary-color 0%, #f8fff9 100%);
+  }
+}
+
+.business-info {
+  flex: 1;
+  cursor: pointer;
+  
+  .business-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+  }
+  
+  .nearest-badge {
+    background: #4ecdc4;
+    color: $secondary-color;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .business-description {
+    color: $text-secondary-color;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  
+  .business-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .detail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #555;
+    
+    .icon {
+      font-size: 1rem;
+    }
+  }
+}
+
+.business-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
+}
+
+.default-business-btn {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8a5c 100%);
+  color: $secondary-color;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  
+  .star-icon {
+    font-size: 14px;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #e55a2b 0%, #e67a4a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.select-arrow {
+  color: #999;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  
+  &:hover {
+    color: #667eea;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .business-selection-container {
+    padding: 16px;
+  }
+  
+  .header {
+    margin-bottom: 30px;
+    
+    h1 {
+      font-size: 2rem;
+    }
+    
+    p {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .business-option {
+    padding: 24px;
+    
+    .option-content {
+      .icon {
+        img {
+          width: 60px;
+          height: 60px;
+        }
+      }
+      
+      h3 {
+        font-size: 1.3rem;
+      }
+    }
+  }
+  
+  .business-card {
+    padding: 16px;
+    
+    .business-info {
+      .business-header h3 {
+        font-size: 1.2rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .business-selection-container {
+    padding: 12px;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .business-option {
+    padding: 20px;
+    
+    .option-content {
+      .icon {
+        img {
+          width: 50px;
+          height: 50px;
+        }
+      }
+      
+      h3 {
+        font-size: 1.2rem;
+      }
+    }
+  }
+}
