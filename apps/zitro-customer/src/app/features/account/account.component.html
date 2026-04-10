@@ -4,10 +4,10 @@
       <div class="dh-profile-image-container" (click)="onProfileImageClick()" style="position: relative; min-height: 120px;">
         <app-loader [isLoading]="isImageLoading" [size]="50" type="spinner" color="#ff6b35"></app-loader>
         <img 
-          [cachedSrc]="profileImage || '/assets/banners/banner1.jpg'" 
+          [cachedSrc]="profileImage || '/assets/banners/banner1.png'" 
           alt="Profile" 
           class="dh-profile-image" 
-          [fallbackSrc]="'/assets/banners/banner1.jpg'" 
+          [fallbackSrc]="'/assets/banners/banner1.png'" 
           (load)="onImageLoad()"
           (error)="onImageError()" />
         <div class="dh-camera-overlay">

@@ -3,10 +3,10 @@
     <div class="dh-sidebar-avatar-container">
       <div *ngIf="!isGuest">
         <img 
-          [src]="userPhotoURL || 'assets/banners/banner1.jpg'" 
+          [src]="userPhotoURL || 'assets/banners/banner1.png'" 
           alt="User" 
           class="dh-sidebar-avatar"
-          (error)="$event.target.src='assets/banners/banner1.jpg'" />
+          (error)="$event.target.src='assets/banners/banner1.png'" />
       </div>
       <div *ngIf="isGuest">
         <span class="material-icons dh-guest-icon">person_outline</span>

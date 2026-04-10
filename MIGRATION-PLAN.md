@@ -88,7 +88,7 @@ Within the same lib, relative imports are fine.
 | MT015 | Copy features: addresses (manage-addresses + add-address) | [x] | MT009 |
 | MT016 | Copy features: orders (order-history + order-confirmation + order-tracking) | [x] | MT009 |
 | MT017 | Copy features: account + contact + cache-management + game-2048 | [x] | MT009 |
-| MT018 | Final verification — app runs end-to-end | [ ] | MT017 |
+| MT018 | Final verification — app runs end-to-end | [x] | MT017 |
 
 ---
 
@@ -771,7 +771,7 @@ zitro-app/src/app/games/                           ← game-2048 lives here
 
 ### MT018 — Final Verification
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT018-verification`
 **Depends on:** MT017
 
@@ -797,6 +797,10 @@ zitro-app/src/app/games/                           ← game-2048 lives here
 nx build zitro-customer --configuration=production
 # Bundle should be similar size to zitro-app build
 ```
+
+or 
+For powersheel
+npx nx build zitro-customer --configuration=production 
 
 **Android verification:**
 ```bash
