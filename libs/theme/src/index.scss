@@ -1,0 +1,4 @@
+// @zitro/theme — central entry point
+// Import this in your app's styles.scss: @use '@zitro/theme' as *
+@forward 'theme';
+@forward 'breakpoints';

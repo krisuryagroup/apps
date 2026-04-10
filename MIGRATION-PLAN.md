@@ -75,7 +75,7 @@ Within the same lib, relative imports are fine.
 | MT002 | Create library scaffolds | [x] | MT001 |
 | MT003 | Copy `@zitro/models` | [x] | MT002 |
 | MT004 | Copy `@zitro/utils` | [x] | MT002 |
-| MT005 | Copy `@zitro/theme` | [ ] | MT002 |
+| MT005 | Copy `@zitro/theme` | [x] | MT002 |
 | MT006 | Copy `@zitro/ui` (shared components + directives) | [ ] | MT003 |
 | MT007 | Copy `@zitro/services` | [ ] | MT003, MT004 |
 | MT008 | Bootstrap `apps/zitro-customer` shell | [ ] | MT007 |
@@ -291,7 +291,7 @@ export * from './validators.util';
 
 ### MT005 — Copy `@zitro/theme`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT005-copy-theme`
 **Depends on:** MT002
 
