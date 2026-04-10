@@ -74,7 +74,7 @@ Within the same lib, relative imports are fine.
 | MT001 | Bootstrap Nx workspace | [x] | — |
 | MT002 | Create library scaffolds | [x] | MT001 |
 | MT003 | Copy `@zitro/models` | [x] | MT002 |
-| MT004 | Copy `@zitro/utils` | [ ] | MT002 |
+| MT004 | Copy `@zitro/utils` | [x] | MT002 |
 | MT005 | Copy `@zitro/theme` | [ ] | MT002 |
 | MT006 | Copy `@zitro/ui` (shared components + directives) | [ ] | MT003 |
 | MT007 | Copy `@zitro/services` | [ ] | MT003, MT004 |
@@ -249,7 +249,7 @@ export * from './search-term.model';
 
 ### MT004 — Copy `@zitro/utils`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/MT004-copy-utils`
 **Depends on:** MT002
 
