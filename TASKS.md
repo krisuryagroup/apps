@@ -37,9 +37,9 @@
 | **Phase 3 — Test Data** |
 | T006 | Implement `@zitro/test-data` | [ ] | T004, T005 |
 | **Phase 4 — Theme** |
-| T007 | Evolve `@zitro/theme` — CSS custom properties + ThemeService (SCSS already copied by MT005) | [ ] | MT005 |
+| T007 | Evolve `@zitro/theme` — CSS custom properties + ThemeService (SCSS already copied by MT005) | [x] | MT005 |
 | **Phase 5 — i18n** |
-| T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [ ] | MT018 |
+| T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [x] | MT018 |
 | **Phase 6 — Services** |
 | T009 | HTTP interceptors in `@zitro/services` | [ ] | T004, T006 |
 | T010 | API service classes in `@zitro/services` | [ ] | T009 |
@@ -541,7 +541,7 @@ export const CatalogBuilders = {
 
 ### T007 — Implement `@zitro/theme`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T007-theme-lib`
 **Depends on:** T003
 
@@ -624,7 +624,7 @@ libs/theme/src/index.ts
 
 ### T008 — Implement `@zitro/i18n`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T008-i18n-lib`
 **Depends on:** T003
 
