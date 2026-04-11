@@ -1,0 +1,15 @@
+{
+  "name": "@zitro/i18n",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "peerDependencies": {
+    "@angular/core": ">=19.0.0",
+    "@angular/common": ">=19.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}
