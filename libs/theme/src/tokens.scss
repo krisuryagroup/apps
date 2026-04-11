@@ -1,0 +1,72 @@
+// @zitro/theme — CSS custom property tokens
+// Import in any Angular app: @use '@zitro/theme/tokens' as *;
+// Or via the barrel: @use '@zitro/theme' as *;
+
+:root {
+  // Colors — derived from $primary-color in theme.scss
+  --zitro-primary: #C73E3A;
+  --zitro-primary-dark: #a8302d;
+  --zitro-accent: #ff5252;
+  --zitro-surface: #FFFFFF;
+  --zitro-surface-variant: #F5F5F5;
+  --zitro-on-surface: #212121;
+  --zitro-on-surface-variant: #757575;
+  --zitro-error: #B00020;
+  --zitro-success: #4CAF50;
+  --zitro-background: #f5f7fa;
+
+  // Spacing
+  --zitro-spacing-xs: 4px;
+  --zitro-spacing-sm: 8px;
+  --zitro-spacing-md: 16px;
+  --zitro-spacing-lg: 24px;
+  --zitro-spacing-xl: 32px;
+
+  // Typography — derived from $font-family in theme.scss
+  --zitro-font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  --zitro-font-size-sm: 12px;
+  --zitro-font-size-md: 14px;
+  --zitro-font-size-lg: 16px;
+  --zitro-font-size-xl: 20px;
+
+  // Border radius — derived from $border-radius in theme.scss
+  --zitro-radius-sm: 4px;
+  --zitro-radius-md: 8px;
+  --zitro-radius-lg: 16px;
+  --zitro-radius-pill: 999px;
+
+  // Shadows — derived from $card-shadow in theme.scss
+  --zitro-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --zitro-shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+// Dark theme overrides
+[data-theme="dark"] {
+  --zitro-surface: #121212;
+  --zitro-surface-variant: #1E1E1E;
+  --zitro-on-surface: #FFFFFF;
+  --zitro-on-surface-variant: #BDBDBD;
+  --zitro-background: #0A0A0A;
+}
+
+// Nature theme overrides
+[data-theme="nature"] {
+  --zitro-primary: #2E7D32;
+  --zitro-primary-dark: #1B5E20;
+  --zitro-accent: #76FF03;
+  --zitro-surface: #F9FBE7;
+  --zitro-surface-variant: #F1F8E9;
+  --zitro-on-surface: #1B5E20;
+  --zitro-on-surface-variant: #33691E;
+}
+
+// Ocean theme overrides
+[data-theme="ocean"] {
+  --zitro-primary: #0277BD;
+  --zitro-primary-dark: #01579B;
+  --zitro-accent: #00B0FF;
+  --zitro-surface: #E3F2FD;
+  --zitro-surface-variant: #BBDEFB;
+  --zitro-on-surface: #01579B;
+  --zitro-on-surface-variant: #0277BD;
+}

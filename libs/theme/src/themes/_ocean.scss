@@ -1,0 +1,15 @@
+// @zitro/theme — Ocean theme
+// Applied when [data-theme="ocean"] is set on document.documentElement
+
+[data-theme="ocean"] {
+  --zitro-primary: #0277BD;
+  --zitro-primary-dark: #01579B;
+  --zitro-accent: #00B0FF;
+  --zitro-surface: #E3F2FD;
+  --zitro-surface-variant: #BBDEFB;
+  --zitro-on-surface: #01579B;
+  --zitro-on-surface-variant: #0277BD;
+  --zitro-error: #B00020;
+  --zitro-success: #4CAF50;
+  --zitro-background: #E1F5FE;
+}

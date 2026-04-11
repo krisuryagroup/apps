@@ -1,0 +1,15 @@
+// @zitro/theme — Nature theme
+// Applied when [data-theme="nature"] is set on document.documentElement
+
+[data-theme="nature"] {
+  --zitro-primary: #2E7D32;
+  --zitro-primary-dark: #1B5E20;
+  --zitro-accent: #76FF03;
+  --zitro-surface: #F9FBE7;
+  --zitro-surface-variant: #F1F8E9;
+  --zitro-on-surface: #1B5E20;
+  --zitro-on-surface-variant: #33691E;
+  --zitro-error: #B00020;
+  --zitro-success: #2E7D32;
+  --zitro-background: #E8F5E9;
+}

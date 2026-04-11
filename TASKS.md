@@ -37,7 +37,7 @@
 | **Phase 3 — Test Data** |
 | T006 | Implement `@zitro/test-data` | [ ] | T004, T005 |
 | **Phase 4 — Theme** |
-| T007 | Evolve `@zitro/theme` — CSS custom properties + ThemeService (SCSS already copied by MT005) | [ ] | MT005 |
+| T007 | Evolve `@zitro/theme` — CSS custom properties + ThemeService (SCSS already copied by MT005) | [x] | MT005 |
 | **Phase 5 — i18n** |
 | T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [ ] | MT018 |
 | **Phase 6 — Services** |
@@ -541,7 +541,7 @@ export const CatalogBuilders = {
 
 ### T007 — Implement `@zitro/theme`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T007-theme-lib`
 **Depends on:** T003
 
@@ -614,11 +614,11 @@ libs/theme/src/index.ts
 - Return `Observable<ThemeName>` of current theme
 
 **Acceptance Criteria:**
-- [ ] `nx test theme` — all pass
-- [ ] `tokens.scss` imports in any Angular app without error
-- [ ] `ThemeService.setTheme('dark')` correctly sets `[data-theme='dark']` on root element
-- [ ] Persists across page reload (localStorage)
-- [ ] Exported `theme.service.spec.ts` tests cover: init, set, persist, restore
+- [x] `nx test theme` — all pass
+- [x] `tokens.scss` imports in any Angular app without error
+- [x] `ThemeService.setTheme('dark')` correctly sets `[data-theme='dark']` on root element
+- [x] Persists across page reload (localStorage)
+- [x] Exported `theme.service.spec.ts` tests cover: init, set, persist, restore
 
 ---
 

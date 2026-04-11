@@ -2,3 +2,8 @@
 // Import this in your app's styles.scss: @use '@zitro/theme' as *
 @forward 'theme';
 @forward 'breakpoints';
+@forward 'tokens';
+@forward 'themes/default';
+@forward 'themes/dark';
+@forward 'themes/nature';
+@forward 'themes/ocean';

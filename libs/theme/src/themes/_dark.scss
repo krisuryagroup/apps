@@ -1,0 +1,15 @@
+// @zitro/theme — Dark theme
+// Applied when [data-theme="dark"] is set on document.documentElement
+
+[data-theme="dark"] {
+  --zitro-primary: #EF5350;
+  --zitro-primary-dark: #C73E3A;
+  --zitro-accent: #FF5252;
+  --zitro-surface: #121212;
+  --zitro-surface-variant: #1E1E1E;
+  --zitro-on-surface: #FFFFFF;
+  --zitro-on-surface-variant: #BDBDBD;
+  --zitro-error: #CF6679;
+  --zitro-success: #81C784;
+  --zitro-background: #0A0A0A;
+}
