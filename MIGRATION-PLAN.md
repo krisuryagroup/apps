@@ -801,6 +801,7 @@ nx build zitro-customer --configuration=production
 or 
 For powersheel
 npx nx build zitro-customer --configuration=production 
+npx nx serve zitro-customer --port=4201
 
 **Android verification:**
 ```bash
@@ -825,6 +826,6 @@ Once MT018 is done, `apps/zitro-customer` is a working copy of the live app in t
 Future tasks (from `TASKS.md`) then incrementally improve the migrated app:
 - **T007** — replace hardcoded SCSS variables with `@zitro/theme` CSS custom properties
 - **T008** — extract hardcoded strings into `@zitro/i18n`
-- **T009/T010** — add HTTP interceptors + .NET API services (alongside existing Firebase services)
+- **T003** — update models now: rename `imageUrl`, flatten `OrderCharges`, add new models (`User`, `BusinessConfig`, `NearbyBusiness`, etc.)
+- **T009/T010** — add HTTP interceptors + .NET API service classes that replace Firebase data services directly (no dual-mode, no FeatureFlagService for API switching)
 - **Component rewrites** — add config objects, signal inputs, `data-testid` attributes
-- **Field renames** — consolidate `image`/`imageURL`, flatten `OrderCharges` (when API is ready)

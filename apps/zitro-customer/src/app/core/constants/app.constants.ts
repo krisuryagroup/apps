@@ -551,6 +551,21 @@ export const FILTER_PREFERENCES = APP_CONSTANTS.FILTER_PREFERENCES;
 export const COMMON_CONSTANTS = APP_CONSTANTS.COMMON_CONSTANTS;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Location Gate — HRD-001
+// Key used by LocationGuard and LocationSelectionComponent to store the user's
+// chosen location (lat, lng, label, address) in localStorage.
+// ─────────────────────────────────────────────────────────────────────────────
+export const LOCATION_STORAGE_KEY = 'zitro_user_location';
+
+/** Shape stored under LOCATION_STORAGE_KEY */
+export interface UserLocation {
+  lat: number;
+  lng: number;
+  label: string;   // e.g. "Home", "Current Location"
+  address: string; // display address string
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Delivery Pincode Restriction Configuration
 // Set enabled: true and add allowed pincodes to restrict delivery to specific areas.
 // When enabled: false, no pincode check is performed and all areas are accepted.

@@ -18,9 +18,10 @@ The live customer app is at `E:/Github/krisuryagroup/zitro-app/` — **do NOT to
 |------|-------------|
 | **`CLAUDE.md`** (this file) | Always — before any task |
 | **`ROADMAP.md`** | Before starting any task — understand where we are in the sequence |
-| **`MIGRATION-PLAN.md`** | For `MT` tasks — copying `zitro-app` into this monorepo |
+| **`MIGRATION-PLAN.md`** | For `MT` tasks — copying `zitro-app` into this monorepo (Phase 1 complete) |
 | **`TASKS.md`** | For `T` tasks — evolving and building new features after migration |
 | **`ZITRO-APPS-ARCHITECTURE.md`** | For deep implementation details — models, patterns, API specs, component specs |
+| **`apps/zitro-customer/HOME-REDESIGN-TASKS.md`** | For HRD tasks — home page redesign (location gate, business tabs, tags, theming) |
 
 ---
 
@@ -34,9 +35,9 @@ App runs identically. No logic           Add patterns, .NET API, tests.         
 changes. Firebase everywhere.            Gradual, one task at a time.
 ```
 
-**Current starting point:** Phase 1 has not begun. `apps/` is empty except for planning documents.
+**Current status:** Phase 1 complete — MT001–MT018 all done. `apps/zitro-customer` is running. Phase 2 (T tasks) is active.
 
-**T001, T002, T003, T005 in TASKS.md are superseded** — migration handles them. Do not run those tasks separately.
+**T001, T002, T005 in TASKS.md are superseded** — migration handled them. T003 is active (models update for API contract). Do not re-run superseded tasks.
 
 ---
 
@@ -63,7 +64,7 @@ changes. Firebase everywhere.            Gradual, one task at a time.
 | utils | `@zitro/utils` | Pure TS | Validators, formatters, geo helpers |
 | theme | `@zitro/theme` | Angular | CSS custom property tokens, ThemeService |
 | i18n | `@zitro/i18n` | Angular | I18nService, I18nPipe, EN default strings |
-| services | `@zitro/services` | Angular | Firebase services (from migration) + .NET API services (added in T010) |
+| services | `@zitro/services` | Angular | Firebase Auth/Storage/FCM (permanent) + .NET API services replacing Firebase data services (T010) |
 | ui | `@zitro/ui` | Angular | All shared components, directives, pipes |
 | test-data | `@zitro/test-data` | Pure TS | JSON fixtures + typed builders + MSW handlers (test-only) |
 | jobs-shared | `@zitro/jobs-shared` | Pure TS | FCM helpers + internal API client (jobs-only) |
@@ -88,6 +89,45 @@ apps/zitro-jobs    → @zitro/models, @zitro/jobs-shared
 ```
 
 **Violations are build errors.** Never bypass Nx boundary checks.
+
+---
+
+## Key Files — Always Check Before Changing
+
+### Workspace-level
+| File | Purpose |
+|------|---------|
+| `nx.json` | Nx version (22.6.4), target caching, plugin config (jest, eslint, playwright) |
+| `tsconfig.base.json` | Path aliases for all `@zitro/*` libs — add here when scaffolding a new lib |
+| `package.json` | All dependencies — never upgrade versions without testing |
+| `eslint.config.mjs` | Workspace lint rules + Nx boundary enforcement |
+
+### zitro-customer app
+| File | Purpose |
+|------|---------|
+| `apps/zitro-customer/project.json` | Build targets, budgets (2 MB warn / 5 MB error initial), serve config |
+| `apps/zitro-customer/capacitor.config.ts` | Android app ID (`com.krisurya.zitro`), `webDir` pointing to dist |
+| `apps/zitro-customer/src/main.ts` | App bootstrap entry point |
+| `apps/zitro-customer/src/app/app.config.ts` | Angular providers: Firebase, HTTP, initializers |
+| `apps/zitro-customer/src/app/app.routes.ts` | All routes + guards |
+| `apps/zitro-customer/src/environments/environment.ts` | Dev config — `apiUrl: 'http://0.0.0.0:8080'` |
+| `apps/zitro-customer/src/environments/environment.prod.ts` | Prod config — `apiUrl: 'https://api.zitroapp.in'` |
+| `apps/zitro-customer/src/styles.scss` | Global styles + theme import |
+| `apps/zitro-customer/HOME-REDESIGN-TASKS.md` | HRD task tracking (location gate, tabs, tags, theming) |
+| `apps/zitro-customer-e2e/playwright.config.ts` | E2E test runner config |
+
+### Shared libraries (each has the same structure)
+| File per lib | Purpose |
+|------|---------|
+| `libs/<name>/project.json` | Nx project definition + tags (scope, type, platform) |
+| `libs/<name>/src/index.ts` | Public barrel export — only things exported here are importable via `@zitro/<name>` |
+| `libs/<name>/tsconfig.lib.json` | Library TS config |
+
+### Backend cross-reference
+| File | Purpose |
+|------|---------|
+| `E:/Github/krisuryagroup/zitro-api/CLAUDE.md` | Backend context — read before touching API contracts |
+| `E:/Github/krisuryagroup/zitro-api/ZITRO-API.postman_collection.json` | All API endpoints with payloads — source of truth for DTOs in `@zitro/mappers` |
 
 ---
 
@@ -159,18 +199,35 @@ getProducts(businessId: string): Observable<Product[]> {
 
 ---
 
-## The .NET API Transition Strategy (Phase 2)
+## The .NET API Strategy (Phase 2) — API-First
 
-After migration, `@zitro/services` has all Firebase services. The .NET API services are added alongside in T010, not as replacements. Feature pages switch over one at a time, controlled by `FeatureFlagService`:
+**Goal:** Replace Firebase data services with .NET API services directly. No dual-mode, no FeatureFlagService for API switching.
 
-```typescript
-products$ = this.flags.isEnabled('use_dotnet_catalog')
-  ? this.catalogApi.getProducts(this.businessId)   // .NET API (T010)
-  : this.productsService.getProducts(this.businessId); // Firebase (migration)
-```
+### What stays on Firebase permanently
+| Service | Reason |
+|---------|--------|
+| Firebase Phone Auth + OTP | No replacement — `firebase-auth.service.ts`, `firebase-otp.service.ts` |
+| Firebase Storage | Product/user image upload — `firebase-storage.service.ts` |
+| FCM push notifications | `fcm.service.ts`, `fcm-token.service.ts`, `device-token.service.ts` |
+| Firebase Analytics | Write-only, low risk — `analytics.service.ts` |
 
-Switch order (lowest to highest risk): catalog → coupons → addresses → orders.
-Firebase Auth is never replaced — it stays forever.
+### What moves to .NET API (T010)
+| Old Firebase service | New API service | Endpoint |
+|----------------------|-----------------|---------|
+| `categories.service.ts` | `catalog-api.service.ts` | `GET /api/categories?businessSlug=X` |
+| `products.service.ts` | `catalog-api.service.ts` | `GET /api/businesses/{slug}/menu` |
+| `order.service.ts` | `order-api.service.ts` | `POST/GET /api/orders` |
+| `user-management.service.ts` | `user-api.service.ts` | `GET/PUT /api/users/profile`, `/api/users/addresses` |
+| `banner.service.ts` | `engagement-api.service.ts` | `GET /api/businesses/{slug}/banners` |
+| `coupon.service.ts` | `coupon-api.service.ts` | `GET /api/coupons` |
+| `pricing.service.ts` | `business-config-api.service.ts` | `GET /api/businesses/{slug}/config` |
+| `app-settings.service.ts` | `business-config-api.service.ts` | `GET /api/businesses/{slug}/config` |
+| `favorites.service.ts` | `favorites-api.service.ts` | `GET/POST/DELETE /api/users/favorites` |
+| `app-version.service.ts` | `engagement-api.service.ts` | `GET /api/app-version` |
+
+Old Firebase service files are **not deleted** until the API replacement is implemented, tested, and the feature page has switched over. Remove them one by one.
+
+**Transition order (lowest to highest risk):** catalog → coupons → banners → addresses → orders.
 
 ---
 
@@ -190,7 +247,7 @@ Firebase Auth is never replaced — it stays forever.
 
 ## Backend API Reference
 
-- **Base URL (dev):** `http://localhost:5000`
+- **Base URL (dev):** `http://0.0.0.0:8080`
 - **Base URL (prod):** configured in environment
 - **Auth:** Firebase JWT in `Authorization: Bearer <token>` header
 - **Business context:** `X-Business-Id: <slug>` header (injected by `BusinessIdInterceptor`)
