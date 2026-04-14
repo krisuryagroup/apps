@@ -5,8 +5,7 @@ export interface OrderItem {
   name: string;
   price: number;
   qty: number;
-  image?: string;
-  imageURL?: string;
+  imageUrl?: string;
   weight?: string;
   description?: string;
   isOfferDisabled?: boolean;
@@ -22,41 +21,16 @@ export interface OrderStatusTimeline {
   note?: string;
 }
 
+// Flat charges returned by .NET API — each field is the final applied value.
+// Legacy Firebase stored nested { calculated, applied, waived } per charge because
+// Cloud Functions updated sub-fields separately. The .NET API computes and returns
+// only the final applied value, making the nested structure unnecessary.
 export interface OrderCharges {
-  // Packaging charges
-  packagingCharges: {
-    calculated: number;  // How much packaging should cost
-    applied: number;     // How much was actually charged
-    waived: number;      // How much was waived off
-  };
-  
-  // Platform fee
-  platformFee: {
-    calculated: number;  // How much platform fee should cost
-    applied: number;     // How much was actually charged
-    waived: number;      // How much was waived off
-  };
-  
-  // GST/Tax
-  gst: {
-    calculated: number;  // How much GST should be (5% typically)
-    applied: number;     // How much GST was actually charged
-    waived: number;      // How much was waived off
-    percentage: number;  // GST percentage (e.g., 5)
-  };
-  
-  // Delivery charge (only for delivery orders)
-  deliveryCharge?: {
-    calculated: number;  // How much delivery should cost
-    applied: number;     // How much was actually charged
-    waived: number;      // How much was waived off
-  };
-  
-  // Coupon discount (if applied)
-  couponDiscount?: {
-    code: string;        // Coupon code used
-    amount: number;      // Discount amount
-  };
+  packagingCharge: number;      // Final packaging charge applied
+  platformFee: number;          // Final platform fee applied
+  gst: number;                  // Final GST applied
+  deliveryCharge?: number;      // Final delivery charge (delivery orders only)
+  couponDiscount?: number;      // Discount amount from applied coupon
 }
 
 export interface Order {

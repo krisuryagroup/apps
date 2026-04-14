@@ -3,18 +3,17 @@ export interface ProductVariation {
   label: string;             // Display label (e.g., "Small", "Medium", "Large")
   price: number;             // Price for this variation
   stock?: number;            // Stock for this variation (optional)
-  image?: string;            // Image specific to this variation (optional)
+  imageUrl?: string;         // Image specific to this variation (optional)
   isEnabled?: boolean;       // If this variation is available for order
   weight?: string;           // Weight or size description (optional)
   isDefault?: boolean;       // If this is the default variation
-  // Add more fields as needed (e.g., dietaryPreferences, isSpicy, etc.)
+  displayOrder?: number;     // Sort order for display
 }
 export interface Product {
   id: string;
   name: string;
   price: number;
-  image?: string;
-  imageURL?: string;
+  imageUrl?: string;         // Single image field — replaces legacy image/imageURL
   weight?: string;
   description?: string;
   category?: string; // Category ID
