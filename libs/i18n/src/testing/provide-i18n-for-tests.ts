@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { EnvironmentProviders, Provider } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { I18nService } from '../i18n.service';
 import { EN_DEFAULTS } from '../defaults/en';
@@ -12,7 +12,7 @@ import { EN_DEFAULTS } from '../defaults/en';
  *   providers: [...provideI18nForTests()],
  * });
  */
-export function provideI18nForTests(): Provider[] {
+export function provideI18nForTests(): (Provider | EnvironmentProviders)[] {
   return [
     provideHttpClient(),
     {

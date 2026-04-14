@@ -1,0 +1,203 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--zitro-surface);
+}
+
+.location-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.5rem 3rem;
+  max-width: 480px;
+  margin: 0 auto;
+
+  // ── Illustration ──────────────────────────────────────────────────────
+  &__illustration {
+    margin-bottom: 1.5rem;
+  }
+
+  &__pin {
+    width: 80px;
+    height: 100px;
+  }
+
+  // ── Heading ───────────────────────────────────────────────────────────
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--zitro-on-surface);
+    text-align: center;
+    margin: 0 0 0.5rem;
+  }
+
+  &__subtitle {
+    font-size: 0.9rem;
+    color: var(--zitro-on-surface-muted);
+    text-align: center;
+    margin: 0 0 2rem;
+    line-height: 1.4;
+  }
+
+  // ── Section ───────────────────────────────────────────────────────────
+  &__section {
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  &__section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--zitro-on-surface-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+  }
+
+  // ── GPS Row ───────────────────────────────────────────────────────────
+  &__gps-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--zitro-surface-alt);
+    border-radius: 0.75rem;
+  }
+
+  &__gps-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  &__gps-label {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--zitro-on-surface);
+  }
+
+  &__enable-btn {
+    padding: 0.4rem 1rem;
+    background: var(--zitro-primary);
+    color: var(--zitro-on-primary);
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--loading {
+      padding: 0.5rem;
+    }
+  }
+
+  &__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: var(--zitro-on-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  &__error {
+    margin: 0.5rem 0 0;
+    font-size: 0.825rem;
+    color: var(--zitro-error, #d32f2f);
+    text-align: left;
+  }
+
+  // ── Saved Addresses ───────────────────────────────────────────────────
+  &__address-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__address-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--zitro-surface-alt);
+    border: 1px solid var(--zitro-border, rgba(0 0 0 / 8%));
+    border-radius: 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+
+    &:active {
+      background: var(--zitro-surface-hover, rgba(0 0 0 / 5%));
+    }
+  }
+
+  &__address-type {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  &__address-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    strong {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--zitro-on-surface);
+    }
+  }
+
+  &__address-text {
+    font-size: 0.8rem;
+    color: var(--zitro-on-surface-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // ── Search Button ─────────────────────────────────────────────────────
+  &__search-row {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  &__search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem;
+    background: transparent;
+    border: 2px solid var(--zitro-primary);
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--zitro-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:active {
+      background: var(--zitro-primary-tint, rgba(var(--zitro-primary-rgb, 255 70 0) / 8%));
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

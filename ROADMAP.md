@@ -50,8 +50,8 @@ See `MIGRATION-PLAN.md` for details of each MT task.
 |--------|----------------|----------------------------|
 | T001 | Bootstrap Nx workspace | **Superseded by MT001** — skip |
 | T002 | Create all lib scaffolds | **Superseded by MT002** — skip (5 libs created; test-data/mappers/jobs-shared still needed in T004/T006/T035) |
-| T003 | Implement `@zitro/models` | **Superseded by MT003** — skip until .NET API contract is finalized, then revisit for the 2 structural changes |
-| T004 | Implement `@zitro/mappers` | **New work** — build fresh. Depends on .NET API contract being stable. |
+| T003 | Implement `@zitro/models` | **Active now** — models were copied in MT003. T003 updates them: rename `imageUrl`, flatten `OrderCharges`, add `User`/`BusinessConfig`/`MenuCategory`/`NearbyBusiness`/`PlatformTag` models. Do not defer. |
+| T004 | Implement `@zitro/mappers` | **New work** — build fresh. Depends on T003 being done. |
 | T005 | Implement `@zitro/utils` | **Superseded by MT004** — run `nx test utils` to verify; fix any failing tests |
 | T006 | Implement `@zitro/test-data` | **New work** — build fresh. Fixtures, builders, MSW handlers. |
 | T007 | Implement `@zitro/theme` | **Evolve** — SCSS already copied in MT005. Now add CSS custom properties + ThemeService on top. |
@@ -85,15 +85,15 @@ Tasks within the same group can run in parallel:
 
 | Task | What to do | Depends on |
 |------|-----------|-----------|
-| **T004** | Build `@zitro/mappers` (DTOs + mapper functions) | T003 stable (it is after MT003), T006 for test fixtures |
+| **T004** | Build `@zitro/mappers` (DTOs + mapper functions) | T003 |
 | **T009** | Build HTTP interceptors | T019 (for CI checks to pass) |
-| **T011** | Evolve `CacheService` + build `FeatureFlagService` | T009 (interceptors needed for API flag loading) |
+| **T011** | Build `CacheService` + `FeatureFlagService` (UI flags only — not for API switching) | T009 |
 
 ### Group C — Depends on Group B
 
 | Task | What to do | Depends on |
 |------|-----------|-----------|
-| **T010** | Build .NET API services (alongside existing Firebase services) | T004, T009, T011 |
+| **T010** | Build .NET API services (replace Firebase data services) | T004, T009 |
 
 ### Group D — Component evolution (sequential, each group depends on previous)
 
@@ -143,46 +143,53 @@ These evolve the feature pages that already exist in `apps/zitro-customer/src/ap
 
 ---
 
-## The Dual-Mode API Transition Strategy
+## The API-First Strategy
 
-When T010 is done, there are two sets of services in `@zitro/services`:
-- **Firebase services** (from migration): `products.service.ts`, `order.service.ts`, etc.
-- **New .NET API services** (from T010): `catalog-api.service.ts`, `order-api.service.ts`, etc.
+**No dual-mode. No FeatureFlagService for API switching.**
 
-Feature pages call Firebase services today. Switching them to the .NET API is done **feature by feature**, controlled by `FeatureFlagService`:
+T010 builds .NET API service classes that **directly replace** the Firebase data services. Feature pages
+switch to the new API service the moment T010 ships that service class. The old Firebase service file
+stays until the page has switched over and been tested — then it is deleted.
 
-```typescript
-// Example in home.component.ts — during transition period
-private catalogApi = inject(CatalogApiService);       // .NET API (T010)
-private productsService = inject(ProductsService);     // Firebase (migration)
-private flags = inject(FeatureFlagService);            // T011
+**What stays on Firebase permanently:**
 
-products$ = this.flags.isEnabled('use_dotnet_catalog')
-  ? this.catalogApi.getProducts(this.businessId)
-  : this.productsService.getProducts(this.businessId);
-```
+| Service | Reason |
+|---------|--------|
+| Firebase Phone Auth + OTP | No replacement — `firebase-auth.service.ts`, `firebase-otp.service.ts` |
+| Firebase Storage | Product/user image upload — `firebase-storage.service.ts` |
+| FCM push notifications | `fcm.service.ts`, `fcm-token.service.ts`, `device-token.service.ts` |
+| Firebase Analytics | Write-only, low risk — `analytics.service.ts` |
 
-**Transition order (one feature at a time, after T010):**
-1. Catalog (products + categories) — lowest risk, read-only
-2. Coupons — read-only
-3. Addresses — read + write, low risk
-4. Orders — highest risk, do last
-5. Auth — Firebase Auth stays forever (not replaced)
+**Firebase data services replaced by T010 (in this order — lowest to highest risk):**
 
-Once a feature is verified on .NET API for 2+ weeks, the Firebase version is removed from that page. The Firebase service class stays in `@zitro/services` (other parts may still use it) but is no longer called from that feature page.
+| Old Firebase service | New API service | Endpoint |
+|----------------------|-----------------|---------|
+| `categories.service.ts` | `catalog-api.service.ts` | `GET /api/categories?businessSlug=X` |
+| `products.service.ts` | `catalog-api.service.ts` | `GET /api/businesses/{slug}/menu` |
+| `coupon.service.ts` | `coupon-api.service.ts` | `GET /api/coupons` |
+| `banner.service.ts` | `engagement-api.service.ts` | `GET /api/businesses/{slug}/banners` |
+| `user-management.service.ts` | `user-api.service.ts` | `GET/PUT /api/users/profile`, `/api/users/addresses` |
+| `order.service.ts` | `order-api.service.ts` | `POST/GET /api/orders` |
+
+`FeatureFlagService` (T011) is for **UI feature flags only** (wallet tab, game, dine-in mode).
+It is never used to pick between Firebase vs .NET API.
 
 ---
 
 ## The `@zitro/models` Structural Changes
 
-Two field changes were deferred from migration (kept legacy field names). They happen only when the .NET API contract for that domain is finalized and the corresponding T010 service is implemented and tested:
+Two field changes were deferred from migration (kept legacy field names to stay safe). They are done
+in **T003, now** — not deferred until "API verified for 2 weeks":
 
-| Change | Trigger |
+| Change | Why now |
 |--------|---------|
-| `Product.image`/`Product.imageURL` → `Product.imageUrl` | When `CatalogApiService` (T010) is done and verified |
-| `OrderCharges` nested → flat numbers | When `OrderApiService` (T010) is done and verified |
+| `Product.image` / `Product.imageURL` → `Product.imageUrl` | .NET API returns one field; Firebase had two from different code paths |
+| `OrderCharges` nested `{ calculated, applied, waived }` → flat numbers | .NET API returns final computed values; no sub-field structure |
 
-When those triggers are hit, create a new task **T003-finalize** that makes both changes across models, mappers, services, and all feature pages that reference those fields.
+New models added in T003: `User`, `BusinessConfig`, `MenuCategory`, `BusinessMenu`, `NearbyBusiness`, `PlatformTag`.
+
+T003 also updates all components in `@zitro/ui` and all feature pages in `zitro-customer` that reference
+the renamed fields — the whole change ships in one PR (no T003-finalize needed).
 
 ---
 
@@ -248,7 +255,7 @@ T019  Finalize command + security          │                                  
               T011  CacheService (evolve) + FeatureFlagService (new)                       │
                       │                                                                     │
                       ▼                                                                     │
-              T010  .NET API service classes (alongside Firebase)                          │
+              T010  .NET API service classes (replace Firebase data services)                          │
                       │                                                                     │
   ┌───────────────────┴──────────────────────────────────────────────────────────────────┘
   │
