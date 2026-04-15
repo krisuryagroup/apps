@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "finalize": "ts-node -P tools/tsconfig.tools.json tools/scripts/finalize.ts --full",
+    "finalize:affected": "ts-node -P tools/tsconfig.tools.json tools/scripts/finalize.ts",
+    "finalize:lint-only": "ts-node -P tools/tsconfig.tools.json tools/scripts/finalize.ts --lint-only",
+    "prepare": "husky"
+  },
   "devDependencies": {
     "@angular-devkit/core": "~20.3.0",
     "@angular-devkit/schematics": "~20.3.0",
@@ -6,6 +12,9 @@
     "@angular/cli": "~20.3.0",
     "@angular/compiler-cli": "~20.3.0",
     "@angular/language-service": "~20.3.0",
+    "audit-ci": "^7.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.0",
     "@eslint/js": "^9.8.0",
     "@nx/angular": "^22.6.4",
     "@nx/devkit": "22.6.4",
