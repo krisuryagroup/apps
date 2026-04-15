@@ -278,6 +278,15 @@ export const EN_DEFAULTS = {
     locationError: 'Unable to get your location. Please try again.',
     noSavedAddresses: 'No saved addresses yet',
   },
+  businessCard: {
+    featured: 'Featured',
+    mSuffix: ' m',
+    minOrder: 'Min order',
+    deliveryFee: 'Delivery',
+    freeDelivery: 'Free delivery',
+    closed: 'Closed',
+    ratingLabel: 'Rating',
+  },
   errors: {
     loadFailed: 'Failed to load. Please try again.',
     orderFailed: 'Failed to place order. Please try again.',
