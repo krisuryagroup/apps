@@ -331,6 +331,19 @@ export class FirebaseAuthService {
     return localStorage.getItem(AUTH_KEYS.GUEST_ID);
   }
 
+  /**
+   * Returns a fresh Firebase ID token for the current user.
+   * Used by AuthInterceptor to attach Authorization: Bearer <token>.
+   * Throws if no user is signed in.
+   */
+  async getIdToken(): Promise<string> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      throw new Error('No authenticated user');
+    }
+    return user.getIdToken();
+  }
+
   // Sign out (including guest mode)
   signOut(): void {
     this.clearUserAuthCache();

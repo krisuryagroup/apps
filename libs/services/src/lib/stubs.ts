@@ -154,6 +154,7 @@ export class LocationService { // MT007-stub
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService { // MT007-stub
   signOut(): Promise<any> { return Promise.resolve(); }
+  getIdToken(): Promise<string> { return Promise.resolve('stub-token'); }
   getTestPhoneNumbers(): string[] { return []; }
   getSmsConfigs(): Promise<any> { return Promise.resolve(null); }
 }
