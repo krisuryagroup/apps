@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@zitro/models": ["libs/models/src/index.ts"],
+      "@zitro/mappers": ["libs/mappers/src/index.ts"],
       "@zitro/utils": ["libs/utils/src/index.ts"],
       "@zitro/theme": ["libs/theme/src/index.ts"],
       "@zitro/services": ["libs/services/src/index.ts"],
