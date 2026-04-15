@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zitro-spacing-md, 16px);
+  padding: var(--zitro-spacing-2xl, 48px) var(--zitro-spacing-lg, 24px);
+  text-align: center;
+
+  &__icon {
+    opacity: 0.6;
+  }
+
+  &__title {
+    font-size: var(--zitro-font-size-lg, 18px);
+    font-weight: var(--zitro-font-weight-semibold, 600);
+    color: var(--zitro-color-text-primary, #212121);
+    margin: 0;
+  }
+
+  &__message {
+    font-size: var(--zitro-font-size-md, 14px);
+    color: var(--zitro-color-text-secondary, #666);
+    margin: 0;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  &__action {
+    margin-top: var(--zitro-spacing-sm, 8px);
+    padding: var(--zitro-spacing-sm, 8px) var(--zitro-spacing-lg, 24px);
+    background: var(--zitro-color-primary, #ff6b35);
+    color: #fff;
+    border: none;
+    border-radius: var(--zitro-radius-md, 8px);
+    font-size: var(--zitro-font-size-md, 14px);
+    font-weight: var(--zitro-font-weight-semibold, 600);
+    cursor: pointer;
+
+    &:active {
+      opacity: 0.85;
+    }
+  }
+}

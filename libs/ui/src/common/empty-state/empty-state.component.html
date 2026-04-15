@@ -1,0 +1,33 @@
+<div class="empty-state" data-testid="empty-state">
+  <div class="empty-state__icon" data-testid="empty-state-icon" aria-hidden="true">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="36" stroke="var(--zitro-color-divider, #e0e0e0)" stroke-width="2"/>
+      <path
+        d="M28 40h24M40 28v24"
+        stroke="var(--zitro-color-text-disabled, #bdbdbd)"
+        stroke-width="2"
+        stroke-linecap="round"
+        opacity="0.5"
+      />
+    </svg>
+  </div>
+
+  <h3 class="empty-state__title" data-testid="empty-state-title">
+    {{ config().titleKey | i18n }}
+  </h3>
+
+  <p class="empty-state__message" data-testid="empty-state-message">
+    {{ config().messageKey | i18n }}
+  </p>
+
+  @if (config().showAction) {
+    <button
+      class="empty-state__action"
+      data-testid="empty-state-action"
+      type="button"
+      (click)="actionClicked.emit()"
+    >
+      {{ config().actionLabelKey | i18n }}
+    </button>
+  }
+</div>

@@ -46,7 +46,7 @@
 | T010 | API service classes in `@zitro/services` (replace Firebase data services) | [ ] | T009 |
 | T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
-| T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [ ] | T007, T008 |
+| T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [x] | T007, T008 |
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [ ] | T012 |
 | T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` component | [ ] | T012 |
 | T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | [ ] | T013, T010 |
@@ -1287,7 +1287,7 @@ isMaintenanceMode() returns true after 503 API response sets it
 
 ### T012 — UI: Common Group 1
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T012-ui-common-g1`
 **Depends on:** T007, T008
 

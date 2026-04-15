@@ -1,0 +1,20 @@
+<div class="splash-screen" data-testid="splash-screen">
+  <div class="splash-screen__content">
+    <img
+      class="splash-screen__logo"
+      data-testid="splash-logo"
+      [src]="config().logoUrl"
+      [alt]="config().appName"
+    />
+
+    @if (config().tagline) {
+      <p class="splash-screen__tagline" data-testid="splash-tagline">
+        {{ config().tagline }}
+      </p>
+    }
+  </div>
+
+  <div class="splash-screen__loader" data-testid="splash-loader">
+    <lib-loader [config]="loaderConfig" />
+  </div>
+</div>

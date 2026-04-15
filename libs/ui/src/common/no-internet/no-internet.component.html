@@ -1,0 +1,43 @@
+<div class="no-internet" data-testid="no-internet">
+  <div class="no-internet__icon" data-testid="no-internet-icon" aria-hidden="true">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="36" stroke="var(--zitro-color-divider, #e0e0e0)" stroke-width="2"/>
+      <!-- WiFi signal lines crossed out -->
+      <path
+        d="M24 38c4.4-4.4 10.4-7 16.5-7s12 2.6 16.5 7"
+        stroke="var(--zitro-color-text-disabled, #bdbdbd)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        opacity="0.4"
+      />
+      <path
+        d="M29 44c3-3 7-4.8 11-4.8s8 1.8 11 4.8"
+        stroke="var(--zitro-color-text-disabled, #bdbdbd)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        opacity="0.4"
+      />
+      <circle cx="40" cy="51" r="2.5" fill="var(--zitro-color-text-disabled, #bdbdbd)" opacity="0.4"/>
+      <!-- X mark -->
+      <path
+        d="M32 32l16 16M48 32L32 48"
+        stroke="var(--zitro-color-error, #f44336)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
+    </svg>
+  </div>
+
+  <p class="no-internet__message" data-testid="no-internet-message">
+    {{ 'common.noInternet' | i18n }}
+  </p>
+
+  <button
+    class="no-internet__retry"
+    data-testid="retry-btn"
+    type="button"
+    (click)="retryClicked.emit()"
+  >
+    {{ 'common.retry' | i18n }}
+  </button>
+</div>
