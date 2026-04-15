@@ -3,6 +3,9 @@ import { Routes } from '@angular/router';
 // MT009: guards now available
 import { AuthGuard, LoginGuard } from './core/guards/auth.guard';
 import { BusinessSelectionGuard } from './core/guards/business-selection.guard';
+// HRD-001: location gate
+import { locationGuard } from './core/guards/location.guard';
+import { LocationSelectionComponent } from './features/location-selection/location-selection.component';
 
 // MT009: layout now available
 import { MainLayoutComponent } from './layout/main-layout.component';
@@ -42,10 +45,13 @@ export const routes: Routes = [
   // Business Selection Route (MT010)
   { path: 'business-selection', component: BusinessSelectionComponent },
 
+  // HRD-001: Location Gate — shown when no delivery location is saved
+  { path: 'location-selection', component: LocationSelectionComponent },
+
   {
     path: '',
     component: MainLayoutComponent,
-    canActivate: [],
+    canActivate: [locationGuard],
     children: [
       { path: 'home', component: HomeComponent },
       { path: 'categories', component: CategoriesComponent },

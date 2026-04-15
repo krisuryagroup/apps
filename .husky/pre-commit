@@ -1,0 +1,3 @@
+#!/bin/sh
+npx lint-staged
+npx ts-node -P tools/tsconfig.tools.json tools/scripts/finalize.ts --lint-only

@@ -266,6 +266,18 @@ export const EN_DEFAULTS = {
     account: 'Account',
     orders: 'Orders',
   },
+  locationSelection: {
+    title: 'Set your delivery location',
+    subtitle: 'We need your location to show nearby restaurants and stores',
+    useCurrentLocation: 'Use my Current Location',
+    enableButton: 'Enable',
+    detectingLocation: 'Detecting your location...',
+    savedAddresses: 'Saved Addresses',
+    searchLocation: 'Search your Location',
+    locationDenied: 'Location permission denied. Please enable it in your device settings.',
+    locationError: 'Unable to get your location. Please try again.',
+    noSavedAddresses: 'No saved addresses yet',
+  },
   businessCard: {
     featured: 'Featured',
     mSuffix: ' m',

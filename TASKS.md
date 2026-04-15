@@ -7,7 +7,8 @@
 > **Architecture reference:** `ZITRO-APPS-ARCHITECTURE.md`
 > **Claude context:** `CLAUDE.md`
 
-> ⚠️ **Tasks T001, T002, T003, T005 are superseded by migration tasks MT001–MT004. Do not run them.**
+> ⚠️ **Tasks T001, T002, T005 are superseded by migration tasks MT001–MT004. Do not run them.**
+> **T003 is now active** — models update (imageUrl rename + flatten OrderCharges + new User/BusinessConfig/catalog models). Start it now; do not wait for .NET API to be "verified".
 > All other tasks start after MT018 is complete. See `ROADMAP.md` for the full sequence.
 
 ---
@@ -31,7 +32,7 @@
 | T001 | Bootstrap Nx workspace | `[x]` superseded by MT001 | — |
 | T002 | Create all library scaffolds | `[x]` superseded by MT002 | T001 |
 | **Phase 2 — Models, Mappers & Utils** |
-| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges) | [ ] after .NET API done | MT003 |
+| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges + new User/BusinessConfig/catalog models) | [ ] | MT003 |
 | T004 | Implement `@zitro/mappers` | [ ] | MT003 |
 | T005 | Verify `@zitro/utils` tests pass | `[x]` superseded by MT004 (run tests only) | MT004 |
 | **Phase 3 — Test Data** |
@@ -41,9 +42,9 @@
 | **Phase 5 — i18n** |
 | T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [x] | MT018 |
 | **Phase 6 — Services** |
-| T009 | HTTP interceptors in `@zitro/services` | [ ] | T004, T006 |
-| T010 | API service classes in `@zitro/services` | [ ] | T009 |
-| T011 | FeatureFlagService + CacheService | [ ] | T009 |
+| T009 | HTTP interceptors in `@zitro/services` | [ ] | T004 |
+| T010 | API service classes in `@zitro/services` (replace Firebase data services) | [ ] | T009 |
+| T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
 | T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n, tests | [ ] | T007, T008, T006 |
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [ ] | T012 |
@@ -256,13 +257,18 @@ nx g @nx/node:app zitro-jobs --directory=apps/zitro-jobs --framework=none
 
 ---
 
-### T003 — Implement `@zitro/models`
+### T003 — Update `@zitro/models` (API-aligned)
 
 **Status:** `[ ]`
-**Branch:** `feature/T003-zitro-models`
-**Depends on:** T002
+**Branch:** `feature/T003-models-api-aligned`
+**Depends on:** MT003
 
-**Source files (migrate from):**
+**Goal:** Update the models already copied in MT003 to match .NET API response shapes.
+Apply the two structural changes, add new models (`User`, `BusinessConfig`, `MenuCategory`, `BusinessMenu`,
+`NearbyBusiness`, `PlatformTag`), and export everything from `index.ts`.
+Do this now — do NOT wait for .NET API to be verified for 2+ weeks.
+
+**Source files (already in `libs/models/src/` from MT003 — modify in place):**
 ```
 zitro-app/src/app/core/models/address.model.ts
 zitro-app/src/app/core/models/auth-config.model.ts
@@ -750,7 +756,7 @@ libs/services/src/provide-services.ts   ← provideZitroServices() function
 **`error.interceptor.ts`:**
 - `401` → clear auth state, redirect to `/auth/signin`
 - `429` → show rate limit toast (via `ToastService`)
-- `503` → show maintenance page (via `FeatureFlagService`)
+- `503` → show maintenance page (via `FeatureFlagService.isMaintenanceMode()` — UI concern, not API switching)
 - Other 4xx/5xx → propagate as `HttpErrorResponse` with normalized error model
 
 **`provideZitroServices()` function:**
@@ -773,13 +779,41 @@ export function provideZitroServices(config: ZitroServicesConfig): EnvironmentPr
 
 ---
 
-### T010 — API Service Classes in `@zitro/services`
+### T010 — API Service Classes in `@zitro/services` (replace Firebase data services)
 
 **Status:** `[ ]`
 **Branch:** `feature/T010-api-services`
 **Depends on:** T009
 
-**Source files (migrate logic from):**
+**Goal:** Build new .NET API service classes that **replace** (not sit alongside) the Firebase data
+services. Feature pages switch directly to the new API services — no dual-mode, no feature flag
+for API switching.
+
+**What stays on Firebase permanently (do not replace these):**
+- `firebase-auth.service.ts`, `firebase-otp.service.ts` — Phone Auth OTP
+- `firebase-storage.service.ts` — image uploads
+- `fcm.service.ts`, `fcm-token.service.ts`, `device-token.service.ts` — push notifications
+- `analytics.service.ts` — write-only, low risk
+
+**Firebase data services replaced by these new API services (old files kept until page switches over):**
+
+| Old Firebase service | New API service | Endpoint |
+|---|---|---|
+| `categories.service.ts` | `catalog-api.service.ts` | `GET /api/categories?businessSlug=X` |
+| `products.service.ts` | `catalog-api.service.ts` | `GET /api/businesses/{slug}/menu` |
+| `order.service.ts` | `order-api.service.ts` | `POST/GET /api/orders` |
+| `user-management.service.ts` | `user-api.service.ts` | `GET/PUT /api/users/profile`, `/api/users/addresses` |
+| `banner.service.ts` | `engagement-api.service.ts` | `GET /api/businesses/{slug}/banners` |
+| `coupon.service.ts` | `coupon-api.service.ts` | `GET /api/coupons` |
+| `pricing.service.ts` | `business-config-api.service.ts` | `GET /api/businesses/{slug}/config` |
+| `app-settings.service.ts` | `business-config-api.service.ts` | `GET /api/businesses/{slug}/config` |
+| `favorites.service.ts` | `favorites-api.service.ts` | `GET/POST/DELETE /api/users/favorites` |
+| `app-version.service.ts` | `engagement-api.service.ts` | `GET /api/app-version` |
+
+**Transition order (lowest to highest risk):** catalog → coupons → banners → addresses → orders.
+Remove old Firebase service file only after the feature page has fully switched over and been tested.
+
+**Source files (read for business logic, do NOT copy — rewrite for .NET API):**
 ```
 zitro-app/src/app/core/services/products.service.ts
 zitro-app/src/app/core/services/categories.service.ts
@@ -851,11 +885,15 @@ export class CatalogApiService {
 
 ---
 
-### T011 — FeatureFlagService + CacheService
+### T011 — FeatureFlagService (UI flags) + CacheService
 
 **Status:** `[ ]`
 **Branch:** `feature/T011-flag-cache-services`
 **Depends on:** T009
+
+> **Note:** `FeatureFlagService` is for UI feature flags only (e.g. show/hide wallet tab, enable game,
+> dine-in mode). It is **NOT** used to switch between Firebase and .NET API — the app uses .NET API
+> services directly (T010). No `flags.isEnabled('use_dotnet_catalog')` pattern anywhere.
 
 **Scope — files to create:**
 ```
@@ -891,12 +929,13 @@ export class FeatureFlagService {
 }
 
 export type FeatureFlag =
-  | 'wallet_payments'
-  | 'delivery_tracking'
-  | 'ratings_reviews'
-  | 'scheduled_pickup'
-  | 'dine_in'
-  | 'grocery_mode';
+  | 'wallet_payments'       // show wallet tab in account page
+  | 'delivery_tracking'     // show live tracking on order page
+  | 'ratings_reviews'       // show ratings prompt after delivery
+  | 'scheduled_pickup'      // show scheduled pickup option in cart
+  | 'dine_in'               // enable dine-in order type
+  | 'grocery_mode'          // show grocery-specific UI tweaks
+  | 'game_tab';             // show 2048 game tab
 ```
 
 **Acceptance Criteria:**

@@ -1,0 +1,29 @@
+{
+  "name": "mappers",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mappers/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:util", "platform:any"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/mappers",
+        "main": "libs/mappers/src/index.ts",
+        "tsConfig": "libs/mappers/tsconfig.lib.json",
+        "assets": ["libs/mappers/*.md"]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vitest run --config libs/mappers/vitest.config.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

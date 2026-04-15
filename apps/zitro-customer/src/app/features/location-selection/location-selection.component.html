@@ -1,0 +1,81 @@
+<div class="location-gate">
+
+  <!-- Illustration -->
+  <div class="location-gate__illustration" aria-hidden="true">
+    <svg class="location-gate__pin" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="32" cy="76" rx="16" ry="4" fill="var(--zitro-surface-alt)" />
+      <path d="M32 4C20.954 4 12 12.954 12 24c0 16 20 52 20 52S52 40 52 24C52 12.954 43.046 4 32 4z"
+            fill="var(--zitro-primary)" />
+      <circle cx="32" cy="24" r="8" fill="var(--zitro-on-primary)" />
+    </svg>
+  </div>
+
+  <!-- Heading -->
+  <h1 class="location-gate__title">{{ 'locationSelection.title' | i18n }}</h1>
+  <p class="location-gate__subtitle">{{ 'locationSelection.subtitle' | i18n }}</p>
+
+  <!-- GPS Row -->
+  <section class="location-gate__section" aria-label="GPS location">
+    <div class="location-gate__gps-row">
+      <span class="location-gate__gps-icon" aria-hidden="true">📍</span>
+      <span class="location-gate__gps-label">{{ 'locationSelection.useCurrentLocation' | i18n }}</span>
+      <button
+        class="location-gate__enable-btn"
+        [class.location-gate__enable-btn--loading]="isLocating()"
+        [disabled]="isLocating()"
+        (click)="onEnableGps()"
+        data-testid="enable-gps-btn"
+      >
+        @if (isLocating()) {
+          <span class="location-gate__spinner" aria-label="Detecting location"></span>
+        } @else {
+          {{ 'locationSelection.enableButton' | i18n }}
+        }
+      </button>
+    </div>
+
+    @if (locationError()) {
+      <p class="location-gate__error" role="alert" data-testid="location-error">
+        {{ locationError()! | i18n }}
+      </p>
+    }
+  </section>
+
+  <!-- Saved Addresses -->
+  @if (savedAddresses().length > 0) {
+    <section class="location-gate__section" aria-label="Saved addresses">
+      <h2 class="location-gate__section-title">{{ 'locationSelection.savedAddresses' | i18n }}</h2>
+      <ul class="location-gate__address-list" role="list">
+        @for (addr of savedAddresses(); track addr.houseAndStreet) {
+          <li class="location-gate__address-item">
+            <button
+              class="location-gate__address-btn"
+              (click)="onSelectSavedAddress(addr)"
+              [attr.data-testid]="'address-btn-' + addr.type"
+            >
+              <span class="location-gate__address-type" aria-hidden="true">
+                {{ addr.type === 'Home' ? '🏠' : addr.type === 'Office' ? '🏢' : '📌' }}
+              </span>
+              <span class="location-gate__address-detail">
+                <strong>{{ addr.type || addr.name }}</strong>
+                <span class="location-gate__address-text">{{ addr.houseAndStreet }}, {{ addr.town }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- Search -->
+  <div class="location-gate__search-row">
+    <button
+      class="location-gate__search-btn"
+      (click)="onSearchLocation()"
+      data-testid="search-location-btn"
+    >
+      🔍&nbsp;{{ 'locationSelection.searchLocation' | i18n }}
+    </button>
+  </div>
+
+</div>
