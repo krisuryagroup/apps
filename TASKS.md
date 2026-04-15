@@ -42,7 +42,7 @@
 | **Phase 5 — i18n** |
 | T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [x] | MT018 |
 | **Phase 6 — Services** |
-| T009 | HTTP interceptors in `@zitro/services` | [ ] | T004 |
+| T009 | HTTP interceptors in `@zitro/services` | [x] | T004 |
 | T010 | API service classes in `@zitro/services` (replace Firebase data services) | [ ] | T009 |
 | T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
@@ -55,7 +55,7 @@
 | T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | [ ] | T013, T010 |
 | **Phase 8 — SCSS Cleanup + Security & Finalize** |
 | T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [x] | MT018 |
-| T019 | Finalize command + Husky + audit-ci | [ ] | MT002, T019-scss |
+| T019 | Finalize command + Husky + audit-ci | [x] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
 | T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) | [ ] | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | [ ] | T020 |
@@ -941,7 +941,7 @@ export type TranslationKey = /* deep path type */ string;
 
 ### T009 — HTTP Interceptors in `@zitro/services`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T009-http-interceptors`
 **Depends on:** T004
 
