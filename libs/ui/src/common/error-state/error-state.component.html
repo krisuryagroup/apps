@@ -1,0 +1,32 @@
+<div class="error-state" data-testid="error-state">
+  <div class="error-state__icon" data-testid="error-state-icon" aria-hidden="true">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="36" stroke="var(--zitro-color-error, #f44336)" stroke-width="2" opacity="0.3"/>
+      <path
+        d="M40 24v20M40 52v4"
+        stroke="var(--zitro-color-error, #f44336)"
+        stroke-width="3"
+        stroke-linecap="round"
+      />
+    </svg>
+  </div>
+
+  <h3 class="error-state__title" data-testid="error-state-title">
+    {{ config().titleKey | i18n }}
+  </h3>
+
+  <p class="error-state__message" data-testid="error-state-message">
+    {{ config().messageKey | i18n }}
+  </p>
+
+  @if (config().showRetry) {
+    <button
+      class="error-state__retry"
+      data-testid="error-state-retry"
+      type="button"
+      (click)="retryClicked.emit()"
+    >
+      {{ config().retryLabelKey | i18n }}
+    </button>
+  }
+</div>

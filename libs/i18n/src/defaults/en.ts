@@ -287,6 +287,14 @@ export const EN_DEFAULTS = {
     closed: 'Closed',
     ratingLabel: 'Rating',
   },
+  emptyState: {
+    title: 'Nothing here yet',
+    message: 'There\'s nothing to show right now.',
+    action: 'Go Back',
+  },
+  errorState: {
+    title: 'Something went wrong',
+  },
   errors: {
     loadFailed: 'Failed to load. Please try again.',
     orderFailed: 'Failed to place order. Please try again.',

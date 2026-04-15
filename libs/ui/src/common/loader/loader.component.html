@@ -1,0 +1,37 @@
+<div
+  class="loader"
+  [class.loader--overlay]="config().overlay"
+  [class.loader--sm]="config().size === 'sm'"
+  [class.loader--md]="config().size === 'md'"
+  [class.loader--lg]="config().size === 'lg'"
+  [class.loader--white]="config().color === 'white'"
+  data-testid="loader-spinner"
+>
+  <svg
+    class="loader__spinner"
+    [attr.width]="spinnerSize()"
+    [attr.height]="spinnerSize()"
+    viewBox="0 0 50 50"
+    aria-hidden="true"
+  >
+    <circle
+      class="loader__track"
+      cx="25" cy="25" r="20"
+      fill="none"
+      stroke-width="4"
+    />
+    <circle
+      class="loader__arc"
+      cx="25" cy="25" r="20"
+      fill="none"
+      stroke-width="4"
+      stroke-linecap="round"
+    />
+  </svg>
+
+  @if (label()) {
+    <span class="loader__label" data-testid="loader-label">{{ label() }}</span>
+  } @else {
+    <span class="loader__label loader__label--sr" data-testid="loader-label">{{ 'common.loading' | i18n }}</span>
+  }
+</div>
