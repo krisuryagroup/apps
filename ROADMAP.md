@@ -57,8 +57,8 @@ See `MIGRATION-PLAN.md` for details of each MT task.
 | T007 | Implement `@zitro/theme` | **Evolve** — SCSS already copied in MT005. Now add CSS custom properties + ThemeService on top. |
 | T008 | Implement `@zitro/i18n` | **Evolve** — scan `apps/zitro-customer` templates (not `zitro-app`) to extract strings. |
 | T009 | HTTP interceptors | **New work** — build fresh. |
-| T010 | .NET API services | **New work alongside Firebase** — see dual-mode strategy below. |
-| T011 | FeatureFlagService + CacheService | **Evolve** — `cache.service.ts` exists from migration; evolve it. `FeatureFlagService` is new. |
+| T010 | .NET API services | **New work** — build fresh, replacing Firebase data services. See API-First strategy. |
+| T011 | FeatureFlagService + CacheService | **New work** — `CacheService` replaces migration version; `FeatureFlagService` for UI flags only (not API switching). |
 | T012–T018 | Build `@zitro/ui` components | **Evolve** — all 30 components already exist in `libs/ui/src/`. Add patterns on top. |
 | T019 | Finalize command + security | **New work** — build fresh. |
 | T020 | Bootstrap `zitro-customer` | **Evolve** — app shell exists from MT008. Update providers only. |
@@ -125,7 +125,7 @@ These evolve the feature pages that already exist in `apps/zitro-customer/src/ap
 2. Pipe all user-visible strings through `{{ 'key' | i18n }}` (after T008)
 3. Apply `ThemeService` where hardcoded colours were used (after T007)
 4. Add `data-testid` to page-level elements needed for E2E (after T030)
-5. Wire to .NET API service (after T010) — see dual-mode strategy below
+5. Wire to .NET API service (after T010) — replace Firebase service call directly, no dual-mode
 
 | Task | Pages to evolve | Depends on |
 |------|----------------|-----------|
@@ -139,7 +139,8 @@ These evolve the feature pages that already exist in `apps/zitro-customer/src/ap
 | **T027** | `order-confirmation`, checkout flow | T026 |
 | **T028** | `order-history`, `order-tracking` pages | T027, T018 |
 | **T029** | `account`, `contact-us`, `coupon-selection`, `game-2048` pages | T028 |
-| **T030** | E2E tests — 5 critical journeys | T029 |
+| **T029-unit** | Write ALL unit + integration tests (mappers, services, interceptors, components, pages) — uses `@zitro/test-data` builders/factories | T029, T006 |
+| **T030** | E2E tests — 27 Playwright tests across 5 journeys | T029-unit |
 
 ---
 
@@ -252,7 +253,7 @@ T019  Finalize command + security          │                                  
                       ▼                                                                     │
               T004  Build @zitro/mappers                                                   │
               T009  HTTP interceptors                                                       │
-              T011  CacheService (evolve) + FeatureFlagService (new)                       │
+              T011  CacheService + FeatureFlagService (UI flags only)                       │
                       │                                                                     │
                       ▼                                                                     │
               T010  .NET API service classes (replace Firebase data services)                          │
@@ -279,7 +280,8 @@ T026  Evolve addresses pages
 T027  Evolve checkout + order-confirmation pages
 T028  Evolve orders + tracking pages
 T029  Evolve account + remaining pages
-T030  ✅ E2E tests — 5 critical journeys
+T029-unit  Write ALL unit + integration tests (mappers, services, interceptors, components, pages)
+T030  ✅ E2E tests — 27 Playwright tests, 5 journeys
   │
   ▼ New Apps (parallel once T019 + T011 done)
   ┌──────────────────────────────────────────┐

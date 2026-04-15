@@ -46,7 +46,7 @@
 | T010 | API service classes in `@zitro/services` (replace Firebase data services) | [ ] | T009 |
 | T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
-| T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n, tests | [ ] | T007, T008, T006 |
+| T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [ ] | T007, T008 |
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [ ] | T012 |
 | T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` component | [ ] | T012 |
 | T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | [ ] | T013, T010 |
@@ -57,7 +57,7 @@
 | T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [x] | MT018 |
 | T019 | Finalize command + Husky + audit-ci | [ ] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
-| T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) alongside Firebase | [ ] | T008, T007, T009 |
+| T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) | [ ] | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | [ ] | T020 |
 | T022 | Evolve auth pages | [ ] | T021, T014 |
 | T023 | Evolve `home` page | [ ] | T022, T015, T018 |
@@ -67,7 +67,8 @@
 | T027 | Evolve `order-confirmation` + checkout flow | [ ] | T026 |
 | T028 | Evolve `order-history`, `order-tracking` pages | [ ] | T027, T018 |
 | T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | [ ] | T028 |
-| T030 | E2E tests — 5 critical journeys (pages exist, now write tests against them) | [ ] | T029 |
+| T029-unit | Write ALL unit + integration tests (mappers, services, interceptors, components, pages) | [ ] | T029, T006 |
+| T030 | E2E tests — 5 critical journeys (Playwright) | [ ] | T029-unit |
 | **Phase 10 — Restaurant Partner App** |
 | T031 | Bootstrap `zitro-restaurant` — app.config, routing, auth, Capacitor | [ ] | T011, T019 |
 | T032 | zitro-restaurant: Order management (live queue, accept/reject) | [ ] | T031, T018 |
@@ -85,6 +86,81 @@
 | T041 | GitHub Actions — PR check + release workflows | [ ] | T019 |
 | **Phase 13 — New API Endpoints** |
 | T042 | zitro-api: Config endpoint + Geo proxy + Business search + Internal jobs endpoints | [ ] | T010 |
+
+---
+
+## Testing Standards
+
+> **Tests are written LAST** — in T029-unit (after T029), not alongside each task.
+> Each task T003–T018 contains a "Test Specifications" subsection that serves as a test plan.
+> The acceptance criteria in T003–T018 do NOT gate on tests passing — only on the build passing.
+> T029-unit writes all unit + integration tests in one PR. T030 adds E2E on top.
+
+### Framework by Location
+
+| Location | Test Runner | Style |
+|---|---|---|
+| `libs/models`, `libs/mappers`, `libs/utils`, `libs/services`, `libs/theme`, `libs/i18n`, `libs/test-data` | **Vitest** — `import { describe, it, expect, vi } from 'vitest'` | Direct constructor injection |
+| `libs/ui` | **jest-preset-angular** — `TestBed.configureTestingModule` | Angular `ComponentFixture` |
+| `apps/zitro-customer` (pages) | **jest-preset-angular** | Angular `ComponentFixture` |
+| `apps/zitro-customer-e2e` | **Playwright** | Page Object Model, `[data-testid]` only |
+
+### File Splitting Rules
+
+Split a spec file when ANY condition is true:
+1. The file would exceed **300 lines** before a new `describe` block is added
+2. A single `describe` group has more than **12 `it()` calls**
+3. The source file has 2+ logically distinct responsibility areas
+
+**Naming convention for split files:**
+```
+service.spec.ts                       → only: construction, init, bootstrap tests
+service.get-products.spec.ts          → all getProducts describe groups
+service.cache.spec.ts                 → all cache-interaction tests
+mapper.catalog.spec.ts                → toProduct, toProductList, toCategory, toVariation
+mapper.order.to-order.spec.ts         → toOrder, toOrderList methods
+mapper.order.from-cart.spec.ts        → fromCart, fromCartItem methods
+component.rendering.spec.ts           → template / data-testid presence assertions
+component.interactions.spec.ts        → user events, outputs, service calls
+component.config.spec.ts              → config object input variations
+```
+
+Every split file is a fully standalone spec (its own `beforeEach` setup, no shared state between files).
+
+### Coverage Targets
+
+| File type | Target |
+|---|---|
+| Pure functions / mappers (`libs/mappers`, `libs/utils`) | **100%** statement + branch |
+| Services (`libs/services`) | **90%** statement, **85%** branch |
+| Angular components (`libs/ui`) | **80%** statement, **70%** branch |
+| Feature pages (`apps/zitro-customer`) | **70%** statement |
+| `libs/test-data` builders + factories | **100%** — untested builders are silent bugs |
+
+Coverage generated by: `nx test <project> -- --coverage` → `coverage/<project>/`
+
+### @zitro/test-data Usage
+
+All T029-unit specs run after T006 — `@zitro/test-data` exists. **Every spec uses builders/factories — no inline mock objects.**
+
+```typescript
+import { CatalogBuilders, OrderBuilders, CartBuilders, UserBuilders } from '@zitro/test-data';
+import { catalogHandlers, orderHandlers } from '@zitro/test-data/msw';
+import { ProductDtoFactory, OrderDtoFactory } from '@zitro/test-data/factories'; // for mapper specs
+```
+
+Never `as any` — builders and factories return fully-typed objects.
+
+### Signal Input Testing (jest-preset-angular)
+
+```typescript
+// CORRECT — use setInput via ComponentRef
+fixture.componentRef.setInput('product', CatalogBuilders.paneerButterMasala());
+fixture.detectChanges();
+
+// WRONG — bypasses signal reactivity
+(component as any).product = someValue;
+```
 
 ---
 
@@ -341,11 +417,35 @@ visibility: {
 **`MIGRATION.md`** — document only the two structural changes above and why, so future developers understand why `OrderCharges` is flat.
 
 **Acceptance Criteria:**
-- [ ] `nx test models` — all pass
+- [ ] `nx build models` — no errors
 - [ ] `nx lint models` — no errors
 - [ ] No fields from legacy model are dropped without being documented in `MIGRATION.md`
 - [ ] `index.ts` exports everything with no circular dependencies
 - [ ] TypeScript strict mode: no implicit `any`, no `!` assertions without justification
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below for what to test.
+
+**Test Specifications (implement in T029-unit):**
+
+`@zitro/models` exports only TypeScript interfaces. If any model file exports a runtime
+function (type guard, validator), test it with Vitest — 100% branch coverage.
+
+Example — if `order.model.ts` exports `isOrderCancellable(order: Order): boolean`:
+```typescript
+// order.model.spec.ts
+describe('isOrderCancellable', () => {
+  it.each([
+    ['pending', true], ['confirmed', true],
+    ['preparing', false], ['shipped', false],
+    ['delivered', false], ['cancelled', false],
+  ])('returns %s for status "%s"', (status, expected) => {
+    expect(isOrderCancellable({ status } as Order)).toBe(expected);
+  });
+});
+```
+
+If no model file exports runtime functions — **zero spec files needed for T003.**
+Model shape correctness is verified implicitly by T004 mapper tests.
 
 ---
 
@@ -375,34 +475,100 @@ libs/mappers/src/mappers/coupon.mapper.ts
 libs/mappers/src/mappers/pricing.mapper.ts
 libs/mappers/src/mappers/index.ts
 libs/mappers/src/index.ts
-libs/mappers/src/mappers/catalog.mapper.spec.ts
-libs/mappers/src/mappers/order.mapper.spec.ts
-libs/mappers/src/mappers/user.mapper.spec.ts
-libs/mappers/src/mappers/coupon.mapper.spec.ts
-libs/mappers/src/mappers/pricing.mapper.spec.ts
 ```
 
 **Key implementation rules:**
 - DTOs mirror the `.NET API` response shapes (camelCase — ASP.NET Core 8 default)
 - DTOs are plain interfaces — no classes, no decorators
 - Mapper functions are pure (no side effects, no DI, no HTTP)
-- Every mapper must have a corresponding `*.spec.ts`
-- Use inline test objects in specs for T004 (test-data builders exist only after T006)
+- No spec files in T004 — tests are written in T029-unit using `@zitro/test-data/factories`
 
 **Key mappers to implement (see Section 4.2 of ZITRO-APPS-ARCHITECTURE.md for full code):**
-- `CatalogMapper.toProduct(dto)` — maps `ProductDto` → `Product`
+- `CatalogMapper.toProduct(dto)` — maps `ProductDto` → `Product`; `dto.imageUrl → product.imageUrl`
 - `CatalogMapper.toVariation(dto)` — maps `ProductVariationDto` → `ProductVariation`
 - `CatalogMapper.toProductList(dtos)` — convenience batch mapper
-- `OrderMapper.toOrder(dto)` — maps `OrderDto` → `Order`
+- `OrderMapper.toOrder(dto)` — maps `OrderDto` → `Order`; flat `OrderCharges`
 - `OrderMapper.fromCart(cart, options)` — builds `CreateOrderRequest` from cart state
-- `PricingMapper.toBreakdown(dto)` — maps `PricingDto` → `PricingBreakdown` (including `visibility` block)
+- `PricingMapper.toBreakdown(dto)` — maps `PricingDto` → `PricingBreakdown` (with `visibility` block)
+- `UserMapper.toUser(dto)` — maps `UserDto` → `User`
+- `CouponMapper.toCoupon(dto)` — maps `CouponDto` → `Coupon`
+- `BusinessMapper.toNearbyBusiness(dto)` — maps `NearbyBusinessDto` → `NearbyBusiness`
+- `BannerMapper.toBanner(dto)` — maps `BannerDto` → `Banner`
 
 **Acceptance Criteria:**
-- [ ] `nx test mappers` — all pass, 100% coverage on mapper functions
+- [ ] `nx build mappers` — no errors
 - [ ] `nx lint mappers` — no errors
-- [ ] Every public mapper function has a unit test with at least: happy path, null field handling
-- [ ] `CatalogMapper.toProduct` correctly maps `label` → `name`, absolute price → `priceModifier`
+- [ ] Every mapper function handles `null`/`undefined` fields without throwing (use defaults)
+- [ ] `CatalogMapper.toProduct` maps `dto.imageUrl → product.imageUrl` (no legacy field names)
 - [ ] `OrderMapper.fromCart` produces a valid `CreateOrderRequest`
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below.
+
+**Test Specifications (implement in T029-unit — 100% coverage target):**
+
+All mapper specs use Vitest. Use `@zitro/test-data/factories` for DTOs.
+
+**`catalog.mapper.spec.ts`** (split if > 300 lines: `catalog.mapper.to-product.spec.ts` + `catalog.mapper.to-category.spec.ts`):
+```
+describe('CatalogMapper.toProduct')
+  it maps all scalar fields 1:1 (id, name, description, basePrice, foodType, ...)
+  it maps dto.imageUrl → product.imageUrl (assert NO "image" or "imageURL" on result)
+  it maps dto.isAvailable = true → product.isEnabledForOnlineOrders = true
+  it maps dto.isAvailable = false → product.isEnabledForOnlineOrders = false
+  it maps dto.variations [] → []
+  it maps 2 dto.variations → 2 ProductVariation via toVariation
+  it defaults dto.dietaryPreferences undefined → []
+  it defaults dto.dietaryPreferences null → []
+
+describe('CatalogMapper.toVariation')
+  it maps dto.name → variation.label  (field rename)
+  it maps dto.isAvailable → variation.isEnabled
+  it maps id, price, isDefault, sortOrder 1:1
+
+describe('CatalogMapper.toProductList')
+  it returns [] for empty input
+  it maps array of 3 DTOs → 3 Products
+
+describe('CatalogMapper.toCategory')
+  it returns MenuCategory with id, name, priority, imageUrl, products[]
+```
+
+**`order.mapper.to-order.spec.ts`** + **`order.mapper.from-cart.spec.ts`**:
+```
+describe('OrderMapper.toOrder')
+  it maps all top-level scalar fields
+  it maps items via toOrderItem (productId, qty, price all present)
+  it FLAT OrderCharges: packagingCharge is number (NOT nested object)
+  it FLAT: deliveryCharge, platformFee, gst, couponDiscount are all numbers
+  it deliveryAddress = null when dto.deliveryAddress = null
+  it deliveryAddress = mapped object when dto.deliveryAddress present
+
+describe('OrderMapper.fromCart')
+  it orderType = "Delivery" for delivery orders
+  it items[0].productId = cart.items[0].productId
+  it items[0].quantity = cart.items[0].qty
+  it couponCode = options.couponCode when provided
+  it couponCode = null when options.couponCode is undefined
+  it deliveryAddressId = null for Takeout order
+```
+
+**`pricing.mapper.spec.ts`**:
+```
+describe('PricingMapper.toBreakdown')
+  it maps all 6 charge amount fields
+  it maps entire visibility block (7 booleans)
+  it showFreeDeliveryProgress = true when subtotal < freeDeliveryThreshold
+  it showFreeDeliveryProgress = false when subtotal >= freeDeliveryThreshold
+  it couponDiscount = 0 when no coupon applied
+```
+
+**`user.mapper.spec.ts`**, **`coupon.mapper.spec.ts`**, **`business.mapper.spec.ts`**:
+```
+UserMapper.toUser: maps all fields; addresses[] via toAddress; [] when dto.addresses undefined
+CouponMapper.toCoupon: maps id, code, discountType, discountValue, minOrderValue, maxDiscount
+  it.each(['percentage','flat'])('maps discountType="%s" correctly')
+BusinessMapper.toNearbyBusiness: maps slug, name, businessType, rating, tags[]
+```
 
 ---
 
@@ -481,16 +647,29 @@ libs/test-data/src/_fixtures/addresses.json
 libs/test-data/src/_fixtures/coupons.json
 libs/test-data/src/_fixtures/delivery-partners.json
 libs/test-data/src/loaders/fixture-loader.ts
-libs/test-data/src/builders/customer.builders.ts
-libs/test-data/src/builders/restaurant.builders.ts
-libs/test-data/src/builders/catalog.builders.ts
-libs/test-data/src/builders/order.builders.ts
-libs/test-data/src/builders/cart.builders.ts
-libs/test-data/src/builders/coupon.builders.ts
+libs/test-data/src/builders/customer.builders.ts       → UserBuilders
+libs/test-data/src/builders/restaurant.builders.ts     → BusinessBuilders
+libs/test-data/src/builders/catalog.builders.ts        → CatalogBuilders (Product, Category, Variation)
+libs/test-data/src/builders/order.builders.ts          → OrderBuilders (placed, delivered, cancelled)
+libs/test-data/src/builders/cart.builders.ts           → CartBuilders (single, multi-item, empty)
+libs/test-data/src/builders/coupon.builders.ts         → CouponBuilders
+libs/test-data/src/builders/address.builders.ts        → AddressBuilders (home, office)
+libs/test-data/src/factories/product-dto.factory.ts    → ProductDtoFactory.build(overrides?)
+libs/test-data/src/factories/order-dto.factory.ts      → OrderDtoFactory.build(overrides?)
+libs/test-data/src/factories/address-dto.factory.ts    → AddressDtoFactory.build(overrides?)
+libs/test-data/src/factories/user-dto.factory.ts       → UserDtoFactory.build(overrides?)
+libs/test-data/src/factories/coupon-dto.factory.ts     → CouponDtoFactory.build(overrides?)
+libs/test-data/src/factories/nearby-business-dto.factory.ts → NearbyBusinessDtoFactory.build(overrides?)
+libs/test-data/src/factories/index.ts
 libs/test-data/src/msw/handlers.ts
 libs/test-data/src/msw/handlers.spec.ts
 libs/test-data/src/index.ts
 ```
+
+> **factories/ vs builders/:** Builders return domain objects (`Product`, `Order` from `@zitro/models`).
+> Factories return raw API DTOs (`ProductDto`, `OrderDto` from `@zitro/mappers/dtos`).
+> Mapper tests use factories as input. Service integration tests use builders for assertions.
+> Both accept partial overrides: `ProductDtoFactory.build({ imageUrl: 'custom.jpg' })`
 
 **Data quality rules — ALL fixture data must look like real Indian data:**
 - Names: Aarav Sharma, Priya Singh, Rahul Gupta, Meera Patel, Vikram Yadav, Ananya Joshi, etc.
@@ -537,11 +716,40 @@ export const CatalogBuilders = {
 - `GET /api/config`
 
 **Acceptance Criteria:**
-- [ ] `nx test test-data` — all pass
+- [ ] `nx test test-data` — all pass (handlers.spec.ts + builder self-tests)
 - [ ] All fixture JSON files are valid JSON with realistic Indian data
 - [ ] Every builder returns a typed object matching `@zitro/models` exactly
-- [ ] MSW handlers respond to all listed endpoints
-- [ ] MSW handlers spec verifies handlers return the right shape
+- [ ] Every factory returns a valid DTO matching `@zitro/mappers/dtos` shape
+- [ ] MSW handlers respond to all listed endpoints with correct shapes
+- [ ] `@zitro/test-data/factories` entry point accessible from other test files
+
+> **Test Specifications (implement in T029-unit — but `handlers.spec.ts` is written here as part of T006):**
+
+**`handlers.spec.ts`** — created IN T006 (not deferred):
+```
+GET /api/businesses/nearby    → 200, array with at least 1 NearbyBusinessDto
+GET /api/businesses/:slug/products → 200, ProductDto[] — first item has imageUrl (not imageURL)
+GET /api/businesses/:slug/categories → 200, CategoryDto[]
+POST /api/orders (valid body) → 201, OrderDto with id + status="pending"
+POST /api/orders (missing items) → 400
+GET /api/orders               → 200, OrderDto[]
+GET /api/orders/:id (known)   → 200, single OrderDto
+GET /api/orders/:id (unknown) → 404
+POST /api/users/addresses     → 201, AddressDto with generated id
+GET /api/config               → 200, featureFlags map + apiVersion string
+```
+
+**Builder self-tests** (created IN T006):
+```
+CatalogBuilders.paneerButterMasala() → imageUrl present, no "image" or "imageURL"
+OrderBuilders.placedOrder()   → status = "pending"
+OrderBuilders.deliveredOrder() → status = "delivered"
+OrderBuilders.cancelledOrder() → status = "cancelled"
+CartBuilders.singleItemCart() → items.length = 1
+CartBuilders.emptyCart()      → items.length = 0
+ProductDtoFactory.build()     → has imageUrl, isAvailable, id (all required DTO fields)
+OrderDtoFactory.build()       → charges object is flat (packagingCharge is a number, not nested)
+```
 
 ---
 
@@ -735,19 +943,19 @@ export type TranslationKey = /* deep path type */ string;
 
 **Status:** `[ ]`
 **Branch:** `feature/T009-http-interceptors`
-**Depends on:** T004, T006
+**Depends on:** T004
 
 **Scope — files to create:**
 ```
 libs/services/src/interceptors/auth.interceptor.ts
-libs/services/src/interceptors/auth.interceptor.spec.ts
 libs/services/src/interceptors/business-id.interceptor.ts
-libs/services/src/interceptors/business-id.interceptor.spec.ts
 libs/services/src/interceptors/error.interceptor.ts
-libs/services/src/interceptors/error.interceptor.spec.ts
+libs/services/src/interceptors/retry.interceptor.ts
 libs/services/src/interceptors/index.ts
 libs/services/src/provide-services.ts   ← provideZitroServices() function
 ```
+
+> No spec files in T009 — all interceptor tests are in T029-unit.
 
 **`auth.interceptor.ts`:** Attaches Firebase JWT to every outgoing request as `Authorization: Bearer <token>`. Skips public endpoints (configurable list). Refreshes token if expired before attaching.
 
@@ -771,11 +979,52 @@ export function provideZitroServices(config: ZitroServicesConfig): EnvironmentPr
 ```
 
 **Acceptance Criteria:**
-- [ ] `nx test services` (interceptors only) — all pass
-- [ ] `auth.interceptor` attaches correct header (verified with MSW)
-- [ ] `auth.interceptor` does NOT attach header to non-API URLs
-- [ ] `error.interceptor` converts 401 into navigation to `/auth/signin`
-- [ ] Integration tests use MSW to simulate 401, 429, 503
+- [ ] `nx build services` — no errors
+- [ ] `nx lint services` — no errors
+- [ ] `provideZitroServices()` registers all 3 interceptors in correct order
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below.
+
+**Test Specifications (implement in T029-unit):**
+
+All interceptor tests use Vitest. Pattern: construct minimal handler chain.
+
+**`auth.interceptor.spec.ts`**:
+```
+attaches Authorization: Bearer <token> to /api/* requests
+does NOT attach to external URLs (https://external.com/*)
+does NOT attach to public endpoints (e.g. /api/config — in public list)
+calls FirebaseAuthService.getIdToken() before attaching header
+propagates error when getIdToken() throws (does not call next)
+```
+
+**`business-id.interceptor.spec.ts`**:
+```
+attaches X-Business-Id to /api/* when businessId signal is set
+does NOT attach to non-API requests
+it.each: hunger_point, efc-pizza, tularam-kirana-store all pass through correctly
+passes request unchanged when businessId signal is empty string
+```
+
+**`error.interceptor.4xx.spec.ts`** + **`error.interceptor.5xx.spec.ts`** (split if > 200 lines):
+```
+401 → Router.navigate(['/auth/signin']) + AuthService.signOut()
+429 → ToastService.show(rateLimitMessage) + propagates error
+400, 404 → propagates unchanged
+500 → propagates unchanged
+503 → FeatureFlagService.setMaintenanceMode(true) + propagates error
+network error (status 0) → propagates unchanged
+200, 201 → passes through without modification
+```
+
+**`retry.interceptor.spec.ts`**:
+```
+retries on network error (status 0), up to maxRetries=2
+does NOT retry on 4xx errors
+does NOT retry on 5xx errors
+emits final error after maxRetries exhausted
+emits success on first retry when second attempt succeeds
+```
 
 ---
 
@@ -829,19 +1078,21 @@ zitro-app/src/app/core/services/google-geocoding.service.ts
 
 **Scope — files to create:**
 ```
-libs/services/src/api/catalog-api.service.ts       + .integration.spec.ts
-libs/services/src/api/order-api.service.ts          + .integration.spec.ts
-libs/services/src/api/user-api.service.ts           + .integration.spec.ts
-libs/services/src/api/cart.service.ts               + .spec.ts
-libs/services/src/api/pricing.service.ts            + .spec.ts
-libs/services/src/api/coupon-api.service.ts         + .integration.spec.ts
-libs/services/src/api/auth.service.ts               + .spec.ts
-libs/services/src/api/address-api.service.ts        + .integration.spec.ts
-libs/services/src/api/config-api.service.ts         + .integration.spec.ts
-libs/services/src/api/geocoding-api.service.ts      + .integration.spec.ts
-libs/services/src/api/business-context.service.ts   + .spec.ts
+libs/services/src/api/catalog-api.service.ts
+libs/services/src/api/order-api.service.ts
+libs/services/src/api/user-api.service.ts
+libs/services/src/api/cart.service.ts
+libs/services/src/api/pricing.service.ts
+libs/services/src/api/coupon-api.service.ts
+libs/services/src/api/auth.service.ts
+libs/services/src/api/address-api.service.ts
+libs/services/src/api/config-api.service.ts
+libs/services/src/api/geocoding-api.service.ts
+libs/services/src/api/business-context.service.ts
 libs/services/src/api/index.ts
 ```
+
+> No spec files in T010 — all API service tests are written in T029-unit.
 
 **Migration rules (for each service):**
 1. Keep all business logic, BehaviorSubjects, caching logic intact
@@ -877,11 +1128,61 @@ export class CatalogApiService {
 - Emits `cartCount$`, `cartSubtotal$`
 
 **Acceptance Criteria:**
-- [ ] `nx test services` — all pass
-- [ ] Integration tests use MSW handlers from `@zitro/test-data`
-- [ ] `CatalogApiService.getProducts` calls mapper before returning
-- [ ] `CartService` survives page reload (localStorage persistence)
-- [ ] `OrderApiService.createOrder` calls `OrderMapper.fromCart` to build request
+- [ ] `nx build services` — no errors
+- [ ] `nx lint services` — no errors
+- [ ] Every API service injects `CacheService` and respects TTL
+- [ ] `CatalogApiService.getProducts` pipes response through `CatalogMapper.toProductList`
+- [ ] `CartService` persists to `localStorage` key `"zitro_cart"`
+- [ ] `OrderApiService.createOrder` calls `OrderMapper.fromCart` to build the request body
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below.
+
+**Test Specifications (implement in T029-unit — uses `@zitro/test-data/msw` for MSW server):**
+
+API services: `.integration.spec.ts` (MSW mock server). Pure state services: `.spec.ts`.
+
+**`catalog-api.service.get-products.integration.spec.ts`**:
+```
+returns Observable<Product[]> with mapped products (Product shape, not DTO shape)
+CatalogMapper.toProductList spy called with raw DTO array
+result stored in CacheService after first fetch (cacheKey = "products:<slug>")
+second call returns cached result (MSW receives only 1 HTTP request)
+fresh fetch after cache TTL expires (vi.advanceTimersByTime > 1hr)
+propagates error when server returns 500
+```
+
+**`catalog-api.service.get-categories.integration.spec.ts`**:
+```
+returns Observable<Category[]>; caches under "categories:<businessId>"
+returns cached value on second call (no new HTTP request)
+```
+
+**`order-api.service.integration.spec.ts`**:
+```
+createOrder: OrderMapper.fromCart spy called before POSTing
+createOrder: POSTs to /api/orders; emits mapped Order (status="pending")
+getOrderHistory: GETs /api/orders; caches 5 minutes
+getOrderHistory: cache invalidated after createOrder
+cancelOrder: PATCHes /api/orders/:id/cancel; invalidates order cache
+cancelOrder: propagates 409 when past cancellation window
+```
+
+**`cart.service.state.spec.ts`** + **`cart.service.persistence.spec.ts`** (split):
+```
+State: empty on init; add→qty=1; add existing→increment; remove→decrement/delete; clear→[]
+Persistence: writes "zitro_cart" after every mutation; restores on construction
+  handles corrupted JSON in localStorage → initializes empty (no throw)
+  cartCount$ = sum of all item qtys; cartSubtotal$ = sum of (price × qty)
+```
+
+**`pricing.service.spec.ts`**:
+```
+deliveryCharge = 0 for takeout/dine-in; > 0 for delivery
+couponDiscount = 0 when no coupon; > 0 with valid coupon
+total = subtotal + delivery + packaging + platform + gst - coupon
+visibility.showCouponDiscount = true when couponDiscount > 0
+visibility.showFreeDeliveryProgress = true when subtotal < threshold
+```
 
 ---
 
@@ -939,10 +1240,48 @@ export type FeatureFlag =
 ```
 
 **Acceptance Criteria:**
-- [ ] `nx test services` — all pass
-- [ ] `CacheService.get` returns null after TTL expires
-- [ ] `CacheService.invalidatePattern` clears all matching keys
-- [ ] `FeatureFlagService` returns `false` for all flags when API is unreachable (fail-safe)
+- [ ] `nx build services` — no errors
+- [ ] `nx lint services` — no errors
+- [ ] `CacheService` stores/retrieves with `"zitro_cache_"` prefix in localStorage
+- [ ] `FeatureFlagService.isEnabled()` returns `false` for all flags before `loadFlags()` called
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below.
+
+**Test Specifications (implement in T029-unit):**
+
+**`cache.service.get-set.spec.ts`** + **`cache.service.invalidate.spec.ts`** (split by 300-line rule):
+```
+GET-SET:
+  get() returns null for unknown key
+  get() returns stored value before TTL (vi.useFakeTimers + advanceByTime < ttl)
+  get() returns null after TTL expires (advanceByTime > ttl)
+  get() removes expired entry from localStorage after returning null
+  set() writes to localStorage with "zitro_cache_" prefix
+  set() stores expiresAt = Date.now() + ttlHours * 3600000
+  get() handles corrupted JSON → null + removes entry (no throw)
+  get() handles missing expiresAt field → null (treat as expired)
+  set() overwrites existing entry with fresh data + fresh TTL
+
+INVALIDATE:
+  invalidate(key) removes exact localStorage key
+  invalidate() on non-existent key → no-op
+  invalidatePattern("products:") removes products:hp, products:efc, products:tularam
+  invalidatePattern("products:") does NOT remove categories:hp
+  invalidatePattern with no matches → no-op
+  clear() removes ALL "zitro_cache_*" keys
+  clear() does NOT remove non-cache keys (e.g. "zitro_theme")
+```
+
+**`feature-flag.service.spec.ts`**:
+```
+returns false for ALL flags before loadFlags() called
+returns true for flag when API returns it as true
+returns false for flag when API returns it as false
+returns false for unknown flag name
+returns false for ALL flags when API call throws 503 (fail-safe)
+isEnabled$() Observable emits current value immediately on subscribe
+isMaintenanceMode() returns true after 503 API response sets it
+```
 
 ---
 
@@ -950,7 +1289,7 @@ export type FeatureFlag =
 
 **Status:** `[ ]`
 **Branch:** `feature/T012-ui-common-g1`
-**Depends on:** T007, T008, T006
+**Depends on:** T007, T008
 
 **Source files (migrate from):**
 ```
@@ -961,7 +1300,7 @@ zitro-app/src/app/shared/components/no-internet/
 zitro-app/src/app/features/splash/
 ```
 
-**Scope — files to create (per component: component.ts, component.html, component.scss, component.spec.ts):**
+**Scope — files to create (per component: component.ts, component.html, component.scss — NO spec files):**
 ```
 libs/ui/src/common/loader/
 libs/ui/src/common/empty-state/
@@ -994,11 +1333,35 @@ export class LoaderComponent {
 ```
 
 **Acceptance Criteria:**
-- [ ] `nx test ui` — all pass for these 5 components
+- [ ] `nx build ui` — no errors for these 5 components
 - [ ] All components are standalone
 - [ ] All user-visible strings go through `I18nPipe`
 - [ ] All interactive/visible elements have `data-testid`
-- [ ] Each component spec tests: renders with default config, renders with custom config, displays i18n string
+
+> **Tests:** Deferred to T029-unit. See "Test Specifications" below.
+
+**Test Specifications (implement in T029-unit — uses jest-preset-angular):**
+
+All component tests use the standard 3-group pattern (split when > 300 lines):
+`component.rendering.spec.ts` + `component.interactions.spec.ts`
+
+```
+LoaderComponent:
+  rendering: [data-testid="loader-spinner"] present
+  rendering: overlay hidden when config.overlay = false
+  rendering: shows [data-testid="loader-label"] with i18n text
+  rendering: config.size="sm" → correct CSS class
+
+NoInternetComponent:
+  rendering: [data-testid="no-internet-icon"] + [data-testid="no-internet-message"] visible
+  rendering: i18n text for "no internet" message
+  interactions: [data-testid="retry-btn"] click → retryClicked output emits void
+
+SplashScreenComponent:
+  rendering: [data-testid="splash-screen"] present
+  rendering: [data-testid="splash-logo"] image visible
+  rendering: [data-testid="splash-loader"] present
+```
 
 ---
 
@@ -1044,7 +1407,25 @@ export interface BottomSheetConfig {
 }
 ```
 
-**Acceptance Criteria:** Same as T012 pattern.
+**Acceptance Criteria:**
+- [ ] `nx build ui` — no errors for these 4 components
+- [ ] All standalone, signal inputs, data-testid, i18n
+
+> **Tests:** Deferred to T029-unit.
+
+**Test Specifications (implement in T029-unit):**
+```
+ConfirmationDialogComponent:
+  rendering: [data-testid="confirm-dialog-title"] shows config.title
+  rendering: [data-testid="confirm-dialog-message"] shows config.message
+  rendering: confirm button shows config.confirmLabel
+  rendering: confirm button has destructive style when config.destructive = true
+  rendering: confirm button has default style when config.destructive = false
+  interactions: confirmed output emits void on confirm click
+  interactions: cancelled output emits void on cancel click
+  interactions: cancelled emits on backdrop click when closeOnBackdropClick = true
+  interactions: cancelled does NOT emit when closeOnBackdropClick = false
+```
 
 ---
 
@@ -1094,10 +1475,31 @@ export interface ThemePickerConfig {
 ```
 
 **Acceptance Criteria:**
+- [ ] `nx build ui` — no errors
 - [ ] `PhoneInput` validates Indian phone format live (uses `Validators.isIndianPhone`)
 - [ ] `OtpInput` supports paste (auto-fills all 6 boxes)
 - [ ] `OtpInput` auto-submits when `autoSubmit: true` and all boxes filled
 - [ ] `ThemePicker` calls `ThemeService.setTheme()` on selection
+
+> **Tests:** Deferred to T029-unit.
+
+**Test Specifications (implement in T029-unit):**
+```
+PhoneInputComponent:
+  valid: 10-digit starting 6/7/8/9 → no [data-testid="phone-input-error"] visible
+  invalid: 5 digits → [data-testid="phone-input-error"] visible
+  invalid: 11 digits → error visible
+  invalid: empty string → error visible
+  valueChange output emits on each valid keystroke
+
+OtpInputComponent:
+  renders config.length [data-testid="otp-box"] elements (default 6)
+  auto-advances focus to next box after single digit entry
+  paste "123456" fills all 6 boxes
+  otpComplete output emits when all boxes filled
+  auto-submits (submitted output) when autoSubmit=true and all filled
+  does NOT auto-submit when autoSubmit=false
+```
 
 ---
 
@@ -1142,10 +1544,40 @@ viewDetails = output<Product>();
 **`ItemDetailSheet`** — bottom sheet showing full product details: image, description, variations, add-to-cart. Uses `BottomSheetComponent` from T013.
 
 **Acceptance Criteria:**
+- [ ] `nx build ui` — no errors
 - [ ] `ProductCard` renders in all 3 layout modes
 - [ ] `ProductCard` shows Veg/Non-Veg indicator (green/red dot)
 - [ ] `CategoryBar` scrolls horizontally, highlights active category
 - [ ] `ItemDetailSheet` shows correct variation prices
+
+> **Tests:** Deferred to T029-unit. **Split into 3 spec files for product-card.**
+
+**Test Specifications (implement in T029-unit):**
+```
+product-card.rendering.spec.ts:
+  it.each(['grid','list','pos'])('renders data-layout="%s" attribute')
+  veg indicator [data-testid="veg-indicator"] visible for foodType="Veg"
+  non-veg indicator visible for foodType="NonVeg"
+  [data-testid="product-card-add-btn"] visible when showAddButton=true
+  [data-testid="product-card-add-btn"] hidden when showAddButton=false
+  price formatted as "₹180" in [data-testid="product-card-price"]
+
+product-card.interactions.spec.ts:
+  addToCart output emits { product, variation: null } for no-variation product
+  addToCart output emits { product, variation } when variation selected
+  viewDetails output emits product on card body click
+  add-btn click does NOT trigger viewDetails (stopPropagation)
+
+product-card.config.spec.ts:
+  showDietaryBadge=false hides badge even for Jain products
+  showVariationPill=true shows selector when product has variations
+
+search-bar.spec.ts:
+  renders [data-testid="search-input"]
+  emits searchChange on every keystroke
+  [data-testid="search-clear-btn"] visible when non-empty; hidden when empty
+  clear click → clears input + emits searchChange('')
+```
 
 ---
 
@@ -1169,10 +1601,23 @@ libs/ui/src/address/address-list/
 **`AddAddressForm` outputs:** `submitted = output<AddressFormData>()`, `cancelled = output<void>()`
 
 **Acceptance Criteria:**
+- [ ] `nx build ui` — no errors
 - [ ] Form validates all required fields
 - [ ] Pincode field only accepts 6 digits
-- [ ] Phone field validates Indian phone format
 - [ ] `AddressCard` shows default badge for `isDefault: true`
+
+> **Tests:** Deferred to T029-unit.
+
+**Test Specifications (implement in T029-unit):**
+```
+add-address-form.spec.ts:
+  save btn disabled when form empty
+  save btn disabled when pincode is non-6-digit
+  save btn enabled when all required fields valid
+  [data-testid="address-pincode-error"] visible for 3-digit pincode
+  submitted output emits AddressFormData when valid form submitted
+  cancelled output emits void on cancel click
+```
 
 ---
 
@@ -1196,9 +1641,23 @@ libs/ui/src/cart/pricing-summary/
 **`CartSummaryBar`** — sticky bottom bar showing item count + total + checkout button.
 
 **Acceptance Criteria:**
+- [ ] `nx build ui` — no errors
 - [ ] `PricingSummary` hides rows where `visibility.show*` is false
 - [ ] Free delivery progress bar shows correct amount remaining
 - [ ] Coupon discount row only shows when `couponDiscount > 0`
+
+> **Tests:** Deferred to T029-unit.
+
+**Test Specifications (implement in T029-unit):**
+```
+pricing-summary.spec.ts:
+  delivery row visible when visibility.showDeliveryCharge=true
+  delivery row hidden when visibility.showDeliveryCharge=false
+  coupon row visible when showCouponDiscount=true AND couponDiscount > 0
+  free delivery bar shows "Add ₹X more" (threshold=500, subtotal=350 → ₹150)
+  all amounts formatted with ₹ symbol
+  total = subtotal + charges - discount
+```
 
 ---
 
@@ -1230,9 +1689,27 @@ libs/ui/src/common/update-dialog/
 **`BannerCarousel`** — auto-scrolling with dots indicator. Respects `banner.isActive`, `banner.startDate`, `banner.endDate`, `banner.versionCondition`.
 
 **Acceptance Criteria:**
+- [ ] `nx build ui` — no errors
 - [ ] Each order status maps to correct color
 - [ ] `BannerCarousel` skips inactive banners
 - [ ] `StarRating` emits on selection and supports read-only mode
+
+> **Tests:** Deferred to T029-unit.
+
+**Test Specifications (implement in T029-unit):**
+```
+order-status-badge.spec.ts:
+  it.each(['pending','confirmed','preparing','shipped','delivered','cancelled'])
+    each status renders [data-testid="order-status-badge"] with data-color=<token>
+    each status renders [data-testid="order-status-label"] with i18n text
+
+banner-carousel.spec.ts:
+  renders only banners where isActive=true (inactive filtered out)
+  skips banners before startDate (vi.setSystemTime before startDate)
+  skips banners after endDate (vi.setSystemTime after endDate)
+  auto-scrolls to next banner after autoPlayMs (jest.useFakeTimers)
+  renders [data-testid="banner-dot"] per active banner
+```
 
 ---
 
@@ -1463,40 +1940,254 @@ const config: CapacitorConfig = {
 
 ---
 
+### T029-unit — Write All Unit + Integration Tests
+
+**Status:** `[ ]`
+**Branch:** `feature/T029-unit-tests`
+**Depends on:** T029, T006
+
+**Goal:** Write all unit and integration tests in one PR after `zitro-customer` is feature-complete
+(T029 done). This avoids rework from tests being written against intermediate implementations.
+Uses `@zitro/test-data` builders + factories everywhere — no inline mock objects.
+
+**Scope — spec files to create (see each task's "Test Specifications" subsection for exact test cases):**
+
+**Batch 1 — Pure libs (Vitest, no Angular):**
+```
+libs/models/src/*.spec.ts                              (only if model files export runtime functions)
+libs/mappers/src/mappers/catalog.mapper.spec.ts        (split: catalog.mapper.to-product.spec.ts if > 300 ln)
+libs/mappers/src/mappers/order.mapper.to-order.spec.ts
+libs/mappers/src/mappers/order.mapper.from-cart.spec.ts
+libs/mappers/src/mappers/pricing.mapper.spec.ts
+libs/mappers/src/mappers/user.mapper.spec.ts
+libs/mappers/src/mappers/coupon.mapper.spec.ts
+libs/mappers/src/mappers/business.mapper.spec.ts
+libs/services/src/interceptors/auth.interceptor.spec.ts
+libs/services/src/interceptors/business-id.interceptor.spec.ts
+libs/services/src/interceptors/error.interceptor.4xx.spec.ts
+libs/services/src/interceptors/error.interceptor.5xx.spec.ts
+libs/services/src/interceptors/retry.interceptor.spec.ts
+libs/services/src/api/cart.service.state.spec.ts
+libs/services/src/api/cart.service.persistence.spec.ts
+libs/services/src/api/pricing.service.spec.ts
+libs/services/src/cache.service.get-set.spec.ts
+libs/services/src/cache.service.invalidate.spec.ts
+libs/services/src/feature-flag.service.spec.ts
+```
+
+**Batch 2 — Integration tests (Vitest + MSW server from `@zitro/test-data/msw`):**
+```
+libs/services/src/api/catalog-api.service.get-products.integration.spec.ts
+libs/services/src/api/catalog-api.service.get-categories.integration.spec.ts
+libs/services/src/api/order-api.service.integration.spec.ts
+libs/services/src/api/user-api.service.integration.spec.ts
+libs/services/src/api/coupon-api.service.integration.spec.ts
+libs/services/src/api/address-api.service.integration.spec.ts
+```
+
+**Batch 3 — Angular component tests (jest-preset-angular, `@zitro/test-data` builders):**
+```
+libs/ui/src/common/loader/loader.component.rendering.spec.ts
+libs/ui/src/common/no-internet/no-internet.component.spec.ts
+libs/ui/src/common/splash-screen/splash-screen.component.spec.ts
+libs/ui/src/common/confirmation-dialog/confirmation-dialog.component.rendering.spec.ts
+libs/ui/src/common/confirmation-dialog/confirmation-dialog.component.interactions.spec.ts
+libs/ui/src/auth/phone-input/phone-input.component.spec.ts
+libs/ui/src/auth/otp-input/otp-input.component.spec.ts
+libs/ui/src/catalog/product-card/product-card.component.rendering.spec.ts
+libs/ui/src/catalog/product-card/product-card.component.interactions.spec.ts
+libs/ui/src/catalog/product-card/product-card.component.config.spec.ts
+libs/ui/src/catalog/search-bar/search-bar.component.spec.ts
+libs/ui/src/address/add-address-form/add-address-form.component.spec.ts
+libs/ui/src/cart/pricing-summary/pricing-summary.component.spec.ts
+libs/ui/src/order/order-status-badge/order-status-badge.component.spec.ts
+libs/ui/src/banners/banner-carousel/banner-carousel.component.spec.ts
+```
+
+**Batch 4 — Feature page tests (jest-preset-angular):**
+One `.spec.ts` per feature page in `apps/zitro-customer/src/app/features/` — test:
+- Route guard behavior (auth guard, business selection guard)
+- Service method calls (mocked via `vi.fn()`)
+- Template renders key `[data-testid]` elements
+- Output/event wiring to services
+
+**Coverage gates (run after all batches complete):**
+- [ ] `nx run-many -t test` — all pass
+- [ ] `nx test mappers -- --coverage` → 100% statement + branch
+- [ ] `nx test services -- --coverage` → 90%+ statement
+- [ ] `nx test ui -- --coverage` → 80%+ statement
+
+**File splitting enforcement:** Any spec file that exceeds 300 lines MUST be split before the PR is opened. Use naming convention from Testing Standards section.
+
+---
+
 ### T030 — E2E Tests (zitro-customer)
 
 **Status:** `[ ]`
 **Branch:** `feature/T030-customer-e2e`
-**Depends on:** T029
+**Depends on:** T029-unit
 
-**Scope:**
+**Scope — files to create:**
 ```
-apps/zitro-customer-e2e/playwright.config.ts
-apps/zitro-customer-e2e/pages/auth.page.ts
-apps/zitro-customer-e2e/pages/home.page.ts
-apps/zitro-customer-e2e/pages/cart.page.ts
-apps/zitro-customer-e2e/pages/checkout.page.ts
-apps/zitro-customer-e2e/pages/orders.page.ts
-apps/zitro-customer-e2e/journeys/guest-browse.journey.ts
-apps/zitro-customer-e2e/journeys/place-order.journey.ts
-apps/zitro-customer-e2e/journeys/apply-coupon.journey.ts
-apps/zitro-customer-e2e/journeys/cancel-order.journey.ts
-apps/zitro-customer-e2e/journeys/address-management.journey.ts
+apps/zitro-customer-e2e/src/pages/location-gate.page.ts
+apps/zitro-customer-e2e/src/pages/home.page.ts
+apps/zitro-customer-e2e/src/pages/auth.page.ts
+apps/zitro-customer-e2e/src/pages/cart.page.ts
+apps/zitro-customer-e2e/src/pages/checkout.page.ts
+apps/zitro-customer-e2e/src/pages/orders.page.ts
+apps/zitro-customer-e2e/src/pages/address.page.ts
+apps/zitro-customer-e2e/src/journeys/guest-browse.spec.ts        (8 tests)
+apps/zitro-customer-e2e/src/journeys/place-order.spec.ts         (7 tests)
+apps/zitro-customer-e2e/src/journeys/apply-coupon.spec.ts        (4 tests)
+apps/zitro-customer-e2e/src/journeys/cancel-order.spec.ts        (3 tests)
+apps/zitro-customer-e2e/src/journeys/address-management.spec.ts  (5 tests)
+apps/zitro-customer-e2e/src/support/test-state.ts                (auth storageState helper)
 ```
 
-**5 Critical Journeys:**
-1. **Guest Browse** — open app → select business → browse menu → search product
-2. **Place Order** — login → add items → checkout (delivery) → confirm order → see status
-3. **Apply Coupon** — add items → apply coupon → verify discount → place order
-4. **Cancel Order** — place order → view orders → cancel within time window
-5. **Address Management** — login → add address → set as default → use in checkout
+**Hard Rules:**
+- Every locator: `page.locator('[data-testid="..."]')` — no CSS class selectors, no XPath
+- Every Page Object method: `Promise<void>` returns unless reading state (`Promise<string|boolean|number>`)
+- All assertions are hard — no `expect.soft()`
+- Auth journeys (J2–J5) use Playwright `storageState` fixture (pre-authenticated session)
+- `playwright.config.ts` `reuseExistingServer = true` — do not restart server per file
+- Add `e2e` target to `apps/zitro-customer-e2e/project.json` pointing at `playwright.config.ts`
+- Replace `apps/zitro-customer-e2e/src/example.spec.ts` (it uses CSS selector `h1` — violates rules)
 
-**Rules:** Page Objects only use `data-testid` selectors. No CSS selectors.
+---
+
+### Page Object Classes
+
+**`LocationGatePage`:**
+```typescript
+class LocationGatePage {
+  readonly root         = this.page.locator('[data-testid="location-gate"]');
+  readonly allowBtn     = this.page.locator('[data-testid="allow-location-btn"]');
+  readonly manualBtn    = this.page.locator('[data-testid="manual-location-btn"]');
+  readonly pincodeInput = this.page.locator('[data-testid="pincode-input"]');
+  readonly submitBtn    = this.page.locator('[data-testid="pincode-submit-btn"]');
+
+  async isVisible(): Promise<boolean>
+  async allowLocation(): Promise<void>            // clicks allowBtn, waits for root hidden
+  async enterPincode(pin: string): Promise<void>  // fills + clicks submitBtn
+  async getPincodeError(): Promise<string>        // text of [data-testid="pincode-error"]
+}
+```
+
+**`HomePage`:**
+```typescript
+class HomePage {
+  readonly root          = this.page.locator('[data-testid="home-page"]');
+  readonly businessCards = this.page.locator('[data-testid="business-card"]');
+  readonly productGrid   = this.page.locator('[data-testid="product-grid"]');
+  readonly productCards  = this.page.locator('[data-testid="product-card"]');
+  readonly cartBadge     = this.page.locator('[data-testid="cart-badge"]');
+
+  async waitForLoad(): Promise<void>
+  async selectBusinessType(label: string): Promise<void>   // clicks [data-testid="business-type-tab"] by aria-label
+  async selectBusiness(name: string): Promise<void>        // clicks [data-testid="business-card-name"] matching text
+  async searchFor(term: string): Promise<void>             // fills [data-testid="search-input"]
+  async getProductNames(): Promise<string[]>               // text of all [data-testid="product-card-name"]
+  async addFirstProductToCart(): Promise<void>             // clicks first [data-testid="product-card-add-btn"]
+  async getCartBadgeCount(): Promise<number>               // parses [data-testid="cart-badge"] text as int
+  async getBusinessName(index: number): Promise<string>    // text of nth [data-testid="business-card-name"]
+}
+```
+
+**`AuthPage`:**
+```typescript
+async enterPhone(phone: string): Promise<void>             // fills [data-testid="auth-phone-input"]
+async submitPhone(): Promise<void>                         // clicks [data-testid="auth-submit-btn"], waits for OTP visible
+async enterOtp(otp: string): Promise<void>                 // fills [data-testid="auth-otp-input"]
+async submitOtp(): Promise<void>
+async loginWithPhone(phone: string, otp: string): Promise<void>  // composite helper
+async getErrorMessage(): Promise<string>                   // text of [data-testid="auth-error-msg"]
+```
+
+**`CartPage`:**
+```typescript
+async waitForLoad(): Promise<void>
+async getItemCount(): Promise<number>                      // count of [data-testid="cart-item"]
+async applyCoupon(code: string): Promise<void>             // fills + clicks [data-testid="apply-coupon-btn"]
+async getCouponDiscount(): Promise<string>                 // text of [data-testid="coupon-discount-row"]
+async getTotalAmount(): Promise<string>                    // text of [data-testid="order-total"]
+async proceedToCheckout(): Promise<void>                   // clicks [data-testid="checkout-btn"]
+async isEmpty(): Promise<boolean>                          // checks [data-testid="cart-empty"] visible
+```
+
+**`CheckoutPage`:**
+```typescript
+async selectDelivery(): Promise<void>                      // clicks [data-testid="delivery-option"]
+async selectAddress(label: string): Promise<void>          // clicks address card matching label text
+async selectCashPayment(): Promise<void>                   // clicks [data-testid="payment-cash"]
+async placeOrder(): Promise<void>                          // clicks [data-testid="place-order-btn"], waits for confirmation
+async getConfirmedOrderId(): Promise<string>               // text of [data-testid="order-id"]
+```
+
+**`OrdersPage`:**
+```typescript
+async waitForLoad(): Promise<void>
+async getOrderCount(): Promise<number>
+async getLatestOrderStatus(): Promise<string>              // text of first [data-testid="order-status"]
+async clickCancelOnLatestOrder(): Promise<void>            // clicks [data-testid="cancel-order-btn"] on first card
+async confirmCancellation(): Promise<void>                 // clicks [data-testid="confirm-cancel-btn"] in dialog
+async isLatestOrderCancelled(): Promise<boolean>           // checks [data-testid="order-status-cancelled"] visible
+```
+
+**`AddressPage`:**
+```typescript
+async clickAddAddress(): Promise<void>
+async fillAddressForm(data: { name: string; street: string; pincode: string; town: string }): Promise<void>
+async saveAddress(): Promise<void>
+async getAddressCount(): Promise<number>
+async setFirstAddressAsDefault(): Promise<void>
+async hasDefaultBadge(): Promise<boolean>                  // checks [data-testid="default-address-badge"] visible
+```
+
+---
+
+### Journey Specifications
+
+| Test ID | Journey | Steps | Key Assertions |
+|---------|---------|-------|----------------|
+| J1-01 | Guest Browse | goto('/') | `location-gate` visible; both CTA buttons visible |
+| J1-02 | Manual pincode → home | click manual → enterPincode('206244') | `home-page` visible; ≥1 `business-card` |
+| J1-03 | Business tab filter | J1-02 → selectBusinessType('Restaurant') | `business-card` count > 0 |
+| J1-04 | Select business → products | J1-02 → selectBusiness('The Hunger Point') | `product-grid` visible; `product-card` count > 0 |
+| J1-05 | Search filters products | J1-04 → searchFor('Paneer') | all `product-card-name` text contains "paneer" (case-insensitive) |
+| J1-06 | Clear search restores list | J1-05 → searchFor('') | count equals pre-search count |
+| J1-E1 | Invalid pincode | enterPincode('999') | `pincode-error` visible; `home-page` NOT visible |
+| J1-E2 | Search no results | searchFor('xyzzynotaproduct') | `product-grid-empty` visible; 0 `product-card` |
+| J2-01 | Login with phone + OTP | goto('/auth/signin') → enterPhone + submitPhone → enterOtp('123456') + submitOtp | `home-page` visible |
+| J2-02 | Add items to cart | goto('/hunger_point') → addFirstProductToCart × 2 | `cart-badge` count = 2 |
+| J2-03 | Cart shows items | J2-02 → click `cart-badge` | `cart-item` count ≥ 1; `cart-empty` NOT visible; `checkout-btn` enabled |
+| J2-04 | Place delivery order | J2-03 → proceedToCheckout → selectDelivery → selectAddress('Home') → selectCashPayment → placeOrder | `order-confirmation-page` visible; `order-id` non-empty |
+| J2-05 | Order in history | goto('/hunger_point/orders') | `order-card` count ≥ 1; status one of "Order Received"/"Confirmed"/"Pending" |
+| J2-E1 | Empty cart no checkout | goto('/hunger_point/cart') | `cart-empty` visible; `checkout-btn` NOT visible |
+| J2-E2 | No address = place-order disabled | proceedToCheckout → selectDelivery (no address) | `place-order-btn` disabled |
+| J3-01 | Valid coupon reduces total | add product → open cart → capture total → applyCoupon('SAVE10') | `coupon-discount-row` visible; total after < total before |
+| J3-02 | Discount on confirmation | J3-01 → placeOrder | `confirmation-coupon-discount` visible |
+| J3-E1 | Invalid coupon shows error | applyCoupon('INVALID') | `coupon-error-msg` visible; `coupon-discount-row` NOT visible |
+| J3-E2 | Remove coupon restores total | J3-01 → click `remove-coupon-btn` | `coupon-discount-row` gone; total = original |
+| J4-01 | Cancel fresh order | place order → goto orders → clickCancelOnLatestOrder → confirmCancellation | `order-status-cancelled` visible; status = "Cancelled" |
+| J4-E1 | No cancel on delivered order | goto orders; find delivered card | `cancel-order-btn` NOT on delivered card |
+| J4-E2 | Dismiss cancel = no change | clickCancelOnLatestOrder → click `cancel-dismiss-btn` | status unchanged |
+| J5-01 | Add address | clickAddAddress → fillAddressForm → saveAddress | form gone; address count = before + 1 |
+| J5-02 | Set default | setFirstAddressAsDefault | `default-address-badge` visible |
+| J5-03 | Default pre-selected | add cart → checkout → selectDelivery | `selected-address-label` contains "Home" |
+| J5-E1 | Save disabled incomplete form | open form → fill name only | `save-address-btn` disabled |
+| J5-E2 | Invalid pincode error | enter "123" in pincode → blur | `address-pincode-error` visible; save btn disabled |
+
+**Total: 27 tests (19 happy path + 8 edge cases)**
+
+---
 
 **Acceptance Criteria:**
-- [ ] All 5 journeys pass against local dev server
-- [ ] Journeys use Page Object Model pattern
-- [ ] No CSS selectors in any test
+- [ ] All 27 tests pass against `nx serve zitro-customer` (local dev server)
+- [ ] Zero CSS class/ID selectors in any spec or page file — only `[data-testid="..."]`
+- [ ] All Page Object methods correctly typed (`Promise<void|string|number|boolean>`)
+- [ ] `zitro-customer-e2e/project.json` has `e2e` target using Playwright executor
+- [ ] `example.spec.ts` is deleted (CSS selector violation)
+- [ ] HTML report groups journeys by `.spec.ts` file
 
 ---
 
