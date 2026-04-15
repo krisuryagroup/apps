@@ -1,0 +1,77 @@
+<div
+  class="business-card"
+  role="button"
+  tabindex="0"
+  data-testid="business-card"
+  (click)="onCardClick()"
+  (keydown.enter)="onCardClick()"
+>
+  <!-- Image area -->
+  <div class="business-card__image-wrap">
+    @if (business().imageUrl) {
+      <img
+        class="business-card__image"
+        [src]="business().imageUrl!"
+        [alt]="business().name"
+        loading="lazy"
+        data-testid="business-image"
+      />
+    } @else {
+      <div class="business-card__image-placeholder" data-testid="business-image-placeholder"></div>
+    }
+
+    @if (business().isFeatured) {
+      <span class="business-card__badge business-card__badge--featured" data-testid="featured-badge">
+        {{ 'businessCard.featured' | i18n }}
+      </span>
+    }
+
+    @if (business().deliveryTimeDisplay) {
+      <span class="business-card__badge business-card__badge--time" data-testid="delivery-time">
+        {{ business().deliveryTimeDisplay }}
+      </span>
+    }
+
+    @if (!business().isActive) {
+      <div class="business-card__overlay-closed" data-testid="closed-overlay">
+        <span>{{ 'businessCard.closed' | i18n }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Card body -->
+  <div class="business-card__body">
+    <h3 class="business-card__name" data-testid="business-name">{{ business().name }}</h3>
+
+    @if (config().showRating || config().showDistance || config().showTags) {
+      <p class="business-card__meta" data-testid="business-meta">
+        @if (config().showRating) {
+          <span class="business-card__rating">⭐ {{ business().rating }}</span>
+        }
+        @if (config().showDistance) {
+          <span class="business-card__distance">· {{ business().distanceMetres }}{{ 'businessCard.mSuffix' | i18n }}</span>
+        }
+        @if (config().showTags && tagNames()) {
+          <span class="business-card__tags" data-testid="business-tags">· {{ tagNames() }}</span>
+        }
+      </p>
+    }
+
+    @if (config().showMinOrder || config().showDeliveryFee) {
+      <p class="business-card__footer">
+        @if (config().showMinOrder && business().minOrderAmount > 0) {
+          <span>{{ 'businessCard.minOrder' | i18n }} ₹{{ business().minOrderAmount }}</span>
+        }
+        @if (config().showDeliveryFee) {
+          <span>
+            @if (business().deliveryFee === 0) {
+              {{ 'businessCard.freeDelivery' | i18n }}
+            } @else {
+              {{ 'businessCard.deliveryFee' | i18n }} ₹{{ business().deliveryFee }}
+            }
+          </span>
+        }
+      </p>
+    }
+  </div>
+</div>

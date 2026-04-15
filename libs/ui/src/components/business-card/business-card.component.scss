@@ -1,0 +1,131 @@
+.business-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--zitro-surface);
+  border-radius: var(--zitro-radius-card, 12px);
+  box-shadow: var(--zitro-shadow-card);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: var(--zitro-shadow-card-elevated, var(--zitro-shadow-card));
+    outline: 2px solid var(--zitro-primary);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // ── Image area ────────────────────────────────────────────────────────────
+  &__image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--zitro-surface-variant);
+    overflow: hidden;
+  }
+
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      var(--zitro-surface-variant) 0%,
+      var(--zitro-outline-variant, var(--zitro-surface-variant)) 100%
+    );
+  }
+
+  &__overlay-closed {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--zitro-on-primary, #fff);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  // ── Badges ────────────────────────────────────────────────────────────────
+  &__badge {
+    position: absolute;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &--featured {
+      top: 8px;
+      left: 8px;
+      background: var(--zitro-primary);
+      color: var(--zitro-on-primary, #fff);
+    }
+
+    &--time {
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+    }
+  }
+
+  // ── Body ──────────────────────────────────────────────────────────────────
+  &__body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--zitro-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--zitro-on-surface-variant, var(--zitro-on-surface));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  &__rating {
+    color: var(--zitro-on-surface);
+    font-weight: 500;
+  }
+
+  &__distance,
+  &__tags {
+    color: var(--zitro-on-surface-variant, var(--zitro-on-surface));
+  }
+
+  &__footer {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: var(--zitro-on-surface-variant, var(--zitro-on-surface));
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}

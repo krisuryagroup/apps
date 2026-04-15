@@ -11,4 +11,5 @@ export interface NearbyBusiness {
   isFeatured: boolean;
   distanceMetres: number;
   tags: string[];                 // tag slugs e.g. ["pizza", "biryani"]
+  imageUrl?: string | null;
 }

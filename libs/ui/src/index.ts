@@ -1,5 +1,6 @@
 // Components
 export * from './components/banner/banner.component';
+export * from './components/business-card/business-card.component';
 export * from './components/bottom-nav/bottom-nav.component';
 export * from './components/cache-management/cache-management.component';
 export * from './components/call-restaurant-button/call-restaurant-button.component';
