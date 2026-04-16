@@ -1,0 +1,124 @@
+[
+  {
+    "id": "prod-001",
+    "businessId": "hunger_point",
+    "categoryId": "cat-mains",
+    "name": "Paneer Butter Masala",
+    "description": "Rich creamy tomato-based curry with fresh cottage cheese, served with naan",
+    "basePrice": 180,
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/products/pbm.jpg",
+    "foodType": "Veg",
+    "isAvailable": true,
+    "isFeatured": true,
+    "isNew": false,
+    "sortOrder": 1,
+    "dietaryPreferences": ["Jain"],
+    "variations": []
+  },
+  {
+    "id": "prod-002",
+    "businessId": "hunger_point",
+    "categoryId": "cat-mains",
+    "name": "Dal Makhani",
+    "description": "Slow-cooked black lentils in creamy tomato gravy, best with laccha paratha",
+    "basePrice": 150,
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/products/dal_makhani.jpg",
+    "foodType": "Veg",
+    "isAvailable": true,
+    "isFeatured": false,
+    "isNew": false,
+    "sortOrder": 2,
+    "dietaryPreferences": [],
+    "variations": []
+  },
+  {
+    "id": "prod-003",
+    "businessId": "hunger_point",
+    "categoryId": "cat-chicken",
+    "name": "Butter Chicken",
+    "description": "Tender chicken in makhani gravy, mildly spiced with cream and butter",
+    "basePrice": 220,
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/products/butter_chicken.jpg",
+    "foodType": "NonVeg",
+    "isAvailable": true,
+    "isFeatured": true,
+    "isNew": false,
+    "sortOrder": 1,
+    "dietaryPreferences": [],
+    "variations": [
+      {
+        "id": "var-001",
+        "name": "Half Plate",
+        "priceModifier": -60,
+        "isDefault": false,
+        "isAvailable": true,
+        "sortOrder": 1
+      },
+      {
+        "id": "var-002",
+        "name": "Full Plate",
+        "priceModifier": 0,
+        "isDefault": true,
+        "isAvailable": true,
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "id": "prod-004",
+    "businessId": "efc-pizza",
+    "categoryId": "cat-pizza",
+    "name": "Margherita Pizza",
+    "description": "Classic thin-crust pizza with tomato sauce, mozzarella and fresh basil",
+    "basePrice": 199,
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/products/margherita.jpg",
+    "foodType": "Veg",
+    "isAvailable": true,
+    "isFeatured": true,
+    "isNew": false,
+    "sortOrder": 1,
+    "dietaryPreferences": [],
+    "variations": [
+      {
+        "id": "var-003",
+        "name": "Small (6\")",
+        "priceModifier": -50,
+        "isDefault": false,
+        "isAvailable": true,
+        "sortOrder": 1
+      },
+      {
+        "id": "var-004",
+        "name": "Medium (8\")",
+        "priceModifier": 0,
+        "isDefault": true,
+        "isAvailable": true,
+        "sortOrder": 2
+      },
+      {
+        "id": "var-005",
+        "name": "Large (10\")",
+        "priceModifier": 80,
+        "isDefault": false,
+        "isAvailable": true,
+        "sortOrder": 3
+      }
+    ]
+  },
+  {
+    "id": "prod-005",
+    "businessId": "efc-pizza",
+    "categoryId": "cat-burgers",
+    "name": "EFC Special Burger",
+    "description": "Crispy chicken patty, jalapeños, lettuce and our signature EFC sauce",
+    "basePrice": 149,
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/products/efc_burger.jpg",
+    "foodType": "NonVeg",
+    "isAvailable": true,
+    "isFeatured": true,
+    "isNew": true,
+    "sortOrder": 1,
+    "dietaryPreferences": [],
+    "variations": []
+  }
+]

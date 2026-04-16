@@ -1,0 +1,22 @@
+[
+  {
+    "id": "dp-001",
+    "name": "Vikram Yadav",
+    "phone": "9988776655",
+    "vehicleType": "motorcycle",
+    "vehicleNumber": "UP76 AB 1234",
+    "isAvailable": true,
+    "rating": 4.7,
+    "totalDeliveries": 1240
+  },
+  {
+    "id": "dp-002",
+    "name": "Meera Patel",
+    "phone": "9977665544",
+    "vehicleType": "bicycle",
+    "vehicleNumber": null,
+    "isAvailable": false,
+    "rating": 4.5,
+    "totalDeliveries": 380
+  }
+]

@@ -36,7 +36,7 @@
 | T004 | Implement `@zitro/mappers` | [ ] | MT003 |
 | T005 | Verify `@zitro/utils` tests pass | `[x]` superseded by MT004 (run tests only) | MT004 |
 | **Phase 3 — Test Data** |
-| T006 | Implement `@zitro/test-data` | [ ] | T004, T005 |
+| T006 | Implement `@zitro/test-data` | [x] | T004, T005 |
 | **Phase 4 — Theme** |
 | T007 | Evolve `@zitro/theme` — CSS custom properties + ThemeService (SCSS already copied by MT005) | [x] | MT005 |
 | **Phase 5 — i18n** |
@@ -632,7 +632,7 @@ libs/utils/src/date.util.spec.ts
 
 ### T006 — Implement `@zitro/test-data`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T006-test-data`
 **Depends on:** T004, T005
 

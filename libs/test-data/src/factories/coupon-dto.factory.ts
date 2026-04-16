@@ -1,0 +1,56 @@
+import type { CouponDto } from '@zitro/mappers';
+
+const BASE: CouponDto = {
+  id: 'cpn-001',
+  code: 'SAVE50',
+  title: 'Save ₹50 on your order',
+  description: 'Get flat ₹50 off on orders above ₹300',
+  discountType: 'flat',
+  discountValue: 50,
+  maxDiscount: null,
+  minOrderAmount: 300,
+  isActive: true,
+  validFrom: '2024-01-01T00:00:00Z',
+  validTo: '2024-12-31T23:59:59Z',
+  usageLimit: null,
+  usedCount: 142,
+  termsAndConditions: [
+    'Applicable on orders above ₹300',
+    'Valid once per user per day',
+    'Cannot be combined with other offers',
+  ],
+  isDisplayedForOnlineOrders: true,
+  isNewCustomerOnly: false,
+  applicableOrderTypes: ['delivery', 'takeout'],
+  maxUsagePerUser: null,
+  usagePeriod: 'day',
+  cooldownPeriodDays: null,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+};
+
+export const CouponDtoFactory = {
+  build: (overrides: Partial<CouponDto> = {}): CouponDto => ({
+    ...BASE,
+    ...overrides,
+  }),
+
+  buildPercentage: (overrides: Partial<CouponDto> = {}): CouponDto =>
+    CouponDtoFactory.build({
+      id: 'cpn-002',
+      code: 'WELCOME20',
+      title: '20% off for new customers',
+      description: 'Get 20% off (up to ₹100) on your first order',
+      discountType: 'percentage',
+      discountValue: 20,
+      maxDiscount: 100,
+      minOrderAmount: 150,
+      usageLimit: 1,
+      usedCount: 0,
+      isNewCustomerOnly: true,
+      applicableOrderTypes: [],
+      maxUsagePerUser: 1,
+      usagePeriod: 'lifetime',
+      ...overrides,
+    }),
+};

@@ -21,7 +21,8 @@
       "@zitro/theme": ["libs/theme/src/index.ts"],
       "@zitro/services": ["libs/services/src/index.ts"],
       "@zitro/i18n": ["libs/i18n/src/index.ts"],
-      "@zitro/ui": ["libs/ui/src/index.ts"]
+      "@zitro/ui": ["libs/ui/src/index.ts"],
+      "@zitro/test-data": ["libs/test-data/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
