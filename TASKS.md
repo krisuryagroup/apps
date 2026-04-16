@@ -1836,7 +1836,7 @@ apps/zitro-customer/project.json
 **`app.config.ts`** must provide:
 - `provideZitroServices({ apiBaseUrl: environment.apiUrl })`
 - `provideRouter(routes, withViewTransitions())`
-- `provideI18n()`
+- `provideI18n()`11
 - `provideTheme()`
 - Firebase app + Auth
 - `APP_INITIALIZER` for config load, i18n load, theme restore
