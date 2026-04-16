@@ -1,3 +1,6 @@
+// T010 — API services
+export * from './api';
+
 // T009 — HTTP infrastructure
 export * from './tokens';
 export * from './business-context.service';
