@@ -1,0 +1,47 @@
+[
+  {
+    "id": "cat-mains",
+    "businessId": "hunger_point",
+    "name": "Main Course",
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/categories/mains.jpg",
+    "priority": 1,
+    "isActive": true,
+    "parentCategoryId": null
+  },
+  {
+    "id": "cat-chicken",
+    "businessId": "hunger_point",
+    "name": "Chicken",
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/categories/chicken.jpg",
+    "priority": 2,
+    "isActive": true,
+    "parentCategoryId": null
+  },
+  {
+    "id": "cat-starters",
+    "businessId": "hunger_point",
+    "name": "Starters",
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/categories/starters.jpg",
+    "priority": 3,
+    "isActive": true,
+    "parentCategoryId": null
+  },
+  {
+    "id": "cat-pizza",
+    "businessId": "efc-pizza",
+    "name": "Pizzas",
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/categories/pizza.jpg",
+    "priority": 1,
+    "isActive": true,
+    "parentCategoryId": null
+  },
+  {
+    "id": "cat-burgers",
+    "businessId": "efc-pizza",
+    "name": "Burgers",
+    "imageUrl": "https://storage.googleapis.com/the-hunger-point.appspot.com/categories/burgers.jpg",
+    "priority": 2,
+    "isActive": true,
+    "parentCategoryId": null
+  }
+]
