@@ -43,7 +43,7 @@
 | T008 | Build `@zitro/i18n` — extract strings from migrated `apps/zitro-customer` templates | [x] | MT018 |
 | **Phase 6 — Services** |
 | T009 | HTTP interceptors in `@zitro/services` | [x] | T004 |
-| T010 | API service classes in `@zitro/services` (replace Firebase data services) | [ ] | T009 |
+| T010 | API service classes in `@zitro/services` (replace Firebase data services) | [x] | T009 |
 | T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
 | T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [x] | T007, T008 |
@@ -1030,7 +1030,7 @@ emits success on first retry when second attempt succeeds
 
 ### T010 — API Service Classes in `@zitro/services` (replace Firebase data services)
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T010-api-services`
 **Depends on:** T009
 
