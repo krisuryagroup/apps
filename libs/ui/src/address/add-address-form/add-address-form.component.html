@@ -1,0 +1,134 @@
+<form class="add-address-form" data-testid="add-address-form" (ngSubmit)="onSubmit()">
+  <h3 class="add-address-form__title" data-testid="add-address-title">
+    @if (config().mode === 'add') {
+      {{ 'address.newAddress' | i18n }}
+    } @else {
+      {{ 'address.editAddress' | i18n }}
+    }
+  </h3>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.fullName' | i18n }}</span>
+    <input
+      type="text"
+      [value]="name()"
+      (input)="name.set($any($event.target).value)"
+      data-testid="address-name-input"
+      autocomplete="name"
+    />
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.phoneNumber' | i18n }}</span>
+    <input
+      type="tel"
+      [value]="phone()"
+      (input)="phone.set($any($event.target).value)"
+      data-testid="address-phone-input"
+      autocomplete="tel"
+    />
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.houseStreet' | i18n }}</span>
+    <input
+      type="text"
+      [value]="houseAndStreet()"
+      (input)="houseAndStreet.set($any($event.target).value)"
+      data-testid="address-house-input"
+    />
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.landmark' | i18n }}</span>
+    <input
+      type="text"
+      [value]="landmark()"
+      (input)="landmark.set($any($event.target).value)"
+      data-testid="address-landmark-input"
+    />
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.pincode' | i18n }}</span>
+    <input
+      type="text"
+      [value]="pincode()"
+      (input)="pincode.set($any($event.target).value)"
+      maxlength="6"
+      inputmode="numeric"
+      data-testid="address-pincode-input"
+    />
+    @if (pincodeError()) {
+      <span class="add-address-form__error" data-testid="address-pincode-error">
+        {{ 'address.pincodeError' | i18n }}
+      </span>
+    }
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.town' | i18n }}</span>
+    <input
+      type="text"
+      [value]="town()"
+      (input)="town.set($any($event.target).value)"
+      data-testid="address-town-input"
+    />
+  </label>
+
+  <label class="add-address-form__field">
+    <span>{{ 'address.state' | i18n }}</span>
+    <input
+      type="text"
+      [value]="state()"
+      (input)="state.set($any($event.target).value)"
+      data-testid="address-state-input"
+    />
+  </label>
+
+  <div class="add-address-form__type-group" data-testid="add-address-type-group">
+    <span class="add-address-form__type-label">{{ 'address.addressType' | i18n }}</span>
+    <div class="add-address-form__type-btns">
+      @for (t of addressTypes; track t) {
+        <button
+          type="button"
+          class="add-address-form__type-btn"
+          [class.add-address-form__type-btn--active]="type() === t"
+          (click)="type.set(t)"
+          [attr.data-testid]="'address-type-' + t.toLowerCase()"
+        >
+          {{ t }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <label class="add-address-form__default-row">
+    <input
+      type="checkbox"
+      [checked]="isDefault()"
+      (change)="isDefault.set($any($event.target).checked)"
+      data-testid="address-default-checkbox"
+    />
+    <span>{{ 'address.setDefault' | i18n }}</span>
+  </label>
+
+  <div class="add-address-form__actions">
+    <button
+      type="button"
+      class="add-address-form__btn add-address-form__btn--secondary"
+      (click)="cancelled.emit()"
+      data-testid="address-cancel-btn"
+    >
+      {{ 'common.cancel' | i18n }}
+    </button>
+    <button
+      type="submit"
+      class="add-address-form__btn add-address-form__btn--primary"
+      [disabled]="!isValid()"
+      data-testid="address-save-btn"
+    >
+      {{ 'address.saveAddress' | i18n }}
+    </button>
+  </div>
+</form>

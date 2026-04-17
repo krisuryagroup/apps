@@ -1,0 +1,17 @@
+<div class="address-list" data-testid="address-list">
+  @if (addresses().length === 0) {
+    <p class="address-list__empty" data-testid="address-list-empty">
+      {{ config().emptyMessageKey | i18n }}
+    </p>
+  } @else {
+    @for (addr of addresses(); track addr.id) {
+      <lib-address-card
+        [config]="config().cardConfig"
+        [address]="addr"
+        (select)="select.emit($event)"
+        (edit)="edit.emit($event)"
+        (delete)="delete.emit($event)"
+      />
+    }
+  }
+</div>

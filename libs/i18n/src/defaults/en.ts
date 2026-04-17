@@ -231,6 +231,8 @@ export const EN_DEFAULTS = {
     other: 'Other',
     addressLabel: '{type} Address',
     loadingAddresses: 'Loading addresses...',
+    selectBtn: 'Deliver here',
+    pincodeError: 'Pincode must be 6 digits',
   },
   account: {
     title: 'Account',

@@ -60,7 +60,7 @@
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image` | `[x]` | T012 |
 | T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` | `[x]` | T012 |
 | T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | `[x]` | T013, T010 |
-| T016 | Evolve: address components | `[ ]` | T013, T010 |
+| T016 | Evolve: address components | `[x]` | T013, T010 |
 | T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | `[ ]` | T015 |
 | T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | `[ ]` | T013, T010 |
 | **Phase 8 — SCSS Cleanup + Security & Finalize** |

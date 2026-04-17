@@ -25,6 +25,11 @@ export * from './catalog/product-card/product-card.component';
 export * from './catalog/product-grid/product-grid.component';
 export * from './catalog/item-detail-sheet/item-detail-sheet.component';
 
+// Address (T016)
+export * from './address/address-card/address-card.component';
+export * from './address/add-address-form/add-address-form.component';
+export * from './address/address-list/address-list.component';
+
 // Components (legacy migrated — evolved versions are in common/)
 export * from './components/banner/banner.component';
 export * from './components/business-card/business-card.component';
