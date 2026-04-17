@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CacheService } from './cache.service';
-import { APP_SETTINGS_CACHE } from '@zitro/utils';
 
 describe('CacheService', () => {
   let service: CacheService;
@@ -8,292 +7,185 @@ describe('CacheService', () => {
   beforeEach(() => {
     localStorage.clear();
     service = new CacheService();
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     localStorage.clear();
-    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
-  describe('Restaurant-Specific Keys', () => {
-    it('should generate key with default restaurant when none selected', () => {
-      const key = service.getRestaurantSpecificKey('cart');
-
-      expect(key).toBe('default_cart');
+  describe('set / get', () => {
+    it('returns stored value within TTL', () => {
+      service.set('products:hp', [{ id: '1' }], { ttlHours: 1 });
+      expect(service.get('products:hp')).toEqual([{ id: '1' }]);
     });
 
-    it('should generate key with selected restaurant ID', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-
-      const key = service.getRestaurantSpecificKey('products');
-
-      expect(key).toBe('rest-123_products');
+    it('returns null for a key that was never set', () => {
+      expect(service.get('missing')).toBeNull();
     });
 
-    it.each([
-      { restaurantId: 'rest-1', baseKey: 'cart', expected: 'rest-1_cart' },
-      { restaurantId: 'store-abc', baseKey: 'favorites', expected: 'store-abc_favorites' },
-      { restaurantId: '123', baseKey: 'orders', expected: '123_orders' }
-    ])('should generate $expected for restaurant=$restaurantId and key=$baseKey', ({ restaurantId, baseKey, expected }) => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, restaurantId);
-
-      const result = service.getRestaurantSpecificKey(baseKey);
-
-      expect(result).toBe(expected);
-    });
-  });
-
-  describe('Get/Set/Remove Item', () => {
-    it('should set and get item with restaurant-specific key', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-
-      service.setItem('testKey', 'testValue');
-      const result = service.getItem('testKey');
-
-      expect(result).toBe('testValue');
-      expect(localStorage.getItem('rest-123_testKey')).toBe('testValue');
+    it('returns null after TTL has elapsed', () => {
+      service.set('key', 'value', { ttlHours: 1 });
+      vi.advanceTimersByTime(3_601_000);
+      expect(service.get('key')).toBeNull();
     });
 
-    it('should return null for non-existent key', () => {
-      const result = service.getItem('nonExistent');
-
-      expect(result).toBeNull();
+    it('removes the entry from localStorage when expired', () => {
+      service.set('expired', 42, { ttlHours: 0.001 });
+      vi.advanceTimersByTime(10_000);
+      service.get('expired');
+      expect(localStorage.getItem('zitro_cache_expired')).toBeNull();
     });
 
-    it('should remove item with restaurant-specific key', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-      service.setItem('testKey', 'value');
-
-      service.removeItem('testKey');
-
-      expect(service.getItem('testKey')).toBeNull();
-      expect(localStorage.getItem('rest-123_testKey')).toBeNull();
+    it('returns null and removes a corrupted entry', () => {
+      localStorage.setItem('zitro_cache_bad', 'not-json{{{');
+      expect(service.get('bad')).toBeNull();
+      expect(localStorage.getItem('zitro_cache_bad')).toBeNull();
     });
 
-    it.each([
-      { value: 'simple string' },
-      { value: '{"json": "object"}' },
-      { value: '12345' }
-    ])('should handle value: $value', ({ value }) => {
-      service.setItem('key', value);
-
-      expect(service.getItem('key')).toBe(value);
-    });
-  });
-
-  describe('Get Current Restaurant ID', () => {
-    it('should return default when no restaurant selected', () => {
-      const id = service.getCurrentRestaurantId();
-
-      expect(id).toBe('default');
+    it('returns null for an entry with no expiresAt field', () => {
+      localStorage.setItem('zitro_cache_malformed', JSON.stringify({ data: 'x' }));
+      expect(service.get('malformed')).toBeNull();
     });
 
-    it('should return selected restaurant ID', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-456');
-
-      const id = service.getCurrentRestaurantId();
-
-      expect(id).toBe('rest-456');
-    });
-  });
-
-  describe('Has Cache', () => {
-    it('should return false for non-existent cache', () => {
-      const result = service.hasCache('nonExistent');
-
-      expect(result).toBe(false);
+    it('overwrites an existing entry', () => {
+      service.set('k', 'first', { ttlHours: 1 });
+      service.set('k', 'second', { ttlHours: 1 });
+      expect(service.get('k')).toBe('second');
     });
 
-    it('should return true for existing cache', () => {
-      service.setItem('existingKey', 'value');
-
-      const result = service.hasCache('existingKey');
-
-      expect(result).toBe(true);
-    });
-
-    it('should return false after removing item', () => {
-      service.setItem('key', 'value');
-      service.removeItem('key');
-
-      expect(service.hasCache('key')).toBe(false);
-    });
-  });
-
-  describe('Get/Set Cached Data (JSON)', () => {
-    it('should store and retrieve JSON object', () => {
-      const data = { name: 'Pizza', price: 10.99 };
-
-      service.setCachedData('product', data);
-      const result = service.getCachedData<typeof data>('product');
-
-      expect(result).toEqual(data);
-    });
-
-    it('should return null for non-existent data', () => {
-      const result = service.getCachedData('nonExistent');
-
-      expect(result).toBeNull();
-    });
-
-    it.each([
-      { data: { items: [1, 2, 3] }, description: 'array in object' },
-      { data: [{ id: 1 }, { id: 2 }], description: 'array of objects' },
-      { data: { nested: { deep: { value: 'test' } } }, description: 'deeply nested' },
-      { data: { number: 123, bool: true, str: 'text' }, description: 'mixed types' }
-    ])('should handle $description', ({ data }) => {
-      service.setCachedData('test', data);
-
-      const result = service.getCachedData('test');
-
-      expect(result).toEqual(data);
-    });
-
-    it('should handle corrupted JSON gracefully', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-      localStorage.setItem('rest-123_corrupted', 'invalid{json');
-
-      const result = service.getCachedData('corrupted');
-
-      expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalled();
-      expect(service.hasCache('corrupted')).toBe(false);
-    });
-
-    it('should remove corrupted cache', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-      localStorage.setItem('rest-123_bad', '{invalid}');
-
-      service.getCachedData('bad');
-
-      expect(localStorage.getItem('rest-123_bad')).toBeNull();
-    });
-  });
-
-  describe('Clear Restaurant Cache', () => {
-    beforeEach(() => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-123');
-      service.setItem('cart', 'cart-data');
-      service.setItem('products', 'products-data');
-      service.setItem('orders', 'orders-data');
-      
-      // Mock Object.keys to return localStorage keys (JSDOM doesn't enumerate them properly)
-      vi.spyOn(Object, 'keys').mockImplementation((obj) => {
-        if (obj === localStorage) {
-          const keys: string[] = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key) keys.push(key);
-          }
-          return keys;
-        }
-        return Object.getOwnPropertyNames(obj);
+    it('does not throw on storage quota error', () => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError');
       });
+      expect(() => service.set('k', 'v', { ttlHours: 1 })).not.toThrow();
     });
 
-    it('should clear all restaurant-specific cache', () => {
-      service.clearRestaurantCache();
-
-      expect(localStorage.getItem('rest-123_cart')).toBeNull();
-      expect(localStorage.getItem('rest-123_products')).toBeNull();
-      expect(localStorage.getItem('rest-123_orders')).toBeNull();
+    it('uses zitro_cache_ prefix for all keys', () => {
+      service.set('mykey', 'val', { ttlHours: 1 });
+      expect(localStorage.getItem('zitro_cache_mykey')).not.toBeNull();
+      expect(localStorage.getItem('mykey')).toBeNull();
     });
 
-    it('should preserve specified keys', () => {
-      service.clearRestaurantCache(['cart']);
-
-      expect(service.hasCache('cart')).toBe(true);
-      expect(localStorage.getItem('rest-123_products')).toBeNull();
-      expect(localStorage.getItem('rest-123_orders')).toBeNull();
-    });
-
-    it('should log number of cleared keys', () => {
-      service.clearRestaurantCache();
-
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Clearing restaurant-specific cache keys'),
-        3,
-        expect.any(String),
-        'rest-123'
-      );
-    });
-
-    it('should only clear keys for current restaurant', () => {
-      localStorage.setItem('other-rest_cart', 'other-data');
-      localStorage.setItem('global-key', 'global-data');
-
-      service.clearRestaurantCache();
-
-      expect(localStorage.getItem('other-rest_cart')).toBe('other-data');
-      expect(localStorage.getItem('global-key')).toBe('global-data');
-    });
-
-    it('should preserve multiple specified keys', () => {
-      service.clearRestaurantCache(['cart', 'products']);
-
-      expect(service.hasCache('cart')).toBe(true);
-      expect(service.hasCache('products')).toBe(true);
-      expect(localStorage.getItem('rest-123_orders')).toBeNull();
+    it('stores typed objects and retrieves them correctly', () => {
+      const obj = { name: 'Paneer Butter Masala', price: 180 };
+      service.set<typeof obj>('product', obj, { ttlHours: 2 });
+      expect(service.get<typeof obj>('product')).toEqual(obj);
     });
   });
 
-  describe('Restaurant Isolation', () => {
-    it('should isolate cache between different restaurants', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-1');
-      service.setItem('cart', 'cart-rest-1');
-
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-2');
-      service.setItem('cart', 'cart-rest-2');
-
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-1');
-      expect(service.getItem('cart')).toBe('cart-rest-1');
-
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-2');
-      expect(service.getItem('cart')).toBe('cart-rest-2');
+  describe('invalidate', () => {
+    it('removes the exact entry', () => {
+      service.set('a', 1, { ttlHours: 1 });
+      service.invalidate('a');
+      expect(service.get('a')).toBeNull();
     });
 
-    it('should not affect other restaurant cache on clear', () => {
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-1');
-      service.setItem('data', 'value-1');
+    it('is a no-op for a key that does not exist', () => {
+      expect(() => service.invalidate('nonexistent')).not.toThrow();
+    });
 
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-2');
-      service.setItem('data', 'value-2');
-      service.clearRestaurantCache();
-
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, 'rest-1');
-      expect(service.getItem('data')).toBe('value-1');
+    it('only removes the specified key, not others', () => {
+      service.set('a', 1, { ttlHours: 1 });
+      service.set('b', 2, { ttlHours: 1 });
+      service.invalidate('a');
+      expect(service.get('b')).toBe(2);
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty string as base key', () => {
-      service.setItem('', 'value');
-
-      expect(service.getItem('')).toBe('value');
+  describe('invalidatePattern', () => {
+    it('removes all keys matching the prefix', () => {
+      service.set('products:hp', [1], { ttlHours: 1 });
+      service.set('products:efc', [2], { ttlHours: 1 });
+      service.set('coupons:hp', [3], { ttlHours: 1 });
+      service.invalidatePattern('products:');
+      expect(service.get('products:hp')).toBeNull();
+      expect(service.get('products:efc')).toBeNull();
+      expect(service.get('coupons:hp')).toBe(3);
     });
 
-    it('should handle special characters in keys', () => {
-      const data = { test: 'value' };
+    it('is a no-op when no keys match', () => {
+      service.set('a', 1, { ttlHours: 1 });
+      expect(() => service.invalidatePattern('xyz')).not.toThrow();
+      expect(service.get('a')).toBe(1);
+    });
+  });
 
-      service.setCachedData('key-with-dash', data);
-      service.setCachedData('key_with_underscore', data);
-
-      expect(service.getCachedData('key-with-dash')).toEqual(data);
-      expect(service.getCachedData('key_with_underscore')).toEqual(data);
+  describe('clear', () => {
+    it('removes all zitro_cache_* entries', () => {
+      service.set('a', 1, { ttlHours: 1 });
+      service.set('b', 2, { ttlHours: 1 });
+      service.clear();
+      expect(service.get('a')).toBeNull();
+      expect(service.get('b')).toBeNull();
     });
 
-    it('should handle empty object', () => {
-      service.setCachedData('empty', {});
+    it('does not remove non-cache keys', () => {
+      localStorage.setItem('user_pref', 'dark');
+      service.set('a', 1, { ttlHours: 1 });
+      service.clear();
+      expect(localStorage.getItem('user_pref')).toBe('dark');
+    });
+  });
 
-      expect(service.getCachedData('empty')).toEqual({});
+  describe('legacy shims', () => {
+    it('getCachedData returns stored JSON value', () => {
+      localStorage.setItem('legacy_key', JSON.stringify({ x: 1 }));
+      expect(service.getCachedData<{ x: number }>('legacy_key')).toEqual({ x: 1 });
     });
 
-    it('should handle empty array', () => {
-      service.setCachedData('emptyArray', []);
+    it('getCachedData returns null for missing key', () => {
+      expect(service.getCachedData('missing')).toBeNull();
+    });
 
-      expect(service.getCachedData('emptyArray')).toEqual([]);
+    it('setCachedData writes raw JSON to localStorage', () => {
+      service.setCachedData('k', { y: 2 });
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      expect(JSON.parse(localStorage.getItem('k')!)).toEqual({ y: 2 });
+    });
+
+    it('setCacheTimestamp writes current epoch ms', () => {
+      const now = new Date('2025-01-01T00:00:00Z').getTime();
+      vi.setSystemTime(now);
+      service.setCacheTimestamp('ts_key');
+      expect(localStorage.getItem('ts_key')).toBe(String(now));
+    });
+
+    it('isCacheExpired returns false for a fresh timestamp', () => {
+      service.setCacheTimestamp('ts');
+      expect(service.isCacheExpired('ts', 60_000)).toBe(false);
+    });
+
+    it('isCacheExpired returns true after duration has passed', () => {
+      service.setCacheTimestamp('ts');
+      vi.advanceTimersByTime(61_000);
+      expect(service.isCacheExpired('ts', 60_000)).toBe(true);
+    });
+
+    it('removeItem deletes the key from localStorage', () => {
+      localStorage.setItem('raw', 'val');
+      service.removeItem('raw');
+      expect(localStorage.getItem('raw')).toBeNull();
+    });
+
+    it('clearCacheByPrefix removes all matching keys', () => {
+      localStorage.setItem('COUPON_123', 'a');
+      localStorage.setItem('COUPON_456', 'b');
+      localStorage.setItem('BANNER_1', 'c');
+      service.clearCacheByPrefix('COUPON_');
+      expect(localStorage.getItem('COUPON_123')).toBeNull();
+      expect(localStorage.getItem('COUPON_456')).toBeNull();
+      expect(localStorage.getItem('BANNER_1')).toBe('c');
+    });
+
+    it('getCurrentRestaurantId returns empty string when not set', () => {
+      expect(service.getCurrentRestaurantId()).toBe('');
+    });
+
+    it('getCurrentRestaurantId returns the stored restaurant ID', () => {
+      localStorage.setItem('SELECTED_RESTAURANT_ID', 'hunger_point');
+      expect(service.getCurrentRestaurantId()).toBe('hunger_point');
     });
   });
 });

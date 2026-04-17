@@ -243,7 +243,7 @@ export class HomeComponent implements OnInit {
       this.selectedItem = {
         id: product.id,
         name: product.name,
-        imageURL: product.imageURL,
+        imageURL: product.imageUrl,
         title: product.name,
         description: product.description,
         weight: product.weight,
@@ -264,7 +264,7 @@ export class HomeComponent implements OnInit {
       this.selectedItem = {
         id: product.id,
         name: product.name,
-        imageURL: product.imageURL,
+        imageURL: product.imageUrl,
         title: product.name,
         description: product.description,
         weight: product.weight,

@@ -5,9 +5,6 @@ import { tap } from 'rxjs/operators';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
 
-const CACHE_TTL_10MIN = 10 * 60 * 1000;
-const CACHE_TTL_1HR = 60 * 60 * 1000;
-
 export interface BusinessConfig {
   slug: string;
   deliveryEnabled: boolean;
@@ -46,43 +43,28 @@ export class ConfigApiService {
 
   getBusinessConfig(businessSlug: string): Observable<BusinessConfig> {
     const cacheKey = `config:${businessSlug}`;
-    if (!this.cache.isCacheExpired(`${cacheKey}_ts`, CACHE_TTL_10MIN)) {
-      const cached = this.cache.getCachedData<BusinessConfig>(cacheKey);
-      if (cached) return of(cached);
-    }
+    const cached = this.cache.get<BusinessConfig>(cacheKey);
+    if (cached) return of(cached);
     return this.http.get<BusinessConfig>(`${this.baseUrl}/api/businesses/${businessSlug}/config`).pipe(
-      tap(config => {
-        this.cache.setCachedData(cacheKey, config);
-        this.cache.setCacheTimestamp(`${cacheKey}_ts`);
-      }),
+      tap(config => this.cache.set(cacheKey, config, { ttlHours: 1 / 6 })),
     );
   }
 
   getBanners(businessSlug: string): Observable<Banner[]> {
     const cacheKey = `banners:${businessSlug}`;
-    if (!this.cache.isCacheExpired(`${cacheKey}_ts`, CACHE_TTL_1HR)) {
-      const cached = this.cache.getCachedData<Banner[]>(cacheKey);
-      if (cached) return of(cached);
-    }
+    const cached = this.cache.get<Banner[]>(cacheKey);
+    if (cached) return of(cached);
     return this.http.get<Banner[]>(`${this.baseUrl}/api/businesses/${businessSlug}/banners`).pipe(
-      tap(banners => {
-        this.cache.setCachedData(cacheKey, banners);
-        this.cache.setCacheTimestamp(`${cacheKey}_ts`);
-      }),
+      tap(banners => this.cache.set(cacheKey, banners, { ttlHours: 1 })),
     );
   }
 
   getAppVersion(): Observable<AppVersionInfo> {
     const cacheKey = 'app:version';
-    if (!this.cache.isCacheExpired(`${cacheKey}_ts`, CACHE_TTL_1HR)) {
-      const cached = this.cache.getCachedData<AppVersionInfo>(cacheKey);
-      if (cached) return of(cached);
-    }
+    const cached = this.cache.get<AppVersionInfo>(cacheKey);
+    if (cached) return of(cached);
     return this.http.get<AppVersionInfo>(`${this.baseUrl}/api/app/version`).pipe(
-      tap(info => {
-        this.cache.setCachedData(cacheKey, info);
-        this.cache.setCacheTimestamp(`${cacheKey}_ts`);
-      }),
+      tap(info => this.cache.set(cacheKey, info, { ttlHours: 1 })),
     );
   }
 }

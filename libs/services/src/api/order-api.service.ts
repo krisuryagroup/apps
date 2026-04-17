@@ -8,7 +8,6 @@ import type { OrderDto } from '@zitro/mappers';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
 
-const CACHE_TTL_5MIN = 5 * 60 * 1000;
 const ORDER_HISTORY_KEY = 'order:history';
 
 export interface CreateOrderOptions {
@@ -34,32 +33,24 @@ export class OrderApiService {
     const request = OrderMapper.fromCart(cart, options);
     return this.http.post<OrderDto>(`${this.baseUrl}/api/orders`, request).pipe(
       map(dto => OrderMapper.toOrder(dto)),
-      tap(() => {
-        // Invalidate order history cache after a new order
-        this.cache.removeItem(`${ORDER_HISTORY_KEY}_ts`);
-      }),
+      tap(() => this.cache.invalidate(ORDER_HISTORY_KEY)),
     );
   }
 
   getOrder(orderId: string): Observable<Order> {
     const cacheKey = `order:${orderId}`;
-    if (!this.cache.isCacheExpired(`${cacheKey}_ts`, CACHE_TTL_5MIN)) {
-      const cached = this.cache.getCachedData<Order>(cacheKey);
-      if (cached) return of(cached);
-    }
+    const cached = this.cache.get<Order>(cacheKey);
+    if (cached) return of(cached);
     return this.http.get<OrderDto>(`${this.baseUrl}/api/orders/${orderId}`).pipe(
       map(dto => OrderMapper.toOrder(dto)),
-      tap(order => {
-        this.cache.setCachedData(cacheKey, order);
-        this.cache.setCacheTimestamp(`${cacheKey}_ts`);
-      }),
+      tap(order => this.cache.set(cacheKey, order, { ttlHours: 1 / 12 })),
     );
   }
 
   getOrderHistory(page = 1, status?: string): Observable<Order[]> {
     const cacheKey = ORDER_HISTORY_KEY;
-    if (!status && !this.cache.isCacheExpired(`${cacheKey}_ts`, CACHE_TTL_5MIN)) {
-      const cached = this.cache.getCachedData<Order[]>(cacheKey);
+    if (!status) {
+      const cached = this.cache.get<Order[]>(cacheKey);
       if (cached) return of(cached);
     }
     const params: Record<string, string> = { page: String(page), pageSize: '20' };
@@ -68,8 +59,7 @@ export class OrderApiService {
       map(dtos => OrderMapper.toOrderList(dtos)),
       tap(orders => {
         if (!status) {
-          this.cache.setCachedData(cacheKey, orders);
-          this.cache.setCacheTimestamp(`${cacheKey}_ts`);
+          this.cache.set(cacheKey, orders, { ttlHours: 1 / 12 });
         }
       }),
     );
@@ -79,9 +69,8 @@ export class OrderApiService {
     return this.http.put<OrderDto>(`${this.baseUrl}/api/orders/${orderId}/cancel`, {}).pipe(
       map(dto => OrderMapper.toOrder(dto)),
       tap(() => {
-        // Invalidate both specific order and history cache
-        this.cache.removeItem(`order:${orderId}_ts`);
-        this.cache.removeItem(`${ORDER_HISTORY_KEY}_ts`);
+        this.cache.invalidate(`order:${orderId}`);
+        this.cache.invalidate(ORDER_HISTORY_KEY);
       }),
     );
   }

@@ -8,7 +8,6 @@ import type { UserDto } from '@zitro/mappers';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
 
-const CACHE_TTL_5MIN = 5 * 60 * 1000;
 const PROFILE_KEY = 'user:profile';
 
 export interface UpdateProfileData {
@@ -23,30 +22,22 @@ export class UserApiService {
   private baseUrl = inject(ZITRO_API_BASE_URL);
 
   getProfile(): Observable<User> {
-    if (!this.cache.isCacheExpired(`${PROFILE_KEY}_ts`, CACHE_TTL_5MIN)) {
-      const cached = this.cache.getCachedData<User>(PROFILE_KEY);
-      if (cached) return of(cached);
-    }
+    const cached = this.cache.get<User>(PROFILE_KEY);
+    if (cached) return of(cached);
     return this.http.get<UserDto>(`${this.baseUrl}/api/users/me`).pipe(
       map(dto => UserMapper.toUser(dto)),
-      tap(user => {
-        this.cache.setCachedData(PROFILE_KEY, user);
-        this.cache.setCacheTimestamp(`${PROFILE_KEY}_ts`);
-      }),
+      tap(user => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
     );
   }
 
   updateProfile(data: UpdateProfileData): Observable<User> {
     return this.http.put<UserDto>(`${this.baseUrl}/api/users/me`, data).pipe(
       map(dto => UserMapper.toUser(dto)),
-      tap(user => {
-        this.cache.setCachedData(PROFILE_KEY, user);
-        this.cache.setCacheTimestamp(`${PROFILE_KEY}_ts`);
-      }),
+      tap(user => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
     );
   }
 
   invalidateProfileCache(): void {
-    this.cache.removeItem(`${PROFILE_KEY}_ts`);
+    this.cache.invalidate(PROFILE_KEY);
   }
 }
