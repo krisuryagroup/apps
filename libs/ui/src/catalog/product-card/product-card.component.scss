@@ -1,0 +1,121 @@
+.product-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+
+  &:active { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+
+  &[data-layout="list"] {
+    flex-direction: row;
+
+    .product-card__image-wrap { width: 100px; flex-shrink: 0; }
+  }
+
+  &[data-layout="pos"] {
+    .product-card__image-wrap { height: 100px; }
+  }
+}
+
+.product-card__image-wrap {
+  position: relative;
+  height: 120px;
+  background: #fafafa;
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 18px;
+  line-height: 1;
+
+  &--veg { color: #2e7d32; }
+  &--nonveg { color: #c62828; }
+}
+
+.product-card__body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.product-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card__price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin-top: 2px;
+}
+
+.product-card__out-of-stock {
+  font-size: 11px;
+  color: #999;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.product-card__add-btn {
+  margin-top: auto;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-primary, #e53935);
+  background: transparent;
+  color: var(--color-primary, #e53935);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.product-card__qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-end;
+  margin-top: auto;
+}
+
+.product-card__qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary, #e53935);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.product-card__qty-value {
+  font-weight: 700;
+  font-size: 15px;
+  min-width: 20px;
+  text-align: center;
+}
