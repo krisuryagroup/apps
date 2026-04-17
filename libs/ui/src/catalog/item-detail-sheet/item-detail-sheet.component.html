@@ -1,0 +1,58 @@
+<lib-bottom-sheet
+  [config]="sheetConfig()"
+  [isOpen]="isOpen()"
+  (cancelled)="closed.emit()"
+  data-testid="item-detail-sheet"
+>
+  @if (product()) {
+    <div class="item-detail-sheet__content">
+      <div class="item-detail-sheet__image-wrap">
+        <img
+          [cachedSrc]="product()!.imageUrl || 'assets/foodCategories/default.png'"
+          [fallbackSrc]="'assets/foodCategories/default.png'"
+          [alt]="product()!.name"
+          class="item-detail-sheet__image"
+          data-testid="item-detail-image"
+        />
+      </div>
+
+      <h3 class="item-detail-sheet__name" data-testid="item-detail-name">{{ product()!.name }}</h3>
+
+      @if (config().showDescription && product()!.description) {
+        <p class="item-detail-sheet__description" data-testid="item-detail-description">{{ product()!.description }}</p>
+      }
+
+      <span class="item-detail-sheet__price" data-testid="item-detail-price">₹{{ effectivePrice() }}</span>
+
+      @if (product()!.hasVariations && product()!.variations?.length) {
+        <div class="item-detail-sheet__variations" data-testid="item-detail-variations">
+          @for (v of product()!.variations!; track v.id) {
+            <button
+              class="item-detail-sheet__variation-btn"
+              [class.item-detail-sheet__variation-btn--active]="selectedVariationId() === v.id"
+              (click)="onVariationSelect(v.id)"
+              [attr.data-testid]="'item-detail-variation-' + v.id"
+              type="button"
+            >
+              {{ v.label }} — ₹{{ v.price }}
+            </button>
+          }
+        </div>
+      }
+
+      <div class="item-detail-sheet__actions">
+        @if (quantity() > 0) {
+          <div class="item-detail-sheet__qty" data-testid="item-detail-qty-controls">
+            <button class="item-detail-sheet__qty-btn" (click)="decrement.emit(product()!)" data-testid="item-detail-decrement-btn" type="button">−</button>
+            <span data-testid="item-detail-qty">{{ quantity() }}</span>
+            <button class="item-detail-sheet__qty-btn" (click)="increment.emit(product()!)" data-testid="item-detail-increment-btn" type="button">+</button>
+          </div>
+        } @else {
+          <button class="item-detail-sheet__add-btn" (click)="onAdd()" data-testid="item-detail-add-btn" type="button">
+            {{ 'listing.addToCart' | i18n }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</lib-bottom-sheet>
