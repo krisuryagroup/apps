@@ -1,10 +1,3 @@
-// Common (T012)
-export * from './common/loader/loader.component';
-export * from './common/empty-state/empty-state.component';
-export * from './common/error-state/error-state.component';
-export * from './common/no-internet/no-internet.component';
-export * from './common/splash-screen/splash-screen.component';
-
 // Components
 export * from './components/banner/banner.component';
 export * from './components/business-card/business-card.component';

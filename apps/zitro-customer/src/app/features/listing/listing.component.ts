@@ -490,7 +490,7 @@ export class ListingComponent implements OnInit, OnDestroy {
     this.selectedItem = {
       id: item.id,
       name: item.name,
-      imageURL: item.imageURL,
+      imageURL: item.imageUrl,
       title: item.name,
       description: item.description,
       weight: item.weight,

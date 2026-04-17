@@ -20,7 +20,7 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 | Task | Title | Status |
 |------|-------|--------|
 | HRD-001 | Location Gate | `done` |
-| HRD-002 | Environment Config + Data Layer | `pending` |
+| HRD-002 | Environment Config + Data Layer | `done` |
 | HRD-003 | Business Card Component | `pending` |
 | HRD-004 | Home Page Redesign | `pending` |
 | HRD-005 | Per-Business-Type Theming | `pending` |

@@ -122,7 +122,7 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
     let cards = Array.from(grouped.entries())
       .map(([categoryId, products]) => {
         // Find the category by ID to get the name and other details
-        const category = this.categories.find(cat => cat.id === categoryId) || {
+        const category = (this.categories.find(cat => cat.id === categoryId) || {
           id: categoryId,
           name: categoryId, // Fallback to ID if category not found
           imageURL: '',
@@ -130,7 +130,7 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
           isEnabledForOnlineOrders: true,
           created_at: '',
           updated_at: ''
-        };
+        }) as Category;
         const card = {
           category,
           products: [...products], // Create a new array copy to avoid reference issues

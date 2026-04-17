@@ -217,83 +217,74 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Charge helper methods for backward compatibility
+  // Charge helper methods — OrderCharges is now flat (applied values only)
   getPackagingCharges(): number {
-    if (this.orderDetails?.charges?.packagingCharges) {
-      return this.orderDetails.charges.packagingCharges.applied;
-    }
-    return this.orderDetails?.totalPackagingCharges || 0;
+    return this.orderDetails?.charges?.packagingCharge
+      ?? this.orderDetails?.totalPackagingCharges
+      ?? 0;
   }
 
   getCalculatedPackaging(): number {
-    return this.orderDetails?.charges?.packagingCharges?.calculated || 0;
+    return this.getPackagingCharges();
   }
 
   getWaivedPackaging(): number {
-    return this.orderDetails?.charges?.packagingCharges?.waived || 0;
-  }
-
-  getPlatformFee(): number {
-    if (this.orderDetails?.charges?.platformFee) {
-      return this.orderDetails.charges.platformFee.applied;
-    }
     return 0;
   }
 
+  getPlatformFee(): number {
+    return this.orderDetails?.charges?.platformFee ?? 0;
+  }
+
   getCalculatedPlatformFee(): number {
-    return this.orderDetails?.charges?.platformFee?.calculated || 0;
+    return this.getPlatformFee();
   }
 
   getWaivedPlatformFee(): number {
-    return this.orderDetails?.charges?.platformFee?.waived || 0;
+    return 0;
   }
 
   getGSTAmount(): number {
-    if (this.orderDetails?.charges?.gst) {
-      return this.orderDetails.charges.gst.applied;
-    }
-    return this.orderDetails?.tax || 0;
+    return this.orderDetails?.charges?.gst
+      ?? this.orderDetails?.tax
+      ?? 0;
   }
 
   getCalculatedGST(): number {
-    return this.orderDetails?.charges?.gst?.calculated || 0;
+    return this.getGSTAmount();
   }
 
   getWaivedGST(): number {
-    return this.orderDetails?.charges?.gst?.waived || 0;
+    return 0;
   }
 
   getGSTPercentage(): number {
-    return this.orderDetails?.charges?.gst?.percentage || 5;
+    return 5;
   }
 
   getDeliveryCharge(): number {
-    if (this.orderDetails?.charges?.deliveryCharge) {
-      return this.orderDetails.charges.deliveryCharge.applied;
-    }
-    return this.orderDetails?.deliveryCharge || this.orderDetails?.deliveryFee || 0;
+    return this.orderDetails?.charges?.deliveryCharge
+      ?? this.orderDetails?.deliveryCharge
+      ?? this.orderDetails?.deliveryFee
+      ?? 0;
   }
 
   getCalculatedDeliveryCharge(): number {
-    return this.orderDetails?.charges?.deliveryCharge?.calculated || 0;
+    return this.getDeliveryCharge();
   }
 
   getWaivedDeliveryCharge(): number {
-    return this.orderDetails?.charges?.deliveryCharge?.waived || 0;
+    return 0;
   }
 
   getCouponCode(): string {
-    if (this.orderDetails?.charges?.couponDiscount?.code) {
-      return this.orderDetails.charges.couponDiscount.code;
-    }
     return this.orderDetails?.couponCode || '';
   }
 
   getCouponDiscount(): number {
-    if (this.orderDetails?.charges?.couponDiscount?.amount) {
-      return this.orderDetails.charges.couponDiscount.amount;
-    }
-    return this.orderDetails?.couponDiscount || 0;
+    return this.orderDetails?.charges?.couponDiscount
+      ?? this.orderDetails?.couponDiscount
+      ?? 0;
   }
 
   hasCoupon(): boolean {

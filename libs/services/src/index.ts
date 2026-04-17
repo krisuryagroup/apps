@@ -47,3 +47,5 @@ export * from './request-throttle.service';
 export * from './restaurant-switching.service';
 export * from './user-management.service';
 export * from './repositories/firebase.repository';
+export * from './nearby-businesses.service';
+export * from './tags.service';

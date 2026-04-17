@@ -136,7 +136,7 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
       this.item = {
         id: product.id,
         name: product.name,
-        imageURL: product.imageURL ?? 'assets/foodCategories/default.png',
+        imageURL: product.imageUrl ?? 'assets/foodCategories/default.png',
         title: product.name,
         description: product.description,
         price: product.price,
@@ -297,7 +297,7 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     return {
       id: item.id || '',
       name: item.name || item.title,
-      imageURL: item.imageURL,
+      imageUrl: item.imageURL,
       price: effectivePrice,
       description: item.description || '',
       weight: item.weight || '',
