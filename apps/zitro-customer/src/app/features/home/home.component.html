@@ -1,10 +1,33 @@
-<app-loader 
-  [isLoading]="isLoadingCategories || isLoadingProducts" 
-  [size]="100" 
-  type="spinner" 
-  color="#ff6b35">
-</app-loader>
+<app-loader [isLoading]="isLoading" [size]="100" type="spinner" color="#ff6b35"></app-loader>
+
 <div class="dh-main-content">
+
+  <!-- Location header -->
+  <div class="dh-location-header" (click)="onLocationHeaderClick()" data-testid="location-header">
+    <span class="material-icons dh-pin-icon">location_on</span>
+    <div class="dh-location-info">
+      <span class="dh-location-label" data-testid="location-label">
+        {{ userLocation?.label || 'Set location' }}
+        <span class="material-icons dh-chevron">expand_more</span>
+      </span>
+      <span class="dh-location-address" data-testid="location-address">
+        {{ userLocation?.address || 'Tap to select your delivery location' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Business type tabs -->
+  <div class="dh-tabs-row" *ngIf="businessTypeTabs.length" data-testid="business-tabs">
+    <button
+      *ngFor="let tab of businessTypeTabs"
+      class="dh-tab-btn"
+      [class.dh-tab-active]="activeTab === tab"
+      (click)="onTabChange(tab)"
+      [attr.data-testid]="'tab-' + tab">
+      <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
+      <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+    </button>
+  </div>
 
   <!-- Hero: banner fills behind transparent header; search+VEG overlays the banner -->
   <div class="dh-hero-wrapper">
@@ -21,18 +44,19 @@
             placeholder="Search &quot;comfort food&quot;"
             [(ngModel)]="searchQuery"
             (keyup.enter)="onSearch()"
+            data-testid="search-input"
           />
           <button class="dh-mic-btn" [class.dh-mic-listening]="isListening" (click)="startVoiceSearch()">
             <span class="material-icons">mic</span>
           </button>
-          <button *ngIf="searchQuery" class="dh-search-clear" (click)="clearSearch()">
+          <button *ngIf="searchQuery" class="dh-search-clear" (click)="clearSearch()" data-testid="search-clear">
             <span class="material-icons">clear</span>
           </button>
         </div>
       </div>
 
-      <!-- VEG toggle: label on top, toggle below -->
-      <div class="dh-veg-toggle-wrap" (click)="togglePureVeg()">
+      <!-- VEG toggle -->
+      <div class="dh-veg-toggle-wrap" (click)="togglePureVeg()" data-testid="veg-toggle">
         <span class="dh-veg-label">VEG</span>
         <div class="dh-veg-toggle" [class.dh-veg-on]="isPureVeg"
              role="switch" [attr.aria-checked]="isPureVeg">
@@ -42,61 +66,50 @@
     </div>
   </div><!-- /dh-hero-wrapper -->
 
-  <!-- Scrollable white content -->
+  <!-- Scrollable content -->
   <div class="dh-scroll-content">
 
-    <!-- Categories Component -->
-    <app-categories
-      [categories]="categories"
-      [isLoading]="isLoadingCategories"
-      (categoryClick)="navigateToCategory($event)">
-    </app-categories>
+    <!-- Cuisine tag chips -->
+    <div class="dh-tags-section" *ngIf="displayTags.length" data-testid="tag-chips">
+      <h3 class="dh-section-title">What's on your mind?</h3>
+      <div class="dh-tags-row">
+        <button
+          *ngFor="let tag of displayTags"
+          class="dh-tag-chip"
+          [class.dh-tag-active]="activeTagFilter === tag.slug"
+          (click)="onTagFilterClick(tag.slug)"
+          [attr.data-testid]="'tag-' + tag.slug">
+          <img *ngIf="tag.iconUrl" [src]="tag.iconUrl" [alt]="tag.name" class="dh-tag-icon" />
+          <span>{{ tag.name }}</span>
+        </button>
+      </div>
+    </div>
 
-  <!-- Recommended Section -->
-  <app-item-slider
-    [products]="recommendedProducts"
-    [maxItems]="recommendedItemSlideCount"
-    [title]="'Recommended for you'"
-    [showViewAll]="true"
-    (productClick)="onProductClick($event)"
-    (viewAllClick)="onRecommendedViewAllClick()"
-    (cartUpdated)="onCartUpdated()"
-  ></app-item-slider>
+    <!-- Nearby businesses list -->
+    <div class="dh-businesses-section" data-testid="businesses-list">
+      <div class="dh-section-header">
+        <h3 class="dh-section-title">Top rated near you</h3>
+      </div>
 
-  <!-- Popular Items Section -->
-  <app-item-slider
-    [products]="popularProducts"
-    [maxItems]="popularItemSlideCount"
-    [title]="'Popular Items'"
-    [showViewAll]="true"
-    (productClick)="onProductClick($event)"
-    (viewAllClick)="onViewAllClick()"
-    (cartUpdated)="onCartUpdated()"
-  ></app-item-slider>
+      <div *ngIf="!isLoading && displayBusinesses.length === 0" class="dh-empty-state" data-testid="empty-state">
+        <span class="material-icons">storefront</span>
+        <p>No businesses found in your area</p>
+      </div>
 
-  <!-- Loading state for products -->
-  <div *ngIf="isLoadingProducts" class="loading-products">
-    <div class="loading-spinner">Loading popular items...</div>
-  </div>
+      <div class="dh-business-list">
+        <lib-business-card
+          *ngFor="let business of displayBusinesses"
+          [business]="business"
+          [tags]="allTags"
+          (businessClick)="onBusinessClick($event)"
+          [attr.data-testid]="'business-card-' + business.slug">
+        </lib-business-card>
+      </div>
+    </div>
 
-  <!-- Category Cards Section -->
-  <app-category-cards
-    [products]="allProducts"
-    [title]="'Browse by Category'"
-    (productClick)="onProductClick($event)"
-    (categoryClick)="onCategoryCardClick($event)"
-    (cartUpdated)="onCartUpdated()"
-  ></app-category-cards>
   </div><!-- /dh-scroll-content -->
 
 </div>
 
 <!-- Cart Summary -->
 <app-cart-summary></app-cart-summary>
-<!-- Item Details Dialog -->
-<app-item-details-dialog
-  [isOpen]="showItemDialog"
-  [item]="selectedItem"
-  (closeEvent)="onCloseItemDialog()"
-  (cartUpdated)="onCartUpdated()">
-</app-item-details-dialog>

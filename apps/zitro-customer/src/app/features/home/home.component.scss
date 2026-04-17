@@ -2,6 +2,167 @@
 @use 'breakpoints' as *;
 @use 'sass:color';
 
+// ─── Location header ──────────────────────────────────────────────────────────
+.dh-location-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: var(--zitro-surface, #fff);
+  border-bottom: 1px solid var(--zitro-outline-variant, #e8e8e8);
+
+  .dh-pin-icon {
+    color: $primary-color;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .dh-location-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .dh-location-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: $text-color;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+
+    .dh-chevron {
+      font-size: 1.1rem;
+    }
+  }
+
+  .dh-location-address {
+    font-size: 0.75rem;
+    color: rgba($text-color, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+}
+
+// ─── Business type tabs ───────────────────────────────────────────────────────
+.dh-tabs-row {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  background: var(--zitro-surface, #fff);
+  border-bottom: 2px solid var(--zitro-outline-variant, #e8e8e8);
+  padding: 0 0.5rem;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.dh-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.6rem 1.1rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s;
+
+  .dh-tab-icon { font-size: 1.3rem; }
+
+  .dh-tab-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba($text-color, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  &.dh-tab-active {
+    border-bottom-color: $primary-color;
+    .dh-tab-label { color: $primary-color; }
+  }
+}
+
+// ─── Cuisine tag chips ────────────────────────────────────────────────────────
+.dh-tags-section {
+  padding: 0.75rem 0;
+  background: var(--zitro-surface, #fff);
+  margin-bottom: 0.5rem;
+}
+
+.dh-tags-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 1rem;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.dh-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--zitro-outline-variant, #e0e0e0);
+  background: var(--zitro-surface, #fff);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: $text-color;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  .dh-tag-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  &.dh-tag-active {
+    background: $primary-color;
+    border-color: $primary-color;
+    color: #fff;
+  }
+}
+
+// ─── Businesses section ───────────────────────────────────────────────────────
+.dh-businesses-section {
+  padding: 0 0 1rem;
+}
+
+.dh-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem 0;
+}
+
+.dh-business-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+}
+
+.dh-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  color: rgba($text-color, 0.45);
+
+  .material-icons { font-size: 3rem; margin-bottom: 0.5rem; }
+  p { font-size: 0.9rem; margin: 0; }
+}
+
 .dh-main-content {
   width: 100%;
   // max-width: 480px;
