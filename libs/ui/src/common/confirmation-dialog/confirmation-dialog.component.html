@@ -1,0 +1,42 @@
+@if (isVisible()) {
+  <div
+    class="confirm-dialog-backdrop"
+    data-testid="confirm-dialog-backdrop"
+    (click)="onBackdropClick()"
+  ></div>
+
+  <div class="confirm-dialog" data-testid="confirm-dialog" role="dialog" aria-modal="true">
+    <div class="confirm-dialog__header">
+      <h3 class="confirm-dialog__title" data-testid="confirm-dialog-title">
+        {{ config().title }}
+      </h3>
+    </div>
+
+    <div class="confirm-dialog__body">
+      <p class="confirm-dialog__message" data-testid="confirm-dialog-message">
+        {{ config().message }}
+      </p>
+    </div>
+
+    <div class="confirm-dialog__actions">
+      <button
+        class="confirm-dialog__cancel"
+        data-testid="confirm-dialog-cancel"
+        type="button"
+        (click)="onCancel()"
+      >
+        {{ config().cancelLabel }}
+      </button>
+
+      <button
+        class="confirm-dialog__confirm"
+        [class.confirm-dialog__confirm--destructive]="config().destructive"
+        data-testid="confirm-dialog-confirm"
+        type="button"
+        (click)="onConfirm()"
+      >
+        {{ config().confirmLabel }}
+      </button>
+    </div>
+  </div>
+}

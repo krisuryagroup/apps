@@ -1,0 +1,19 @@
+.truncated-text {
+  line-height: 1.4;
+  color: var(--zitro-color-text-secondary, #666);
+  font-size: 0.9rem;
+
+  &__read-more,
+  &__read-less {
+    color: var(--zitro-color-primary, #009688);
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    margin-left: 2px;
+
+    &:hover {
+      color: var(--zitro-color-primary-dark, #00695c);
+      text-decoration: underline;
+    }
+  }
+}

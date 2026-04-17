@@ -1,0 +1,88 @@
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--zitro-color-surface, #fff);
+  border-radius: 16px;
+  width: min(90vw, 360px);
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  animation: slideIn 0.2s ease;
+
+  &__header {
+    padding: 1.5rem 1.5rem 0.5rem;
+  }
+
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--zitro-color-text-primary, #212121);
+    margin: 0;
+  }
+
+  &__body {
+    padding: 0.5rem 1.5rem 1rem;
+  }
+
+  &__message {
+    font-size: 0.95rem;
+    color: var(--zitro-color-text-secondary, #666);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0 1.5rem 1.5rem;
+    justify-content: flex-end;
+  }
+
+  &__cancel,
+  &__confirm {
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+
+  &__cancel {
+    background: var(--zitro-color-surface-variant, #f5f5f5);
+    color: var(--zitro-color-text-secondary, #666);
+  }
+
+  &__confirm {
+    background: var(--zitro-color-primary, #009688);
+    color: #fff;
+
+    &--destructive {
+      background: var(--zitro-color-error, #f44336);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

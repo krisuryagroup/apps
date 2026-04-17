@@ -1,0 +1,70 @@
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+  animation: fadeIn 0.25s ease;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--zitro-color-surface, #fff);
+  border-radius: 20px 20px 0 0;
+  z-index: 901;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--open {
+    transform: translateY(0);
+  }
+
+  &__handle {
+    width: 40px;
+    height: 4px;
+    background: var(--zitro-color-divider, #e0e0e0);
+    border-radius: 2px;
+    margin: 12px auto 4px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem 0.5rem;
+    border-bottom: 1px solid var(--zitro-color-divider, #e0e0e0);
+  }
+
+  &__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--zitro-color-text-primary, #212121);
+    margin: 0;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--zitro-color-primary, #009688);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  &__body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 1rem 1.25rem;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
