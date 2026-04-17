@@ -1,0 +1,21 @@
+<div class="rating-summary" data-testid="rating-summary">
+  <div class="rating-summary__average">
+    <span class="rating-summary__score" data-testid="rating-summary-score">{{ data().average | number:'1.1-1' }}</span>
+    <lib-star-rating [value]="data().average" [config]="readonlyConfig" />
+    <span class="rating-summary__count" data-testid="rating-summary-count">
+      {{ data().totalCount }} {{ 'ratings.reviews' | i18n }}
+    </span>
+  </div>
+
+  <div class="rating-summary__bars">
+    @for (bar of bars(); track bar.star) {
+      <div class="rating-summary__bar-row" [attr.data-testid]="'rating-bar-' + bar.star">
+        <span class="rating-summary__bar-label">{{ bar.star }}★</span>
+        <div class="rating-summary__bar-track">
+          <div class="rating-summary__bar-fill" [style.width.%]="bar.pct"></div>
+        </div>
+        <span class="rating-summary__bar-count">{{ bar.count }}</span>
+      </div>
+    }
+  </div>
+</div>
