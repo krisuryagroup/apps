@@ -19,7 +19,13 @@ The live customer app is at `E:/Github/krisuryagroup/zitro-app/` — **do NOT to
 | **`CLAUDE.md`** (this file) | Always — before any task |
 | **`ROADMAP.md`** | Before starting any task — understand where we are in the sequence |
 | **`MIGRATION-PLAN.md`** | For `MT` tasks — copying `zitro-app` into this monorepo (Phase 1 complete) |
-| **`TASKS.md`** | For `T` tasks — evolving and building new features after migration |
+| **`tasks/STATUS.md`** | For `T` tasks — read first, has the status board and parallel execution map |
+| **`tasks/TESTING-STANDARDS.md`** | Before writing any tests — framework rules, coverage targets, file splitting |
+| **`tasks/T003-T011.md`** | For T003–T011 — models, mappers, test-data, services tasks |
+| **`tasks/T012-T019.md`** | For T012–T019 — UI component evolution, SCSS, finalize tasks |
+| **`tasks/T020-T029.md`** | For T020–T042 — feature pages + remaining apps |
+| **`tasks/T029-UNIT.md`** | For T029-unit — all unit + integration test specs |
+| **`tasks/T030-E2E.md`** | For T030 — Playwright E2E journey specs |
 | **`ZITRO-APPS-ARCHITECTURE.md`** | For deep implementation details — models, patterns, API specs, component specs |
 | **`apps/zitro-customer/HOME-REDESIGN-TASKS.md`** | For HRD tasks — home page redesign (location gate, business tabs, tags, theming) |
 

@@ -1,11 +1,17 @@
 # ZITRO Apps — Task Board
 
-> **How to use:** Tell Claude "start task T007" and it will read this file, implement everything in scope, run checks, and raise a PR automatically.
+> ⚠️ **This file has been split into smaller files for token efficiency.**
+> **Do NOT read this file. Read the files in `tasks/` instead:**
 >
-> **Read first:** `ROADMAP.md` — shows the complete sequence (migration → evolution → new apps) and how each task here connects to the migration.
-> **Migration tasks:** `MIGRATION-PLAN.md` (MT001–MT018) — must be done before any task here.
-> **Architecture reference:** `ZITRO-APPS-ARCHITECTURE.md`
-> **Claude context:** `CLAUDE.md`
+> | File | Contents |
+> |------|---------|
+> | **`tasks/STATUS.md`** | Status board — read this first |
+> | **`tasks/TESTING-STANDARDS.md`** | Test framework rules + coverage targets |
+> | **`tasks/T003-T011.md`** | Models, mappers, test-data, services |
+> | **`tasks/T012-T019.md`** | UI components, SCSS, finalize |
+> | **`tasks/T020-T029.md`** | Feature pages + remaining apps |
+> | **`tasks/T029-UNIT.md`** | All unit + integration test specs |
+> | **`tasks/T030-E2E.md`** | Playwright E2E journey specs |
 
 > ⚠️ **Tasks T001, T002, T005 are superseded by migration tasks MT001–MT004. Do not run them.**
 > **T003 is now active** — models update (imageUrl rename + flatten OrderCharges + new User/BusinessConfig/catalog models). Start it now; do not wait for .NET API to be "verified".
