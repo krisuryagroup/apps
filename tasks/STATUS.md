@@ -68,7 +68,7 @@
 | T019 | Finalize command + Husky + audit-ci | `[x]` | MT002, T019-scss |
 | **Phase 9 — zitro-customer pages** |
 | T020 | Evolve `app.config.ts` | `[ ]` | T008, T007, T009 |
-| T021 | Evolve `business-selection` page | `[ ]` | T020 |
+| T021 | Evolve `business-selection` page | `[x]` | T020 |
 | T022 | Evolve auth pages | `[ ]` | T021, T014 |
 | T023 | Evolve `home` page | `[ ]` | T022, T015, T018 |
 | T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[ ]` | T023 |

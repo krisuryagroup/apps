@@ -1,0 +1,176 @@
+<div class="biz-selection" data-testid="business-selection-page">
+
+  @if (isLoading()) {
+    <div class="biz-selection__loading" data-testid="business-selection-loading">
+      <div class="biz-selection__spinner"></div>
+      <p>{{ 'businessSelection.loading' | i18n }}</p>
+    </div>
+  }
+
+  @if (!isLoading() && !selectedType()) {
+    <!-- Location permission banner -->
+    @if (locationStatus() !== 'granted' && isLocationReady()) {
+      <div class="biz-selection__location-banner" data-testid="location-banner">
+        <span class="biz-selection__location-icon" aria-hidden="true">📍</span>
+        <div class="biz-selection__location-text">
+          <strong>{{ 'businessSelection.locationNeededTitle' | i18n }}</strong>
+          <p>{{ 'businessSelection.locationNeededDesc' | i18n }}</p>
+        </div>
+        <button
+          class="biz-selection__location-btn"
+          data-testid="enable-location-btn"
+          type="button"
+          [disabled]="locationStatus() === 'checking'"
+          (click)="requestLocation()"
+        >
+          @if (locationStatus() === 'checking') {
+            {{ 'businessSelection.checkingLocation' | i18n }}
+          } @else {
+            {{ 'businessSelection.enableLocation' | i18n }}
+          }
+        </button>
+      </div>
+    }
+
+    @if (locationError()) {
+      <p class="biz-selection__error" data-testid="location-error" role="alert">
+        {{ 'common.error' | i18n }}
+      </p>
+    }
+
+    @if (userPincode()) {
+      <div class="biz-selection__pincode-info" data-testid="pincode-info">
+        <span aria-hidden="true">📍</span>
+        <span>{{ userPincode() }}</span>
+      </div>
+    }
+
+    <!-- Manual pincode entry -->
+    @if (showManualEntry()) {
+      <div class="biz-selection__manual-entry" data-testid="manual-pincode-entry">
+        <div class="biz-selection__pincode-row">
+          <input
+            class="biz-selection__pincode-input"
+            data-testid="pincode-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            [value]="manualPincode()"
+            [placeholder]="'businessSelection.pincodePlaceholder' | i18n"
+            (input)="onManualPincodeChange($any($event.target).value)"
+          />
+          <button
+            class="biz-selection__pincode-submit"
+            data-testid="pincode-submit-btn"
+            type="button"
+            [disabled]="manualPincode().length < 5"
+            (click)="submitManualPincode()"
+          >
+            {{ 'businessSelection.checkArea' | i18n }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Business type options -->
+    <div class="biz-selection__options" data-testid="business-options">
+      @for (option of businessOptions(); track option.type) {
+        <button
+          class="biz-selection__option-card"
+          [attr.data-testid]="'business-option-' + option.type"
+          type="button"
+          (click)="selectType(option.type)"
+        >
+          <div class="biz-selection__option-icon">
+            <img
+              [cachedSrc]="option.icon"
+              [alt]="option.titleKey | i18n"
+              fallbackSrc="assets/business-types/default.png"
+              data-testid="option-icon"
+            />
+          </div>
+          <div class="biz-selection__option-info">
+            <h3>{{ option.titleKey | i18n }}</h3>
+            <p>{{ option.count }} {{ option.subtitleKey | i18n }}</p>
+          </div>
+          <span class="biz-selection__arrow" aria-hidden="true">→</span>
+        </button>
+      }
+    </div>
+  }
+
+  @if (!isLoading() && selectedType()) {
+    <!-- Business list -->
+    <div class="biz-selection__list-view" data-testid="business-list-view">
+      <div class="biz-selection__list-header">
+        <button
+          class="biz-selection__back-btn"
+          data-testid="back-btn"
+          type="button"
+          (click)="goBack()"
+        >
+          ← {{ 'common.back' | i18n }}
+        </button>
+        <h1>
+          @if (selectedType() === 'restaurant') {
+            {{ 'businessSelection.chooseRestaurant' | i18n }}
+          } @else {
+            {{ 'businessSelection.chooseStore' | i18n }}
+          }
+        </h1>
+      </div>
+
+      <div class="biz-selection__list" data-testid="business-list">
+        @for (business of availableBusinesses(); track business.id; let i = $index) {
+          <div
+            class="biz-selection__biz-card"
+            [class.biz-selection__biz-card--nearest]="i === 0"
+            [attr.data-testid]="'business-card-' + business.id"
+          >
+            <div
+              class="biz-selection__biz-info"
+              role="button"
+              tabindex="0"
+              (click)="selectBusiness(business)"
+              (keydown.enter)="selectBusiness(business)"
+            >
+              <div class="biz-selection__biz-header">
+                <h3>{{ business.name }}</h3>
+                @if (i === 0) {
+                  <span class="biz-selection__nearest-badge" data-testid="nearest-badge">
+                    {{ 'businessSelection.nearest' | i18n }}
+                  </span>
+                }
+              </div>
+              <p class="biz-selection__biz-desc">{{ business['description'] }}</p>
+              <div class="biz-selection__biz-details">
+                <span data-testid="biz-location">📍 {{ business.location }}</span>
+                <span data-testid="biz-rating">⭐ {{ business.rating }}</span>
+                <span data-testid="biz-delivery-time">🕒 {{ business.deliveryTime }}</span>
+                <span data-testid="biz-min-order">₹{{ business['minOrderAmount'] }} min</span>
+              </div>
+            </div>
+            <div class="biz-selection__biz-actions">
+              <button
+                class="biz-selection__default-btn"
+                data-testid="set-default-btn"
+                type="button"
+                (click)="setDefaultAndSelect(business)"
+              >
+                ⭐ {{ 'businessSelection.setDefault' | i18n }}
+              </button>
+              <button
+                class="biz-selection__select-btn"
+                [attr.data-testid]="'select-btn-' + business.id"
+                type="button"
+                (click)="selectBusiness(business)"
+              >
+                →
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
