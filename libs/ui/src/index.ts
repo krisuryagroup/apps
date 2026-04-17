@@ -11,6 +11,13 @@ export * from './common/zoomable-image/zoomable-image.component';
 export * from './common/confirmation-dialog/confirmation-dialog.component';
 export * from './common/bottom-sheet/bottom-sheet.component';
 
+// Common (T014)
+export * from './common/theme-picker/theme-picker.component';
+
+// Auth (T014)
+export * from './auth/phone-input/phone-input.component';
+export * from './auth/otp-input/otp-input.component';
+
 // Components (legacy migrated — evolved versions are in common/)
 export * from './components/banner/banner.component';
 export * from './components/business-card/business-card.component';

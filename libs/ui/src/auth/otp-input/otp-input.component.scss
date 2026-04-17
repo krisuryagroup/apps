@@ -1,0 +1,36 @@
+.otp-input {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+
+  &__box {
+    width: 48px;
+    height: 56px;
+    border: 1.5px solid var(--zitro-color-divider, #e0e0e0);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--zitro-color-text-primary, #212121);
+    background: var(--zitro-color-surface, #fff);
+    outline: none;
+    transition: border-color 0.2s ease;
+    caret-color: var(--zitro-color-primary, #009688);
+
+    &:focus {
+      border-color: var(--zitro-color-primary, #009688);
+      box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.12);
+    }
+
+    &:not(:placeholder-shown) {
+      border-color: var(--zitro-color-primary, #009688);
+      background: var(--zitro-color-primary-light, rgba(0, 150, 136, 0.06));
+    }
+
+    @media (max-width: 360px) {
+      width: 40px;
+      height: 48px;
+      font-size: 1.2rem;
+    }
+  }
+}

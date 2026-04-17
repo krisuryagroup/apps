@@ -1,0 +1,32 @@
+<div
+  class="theme-picker"
+  [class.theme-picker--list]="config().layout === 'list'"
+  [class.theme-picker--grid]="config().layout === 'grid'"
+  data-testid="theme-picker"
+  role="radiogroup"
+  [attr.aria-label]="'theme.label' | i18n"
+>
+  @for (theme of themes; track theme.name) {
+    <button
+      class="theme-picker__option"
+      [class.theme-picker__option--active]="currentTheme() === theme.name"
+      [attr.data-testid]="'theme-option-' + theme.name"
+      type="button"
+      role="radio"
+      [attr.aria-checked]="currentTheme() === theme.name"
+      (click)="select(theme.name)"
+    >
+      <span class="theme-picker__preview" aria-hidden="true">
+        @for (color of theme.previewColors; track color) {
+          <span class="theme-picker__swatch" [style.background]="color"></span>
+        }
+      </span>
+
+      @if (config().showLabels) {
+        <span class="theme-picker__label" data-testid="theme-label">
+          {{ theme.labelKey | i18n }}
+        </span>
+      }
+    </button>
+  }
+</div>

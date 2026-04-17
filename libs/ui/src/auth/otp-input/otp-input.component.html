@@ -1,0 +1,21 @@
+<div
+  class="otp-input"
+  [class.otp-input--grid]="config().length <= 6"
+  data-testid="otp-input-wrapper"
+  (paste)="onPaste($event)"
+>
+  @for (i of boxes(); track i) {
+    <input
+      #otpBox
+      class="otp-input__box"
+      data-testid="otp-box"
+      type="tel"
+      inputmode="numeric"
+      maxlength="1"
+      [value]="digits()[i]"
+      [attr.aria-label]="('auth.otpDigit' | i18n) + ' ' + (i + 1)"
+      (input)="onInput(i, $event)"
+      (keydown)="onKeydown(i, $event)"
+    />
+  }
+</div>

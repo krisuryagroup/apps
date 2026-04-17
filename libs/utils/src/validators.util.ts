@@ -50,6 +50,13 @@ export class ValidatorsUtil {
     return phoneRegex.test(phone.trim());
   }
 
+  static isIndianPhone(phone: string): boolean {
+    if (!phone || phone.trim().length === 0) {
+      return false;
+    }
+    return /^[6-9]\d{9}$/.test(phone.trim());
+  }
+
   /**
    * Get phone validation error message
    * @param phone Phone number string to validate

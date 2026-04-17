@@ -1,0 +1,27 @@
+<div class="phone-input" data-testid="phone-input-wrapper">
+  <div class="phone-input__field">
+    @if (config().showFlag) {
+      <span class="phone-input__flag" data-testid="phone-input-flag" aria-hidden="true">🇮🇳</span>
+    }
+
+    <span class="phone-input__code" data-testid="phone-input-code">{{ config().countryCode }}</span>
+
+    <input
+      class="phone-input__input"
+      [class.phone-input__input--error]="hasError()"
+      data-testid="phone-input"
+      type="tel"
+      inputmode="numeric"
+      [attr.maxlength]="config().maxLength"
+      [value]="value()"
+      [placeholder]="'auth.phonePlaceholder' | i18n"
+      (input)="onInput($event)"
+    />
+  </div>
+
+  @if (hasError()) {
+    <p class="phone-input__error" data-testid="phone-input-error" role="alert">
+      {{ 'errors.invalidIndianPhone' | i18n }}
+    </p>
+  }
+</div>
