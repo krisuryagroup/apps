@@ -26,6 +26,16 @@ export class ThemeService {
     this.currentTheme.set(theme);
   }
 
+  applyBusinessTypeTheme(businessType: string): void {
+    const themeMap: Record<string, ThemeName> = {
+      restaurant:  'default',
+      grocery:     'nature',
+      pharmacy:    'ocean',
+      gift_center: 'default',
+    };
+    this.setTheme(themeMap[businessType] ?? 'default');
+  }
+
   /**
    * Apply individual CSS custom property overrides at runtime.
    * Useful for backend-driven theme configs (e.g. per-business branding).
