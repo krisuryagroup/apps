@@ -105,7 +105,7 @@
                  *ngFor="let product of relatedProducts"
                  (click)="onRelatedProductClick(product, $event)">
               <div class="related-product-image">
-                <img [cachedSrc]="product.imageURL ?? 'assets/foodCategories/default.png'" 
+                <img [cachedSrc]="product.imageUrl ?? 'assets/foodCategories/default.png'" 
                      [fallbackSrc]="'assets/foodCategories/default.png'"
                      [alt]="product.name" />
               </div>

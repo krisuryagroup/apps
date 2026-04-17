@@ -14,7 +14,7 @@
       color="#ff6b35">
     </app-loader>
     <img 
-      [cachedSrc]="product.imageURL || 'assets/foodCategories/default.png'" 
+      [cachedSrc]="product.imageUrl || 'assets/foodCategories/default.png'" 
       [alt]="product.name"
       [fallbackSrc]="'assets/foodCategories/default.png'"
       (load)="onImageLoad()"

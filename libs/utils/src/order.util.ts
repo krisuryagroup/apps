@@ -198,32 +198,23 @@ export function getItemTotal(order: OrderDisplay): number {
  * @returns Packaging charges
  */
 export function getPackagingCharges(order: OrderDisplay): number {
-  if (order.charges?.packagingCharges) {
-    return order.charges.packagingCharges.applied;
-  }
-  return order.totalPackagingCharges || 0;
+  return order.charges?.packagingCharge ?? order.totalPackagingCharges ?? 0;
 }
 
 /**
- * Get calculated packaging charges (before waiver)
+ * Get calculated packaging charges (before waiver) — flat model returns applied value only.
  * @param order - The order object
- * @returns Calculated packaging charges
+ * @returns Packaging charges
  */
 export function getCalculatedPackaging(order: OrderDisplay): number {
-  if (order.charges?.packagingCharges) {
-    return order.charges.packagingCharges.calculated;
-  }
   return getPackagingCharges(order);
 }
 
 /**
- * Get waived packaging charges
- * @param order - The order object
- * @returns Waived packaging amount
+ * Get waived packaging charges — not tracked in flat model.
  */
-export function getWaivedPackaging(order: OrderDisplay): number {
-  if (!order.charges?.packagingCharges) return 0;
-  return order.charges.packagingCharges.waived;
+export function getWaivedPackaging(_order: OrderDisplay): number {
+  return 0;
 }
 
 /**
@@ -232,32 +223,21 @@ export function getWaivedPackaging(order: OrderDisplay): number {
  * @returns Platform fee
  */
 export function getPlatformFee(order: OrderDisplay): number {
-  if (order.charges?.platformFee) {
-    return order.charges.platformFee.applied;
-  }
-  return order.deliveryFee || 0;
+  return order.charges?.platformFee ?? order.deliveryFee ?? 0;
 }
 
 /**
- * Get calculated platform fee (before waiver)
- * @param order - The order object
- * @returns Calculated platform fee
+ * Get calculated platform fee — flat model returns applied value only.
  */
 export function getCalculatedPlatformFee(order: OrderDisplay): number {
-  if (order.charges?.platformFee) {
-    return order.charges.platformFee.calculated;
-  }
   return getPlatformFee(order);
 }
 
 /**
- * Get waived platform fee
- * @param order - The order object
- * @returns Waived platform fee
+ * Get waived platform fee — not tracked in flat model.
  */
-export function getWaivedPlatformFee(order: OrderDisplay): number {
-  if (!order.charges?.platformFee) return 0;
-  return order.charges.platformFee.waived;
+export function getWaivedPlatformFee(_order: OrderDisplay): number {
+  return 0;
 }
 
 /**
@@ -266,21 +246,13 @@ export function getWaivedPlatformFee(order: OrderDisplay): number {
  * @returns GST amount
  */
 export function getGSTAmount(order: OrderDisplay): number {
-  if (order.charges?.gst) {
-    return order.charges.gst.applied;
-  }
-  return order.tax || (order.subtotal * 0.05);
+  return order.charges?.gst ?? order.tax ?? (order.subtotal * 0.05);
 }
 
 /**
- * Get calculated GST (before waiver)
- * @param order - The order object
- * @returns Calculated GST
+ * Get calculated GST — flat model returns applied value only.
  */
 export function getCalculatedGST(order: OrderDisplay): number {
-  if (order.charges?.gst) {
-    return order.charges.gst.calculated;
-  }
   return getGSTAmount(order);
 }
 
@@ -289,9 +261,9 @@ export function getCalculatedGST(order: OrderDisplay): number {
  * @param order - The order object
  * @returns Waived GST
  */
-export function getWaivedGST(order: OrderDisplay): number {
-  if (!order.charges?.gst) return 0;
-  return order.charges.gst.waived;
+export function getWaivedGST(_order: OrderDisplay): number {
+  // gst is now a flat applied value — no separate "waived" field
+  return 0;
 }
 
 /**
@@ -300,10 +272,7 @@ export function getWaivedGST(order: OrderDisplay): number {
  * @returns Delivery charge
  */
 export function getDeliveryCharge(order: OrderDisplay): number {
-  if (order.charges?.deliveryCharge) {
-    return order.charges.deliveryCharge.applied;
-  }
-  return order.deliveryCharge || 0;
+  return order.charges?.deliveryCharge ?? order.deliveryCharge ?? 0;
 }
 
 /**
@@ -312,10 +281,7 @@ export function getDeliveryCharge(order: OrderDisplay): number {
  * @returns Calculated delivery charge
  */
 export function getCalculatedDeliveryCharge(order: OrderDisplay): number {
-  if (order.charges?.deliveryCharge) {
-    return order.charges.deliveryCharge.calculated;
-  }
-  return getDeliveryCharge(order);
+  return order.charges?.deliveryCharge ?? getDeliveryCharge(order);
 }
 
 /**
@@ -323,9 +289,9 @@ export function getCalculatedDeliveryCharge(order: OrderDisplay): number {
  * @param order - The order object
  * @returns Waived delivery charge
  */
-export function getWaivedDeliveryCharge(order: OrderDisplay): number {
-  if (!order.charges?.deliveryCharge) return 0;
-  return order.charges.deliveryCharge.waived;
+export function getWaivedDeliveryCharge(_order: OrderDisplay): number {
+  // deliveryCharge is now a flat applied value — no separate "waived" field
+  return 0;
 }
 
 /**
@@ -334,9 +300,6 @@ export function getWaivedDeliveryCharge(order: OrderDisplay): number {
  * @returns Coupon code or empty string
  */
 export function getCouponCode(order: OrderDisplay): string {
-  if (order.charges?.couponDiscount?.code) {
-    return order.charges.couponDiscount.code;
-  }
   return order.couponCode || '';
 }
 
@@ -346,10 +309,7 @@ export function getCouponCode(order: OrderDisplay): string {
  * @returns Coupon discount amount
  */
 export function getCouponDiscount(order: OrderDisplay): number {
-  if (order.charges?.couponDiscount?.amount) {
-    return order.charges.couponDiscount.amount;
-  }
-  return order.couponDiscount || 0;
+  return order.charges?.couponDiscount ?? order.couponDiscount ?? 0;
 }
 
 /**

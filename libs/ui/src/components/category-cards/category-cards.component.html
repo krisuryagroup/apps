@@ -14,7 +14,7 @@
       <div class="carousel-container">
         <div class="carousel-slide" [attr.data-product-id]="card.currentProduct.id">
           <img 
-            [cachedSrc]="card.currentProduct.imageURL || 'assets/foodCategories/default.png'" 
+            [cachedSrc]="card.currentProduct.imageUrl || 'assets/foodCategories/default.png'" 
             [alt]="card.currentProduct.name"
             [fallbackSrc]="'assets/foodCategories/default.png'"
             [attr.key]="card.currentProduct.id"

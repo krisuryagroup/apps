@@ -566,6 +566,39 @@ export interface UserLocation {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Home Redesign — HRD-002
+// Constants for nearby businesses API, business type tabs, and tag caching.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Ordered list of business types for home-page tab display. */
+export const BUSINESS_TYPE_ORDER = ['restaurant', 'grocery', 'gift_center', 'pharmacy'] as const;
+
+/** Human-readable tab labels per business type. */
+export const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  restaurant: 'Food',
+  grocery:    'Grocery',
+  gift_center: 'Gifts',
+  pharmacy:   'Pharma',
+};
+
+/** Emoji icons for business type tabs. */
+export const BUSINESS_TYPE_ICONS: Record<string, string> = {
+  restaurant: '🍔',
+  grocery:    '🛒',
+  gift_center: '🎁',
+  pharmacy:   '💊',
+};
+
+/** Radius passed to /api/businesses/nearby. */
+export const NEARBY_API_RADIUS_KM = 10;
+
+/** localStorage key for platform tags (1 hr TTL, managed by CacheService). */
+export const TAGS_CACHE_KEY = 'zitro_tags_cache';
+
+/** localStorage key for nearby businesses cache. */
+export const NEARBY_CACHE_KEY = 'zitro_nearby_cache';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Delivery Pincode Restriction Configuration
 // Set enabled: true and add allowed pincodes to restrict delivery to specific areas.
 // When enabled: false, no pincode check is performed and all areas are accepted.

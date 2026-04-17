@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  apiUrl: 'http://0.0.0.0:8080',
   appVersion: '1.0.0', // App version fallback for web/browser
   google: {
     mapsApiKey:      'AIzaSyDCzOAMLNb1I0_ae9j4HXWO_ASjNkZFwMk',    // Maps Platform  — browser map rendering

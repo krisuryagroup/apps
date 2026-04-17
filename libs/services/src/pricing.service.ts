@@ -408,43 +408,17 @@ export class PricingService {
    * Format pricing breakdown for Firebase order storage
    */
   formatChargesForOrder(pricing: PricingBreakdown): OrderCharges {
-    const charges: OrderCharges = {
-      packagingCharges: {
-        calculated: pricing.charges.packaging.calculated,
-        applied: pricing.charges.packaging.applied,
-        waived: pricing.charges.packaging.waived
-      },
-      platformFee: {
-        calculated: pricing.charges.platformFee.calculated,
-        applied: pricing.charges.platformFee.applied,
-        waived: pricing.charges.platformFee.waived
-      },
-      gst: {
-        calculated: pricing.charges.gst.calculated,
-        applied: pricing.charges.gst.applied,
-        waived: pricing.charges.gst.waived,
-        percentage: pricing.charges.gst.percentage
-      }
+    return {
+      packagingCharge: pricing.charges.packaging.applied,
+      platformFee: pricing.charges.platformFee.applied,
+      gst: pricing.charges.gst.applied,
+      ...(pricing.visibility.showDelivery
+        ? { deliveryCharge: pricing.charges.delivery.applied }
+        : {}),
+      ...(pricing.discounts.couponCode && pricing.discounts.discountAmount > 0
+        ? { couponDiscount: pricing.discounts.discountAmount }
+        : {}),
     };
-    
-    // Add delivery charge if visible
-    if (pricing.visibility.showDelivery) {
-      charges.deliveryCharge = {
-        calculated: pricing.charges.delivery.calculated,
-        applied: pricing.charges.delivery.applied,
-        waived: pricing.charges.delivery.waived
-      };
-    }
-    
-    // Add coupon discount if applicable
-    if (pricing.discounts.couponCode && pricing.discounts.discountAmount > 0) {
-      charges.couponDiscount = {
-        code: pricing.discounts.couponCode,
-        amount: pricing.discounts.discountAmount
-      };
-    }
-    
-    return charges;
   }
 
   /**

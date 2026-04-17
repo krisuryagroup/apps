@@ -827,8 +827,7 @@ export class CartComponent implements OnInit, OnDestroy {
             name: (item.name || FALLBACK_VALUES.UNKNOWN_ITEM).toString(),
             price: this.parsePrice(item.price),
             qty: Math.max(1, parseInt(item.qty) || 1), // Ensure qty is at least 1
-            image: (item.image || '').toString(),
-            imageURL: (item.imageURL || '').toString(),
+            imageUrl: (item.imageUrl || '').toString(),
             weight: (item.weight || '').toString(),
             // Include variation data
             selectedVariationId: item.selectedVariationId,
