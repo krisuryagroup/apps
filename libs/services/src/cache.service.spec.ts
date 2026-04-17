@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CacheService } from './cache.service';
 
 describe('CacheService', () => {
@@ -6,12 +7,12 @@ describe('CacheService', () => {
   beforeEach(() => {
     localStorage.clear();
     service = new CacheService();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     localStorage.clear();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('set / get', () => {
@@ -26,13 +27,13 @@ describe('CacheService', () => {
 
     it('returns null after TTL has elapsed', () => {
       service.set('key', 'value', { ttlHours: 1 });
-      jest.advanceTimersByTime(3_601_000);
+      vi.advanceTimersByTime(3_601_000);
       expect(service.get('key')).toBeNull();
     });
 
     it('removes the entry from localStorage when expired', () => {
       service.set('expired', 42, { ttlHours: 0.001 });
-      jest.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(10_000);
       service.get('expired');
       expect(localStorage.getItem('zitro_cache_expired')).toBeNull();
     });
@@ -55,7 +56,7 @@ describe('CacheService', () => {
     });
 
     it('does not throw on storage quota error', () => {
-      jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('QuotaExceededError');
       });
       expect(() => service.set('k', 'v', { ttlHours: 1 })).not.toThrow();
@@ -146,7 +147,7 @@ describe('CacheService', () => {
 
     it('setCacheTimestamp writes current epoch ms', () => {
       const now = new Date('2025-01-01T00:00:00Z').getTime();
-      jest.setSystemTime(now);
+      vi.setSystemTime(now);
       service.setCacheTimestamp('ts_key');
       expect(localStorage.getItem('ts_key')).toBe(String(now));
     });
@@ -158,7 +159,7 @@ describe('CacheService', () => {
 
     it('isCacheExpired returns true after duration has passed', () => {
       service.setCacheTimestamp('ts');
-      jest.advanceTimersByTime(61_000);
+      vi.advanceTimersByTime(61_000);
       expect(service.isCacheExpired('ts', 60_000)).toBe(true);
     });
 

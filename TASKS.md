@@ -44,7 +44,7 @@
 | **Phase 6 — Services** |
 | T009 | HTTP interceptors in `@zitro/services` | [x] | T004 |
 | T010 | API service classes in `@zitro/services` (replace Firebase data services) | [x] | T009 |
-| T011 | FeatureFlagService (UI flags only) + CacheService | [ ] | T009 |
+| T011 | FeatureFlagService (UI flags only) + CacheService | [x] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
 | T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [x] | T007, T008 |
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [ ] | T012 |
@@ -1188,7 +1188,7 @@ visibility.showFreeDeliveryProgress = true when subtotal < threshold
 
 ### T011 — FeatureFlagService (UI flags) + CacheService
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T011-flag-cache-services`
 **Depends on:** T009
 
