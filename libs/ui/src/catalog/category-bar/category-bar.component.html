@@ -1,0 +1,26 @@
+<div class="category-bar" data-testid="category-bar">
+  @if (config().showAllOption) {
+    <button
+      class="category-bar__item"
+      [class.category-bar__item--active]="activeId() === ''"
+      [attr.data-active]="activeId() === '' ? 'true' : null"
+      (click)="categorySelected.emit('')"
+      data-testid="category-bar-all-btn"
+      type="button"
+    >
+      {{ 'home.allCategories' | i18n }}
+    </button>
+  }
+  @for (item of items(); track item.id) {
+    <button
+      class="category-bar__item"
+      [class.category-bar__item--active]="activeId() === item.id"
+      [attr.data-active]="activeId() === item.id ? 'true' : null"
+      (click)="categorySelected.emit(item.id)"
+      [attr.data-testid]="'category-bar-item'"
+      type="button"
+    >
+      {{ item.name }}
+    </button>
+  }
+</div>

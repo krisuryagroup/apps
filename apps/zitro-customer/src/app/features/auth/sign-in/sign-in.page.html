@@ -1,0 +1,56 @@
+<div class="sign-in" data-testid="sign-in-page">
+  <div class="sign-in__card">
+    <h1 class="sign-in__title" data-testid="sign-in-title">
+      {{ 'auth.header' | i18n }}
+    </h1>
+    <p class="sign-in__subtitle" data-testid="sign-in-subtitle">
+      {{ 'auth.headerDescription' | i18n }}
+    </p>
+
+    <div class="sign-in__phone-section" data-testid="phone-section">
+      <lib-phone-input
+        [config]="phoneConfig"
+        data-testid="phone-input-component"
+        (valueChange)="onPhoneChange($event)"
+      />
+    </div>
+
+    @if (statusMessage()) {
+      <p class="sign-in__status" data-testid="status-message" role="status">
+        {{ statusMessage() | i18n }}
+      </p>
+    }
+
+    <button
+      class="sign-in__btn sign-in__btn--primary"
+      data-testid="send-otp-btn"
+      type="button"
+      [disabled]="isLoading()"
+      (click)="onSendOtp()"
+    >
+      @if (isLoading()) {
+        <span class="sign-in__spinner" aria-hidden="true"></span>
+      }
+      {{ 'auth.sendOtpButton' | i18n }}
+    </button>
+
+    <div class="sign-in__divider" data-testid="divider">
+      <span>{{ 'common.or' | i18n }}</span>
+    </div>
+
+    <button
+      class="sign-in__btn sign-in__btn--guest"
+      data-testid="guest-btn"
+      type="button"
+      (click)="continueAsGuest()"
+    >
+      {{ 'auth.guestButton' | i18n }}
+    </button>
+
+    <p class="sign-in__guest-note" data-testid="guest-description">
+      {{ 'auth.guestDescription' | i18n }}
+    </p>
+  </div>
+
+  <div id="recaptcha-container"></div>
+</div>

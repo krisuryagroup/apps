@@ -1,0 +1,66 @@
+<div class="otp" data-testid="otp-page">
+  <div class="otp__card">
+    <button
+      class="otp__back"
+      data-testid="otp-back-btn"
+      type="button"
+      (click)="goBack()"
+    >
+      ← {{ 'common.back' | i18n }}
+    </button>
+
+    <h1 class="otp__title" data-testid="otp-title">
+      {{ 'auth.verifyOtpButton' | i18n }}
+    </h1>
+
+    <p class="otp__subtitle" data-testid="otp-subtitle">
+      {{ 'auth.otpPlaceholder' | i18n }}
+    </p>
+
+    <p class="otp__phone" data-testid="otp-phone">
+      {{ maskedPhone }}
+    </p>
+
+    <div class="otp__input-section" data-testid="otp-input-section">
+      <lib-otp-input
+        [config]="otpConfig"
+        data-testid="otp-input-component"
+        (submitted)="onOtpSubmit($event)"
+      />
+    </div>
+
+    @if (isLoading()) {
+      <div class="otp__loading" data-testid="otp-loading" role="status">
+        <span class="otp__spinner" aria-hidden="true"></span>
+      </div>
+    }
+
+    @if (statusMessage()) {
+      <p
+        class="otp__status"
+        [class.otp__status--error]="statusMessage().startsWith('errors.')"
+        data-testid="otp-status"
+        role="alert"
+      >
+        {{ statusMessage() | i18n }}
+      </p>
+    }
+
+    <div class="otp__resend" data-testid="otp-resend-section">
+      @if (canResend()) {
+        <button
+          class="otp__resend-btn"
+          data-testid="resend-otp-btn"
+          type="button"
+          (click)="resendOtp()"
+        >
+          {{ 'auth.resendOtp' | i18n }}
+        </button>
+      } @else {
+        <p class="otp__resend-countdown" data-testid="resend-countdown">
+          {{ 'auth.resendOtp' | i18n }} ({{ resendCountdown() }}s)
+        </p>
+      }
+    </div>
+  </div>
+</div>

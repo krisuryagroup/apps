@@ -47,6 +47,7 @@ export const EN_DEFAULTS = {
     login: 'Login',
     guestDescription: 'Browse menu without signing in',
     otpDigit: 'OTP digit',
+    sendingOtp: 'Sending OTP...',
   },
   home: {
     searchPlaceholder: 'Search "comfort food"',
@@ -230,6 +231,8 @@ export const EN_DEFAULTS = {
     other: 'Other',
     addressLabel: '{type} Address',
     loadingAddresses: 'Loading addresses...',
+    selectBtn: 'Deliver here',
+    pincodeError: 'Pincode must be 6 digits',
   },
   account: {
     title: 'Account',
@@ -328,6 +331,8 @@ export const EN_DEFAULTS = {
     required: 'This field is required',
     goToHome: 'Go to Home',
     invalidIndianPhone: 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9',
+    otpExpired: 'OTP has expired. Please request a new one.',
+    tooManyRequests: 'Too many attempts. Please try again after some time.',
   },
   theme: {
     label: 'Theme',

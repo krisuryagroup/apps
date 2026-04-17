@@ -1,0 +1,17 @@
+<div class="product-grid" [attr.data-columns]="config().columns" data-testid="product-grid">
+  @if (products().length === 0) {
+    <p class="product-grid__empty" data-testid="product-grid-empty">{{ config().emptyMessageKey | i18n }}</p>
+  } @else {
+    @for (product of products(); track product.id) {
+      <lib-product-card
+        [config]="config().cardConfig"
+        [product]="product"
+        [quantity]="getQuantity(product.id)"
+        (addToCart)="addToCart.emit($event)"
+        (viewDetails)="viewDetails.emit($event)"
+        (increment)="increment.emit($event)"
+        (decrement)="decrement.emit($event)"
+      />
+    }
+  }
+</div>
