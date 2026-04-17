@@ -16,7 +16,10 @@ import { I18nService } from './i18n.service';
 export class I18nPipe implements PipeTransform {
   private readonly i18n = inject(I18nService);
 
-  transform(key: string, params?: Record<string, string>): string {
-    return this.i18n.translate(key, params);
+  transform(key: string, params?: Record<string, string | number>): string {
+    const stringParams = params
+      ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))
+      : undefined;
+    return this.i18n.translate(key, stringParams);
   }
 }

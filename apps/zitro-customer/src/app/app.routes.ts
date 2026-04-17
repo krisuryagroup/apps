@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 // MT009: guards now available
 import { AuthGuard, LoginGuard } from './core/guards/auth.guard';
-import { BusinessSelectionGuard } from './core/guards/business-selection.guard';
 // HRD-001: location gate
 import { locationGuard } from './core/guards/location.guard';
 import { LocationSelectionComponent } from './features/location-selection/location-selection.component';
@@ -10,11 +9,8 @@ import { LocationSelectionComponent } from './features/location-selection/locati
 // MT009: layout now available
 import { MainLayoutComponent } from './layout/main-layout.component';
 
-// MT010: business-selection (legacy)
-import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
-// T021: evolved splash + business-selection pages
+// T021: evolved splash page
 import { SplashPage } from './features/splash/splash.page';
-import { BusinessSelectionPage } from './features/business-selection/business-selection.page';
 // MT011: auth features (legacy)
 import { SigninComponent } from './features/auth/signin.component';
 import { SignupComponent } from './features/auth/signup.component';
@@ -48,11 +44,6 @@ import { Game2048Component } from './features/game-2048/game-2048.component';
 export const routes: Routes = [
   // T021: splash entry point
   { path: '', component: SplashPage, pathMatch: 'full' },
-
-  // T021: evolved business-selection page
-  { path: 'business-selection', component: BusinessSelectionPage },
-  // MT010: legacy business-selection (kept for reference)
-  // { path: 'business-selection', component: BusinessSelectionComponent },
 
   // HRD-001: Location Gate — shown when no delivery location is saved
   { path: 'location-selection', component: LocationSelectionComponent },

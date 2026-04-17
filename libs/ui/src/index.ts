@@ -1,9 +1,12 @@
 // Common (T012)
-export * from './common/loader/loader.component';
+export { LoaderComponent as EvolvedLoaderComponent } from './common/loader/loader.component';
+export type { LoaderConfig } from './common/loader/loader.component';
+export { LOADER_DEFAULT_CONFIG } from './common/loader/loader.component';
 export * from './common/empty-state/empty-state.component';
 export * from './common/error-state/error-state.component';
-export * from './common/no-internet/no-internet.component';
-export * from './common/splash-screen/splash-screen.component';
+export { NoInternetComponent as EvolvedNoInternetComponent } from './common/no-internet/no-internet.component';
+export { SplashScreenComponent as EvolvedSplashScreenComponent, SPLASH_SCREEN_DEFAULT_CONFIG } from './common/splash-screen/splash-screen.component';
+export type { SplashScreenConfig } from './common/splash-screen/splash-screen.component';
 
 // Common (T013)
 export * from './common/truncated-text/truncated-text.component';
@@ -67,15 +70,15 @@ export * from './components/description-dialog/description-dialog.component';
 export * from './components/footer/footer.component';
 export * from './components/item-details-dialog/item-details-dialog.component';
 export * from './components/item-slider/item-slider.component';
-// loader evolved → common/loader
+export * from './components/loader/loader.component';
 export * from './components/location-bottom-sheet/location-bottom-sheet.component';
-// no-internet evolved → common/no-internet
+export * from './components/no-internet/no-internet.component';
 export * from './components/order-loading-modal/order-loading-modal.component';
 export * from './components/pricing-summary/pricing-summary.component';
 export * from './components/product-card/product-card.component';
 export * from './components/product-grid/product-grid.component';
 export * from './components/sidebar/sidebar.component';
-// splash-screen evolved → common/splash-screen
+export * from './components/splash-screen/splash-screen.component';
 // truncated-text evolved → common/truncated-text
 export * from './components/update-dialog/update-dialog.component';
 export * from './components/view-all-card/view-all-card.component';

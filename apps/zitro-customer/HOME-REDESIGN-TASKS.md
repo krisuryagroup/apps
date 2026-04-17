@@ -22,9 +22,9 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 | HRD-001 | Location Gate | `done` |
 | HRD-002 | Environment Config + Data Layer | `done` |
 | HRD-003 | Business Card Component | `done` |
-| HRD-004 | Home Page Redesign | `in-progress` |
-| HRD-005 | Per-Business-Type Theming | `in-progress` |
-| HRD-006 | Cleanup + Routing | `pending` |
+| HRD-004 | Home Page Redesign | `done` |
+| HRD-005 | Per-Business-Type Theming | `done` |
+| HRD-006 | Cleanup + Routing | `done` |
 
 ---
 
