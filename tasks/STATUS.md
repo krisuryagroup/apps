@@ -58,7 +58,7 @@
 | **Phase 7 — UI Library** |
 | T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents | `[x]` | T007, T008 |
 | T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image` | `[x]` | T012 |
-| T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` | `[ ]` | T012 |
+| T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` | `[x]` | T012 |
 | T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | `[ ]` | T013, T010 |
 | T016 | Evolve: address components | `[ ]` | T013, T010 |
 | T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | `[ ]` | T015 |

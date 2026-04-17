@@ -46,6 +46,7 @@ export const EN_DEFAULTS = {
     loginToOrder: 'Please login to place your order',
     login: 'Login',
     guestDescription: 'Browse menu without signing in',
+    otpDigit: 'OTP digit',
   },
   home: {
     searchPlaceholder: 'Search "comfort food"',
@@ -310,6 +311,14 @@ export const EN_DEFAULTS = {
     invalidEmail: 'Please enter a valid email address',
     required: 'This field is required',
     goToHome: 'Go to Home',
+    invalidIndianPhone: 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9',
+  },
+  theme: {
+    label: 'Theme',
+    default: 'Default',
+    dark: 'Dark',
+    nature: 'Nature',
+    ocean: 'Ocean',
   },
 } as const;
 
