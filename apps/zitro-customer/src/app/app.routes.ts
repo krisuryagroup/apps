@@ -10,8 +10,11 @@ import { LocationSelectionComponent } from './features/location-selection/locati
 // MT009: layout now available
 import { MainLayoutComponent } from './layout/main-layout.component';
 
-// MT010: business-selection
+// MT010: business-selection (legacy)
 import { BusinessSelectionComponent } from './features/business-selection/business-selection.component';
+// T021: evolved splash + business-selection pages
+import { SplashPage } from './features/splash/splash.page';
+import { BusinessSelectionPage } from './features/business-selection/business-selection.page';
 // MT011: auth features
 import { SigninComponent } from './features/auth/signin.component';
 import { SignupComponent } from './features/auth/signup.component';
@@ -40,10 +43,13 @@ import { CacheManagementComponent } from './shared/components/cache-management/c
 import { Game2048Component } from './features/game-2048/game-2048.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  // T021: splash entry point
+  { path: '', component: SplashPage, pathMatch: 'full' },
 
-  // Business Selection Route (MT010)
-  { path: 'business-selection', component: BusinessSelectionComponent },
+  // T021: evolved business-selection page
+  { path: 'business-selection', component: BusinessSelectionPage },
+  // MT010: legacy business-selection (kept for reference)
+  // { path: 'business-selection', component: BusinessSelectionComponent },
 
   // HRD-001: Location Gate — shown when no delivery location is saved
   { path: 'location-selection', component: LocationSelectionComponent },

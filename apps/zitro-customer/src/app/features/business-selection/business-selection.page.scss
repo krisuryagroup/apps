@@ -1,0 +1,305 @@
+.biz-selection {
+  min-height: 100vh;
+  background: var(--zitro-color-background, #f8f8f8);
+  padding: 1rem;
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: 1rem;
+    color: var(--zitro-color-text-secondary, #666);
+  }
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--zitro-color-divider, #e0e0e0);
+    border-top-color: var(--zitro-color-primary, #009688);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  &__location-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--zitro-color-surface, #fff);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  &__location-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  &__location-text {
+    flex: 1;
+
+    strong {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--zitro-color-text-primary, #212121);
+    }
+
+    p {
+      font-size: 0.8rem;
+      color: var(--zitro-color-text-secondary, #666);
+      margin: 2px 0 0;
+    }
+  }
+
+  &__location-btn {
+    background: var(--zitro-color-primary, #009688);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__error {
+    color: var(--zitro-color-error, #f44336);
+    font-size: 0.85rem;
+    margin: 0 0 0.75rem;
+  }
+
+  &__pincode-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--zitro-color-text-secondary, #666);
+    margin-bottom: 0.75rem;
+  }
+
+  &__manual-entry {
+    margin-bottom: 1rem;
+  }
+
+  &__pincode-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__pincode-input {
+    flex: 1;
+    border: 1.5px solid var(--zitro-color-divider, #e0e0e0);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    outline: none;
+    background: var(--zitro-color-surface, #fff);
+
+    &:focus {
+      border-color: var(--zitro-color-primary, #009688);
+    }
+  }
+
+  &__pincode-submit {
+    background: var(--zitro-color-primary, #009688);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__option-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--zitro-color-surface, #fff);
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &__option-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--zitro-color-surface-variant, #f5f5f5);
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+    }
+  }
+
+  &__option-info {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--zitro-color-text-primary, #212121);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--zitro-color-text-secondary, #666);
+    }
+  }
+
+  &__arrow {
+    font-size: 1.25rem;
+    color: var(--zitro-color-text-secondary, #666);
+  }
+
+  // List view
+  &__list-header {
+    margin-bottom: 1rem;
+
+    h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--zitro-color-text-primary, #212121);
+      margin: 8px 0 0;
+    }
+  }
+
+  &__back-btn {
+    background: none;
+    border: none;
+    color: var(--zitro-color-primary, #009688);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__biz-card {
+    background: var(--zitro-color-surface, #fff);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    &--nearest {
+      border: 2px solid var(--zitro-color-primary, #009688);
+    }
+  }
+
+  &__biz-info {
+    padding: 1rem;
+    cursor: pointer;
+  }
+
+  &__biz-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--zitro-color-text-primary, #212121);
+    }
+  }
+
+  &__nearest-badge {
+    background: var(--zitro-color-primary, #009688);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  &__biz-desc {
+    font-size: 0.85rem;
+    color: var(--zitro-color-text-secondary, #666);
+    margin: 0 0 8px;
+  }
+
+  &__biz-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--zitro-color-text-secondary, #666);
+  }
+
+  &__biz-actions {
+    display: flex;
+    border-top: 1px solid var(--zitro-color-divider, #e0e0e0);
+  }
+
+  &__default-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--zitro-color-text-secondary, #666);
+    cursor: pointer;
+    border-right: 1px solid var(--zitro-color-divider, #e0e0e0);
+
+    &:hover {
+      background: var(--zitro-color-surface-variant, #f5f5f5);
+    }
+  }
+
+  &__select-btn {
+    width: 52px;
+    background: var(--zitro-color-primary, #009688);
+    color: #fff;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,13 @@
+<lib-splash-screen
+  [config]="splashConfig"
+  data-testid="splash-page"
+/>
+
+@if (showForceUpdate()) {
+  <lib-confirmation-dialog
+    [isVisible]="true"
+    [config]="updateDialogConfig"
+    data-testid="force-update-dialog"
+    (confirmed)="onUpdateConfirmed()"
+  />
+}
