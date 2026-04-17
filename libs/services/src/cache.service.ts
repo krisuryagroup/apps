@@ -1,153 +1,160 @@
 import { Injectable } from '@angular/core';
-import { APP_SETTINGS_CACHE } from '@zitro/utils';
+
+const KEY_PREFIX = 'zitro_cache_';
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
 
 /**
- * Cache Service - Manages restaurant-specific caching
- * This service ensures all cache keys are specific to the current restaurant
+ * TTL-based localStorage cache used by all API services.
+ *
+ * Key format: `zitro_cache_{key}` — easy to identify and bulk-clear.
+ * Each entry is stored as JSON: { data, expiresAt (epoch ms) }.
+ *
+ * Usage:
+ *   const cached = this.cache.get<Product[]>('products:hunger_point');
+ *   if (!cached) {
+ *     this.cache.set('products:hunger_point', products, { ttlHours: 1 });
+ *   }
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CacheService {
-  
-  constructor() {}
-
   /**
-   * Generate restaurant-specific cache key by prepending restaurant ID
+   * Returns the cached value for `key`, or null if missing / expired / corrupted.
+   * Removes the entry from localStorage if it has expired.
    */
-  getRestaurantSpecificKey(baseKey: string): string {
-    const restaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
-    return `${restaurantId}_${baseKey}`;
-  }
+  get<T>(key: string): T | null {
+    const raw = localStorage.getItem(KEY_PREFIX + key);
+    if (!raw) return null;
 
-  /**
-   * Get item from localStorage with restaurant-specific key
-   */
-  getItem(baseKey: string): string | null {
-    return localStorage.getItem(this.getRestaurantSpecificKey(baseKey));
-  }
-
-  /**
-   * Set item in localStorage with restaurant-specific key
-   */
-  setItem(baseKey: string, value: string): void {
-    localStorage.setItem(this.getRestaurantSpecificKey(baseKey), value);
-  }
-
-  /**
-   * Remove item from localStorage with restaurant-specific key
-   */
-  removeItem(baseKey: string): void {
-    localStorage.removeItem(this.getRestaurantSpecificKey(baseKey));
-  }
-
-  /**
-   * Clear all restaurant-specific cache except specified keys
-   */
-  clearRestaurantCache(preserveKeys: string[] = []): void {
-    const restaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
-    const allKeys = Object.keys(localStorage);
-    
-    // Find all keys that belong to current restaurant
-    const restaurantKeys = allKeys.filter(key => 
-      key.startsWith(`${restaurantId}_`) && 
-      !preserveKeys.some(preserveKey => key === this.getRestaurantSpecificKey(preserveKey))
-    );
-
-    console.log('🧹 CacheService: Clearing restaurant-specific cache keys:', restaurantKeys.length, 'keys for restaurant:', restaurantId);
-    
-    restaurantKeys.forEach(key => {
-      localStorage.removeItem(key);
-    });
-  }
-
-  /**
-   * Get current restaurant ID
-   */
-  getCurrentRestaurantId(): string {
-    return localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
-  }
-
-  /**
-   * Check if cache exists for current restaurant
-   */
-  hasCache(baseKey: string): boolean {
-    return this.getItem(baseKey) !== null;
-  }
-
-  /**
-   * Get cached data as JSON object
-   */
-  getCachedData<T>(baseKey: string): T | null {
-    const cached = this.getItem(baseKey);
-    if (!cached) return null;
-    
+    let entry: CacheEntry<T>;
     try {
-      return JSON.parse(cached);
-    } catch (error) {
-      console.error('CacheService: Error parsing cached data for key:', baseKey, error);
-      this.removeItem(baseKey); // Remove corrupted cache
+      entry = JSON.parse(raw) as CacheEntry<T>;
+    } catch {
+      localStorage.removeItem(KEY_PREFIX + key);
+      return null;
+    }
+
+    if (typeof entry.expiresAt !== 'number') {
+      localStorage.removeItem(KEY_PREFIX + key);
+      return null;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      localStorage.removeItem(KEY_PREFIX + key);
+      return null;
+    }
+
+    return entry.data;
+  }
+
+  /**
+   * Stores `data` under `key` with the given TTL.
+   * Overwrites any existing entry (including its TTL).
+   */
+  set<T>(key: string, data: T, options: { ttlHours: number }): void {
+    const entry: CacheEntry<T> = {
+      data,
+      expiresAt: Date.now() + options.ttlHours * 3_600_000,
+    };
+    try {
+      localStorage.setItem(KEY_PREFIX + key, JSON.stringify(entry));
+    } catch {
+      // Storage quota exceeded or private browsing — silently no-op
+    }
+  }
+
+  /**
+   * Removes the exact cache entry for `key`.
+   * No-op if the key does not exist.
+   */
+  invalidate(key: string): void {
+    localStorage.removeItem(KEY_PREFIX + key);
+  }
+
+  /**
+   * Removes all entries whose key starts with `prefix`.
+   * Example: `invalidatePattern('products:')` removes products:hp, products:efc.
+   */
+  invalidatePattern(prefix: string): void {
+    const fullPrefix = KEY_PREFIX + prefix;
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(fullPrefix)) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  }
+
+  /**
+   * Removes ALL `zitro_cache_*` entries. Non-cache keys are left untouched.
+   */
+  clear(): void {
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(KEY_PREFIX)) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Legacy shims — used by MT-migrated Firebase services (cart, favorites,
+  // categories, cache-manager). Removed once each service is replaced by a
+  // T010 API service. Do NOT use in new code.
+  // ---------------------------------------------------------------------------
+
+  /** @deprecated Use get() with ttlHours instead. */
+  getCachedData<T>(key: string): T | null {
+    try {
+      return JSON.parse(localStorage.getItem(key) ?? 'null') as T;
+    } catch {
       return null;
     }
   }
 
-  /**
-   * Set cached data as JSON string
-   */
-  setCachedData<T>(baseKey: string, data: T): void {
+  /** @deprecated Use set() with ttlHours instead. */
+  setCachedData<T>(key: string, data: T): void {
     try {
-      this.setItem(baseKey, JSON.stringify(data));
-    } catch (error) {
-      console.error('CacheService: Error caching data for key:', baseKey, error);
-    }
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch { /* quota exceeded — silently no-op */ }
   }
 
-  /**
-   * Get cache timestamp
-   */
-  getCacheTimestamp(baseKey: string): number {
-    const timestamp = this.getItem(baseKey);
-    return timestamp ? parseInt(timestamp) : 0;
+  /** @deprecated Use set() — TTL is embedded in the entry. */
+  setCacheTimestamp(key: string): void {
+    localStorage.setItem(key, String(Date.now()));
   }
 
-  /**
-   * Set cache timestamp
-   */
-  setCacheTimestamp(baseKey: string, timestamp?: number): void {
-    this.setItem(baseKey, (timestamp || Date.now()).toString());
+  /** @deprecated Use get() — it returns null when expired. */
+  isCacheExpired(tsKey: string, durationMs: number): boolean {
+    const ts = Number(localStorage.getItem(tsKey) ?? '0');
+    return Date.now() - ts > durationMs;
   }
 
-  /**
-   * Check if cache is expired
-   */
-  isCacheExpired(baseKey: string, maxAge: number): boolean {
-    const timestamp = this.getCacheTimestamp(baseKey);
-    if (!timestamp) return true;
-    
-    return Date.now() - timestamp > maxAge;
+  /** @deprecated Use invalidate() instead. */
+  removeItem(key: string): void {
+    localStorage.removeItem(key);
   }
 
-  /**
-   * Clear all cache entries that start with the given prefix
-   * @param prefix The prefix to match cache keys against (e.g., 'USER_PROFILE_CACHE')
-   */
+  /** @deprecated Use invalidatePattern() instead. */
   clearCacheByPrefix(prefix: string): void {
-    try {
-      const restaurantId = this.getCurrentRestaurantId();
-      const fullPrefix = `${restaurantId}_${prefix}`;
-      const allKeys = Object.keys(localStorage);
-      
-      const keysToRemove = allKeys.filter(key => key.startsWith(fullPrefix));
-      
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-      });
-      
-      if (keysToRemove.length > 0) {
-        console.log(`🗑️ Cleared ${keysToRemove.length} cache entries with prefix: ${prefix}`);
-      }
-    } catch (error) {
-      console.error('Error clearing cache by prefix:', error);
-    }
+    const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  }
+
+  /**
+   * @deprecated Belongs in BusinessContextService — reads the legacy restaurant
+   * selection key written by the old MT-migrated app shell.
+   */
+  getCurrentRestaurantId(): string {
+    return localStorage.getItem('SELECTED_RESTAURANT_ID') ?? '';
   }
 }
