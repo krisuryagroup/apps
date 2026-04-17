@@ -57,7 +57,7 @@
 | T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [x] | MT018 |
 | T019 | Finalize command + Husky + audit-ci | [x] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
-| T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) | [ ] | T008, T007, T009 |
+| T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) | [x] | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | [ ] | T020 |
 | T022 | Evolve auth pages | [ ] | T021, T014 |
 | T023 | Evolve `home` page | [ ] | T022, T015, T018 |
@@ -1818,7 +1818,7 @@ npm run finalize:affected
 
 ### T020 — Bootstrap `zitro-customer`
 
-**Status:** `[ ]`
+**Status:** `[x]`
 **Branch:** `feature/T020-customer-bootstrap`
 **Depends on:** T011, T019
 
