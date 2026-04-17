@@ -18,6 +18,13 @@ export * from './common/theme-picker/theme-picker.component';
 export * from './auth/phone-input/phone-input.component';
 export * from './auth/otp-input/otp-input.component';
 
+// Catalog (T015)
+export * from './catalog/category-bar/category-bar.component';
+export * from './catalog/search-bar/search-bar.component';
+export * from './catalog/product-card/product-card.component';
+export * from './catalog/product-grid/product-grid.component';
+export * from './catalog/item-detail-sheet/item-detail-sheet.component';
+
 // Components (legacy migrated — evolved versions are in common/)
 export * from './components/banner/banner.component';
 export * from './components/business-card/business-card.component';
