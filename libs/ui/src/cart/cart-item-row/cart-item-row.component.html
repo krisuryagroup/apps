@@ -1,0 +1,47 @@
+<div class="cart-item-row" data-testid="cart-item-row">
+  @if (config().showImage) {
+    <div class="cart-item-row__image-wrap">
+      <img
+        [cachedSrc]="item().imageUrl || 'assets/foodCategories/default.png'"
+        [fallbackSrc]="'assets/foodCategories/default.png'"
+        [alt]="item().name"
+        class="cart-item-row__image"
+        data-testid="cart-item-image"
+      />
+    </div>
+  }
+
+  <div class="cart-item-row__details">
+    <span class="cart-item-row__name" data-testid="cart-item-name">
+      {{ item().name }}
+      @if (variationLabel) {
+        <span class="cart-item-row__variation"> - {{ variationLabel }}</span>
+      }
+    </span>
+    @if (config().showWeight && item().weight) {
+      <span class="cart-item-row__meta" data-testid="cart-item-weight">{{ item().weight }}</span>
+    }
+    <span class="cart-item-row__price" data-testid="cart-item-price">₹{{ item().price }}</span>
+    @if (item().isOfferDisabled) {
+      <span class="cart-item-row__no-offer" data-testid="cart-item-no-offer">
+        {{ 'cart.noOfferApplicable' | i18n }}
+      </span>
+    }
+  </div>
+
+  <div class="cart-item-row__qty" data-testid="cart-item-qty-controls">
+    <button
+      class="cart-item-row__qty-btn"
+      type="button"
+      (click)="onDecrement()"
+      data-testid="cart-item-decrement-btn"
+    >−</button>
+    <span class="cart-item-row__qty-value" data-testid="cart-item-qty">{{ item().qty }}</span>
+    <button
+      class="cart-item-row__qty-btn cart-item-row__qty-btn--add"
+      type="button"
+      (click)="onIncrement()"
+      data-testid="cart-item-increment-btn"
+    >+</button>
+  </div>
+</div>

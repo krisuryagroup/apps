@@ -90,6 +90,9 @@ export const EN_DEFAULTS = {
     loadingAddresses: 'Loading addresses...',
     selectDeliveryLocation: 'Please select a delivery location from the home page or add a new address',
     noLocationSelected: 'No location selected',
+    billDetails: 'Bill Details',
+    item: 'item',
+    items: 'items',
   },
   order: {
     placed: 'Order placed successfully!',
@@ -201,6 +204,8 @@ export const EN_DEFAULTS = {
     save: 'Save ₹{amount}',
     discount: 'Coupon Discount ({code})',
     discountLabel: 'Discount ({code})',
+    apply: 'Apply Coupon',
+    change: 'Change Coupon',
   },
   address: {
     title: 'Addresses',

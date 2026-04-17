@@ -25,6 +25,11 @@ export * from './catalog/product-card/product-card.component';
 export * from './catalog/product-grid/product-grid.component';
 export * from './catalog/item-detail-sheet/item-detail-sheet.component';
 
+// Cart (T017)
+export * from './cart/cart-item-row/cart-item-row.component';
+export * from './cart/cart-summary-bar/cart-summary-bar.component';
+export * from './cart/pricing-summary/pricing-summary.component';
+
 // Address (T016)
 export * from './address/address-card/address-card.component';
 export * from './address/add-address-form/add-address-form.component';
