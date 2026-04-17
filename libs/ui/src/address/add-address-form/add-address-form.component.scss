@@ -1,0 +1,118 @@
+.add-address-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.add-address-form__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #222;
+}
+
+.add-address-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+  }
+
+  input[type="text"],
+  input[type="tel"] {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus { border-color: var(--color-primary, #e53935); }
+  }
+}
+
+.add-address-form__error {
+  font-size: 12px;
+  color: #c62828;
+}
+
+.add-address-form__type-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-address-form__type-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.add-address-form__type-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.add-address-form__type-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+
+  &--active {
+    background: var(--color-primary, #e53935);
+    color: white;
+    border-color: transparent;
+  }
+}
+
+.add-address-form__default-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+
+  input { width: 18px; height: 18px; cursor: pointer; }
+}
+
+.add-address-form__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.add-address-form__btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 15px;
+  transition: opacity 0.15s;
+
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  &--primary {
+    background: var(--color-primary, #e53935);
+    color: white;
+  }
+
+  &--secondary {
+    background: #f0f0f0;
+    color: #333;
+  }
+}
