@@ -1,0 +1,13 @@
+@if (isVisible()) {
+  <div class="cart-summary-bar" (click)="onViewCart()" data-testid="cart-summary-bar">
+    @if (config().showItemCount) {
+      <span class="cart-summary-bar__count" data-testid="cart-summary-bar-count">
+        {{ itemCount() }} {{ itemCount() === 1 ? ('cart.item' | i18n) : ('cart.items' | i18n) }}
+      </span>
+    }
+    <span class="cart-summary-bar__total" data-testid="cart-summary-bar-total">₹{{ total() }}</span>
+    <span class="cart-summary-bar__cta" data-testid="cart-summary-bar-cta">
+      {{ 'cart.proceedCheckout' | i18n }}
+    </span>
+  </div>
+}

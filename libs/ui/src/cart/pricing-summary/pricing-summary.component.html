@@ -1,0 +1,179 @@
+@if (hasPricing()) {
+  <div class="pricing-summary" data-testid="pricing-summary">
+
+    @if (config().showHeader) {
+      <div class="pricing-summary__header" (click)="toggleExpanded()" data-testid="pricing-summary-header">
+        <h3 class="pricing-summary__title">{{ 'cart.billDetails' | i18n }}</h3>
+        <span class="pricing-summary__toggle" [class.pricing-summary__toggle--expanded]="isExpanded()" data-testid="pricing-summary-toggle">
+          {{ isExpanded() ? '▼' : '▶' }}
+        </span>
+      </div>
+    }
+
+    @if (isExpanded()) {
+      <div class="pricing-summary__content" data-testid="pricing-summary-content">
+
+        <!-- Subtotal -->
+        <div class="pricing-summary__row" data-testid="pricing-summary-subtotal">
+          <span class="pricing-summary__label">{{ 'cart.subtotal' | i18n }}</span>
+          <span class="pricing-summary__value">₹{{ pricing()!.subtotal | number: '1.2-2' }}</span>
+        </div>
+
+        <!-- Delivery Charge -->
+        @if (pricing()!.visibility.showDelivery) {
+          <div class="pricing-summary__row" data-testid="pricing-summary-delivery">
+            <span class="pricing-summary__label">
+              {{ 'cart.deliveryCharge' | i18n }}
+              @if (pricing()!.charges.delivery.waived > 0) {
+                <span class="pricing-summary__free-badge" data-testid="delivery-free-badge">{{ 'cart.freeDelivery' | i18n }}</span>
+              }
+            </span>
+            <span class="pricing-summary__value">
+              @if (pricing()!.charges.delivery.waived > 0) {
+                <span class="pricing-summary__original" data-testid="delivery-original-price">
+                  ₹{{ pricing()!.charges.delivery.calculated | number: '1.2-2' }}
+                </span>
+              }
+              <span
+                [class.pricing-summary__free-text]="pricing()!.charges.delivery.applied === 0"
+                data-testid="delivery-applied-price"
+              >
+                {{ pricing()!.charges.delivery.applied === 0 ? ('cart.freeDelivery' | i18n) : '₹' + (pricing()!.charges.delivery.applied | number: '1.2-2') }}
+              </span>
+            </span>
+          </div>
+        }
+
+        <!-- Free delivery progress bar -->
+        @if (showFreeDeliveryBar()) {
+          <div class="pricing-summary__delivery-progress" data-testid="pricing-summary-delivery-progress">
+            <div class="pricing-summary__progress-bar">
+              <div class="pricing-summary__progress-fill" [style.width.%]="freeDeliveryProgress()"></div>
+            </div>
+            <span class="pricing-summary__progress-label" data-testid="pricing-summary-free-delivery-label">
+              {{ 'cart.freeDeliveryProgress' | i18n : { amount: freeDeliveryAmountRemaining() } }}
+            </span>
+          </div>
+        }
+
+        <!-- Packaging Charges -->
+        @if (pricing()!.visibility.showPackaging) {
+          <div class="pricing-summary__row" data-testid="pricing-summary-packaging">
+            <span class="pricing-summary__label">
+              {{ 'cart.packagingCharges' | i18n }}
+              @if (pricing()!.charges.packaging.waived > 0) {
+                <span class="pricing-summary__free-badge">{{ 'cart.freeDelivery' | i18n }}</span>
+              }
+            </span>
+            <span class="pricing-summary__value">
+              @if (pricing()!.charges.packaging.waived > 0) {
+                <span class="pricing-summary__original">
+                  ₹{{ pricing()!.charges.packaging.calculated | number: '1.2-2' }}
+                </span>
+              }
+              <span [class.pricing-summary__free-text]="pricing()!.charges.packaging.applied === 0">
+                {{ pricing()!.charges.packaging.applied === 0 ? ('cart.freeDelivery' | i18n) : '₹' + (pricing()!.charges.packaging.applied | number: '1.2-2') }}
+              </span>
+            </span>
+          </div>
+        }
+
+        <!-- Platform Fee -->
+        @if (pricing()!.visibility.showPlatformFee) {
+          <div class="pricing-summary__row" data-testid="pricing-summary-platform-fee">
+            <span class="pricing-summary__label">
+              {{ 'cart.platformFeeLabel' | i18n }}
+              @if (pricing()!.charges.platformFee.waived > 0) {
+                <span class="pricing-summary__free-badge">{{ 'cart.freeDelivery' | i18n }}</span>
+              }
+            </span>
+            <span class="pricing-summary__value">
+              @if (pricing()!.charges.platformFee.waived > 0) {
+                <span class="pricing-summary__original">
+                  ₹{{ pricing()!.charges.platformFee.calculated | number: '1.2-2' }}
+                </span>
+              }
+              <span [class.pricing-summary__free-text]="pricing()!.charges.platformFee.applied === 0">
+                {{ pricing()!.charges.platformFee.applied === 0 ? ('cart.freeDelivery' | i18n) : '₹' + (pricing()!.charges.platformFee.applied | number: '1.2-2') }}
+              </span>
+            </span>
+          </div>
+        }
+
+        <!-- GST -->
+        @if (pricing()!.visibility.showGst) {
+          <div class="pricing-summary__row" data-testid="pricing-summary-gst">
+            <span class="pricing-summary__label">
+              {{ 'cart.gst' | i18n }} ({{ pricing()!.charges.gst.percentage }}%)
+              @if (pricing()!.charges.gst.waived > 0) {
+                <span class="pricing-summary__free-badge">{{ 'cart.freeDelivery' | i18n }}</span>
+              }
+            </span>
+            <span class="pricing-summary__value">
+              @if (pricing()!.charges.gst.waived > 0) {
+                <span class="pricing-summary__original">
+                  ₹{{ pricing()!.charges.gst.calculated | number: '1.2-2' }}
+                </span>
+              }
+              <span [class.pricing-summary__free-text]="pricing()!.charges.gst.applied === 0">
+                {{ pricing()!.charges.gst.applied === 0 ? ('cart.freeDelivery' | i18n) : '₹' + (pricing()!.charges.gst.applied | number: '1.2-2') }}
+              </span>
+            </span>
+          </div>
+        }
+
+        <!-- Coupon Discount -->
+        @if (hasCoupon() && couponDiscount() > 0) {
+          <div class="pricing-summary__row pricing-summary__row--discount" data-testid="pricing-summary-coupon">
+            <span class="pricing-summary__label pricing-summary__label--discount">
+              {{ 'cart.couponDiscount' | i18n }} ({{ pricing()!.discounts.couponCode }})
+              @if (config().variant === 'cart') {
+                <button
+                  class="pricing-summary__remove-coupon"
+                  type="button"
+                  (click)="onRemoveCoupon()"
+                  data-testid="pricing-summary-remove-coupon"
+                >✕</button>
+              }
+            </span>
+            <span class="pricing-summary__value pricing-summary__value--discount" data-testid="pricing-summary-coupon-amount">
+              -₹{{ couponDiscount() | number: '1.2-2' }}
+            </span>
+          </div>
+        }
+
+        <div class="pricing-summary__divider"></div>
+
+        <!-- Total -->
+        <div class="pricing-summary__row pricing-summary__row--total" data-testid="pricing-summary-total">
+          <span class="pricing-summary__label pricing-summary__label--total">{{ 'cart.total' | i18n }}</span>
+          <span class="pricing-summary__value pricing-summary__value--total" data-testid="pricing-summary-total-amount">
+            ₹{{ pricing()!.total | number: '1.2-2' }}
+          </span>
+        </div>
+
+        <!-- Savings banner -->
+        @if (hasSavings() && pricing()!.visibility.showSavings) {
+          <div class="pricing-summary__savings" data-testid="pricing-summary-savings">
+            <span>{{ 'cart.savingsBanner' | i18n : { amount: pricing()!.savings.totalSavings } }}</span>
+          </div>
+        }
+
+        <!-- Coupon action (cart variant only) -->
+        @if (config().showCouponAction && config().variant === 'cart') {
+          <div class="pricing-summary__coupon-action">
+            <button
+              class="pricing-summary__coupon-btn"
+              type="button"
+              (click)="onCouponClick()"
+              data-testid="pricing-summary-coupon-btn"
+            >
+              🎟️ {{ hasCoupon() ? ('coupon.change' | i18n) : ('coupon.apply' | i18n) }}
+            </button>
+          </div>
+        }
+
+      </div>
+    }
+  </div>
+}

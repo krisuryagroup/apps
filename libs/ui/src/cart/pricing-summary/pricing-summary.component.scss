@@ -1,0 +1,206 @@
+.pricing-summary {
+  background: var(--color-surface, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--color-surface-alt, #f8f9fa);
+    border-bottom: 1px solid var(--color-border, #e9ecef);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #212529);
+  }
+
+  &__toggle {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6c757d);
+    transition: transform 0.3s ease;
+  }
+
+  &__content {
+    padding: 1rem;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    font-size: 0.875rem;
+
+    &--discount {
+      .pricing-summary__label,
+      .pricing-summary__value {
+        color: var(--color-success, #28a745);
+      }
+    }
+
+    &--total {
+      padding-top: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  }
+
+  &__label {
+    color: var(--color-text-secondary, #495057);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &--discount {
+      color: var(--color-success, #28a745);
+    }
+
+    &--total {
+      color: var(--color-text-primary, #212529);
+    }
+  }
+
+  &__value {
+    font-weight: 500;
+    color: var(--color-text-primary, #212529);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &--discount {
+      color: var(--color-success, #28a745);
+      font-weight: 600;
+    }
+
+    &--total {
+      color: var(--color-success, #28a745);
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+  }
+
+  &__free-badge {
+    background: var(--color-success, #28a745);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  &__original {
+    text-decoration: line-through;
+    color: var(--color-text-secondary, #6c757d);
+    font-size: 0.75rem;
+  }
+
+  &__free-text {
+    color: var(--color-success, #28a745);
+    font-weight: 600;
+  }
+
+  &__remove-coupon {
+    background: var(--color-error, #dc3545);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #c82333;
+    }
+  }
+
+  &__divider {
+    height: 1px;
+    background: var(--color-border, #e9ecef);
+    margin: 0.75rem 0;
+  }
+
+  &__savings {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  &__delivery-progress {
+    padding: 0.5rem 0;
+  }
+
+  &__progress-bar {
+    height: 4px;
+    background: var(--color-border, #e9ecef);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: var(--color-primary, #ff6b35);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  &__progress-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6c757d);
+  }
+
+  &__coupon-action {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-border, #e9ecef);
+  }
+
+  &__coupon-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
