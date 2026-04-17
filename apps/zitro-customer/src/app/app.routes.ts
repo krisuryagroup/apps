@@ -15,10 +15,13 @@ import { BusinessSelectionComponent } from './features/business-selection/busine
 // T021: evolved splash + business-selection pages
 import { SplashPage } from './features/splash/splash.page';
 import { BusinessSelectionPage } from './features/business-selection/business-selection.page';
-// MT011: auth features
+// MT011: auth features (legacy)
 import { SigninComponent } from './features/auth/signin.component';
 import { SignupComponent } from './features/auth/signup.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+// T022: evolved auth pages
+import { SignInPage } from './features/auth/sign-in/sign-in.page';
+import { OtpPage } from './features/auth/otp/otp.page';
 // MT012: home + categories
 import { HomeComponent } from './features/home/home.component';
 import { CategoriesComponent } from './features/categories/categories.component';
@@ -85,7 +88,11 @@ export const routes: Routes = [
     path: 'auth',
     canActivate: [LoginGuard],
     children: [
-      { path: 'signin', component: SigninComponent },
+      // T022: evolved auth pages
+      { path: 'signin', component: SignInPage },
+      { path: 'otp', component: OtpPage },
+      // MT011: legacy auth pages (kept for reference)
+      // { path: 'signin', component: SigninComponent },
       { path: 'signup', component: SignupComponent },
       { path: 'forgot-password', component: ForgotPasswordComponent },
     ]
