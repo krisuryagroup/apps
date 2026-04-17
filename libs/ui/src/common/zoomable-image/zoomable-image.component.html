@@ -1,0 +1,73 @@
+<div
+  class="zoomable-image"
+  [class.zoomable-image--zoomed]="imageZoomed()"
+  [ngStyle]="containerStyle()"
+  data-testid="zoomable-image-container"
+>
+  @if (imageLoading()) {
+    <div class="zoomable-image__spinner" data-testid="zoomable-image-spinner" aria-label="Loading">
+      <svg class="zoomable-image__spin-icon" width="40" height="40" viewBox="0 0 50 50" aria-hidden="true">
+        <circle cx="25" cy="25" r="20" fill="none" stroke="var(--zitro-color-divider,#e0e0e0)" stroke-width="4"/>
+        <circle cx="25" cy="25" r="20" fill="none" stroke="var(--zitro-color-primary,#009688)" stroke-width="4"
+          stroke-linecap="round" stroke-dasharray="80 45"/>
+      </svg>
+    </div>
+  }
+
+  @if (config().showControls && !imageLoading()) {
+    <div class="zoomable-image__controls" data-testid="zoomable-image-controls">
+      <button
+        class="zoomable-image__btn"
+        data-testid="zoom-in-btn"
+        type="button"
+        [disabled]="zoomLevel() >= config().maxZoom"
+        [attr.aria-label]="'common.zoomIn' | i18n"
+        (click)="zoomIn()"
+      >+</button>
+      <button
+        class="zoomable-image__btn"
+        data-testid="zoom-out-btn"
+        type="button"
+        [disabled]="zoomLevel() <= config().minZoom"
+        [attr.aria-label]="'common.zoomOut' | i18n"
+        (click)="zoomOut()"
+      >−</button>
+      @if (imageZoomed()) {
+        <button
+          class="zoomable-image__btn"
+          data-testid="zoom-reset-btn"
+          type="button"
+          [attr.aria-label]="'common.resetZoom' | i18n"
+          (click)="resetZoom()"
+        >⤢</button>
+      }
+    </div>
+  }
+
+  <img
+    [cachedSrc]="src()"
+    [fallbackSrc]="fallbackSrc()"
+    [alt]="alt()"
+    [class.zoomable-image__img--hidden]="imageLoading()"
+    [ngStyle]="imageStyle()"
+    [style.transform]="transform()"
+    [style.cursor]="cursor()"
+    data-testid="zoomable-image-img"
+    (load)="onImageLoad()"
+    (error)="onImageError($event)"
+    (click)="toggleZoom()"
+    (mousedown)="onMouseDown($event)"
+    (mousemove)="onMouseMove($event)"
+    (mouseup)="onMouseUp()"
+    (mouseleave)="onMouseUp()"
+    (touchstart)="onTouchStart($event)"
+    (touchmove)="onTouchMove($event)"
+    (touchend)="onTouchEnd()"
+  />
+
+  @if (!imageLoading() && !imageZoomed() && config().enableClickZoom) {
+    <div class="zoomable-image__hint" data-testid="zoomable-image-hint" aria-hidden="true">
+      {{ 'common.clickToZoom' | i18n }}
+    </div>
+  }
+</div>

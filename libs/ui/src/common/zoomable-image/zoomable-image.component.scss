@@ -1,0 +1,117 @@
+.zoomable-image {
+  position: relative;
+  overflow: hidden;
+  background: var(--zitro-color-surface-variant, #f5f5f5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+
+  &--zoomed {
+    cursor: move;
+
+    .zoomable-image__hint {
+      display: none;
+    }
+
+    img {
+      will-change: transform;
+    }
+  }
+
+  &__spinner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 2;
+  }
+
+  &__spin-icon {
+    animation: spin 0.9s linear infinite;
+  }
+
+  &__controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 4px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &__btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--zitro-color-surface-variant, #f5f5f5);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--zitro-color-text-primary, #212121);
+    transition: background 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--zitro-color-divider, #e0e0e0);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
+  &__img--hidden {
+    opacity: 0;
+  }
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &__hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeInOut 3s ease-in-out infinite;
+    z-index: 2;
+    white-space: nowrap;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,39 @@
+@if (isOpen()) {
+  <div
+    class="bottom-sheet-backdrop"
+    data-testid="bottom-sheet-backdrop"
+    (click)="onBackdropClick()"
+  ></div>
+}
+
+<div
+  class="bottom-sheet"
+  [class.bottom-sheet--open]="isOpen()"
+  data-testid="bottom-sheet"
+  role="dialog"
+  aria-modal="true"
+>
+  @if (config().showHandle) {
+    <div class="bottom-sheet__handle" data-testid="bottom-sheet-handle"></div>
+  }
+
+  @if (config().title) {
+    <div class="bottom-sheet__header">
+      <h3 class="bottom-sheet__title" data-testid="bottom-sheet-title">
+        {{ config().title }}
+      </h3>
+      <button
+        class="bottom-sheet__close"
+        data-testid="bottom-sheet-close"
+        type="button"
+        (click)="cancelled.emit()"
+      >
+        {{ 'common.close' | i18n }}
+      </button>
+    </div>
+  }
+
+  <div class="bottom-sheet__body" data-testid="bottom-sheet-body">
+    <ng-content />
+  </div>
+</div>

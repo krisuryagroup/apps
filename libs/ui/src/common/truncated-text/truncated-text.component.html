@@ -1,0 +1,25 @@
+<span class="truncated-text" data-testid="truncated-text">
+  <span data-testid="truncated-text-content">{{ displayText() }}</span>
+
+  @if (shouldTruncate() && !showFullText()) {
+    <span
+      class="truncated-text__read-more"
+      data-testid="truncated-text-read-more"
+      role="button"
+      tabindex="0"
+      (click)="onReadMore()"
+      (keydown.enter)="onReadMore()"
+    >... {{ 'common.readMore' | i18n }}</span>
+  }
+
+  @if (shouldTruncate() && showFullText() && !config().showInDialog) {
+    <span
+      class="truncated-text__read-less"
+      data-testid="truncated-text-read-less"
+      role="button"
+      tabindex="0"
+      (click)="showLess()"
+      (keydown.enter)="showLess()"
+    > {{ 'common.readLess' | i18n }}</span>
+  }
+</span>

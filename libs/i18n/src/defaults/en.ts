@@ -17,6 +17,12 @@ export const EN_DEFAULTS = {
     apply: 'Apply',
     remove: 'Remove',
     or: 'or',
+    readMore: 'read more',
+    readLess: 'read less',
+    clickToZoom: 'Click to zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    resetZoom: 'Reset zoom',
   },
   auth: {
     header: 'Welcome Back!',
