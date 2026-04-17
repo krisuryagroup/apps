@@ -1,0 +1,49 @@
+@if (isVisible()) {
+  <div class="update-dialog-overlay" data-testid="update-dialog-overlay">
+    <div class="update-dialog" data-testid="update-dialog">
+      <div class="update-dialog__icon" data-testid="update-dialog-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+      </div>
+
+      <h2 class="update-dialog__title" data-testid="update-dialog-title">
+        @if (config().mandatory) {
+          {{ 'update.mandatoryTitle' | i18n }}
+        } @else {
+          {{ 'update.title' | i18n }}
+        }
+      </h2>
+
+      <p class="update-dialog__message" data-testid="update-dialog-message">{{ message() }}</p>
+
+      <div class="update-dialog__actions">
+        <button
+          class="update-dialog__btn update-dialog__btn--primary"
+          (click)="update.emit()"
+          data-testid="update-dialog-update-btn"
+          type="button"
+        >
+          {{ 'update.updateNow' | i18n }}
+        </button>
+
+        @if (!config().mandatory) {
+          <button
+            class="update-dialog__btn update-dialog__btn--secondary"
+            (click)="onLater()"
+            data-testid="update-dialog-later-btn"
+            type="button"
+          >
+            {{ 'update.later' | i18n }}
+          </button>
+        }
+      </div>
+
+      @if (config().mandatory) {
+        <small class="update-dialog__notice" data-testid="update-dialog-mandatory-notice">
+          {{ 'update.mandatoryNote' | i18n }}
+        </small>
+      }
+    </div>
+  </div>
+}

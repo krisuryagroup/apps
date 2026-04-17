@@ -1,0 +1,19 @@
+<div
+  class="star-rating"
+  [class.star-rating--readonly]="config().readonly"
+  [attr.data-size]="config().size"
+  data-testid="star-rating"
+  (mouseleave)="onLeave()"
+>
+  @for (star of stars(); track star) {
+    <button
+      type="button"
+      class="star-rating__star"
+      [class.star-rating__star--active]="isActive(star)"
+      [attr.data-testid]="'star-' + star"
+      [attr.aria-label]="star + ' star'"
+      (click)="onSelect(star)"
+      (mouseenter)="onHover(star)"
+    >★</button>
+  }
+</div>

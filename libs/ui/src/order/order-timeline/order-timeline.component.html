@@ -1,0 +1,16 @@
+<div class="order-timeline" data-testid="order-timeline">
+  @for (event of events(); track event.timestamp) {
+    <div class="order-timeline__event" data-testid="order-timeline-event">
+      <div class="order-timeline__dot"></div>
+      <div class="order-timeline__content">
+        <lib-order-status-badge [status]="toEvolvedStatus(event.status)" />
+        <span class="order-timeline__time" data-testid="order-timeline-time">
+          {{ event.timestamp | date:'dd MMM, h:mm a' }}
+        </span>
+        @if (event.note) {
+          <span class="order-timeline__note" data-testid="order-timeline-note">{{ event.note }}</span>
+        }
+      </div>
+    </div>
+  }
+</div>

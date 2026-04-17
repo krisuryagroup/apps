@@ -1,0 +1,47 @@
+<div class="order-card" (click)="viewDetails.emit(order())" data-testid="order-card">
+  <div class="order-card__header">
+    <span class="order-card__id" data-testid="order-card-id">
+      {{ 'order.id' | i18n }}: #{{ order().orderId }}
+    </span>
+    <lib-order-status-badge [status]="safeStatus" />
+  </div>
+
+  <div class="order-card__items" data-testid="order-card-items">
+    @for (item of order().items.slice(0, 2); track item.id) {
+      <span class="order-card__item">{{ item.name }} x{{ item.qty }}</span>
+    }
+    @if (order().items.length > 2) {
+      <span class="order-card__item order-card__item--more">+{{ order().items.length - 2 }} more</span>
+    }
+  </div>
+
+  <div class="order-card__date" data-testid="order-card-date">
+    {{ order().createdAt | date:'dd MMM yyyy, h:mm a' }}
+  </div>
+
+  <div class="order-card__footer">
+    <span class="order-card__total" data-testid="order-card-total">₹{{ order().total }}</span>
+    <div class="order-card__actions">
+      @if (config().showTrackButton && isTrackable(order().status)) {
+        <button
+          class="order-card__btn order-card__btn--outline"
+          (click)="track.emit(order()); $event.stopPropagation()"
+          data-testid="order-card-track-btn"
+          type="button"
+        >
+          {{ 'order.status' | i18n }}
+        </button>
+      }
+      @if (config().showReorderButton && isReorderable(order().status)) {
+        <button
+          class="order-card__btn order-card__btn--primary"
+          (click)="reorder.emit(order()); $event.stopPropagation()"
+          data-testid="order-card-reorder-btn"
+          type="button"
+        >
+          {{ 'orderHistory.reorder' | i18n }}
+        </button>
+      }
+    </div>
+  </div>
+</div>

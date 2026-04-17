@@ -30,6 +30,21 @@ export * from './address/address-card/address-card.component';
 export * from './address/add-address-form/add-address-form.component';
 export * from './address/address-list/address-list.component';
 
+// Order (T018)
+export * from './order/order-status-badge/order-status-badge.component';
+export * from './order/order-card/order-card.component';
+export * from './order/order-timeline/order-timeline.component';
+
+// Ratings (T018)
+export * from './ratings/star-rating/star-rating.component';
+export * from './ratings/rating-summary/rating-summary.component';
+
+// Banners (T018)
+export * from './banners/banner-carousel/banner-carousel.component';
+
+// Common update-dialog (T018 — evolved, selector lib-update-dialog)
+export * from './common/update-dialog/update-dialog.component';
+
 // Components (legacy migrated — evolved versions are in common/)
 export * from './components/banner/banner.component';
 export * from './components/business-card/business-card.component';

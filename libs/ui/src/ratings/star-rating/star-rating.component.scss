@@ -1,0 +1,28 @@
+.star-rating {
+  display: flex;
+  gap: 2px;
+}
+
+.star-rating__star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.15s, transform 0.1s;
+  padding: 2px;
+  line-height: 1;
+  font-size: 28px;
+
+  &--active { color: #ffc107; }
+  &:hover { transform: scale(1.1); }
+}
+
+.star-rating--readonly .star-rating__star {
+  cursor: default;
+  pointer-events: none;
+
+  &:hover { transform: none; }
+}
+
+.star-rating[data-size="sm"] .star-rating__star { font-size: 18px; }
+.star-rating[data-size="lg"] .star-rating__star { font-size: 36px; }

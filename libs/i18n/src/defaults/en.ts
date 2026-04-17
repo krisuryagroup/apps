@@ -341,6 +341,22 @@ export const EN_DEFAULTS = {
     nature: 'Nature',
     ocean: 'Ocean',
   },
+  ratings: {
+    excellent: 'Excellent',
+    good: 'Good',
+    okay: 'Okay',
+    poor: 'Poor',
+    terrible: 'Terrible',
+    rateExperience: 'Rate your experience',
+    reviews: 'reviews',
+  },
+  update: {
+    title: 'Update Available',
+    mandatoryTitle: 'Update Required',
+    updateNow: 'Update Now',
+    later: 'Later',
+    mandatoryNote: 'You must update to continue using the app',
+  },
 } as const;
 
 export type TranslationMap = typeof EN_DEFAULTS;
