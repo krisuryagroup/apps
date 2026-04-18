@@ -1,0 +1,293 @@
+.add-address-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-background, #f5f5f5);
+  padding-bottom: 80px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  padding: 0.875rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-primary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.page-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1a1a1a);
+  margin: 0;
+}
+
+// Search
+.search-bar-wrapper {
+  background: #fff;
+  padding: 0.75rem 1rem;
+  position: relative;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+}
+
+.search-icon {
+  font-size: 1.2rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  outline: none;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.clear-search-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+
+.suggestions-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  z-index: 20;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f5f5f5;
+
+  .material-icons {
+    font-size: 1.1rem;
+    color: var(--color-primary, #ff6b35);
+    flex-shrink: 0;
+  }
+
+  &:hover { background: #f9f9f9; }
+  &:last-child { border-bottom: none; }
+}
+
+// Map
+.map-container {
+  position: relative;
+  height: 220px;
+  background: #eee;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.map-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 0.5rem;
+  color: #888;
+  font-size: 0.875rem;
+  text-align: center;
+
+  .material-icons { font-size: 2rem; }
+}
+
+// Use location button
+.use-location-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1.5px solid var(--color-primary, #ff6b35);
+  color: var(--color-primary, #ff6b35);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0.75rem 1rem 0;
+  width: calc(100% - 2rem);
+  transition: opacity 0.15s;
+
+  .material-icons { font-size: 1.1rem; }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+// Detected address
+.detected-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: #fff8f5;
+  border: 1px solid rgba(255, 107, 53, 0.25);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 1rem;
+
+  .material-icons {
+    color: var(--color-primary, #ff6b35);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-primary, #1a1a1a);
+    line-height: 1.4;
+  }
+}
+
+.clear-map-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// Pincode restriction banner
+.pincode-restricted-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #fff3e0;
+  border: 1px solid #fb8c00;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  margin: 0.75rem 1rem;
+
+  .material-icons {
+    color: #fb8c00;
+    flex-shrink: 0;
+    font-size: 1.3rem;
+  }
+
+  .banner-text {
+    flex: 1;
+
+    strong {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    p {
+      font-size: 0.8rem;
+      margin: 0;
+      color: #555;
+    }
+  }
+}
+
+.contact-btn {
+  background: #fb8c00;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.error-msg {
+  color: #e53935;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+}
+
+.form-container {
+  background: #fff;
+  margin: 0.75rem;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.saving-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+
+  p {
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a1a);
+  }
+}

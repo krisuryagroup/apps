@@ -72,8 +72,8 @@
 | T022 | Evolve auth pages | `[x]` | T021, T014 |
 | T023 | Evolve `home` page | `[x]` | T022, T015, T018 |
 | T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[~]` | T023 |
-| T025 | Evolve `cart` page | `[ ]` | T024, T017 |
-| T026 | Evolve address pages | `[ ]` | T025, T016 |
+| T025 | Evolve `cart` page | `[x]` | T024, T017 |
+| T026 | Evolve address pages | `[x]` | T025, T016 |
 | T027 | Evolve `order-confirmation` + checkout flow | `[ ]` | T026 |
 | T028 | Evolve `order-history`, `order-tracking` pages | `[ ]` | T027, T018 |
 | T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | `[ ]` | T028 |

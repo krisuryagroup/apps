@@ -1,0 +1,122 @@
+<div class="add-address-page" data-testid="add-address-page">
+
+  <header class="page-header" data-testid="page-header">
+    <button class="back-btn" (click)="goBack()" data-testid="back-btn">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1 class="page-title">{{ 'address.newAddress' | i18n }}</h1>
+  </header>
+
+  <!-- Place search -->
+  <div class="search-bar-wrapper" data-testid="search-bar-wrapper">
+    <div class="search-row">
+      <span class="material-icons search-icon">search</span>
+      <input
+        class="search-input"
+        type="text"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+        placeholder="Search for a location..."
+        data-testid="location-search-input"
+      />
+      @if (searchQuery()) {
+        <button class="clear-search-btn" (click)="clearSearch()" data-testid="clear-search-btn">
+          <span class="material-icons">close</span>
+        </button>
+      }
+    </div>
+    @if (searchSuggestions().length) {
+      <ul class="suggestions-list" data-testid="suggestions-list">
+        @for (s of searchSuggestions(); track s.name) {
+          <li
+            class="suggestion-item"
+            (click)="selectSuggestion(s)"
+            data-testid="suggestion-item"
+          >
+            <span class="material-icons">place</span>
+            <span>{{ s.name }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- Map -->
+  <div class="map-container" data-testid="map-container">
+    @if (mapLoadError()) {
+      <div class="map-error" data-testid="map-error">
+        <span class="material-icons">map</span>
+        <p>Map could not be loaded. Enter address manually below.</p>
+      </div>
+    } @else {
+      <div #mapContainer class="map" data-testid="google-map"></div>
+      @if (isMapLoading()) {
+        <div class="map-loading-overlay">
+          <span class="material-icons spinning">refresh</span>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Use current location -->
+  <button
+    class="use-location-btn"
+    (click)="useCurrentLocation()"
+    [disabled]="isGettingLocation()"
+    data-testid="use-current-location-btn"
+  >
+    <span class="material-icons">my_location</span>
+    @if (isGettingLocation()) {
+      Detecting location...
+    } @else {
+      Use current location
+    }
+  </button>
+
+  <!-- Detected address display -->
+  @if (locationFromMap() && mapAddress()) {
+    <div class="detected-address" data-testid="detected-address">
+      <span class="material-icons">place</span>
+      <p>{{ mapAddress() }}</p>
+      <button class="clear-map-btn" (click)="clearMapSelection()" data-testid="clear-map-btn">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+  }
+
+  <!-- Pincode restriction banner -->
+  @if (pincodeRestricted() && pincodeConfig.enabled) {
+    <div class="pincode-restricted-banner" data-testid="pincode-restricted-banner">
+      <span class="material-icons">warning</span>
+      <div class="banner-text">
+        <strong>Delivery not available in this area</strong>
+        <p>We currently deliver to selected pincodes only.</p>
+      </div>
+      <button class="contact-btn" (click)="goToContact()" data-testid="contact-restaurant-btn">
+        Contact Restaurant
+      </button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <p class="error-msg" data-testid="error-message">{{ errorMessage() }}</p>
+  }
+
+  <!-- Address form -->
+  <div class="form-container" data-testid="form-container">
+    <lib-add-address-form
+      [config]="{ mode: 'add' }"
+      [initialData]="initialFormData()"
+      (submitted)="onFormSubmitted($event)"
+      (cancelled)="onFormCancelled()"
+      data-testid="add-address-form"
+    />
+  </div>
+
+  @if (isSaving()) {
+    <div class="saving-overlay" data-testid="saving-overlay">
+      <p>{{ 'address.savingAddress' | i18n }}</p>
+    </div>
+  }
+
+</div>
