@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { NearbyBusinessesService, TagsService, AnalyticsService } from '@zitro/services';
+import { forkJoin, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { NearbyBusinessesService, TagsService, AnalyticsService, LocationSelectionService } from '@zitro/services';
 import { ThemeService } from '@zitro/theme';
 import { NearbyBusiness, PlatformTag } from '@zitro/models';
 import { BusinessCardComponent } from '@zitro/ui';
@@ -33,12 +34,14 @@ import {
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private nearbyService = inject(NearbyBusinessesService);
   private tagsService = inject(TagsService);
   private themeService = inject(ThemeService);
   private analyticsService = inject(AnalyticsService);
+  private locationSelectionService = inject(LocationSelectionService);
+  private destroy$ = new Subject<void>();
 
   readonly BUSINESS_TYPE_LABELS = BUSINESS_TYPE_LABELS;
   readonly BUSINESS_TYPE_ICONS = BUSINESS_TYPE_ICONS;
@@ -76,6 +79,26 @@ export class HomeComponent implements OnInit {
     this.userLocation = this.loadStoredLocation();
     await this.analyticsService.logScreenView('Home', 'HomeComponent');
     this.loadData();
+
+    // Subscribe to location changes from LocationSelectionService
+    // When user selects a new location (GPS or from modal), reload nearby businesses
+    this.locationSelectionService.selectedLocation$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(selectedLoc => {
+        // Update local userLocation and reload businesses with new coordinates
+        this.userLocation = {
+          lat: selectedLoc.coordinates?.lat ?? 0,
+          lng: selectedLoc.coordinates?.lng ?? 0,
+          label: selectedLoc.label,
+          address: selectedLoc.address,
+        };
+        this.loadData();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onTabChange(type: string): void {
@@ -90,10 +113,6 @@ export class HomeComponent implements OnInit {
 
   onBusinessClick(business: NearbyBusiness): void {
     this.router.navigate(['/listing'], { queryParams: { businessSlug: business.slug } });
-  }
-
-  onLocationHeaderClick(): void {
-    this.router.navigate(['/location-selection']);
   }
 
   // Search (kept from previous home)
@@ -138,6 +157,7 @@ export class HomeComponent implements OnInit {
 
   private loadData(): void {
     const loc = this.userLocation;
+    // Use actual coordinates from location, only fall back to 0,0 if no location yet
     const lat = loc?.lat ?? 0;
     const lng = loc?.lng ?? 0;
 
@@ -145,7 +165,7 @@ export class HomeComponent implements OnInit {
     forkJoin({
       businesses: this.nearbyService.getNearbyBusinesses(lat, lng, NEARBY_API_RADIUS_KM),
       tags: this.tagsService.getTags(),
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ businesses, tags }) => {
         this.nearbyBusinesses = businesses;
         this.allTags = tags;

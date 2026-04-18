@@ -20,6 +20,56 @@
       <div class="business-card__image-placeholder" data-testid="business-image-placeholder"></div>
     }
 
+    @if (config().showProductSlider && business().latestProducts?.length) {
+      <div
+        class="business-card__product-slider"
+        [class.business-card__product-slider--fade]="config().productSliderAnimation === 'fade'"
+        [class.business-card__product-slider--slide]="config().productSliderAnimation === 'slide'"
+        data-testid="product-slider"
+      >
+        @for (product of business().latestProducts; track product.id; let i = $index) {
+          <div
+            class="business-card__product-slide"
+            [class.is-active]="currentProductIndex() === i"
+            [attr.aria-hidden]="currentProductIndex() !== i"
+            data-testid="product-slide"
+          >
+            <img
+              class="business-card__product-image"
+              [src]="product.imageUrl || 'assets/foodCategories/default.png'"
+              [alt]="product.name"
+              loading="lazy"
+            />
+            <div class="business-card__product-info">
+              <span class="business-card__product-name">{{ product.name }}</span>
+              @if (product.price !== null) {
+                <span class="business-card__product-price">₹{{ product.price }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if ((business().latestProducts?.length ?? 0) > 1) {
+          <div class="business-card__slide-dots" aria-hidden="true">
+            @for (product of business().latestProducts; track product.id; let i = $index) {
+              <span
+                class="business-card__slide-dot"
+                [class.is-active]="currentProductIndex() === i"
+              ></span>
+            }
+          </div>
+        }
+      </div>
+    } @else if (config().showProductSlider && !business().latestProducts?.length) {
+      <img
+        class="business-card__image"
+        src="assets/foodCategories/default.png"
+        alt="Default food image"
+        loading="lazy"
+        data-testid="default-product-image"
+      />
+    }
+
     @if (business().isFeatured) {
       <span class="business-card__badge business-card__badge--featured" data-testid="featured-badge">
         {{ 'businessCard.featured' | i18n }}

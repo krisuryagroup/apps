@@ -8,7 +8,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-const BASE = 'http://0.0.0.0:8080';
+const BASE = 'http://localhost:8080';
 
 describe('GET /api/businesses/nearby', () => {
   it('returns 200 with at least 1 NearbyBusiness', async () => {

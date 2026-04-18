@@ -7,16 +7,15 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, combineLatest, of, take, timer } from 'rxjs';
-import { SplashScreenComponent, SplashScreenConfig, ConfirmationDialogComponent, ConfirmationDialogConfig } from '@zitro/ui';
+import { EvolvedSplashScreenComponent, SplashScreenConfig, ConfirmationDialogComponent, ConfirmationDialogConfig } from '@zitro/ui';
 import { ConfigApiService } from '@zitro/services';
-import { APP_SETTINGS_CACHE } from '../../core/constants/app.constants';
 
 const SPLASH_DURATION_MS = 2000;
 
 @Component({
   selector: 'app-splash-page',
   standalone: true,
-  imports: [SplashScreenComponent, ConfirmationDialogComponent],
+  imports: [EvolvedSplashScreenComponent, ConfirmationDialogComponent],
   templateUrl: './splash.page.html',
   styleUrl: './splash.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +60,6 @@ export class SplashPage implements OnInit {
   }
 
   private navigateNext(): void {
-    const selected = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID);
-    this.router.navigate([selected ? '/home' : '/business-selection'], { replaceUrl: true });
+    this.router.navigate(['/home'], { replaceUrl: true });
   }
 }

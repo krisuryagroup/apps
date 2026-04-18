@@ -22,9 +22,9 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 | HRD-001 | Location Gate | `done` |
 | HRD-002 | Environment Config + Data Layer | `done` |
 | HRD-003 | Business Card Component | `done` |
-| HRD-004 | Home Page Redesign | `in-progress` |
-| HRD-005 | Per-Business-Type Theming | `in-progress` |
-| HRD-006 | Cleanup + Routing | `pending` |
+| HRD-004 | Home Page Redesign | `done` |
+| HRD-005 | Per-Business-Type Theming | `done` |
+| HRD-006 | Cleanup + Routing | `done` |
 
 ---
 
@@ -84,7 +84,7 @@ interface UserLocation {
 
 **`environment.ts`** (dev default — add `apiUrl`):
 ```typescript
-apiUrl: 'http://0.0.0.0:8080',   // local dev API
+apiUrl: 'http://localhost:8080',   // local dev API
 ```
 
 **`environment.prod.ts`** (new file):
@@ -186,7 +186,7 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 - `src/app/app.config.ts` — ensure `provideHttpClient()` is present
 
 ### Acceptance criteria
-- [ ] `environment.ts` has `apiUrl: 'http://0.0.0.0:8080'`
+- [ ] `environment.ts` has `apiUrl: 'http://localhost:8080'`
 - [ ] `environment.prod.ts` created with production URL
 - [ ] `NearbyBusiness` and `PlatformTag` exported from `@zitro/models`
 - [ ] `NearbyBusinessesService` and `TagsService` exported from `@zitro/services`

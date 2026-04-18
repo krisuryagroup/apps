@@ -49,12 +49,18 @@
 
 // ─── Business type tabs ───────────────────────────────────────────────────────
 .dh-tabs-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
   display: flex;
   gap: 0;
   overflow-x: auto;
-  background: var(--zitro-surface, #fff);
+  background: rgba(255, 255, 255, 0.95);
   border-bottom: 2px solid var(--zitro-outline-variant, #e8e8e8);
   padding: 0 0.5rem;
+  backdrop-filter: blur(4px);
 
   &::-webkit-scrollbar { display: none; }
 }
@@ -195,7 +201,7 @@
 // Row: search bar (flex-1) + VEG toggle — absolutely overlaid on the banner, transparent bg
 .dh-search-veg-row {
   position: absolute;
-  top: 70px;
+  top: 55px;
   left: 0;
   right: 0;
   z-index: 10;
@@ -215,7 +221,6 @@
 // Content section below the hero
 .dh-scroll-content {
   background: $background-color;
-  padding-top: 0.5rem;
 }
 
 // VEG toggle (label on top, toggle below)

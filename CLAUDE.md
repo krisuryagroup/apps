@@ -116,7 +116,7 @@ apps/zitro-jobs    → @zitro/models, @zitro/jobs-shared
 | `apps/zitro-customer/src/main.ts` | App bootstrap entry point |
 | `apps/zitro-customer/src/app/app.config.ts` | Angular providers: Firebase, HTTP, initializers |
 | `apps/zitro-customer/src/app/app.routes.ts` | All routes + guards |
-| `apps/zitro-customer/src/environments/environment.ts` | Dev config — `apiUrl: 'http://0.0.0.0:8080'` |
+| `apps/zitro-customer/src/environments/environment.ts` | Dev config — `apiUrl: 'http://localhost:8080'` |
 | `apps/zitro-customer/src/environments/environment.prod.ts` | Prod config — `apiUrl: 'https://api.zitroapp.in'` |
 | `apps/zitro-customer/src/styles.scss` | Global styles + theme import |
 | `apps/zitro-customer/HOME-REDESIGN-TASKS.md` | HRD task tracking (location gate, tabs, tags, theming) |
@@ -253,7 +253,7 @@ Old Firebase service files are **not deleted** until the API replacement is impl
 
 ## Backend API Reference
 
-- **Base URL (dev):** `http://0.0.0.0:8080`
+- **Base URL (dev):** `http://localhost:8080`
 - **Base URL (prod):** configured in environment
 - **Auth:** Firebase JWT in `Authorization: Bearer <token>` header
 - **Business context:** `X-Business-Id: <slug>` header (injected by `BusinessIdInterceptor`)
