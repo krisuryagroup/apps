@@ -58,6 +58,108 @@
     letter-spacing: 0.05em;
   }
 
+  // ── Product slider ────────────────────────────────────────────────────────
+  &__product-slider {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  &__product-slide {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  // Fade animation (default)
+  &__product-slider--fade &__product-slide {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+
+    &.is-active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  }
+
+  // Slide animation — entry from right on activation
+  &__product-slider--slide &__product-slide {
+    &.is-active {
+      visibility: visible;
+      pointer-events: auto;
+      animation: zitroSlideInRight 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+  }
+
+  &__product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  // Product name + price overlay — top-left
+  &__product-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.68) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    width: 100%;
+    pointer-events: none;
+  }
+
+  &__product-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 16px);
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  &__product-price {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  // Dot indicators — bottom center
+  &__slide-dots {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+  }
+
+  &__slide-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    transition: background 0.3s ease, transform 0.3s ease;
+
+    &.is-active {
+      background: #fff;
+      transform: scale(1.3);
+    }
+  }
+
   // ── Badges ────────────────────────────────────────────────────────────────
   &__badge {
     position: absolute;
@@ -127,5 +229,16 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+  }
+}
+
+@keyframes zitroSlideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }

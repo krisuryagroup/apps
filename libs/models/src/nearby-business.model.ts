@@ -1,3 +1,10 @@
+export interface LatestProduct {
+  id: string;
+  name: string;
+  price: number | null;
+  imageUrl?: string | null;
+}
+
 export interface NearbyBusiness {
   id: string;
   slug: string;
@@ -12,4 +19,5 @@ export interface NearbyBusiness {
   distanceMetres: number;
   tags: string[];                 // tag slugs e.g. ["pizza", "biryani"]
   imageUrl?: string | null;
+  latestProducts?: LatestProduct[];
 }

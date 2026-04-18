@@ -6,7 +6,7 @@ import { UserDtoFactory } from '../factories/user-dto.factory';
 import { CouponDtoFactory } from '../factories/coupon-dto.factory';
 import { NearbyBusinessDtoFactory } from '../factories/nearby-business-dto.factory';
 
-const BASE_URL = 'http://0.0.0.0:8080';
+const BASE_URL = 'http://localhost:8080';
 
 export const handlers = [
   // GET /api/businesses/nearby

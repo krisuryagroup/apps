@@ -2,36 +2,22 @@
 
 <div class="dh-main-content">
 
-  <!-- Location header -->
-  <div class="dh-location-header" (click)="onLocationHeaderClick()" data-testid="location-header">
-    <span class="material-icons dh-pin-icon">location_on</span>
-    <div class="dh-location-info">
-      <span class="dh-location-label" data-testid="location-label">
-        {{ userLocation?.label || 'Set location' }}
-        <span class="material-icons dh-chevron">expand_more</span>
-      </span>
-      <span class="dh-location-address" data-testid="location-address">
-        {{ userLocation?.address || 'Tap to select your delivery location' }}
-      </span>
-    </div>
-  </div>
-
-  <!-- Business type tabs -->
-  <div class="dh-tabs-row" *ngIf="businessTypeTabs.length" data-testid="business-tabs">
-    <button
-      *ngFor="let tab of businessTypeTabs"
-      class="dh-tab-btn"
-      [class.dh-tab-active]="activeTab === tab"
-      (click)="onTabChange(tab)"
-      [attr.data-testid]="'tab-' + tab">
-      <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
-      <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
-    </button>
-  </div>
-
-  <!-- Hero: banner fills behind transparent header; search+VEG overlays the banner -->
+  <!-- Hero: banner fills behind transparent header; tabs and search+VEG overlay the banner -->
   <div class="dh-hero-wrapper">
     <app-banner [autoScroll]="true" [scrollInterval]="4000"></app-banner>
+
+    <!-- Business type tabs — overlaid on banner -->
+    <div class="dh-tabs-row" *ngIf="businessTypeTabs.length" data-testid="business-tabs">
+      <button
+        *ngFor="let tab of businessTypeTabs"
+        class="dh-tab-btn"
+        [class.dh-tab-active]="activeTab === tab"
+        (click)="onTabChange(tab)"
+        [attr.data-testid]="'tab-' + tab">
+        <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
+        <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+      </button>
+    </div>
 
     <!-- Search + VEG toggle — overlaid on banner, transparent background -->
     <div class="dh-search-veg-row">

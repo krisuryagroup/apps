@@ -274,12 +274,40 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectSavedAddress(addr: UserAddress): void {
-    this.selectionService.setLocation({
-      label: addr.type || 'Home',
-      address: [addr.houseAndStreet, addr.town, addr.state].filter(Boolean).join(', '),
-      type: 'saved'
-    });
+  async selectSavedAddress(addr: UserAddress): Promise<void> {
+    const fullAddress = [addr.houseAndStreet, addr.town, addr.state].filter(Boolean).join(', ');
+    
+    try {
+      // Geocode the address to get coordinates
+      const suggestions = await this.selectionService.searchAddresses(fullAddress);
+      
+      if (suggestions.length > 0) {
+        // Use coordinates from the first matching suggestion
+        const coords = suggestions[0].coordinates;
+        this.selectionService.setLocation({
+          label: addr.type || 'Home',
+          address: fullAddress,
+          coordinates: coords,
+          type: 'saved'
+        });
+      } else {
+        // Fallback: if no geocoding result, send without coordinates
+        this.selectionService.setLocation({
+          label: addr.type || 'Home',
+          address: fullAddress,
+          type: 'saved'
+        });
+      }
+    } catch (error) {
+      // Fallback: if geocoding fails, save address without coordinates
+      console.warn('Geocoding failed for saved address in bottom sheet:', error);
+      this.selectionService.setLocation({
+        label: addr.type || 'Home',
+        address: fullAddress,
+        type: 'saved'
+      });
+    }
+    
     this.selectionService.setSelectedSavedAddress(addr);
     this.close();
   }

@@ -65,13 +65,42 @@ export class LocationSelectionComponent implements OnInit {
     }
   }
 
-  onSelectSavedAddress(addr: UserAddress): void {
-    this.saveAndNavigate({
-      lat: 0,
-      lng: 0,
-      label: addr.type || addr.name,
-      address: `${addr.houseAndStreet}, ${addr.town}, ${addr.pincode}`,
-    });
+  async onSelectSavedAddress(addr: UserAddress): Promise<void> {
+    const fullAddress = `${addr.houseAndStreet}, ${addr.town}, ${addr.pincode}`;
+    
+    try {
+      // Geocode the address to get actual coordinates
+      const suggestions = await this.locationSelectionService.searchAddresses(fullAddress);
+      
+      if (suggestions.length > 0) {
+        // Use coordinates from the first matching suggestion
+        const coords = suggestions[0].coordinates;
+        this.saveAndNavigate({
+          lat: coords.lat,
+          lng: coords.lng,
+          label: addr.type || addr.name,
+          address: fullAddress,
+        });
+      } else {
+        // Fallback: if no geocoding result, use 0,0 but mark as saved type
+        // The system will still work, just without precise GPS
+        this.saveAndNavigate({
+          lat: 0,
+          lng: 0,
+          label: addr.type || addr.name,
+          address: fullAddress,
+        });
+      }
+    } catch (error) {
+      // Fallback: if geocoding fails, save address without coordinates
+      console.warn('Geocoding failed for saved address:', error);
+      this.saveAndNavigate({
+        lat: 0,
+        lng: 0,
+        label: addr.type || addr.name,
+        address: fullAddress,
+      });
+    }
   }
 
   onSearchLocation(): void {
