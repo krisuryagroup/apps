@@ -1,16 +1,18 @@
-<div class="search-bar">
-  <input type="text" placeholder="Search" />
-  <span class="search-icon">🔍</span>
-</div>
-<div class="search-results">
-  <div class="no-results">
-    <span class="no-results-icon">🔍</span>
-    <div>No Restaurants Found</div>
+<div class="search-page" data-testid="search-page">
+  <div class="search-header" data-testid="search-header">
+    <button class="back-btn" (click)="goBack()" data-testid="search-back-btn">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <lib-search-bar
+      class="search-bar-expanded"
+      data-testid="search-bar"
+      [value]="searchQuery()"
+      (searchChange)="onSearchChange($event)"
+    />
   </div>
-</div>
-<div class="bottom-nav">
-  <div class="nav-item">HOME</div>
-  <div class="nav-item active">SEARCH</div>
-  <div class="nav-item">CART</div>
-  <div class="nav-item">ACCOUNT</div>
+
+  <div class="search-hint" data-testid="search-hint">
+    <span class="material-icons">search</span>
+    <p>{{ 'search.placeholder' | i18n }}</p>
+  </div>
 </div>
