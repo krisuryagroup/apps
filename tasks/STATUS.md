@@ -70,7 +70,7 @@
 | T020 | Evolve `app.config.ts` | `[ ]` | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | `[x]` | T020 |
 | T022 | Evolve auth pages | `[x]` | T021, T014 |
-| T023 | Evolve `home` page | `[~]` | T022, T015, T018 |
+| T023 | Evolve `home` page | `[x]` | T022, T015, T018 |
 | T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[ ]` | T023 |
 | T025 | Evolve `cart` page | `[ ]` | T024, T017 |
 | T026 | Evolve address pages | `[ ]` | T025, T016 |
