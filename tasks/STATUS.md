@@ -74,8 +74,8 @@
 | T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[~]` | T023 |
 | T025 | Evolve `cart` page | `[x]` | T024, T017 |
 | T026 | Evolve address pages | `[x]` | T025, T016 |
-| T027 | Evolve `order-confirmation` + checkout flow | `[ ]` | T026 |
-| T028 | Evolve `order-history`, `order-tracking` pages | `[ ]` | T027, T018 |
+| T027 | Evolve `order-confirmation` + checkout flow | `[x]` | T026 |
+| T028 | Evolve `order-history`, `order-tracking` pages | `[x]` | T027, T018 |
 | T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | `[ ]` | T028 |
 | T029-unit | Write ALL unit + integration tests | `[ ]` | T029, T006 |
 | T030 | E2E tests — 5 critical journeys (Playwright, 27 tests) | `[ ]` | T029-unit |
