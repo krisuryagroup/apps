@@ -1,16 +1,33 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { NearbyBusinessesService, TagsService, AnalyticsService, LocationSelectionService } from '@zitro/services';
+import { forkJoin } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NearbyBusinessesService,
+  TagsService,
+  AnalyticsService,
+  LocationSelectionService,
+  BannerService,
+} from '@zitro/services';
 import { ThemeService } from '@zitro/theme';
-import { NearbyBusiness, PlatformTag } from '@zitro/models';
-import { BusinessCardComponent } from '@zitro/ui';
-import { CartSummaryComponent } from '@zitro/ui';
-import { BannerComponent } from '@zitro/ui';
-import { LoaderComponent } from '@zitro/ui';
+import { NearbyBusiness, PlatformTag, Banner } from '@zitro/models';
+import { I18nPipe } from '@zitro/i18n';
+import {
+  BusinessCardComponent,
+  BannerCarouselComponent,
+  EvolvedLoaderComponent,
+  CartSummaryComponent,
+} from '@zitro/ui';
 import {
   LOCATION_STORAGE_KEY,
   UserLocation,
@@ -24,160 +41,166 @@ import {
   selector: 'app-home',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
     BusinessCardComponent,
+    BannerCarouselComponent,
+    EvolvedLoaderComponent,
     CartSummaryComponent,
-    BannerComponent,
-    LoaderComponent,
+    I18nPipe,
   ],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
+  styleUrl: './home.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   private router = inject(Router);
   private nearbyService = inject(NearbyBusinessesService);
   private tagsService = inject(TagsService);
   private themeService = inject(ThemeService);
   private analyticsService = inject(AnalyticsService);
   private locationSelectionService = inject(LocationSelectionService);
-  private destroy$ = new Subject<void>();
+  private bannerService = inject(BannerService);
+  private destroyRef = inject(DestroyRef);
+
+  private carouselRef = viewChild(BannerCarouselComponent);
 
   readonly BUSINESS_TYPE_LABELS = BUSINESS_TYPE_LABELS;
   readonly BUSINESS_TYPE_ICONS = BUSINESS_TYPE_ICONS;
 
-  isLoading = true;
+  readonly isLoading = signal(true);
+  readonly banners = signal<Banner[]>([]);
+  readonly isPureVeg = signal(false);
+  readonly searchQuery = signal('');
+  readonly isListening = signal(false);
 
-  userLocation: UserLocation | null = null;
-  nearbyBusinesses: NearbyBusiness[] = [];
-  allTags: PlatformTag[] = [];
-  businessTypeTabs: string[] = [];
-  activeTab = '';
-  activeTagFilter: string | null = null;
+  private readonly userLocation = signal<UserLocation | null>(null);
+  readonly nearbyBusinesses = signal<NearbyBusiness[]>([]);
+  readonly allTags = signal<PlatformTag[]>([]);
+  readonly businessTypeTabs = signal<string[]>([]);
+  readonly activeTab = signal('');
+  readonly activeTagFilter = signal<string | null>(null);
 
-  // Search + veg filter (kept from previous home)
-  searchQuery = '';
-  isListening = false;
-  isPureVeg = false;
+  readonly filteredByTab = computed(() => {
+    const tab = this.activeTab();
+    if (!tab) return this.nearbyBusinesses();
+    return this.nearbyBusinesses().filter(b => b.businessType === tab);
+  });
 
-  get filteredByTab(): NearbyBusiness[] {
-    if (!this.activeTab) return this.nearbyBusinesses;
-    return this.nearbyBusinesses.filter(b => b.businessType === this.activeTab);
-  }
+  readonly displayTags = computed(() => {
+    const tagSlugsInTab = new Set(this.filteredByTab().flatMap(b => b.tags));
+    return this.allTags().filter(t => tagSlugsInTab.has(t.slug));
+  });
 
-  get displayTags(): PlatformTag[] {
-    const tagSlugsInTab = new Set(this.filteredByTab.flatMap(b => b.tags));
-    return this.allTags.filter(t => tagSlugsInTab.has(t.slug));
-  }
+  readonly displayBusinesses = computed(() => {
+    const filter = this.activeTagFilter();
+    if (!filter) return this.filteredByTab();
+    return this.filteredByTab().filter(b => b.tags.includes(filter));
+  });
 
-  get displayBusinesses(): NearbyBusiness[] {
-    if (!this.activeTagFilter) return this.filteredByTab;
-    return this.filteredByTab.filter(b => b.tags.includes(this.activeTagFilter!));
+  constructor() {
+    effect(() => {
+      if (this.banners().length > 1) {
+        this.carouselRef()?.startAutoPlay();
+      }
+    });
   }
 
   async ngOnInit(): Promise<void> {
-    this.userLocation = this.loadStoredLocation();
+    this.userLocation.set(this.loadStoredLocation());
     await this.analyticsService.logScreenView('Home', 'HomeComponent');
     this.loadData();
 
-    // Subscribe to location changes from LocationSelectionService
-    // When user selects a new location (GPS or from modal), reload nearby businesses
+    this.bannerService.getBanners()
+      .then(b => this.banners.set(b))
+      .catch(() => this.banners.set([]));
+
     this.locationSelectionService.selectedLocation$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(selectedLoc => {
-        // Update local userLocation and reload businesses with new coordinates
-        this.userLocation = {
+        this.userLocation.set({
           lat: selectedLoc.coordinates?.lat ?? 0,
           lng: selectedLoc.coordinates?.lng ?? 0,
           label: selectedLoc.label,
           address: selectedLoc.address,
-        };
+        });
         this.loadData();
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   onTabChange(type: string): void {
-    this.activeTab = type;
-    this.activeTagFilter = null;
+    this.activeTab.set(type);
+    this.activeTagFilter.set(null);
     this.themeService.applyBusinessTypeTheme(type);
   }
 
   onTagFilterClick(slug: string): void {
-    this.activeTagFilter = this.activeTagFilter === slug ? null : slug;
+    this.activeTagFilter.update(f => f === slug ? null : slug);
   }
 
   onBusinessClick(business: NearbyBusiness): void {
     this.router.navigate(['/listing'], { queryParams: { businessSlug: business.slug } });
   }
 
-  // Search (kept from previous home)
+  togglePureVeg(): void {
+    this.isPureVeg.update(v => !v);
+  }
+
   onSearch(): void {
-    if (this.searchQuery.trim()) {
-      this.router.navigate(['/listing'], {
-        queryParams: { search: this.searchQuery.trim() },
-      });
+    const q = this.searchQuery().trim();
+    if (q) {
+      this.router.navigate(['/listing'], { queryParams: { search: q } });
     }
   }
 
   onSearchInput(event: Event): void {
-    this.searchQuery = (event.target as HTMLInputElement).value;
+    this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
   clearSearch(): void {
-    this.searchQuery = '';
-  }
-
-  togglePureVeg(): void {
-    this.isPureVeg = !this.isPureVeg;
+    this.searchQuery.set('');
   }
 
   startVoiceSearch(): void {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition || this.isListening) return;
+    if (!SpeechRecognition || this.isListening()) return;
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-IN';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    this.isListening = true;
+    this.isListening.set(true);
     recognition.onresult = (event: any) => {
-      this.searchQuery = event.results[0][0].transcript;
-      this.isListening = false;
+      this.searchQuery.set(event.results[0][0].transcript);
+      this.isListening.set(false);
       this.onSearch();
     };
-    recognition.onerror = () => { this.isListening = false; };
-    recognition.onend = () => { this.isListening = false; };
+    recognition.onerror = () => { this.isListening.set(false); };
+    recognition.onend = () => { this.isListening.set(false); };
     recognition.start();
   }
 
   private loadData(): void {
-    const loc = this.userLocation;
-    // Use actual coordinates from location, only fall back to 0,0 if no location yet
+    const loc = this.userLocation();
     const lat = loc?.lat ?? 0;
     const lng = loc?.lng ?? 0;
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     forkJoin({
       businesses: this.nearbyService.getNearbyBusinesses(lat, lng, NEARBY_API_RADIUS_KM),
       tags: this.tagsService.getTags(),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ businesses, tags }) => {
-        this.nearbyBusinesses = businesses;
-        this.allTags = tags;
-        this.businessTypeTabs = this.buildTabs(businesses);
-        this.activeTab = this.businessTypeTabs[0] ?? '';
-        if (this.activeTab) {
-          this.themeService.applyBusinessTypeTheme(this.activeTab);
+        this.nearbyBusinesses.set(businesses);
+        this.allTags.set(tags);
+        const tabs = this.buildTabs(businesses);
+        this.businessTypeTabs.set(tabs);
+        this.activeTab.set(tabs[0] ?? '');
+        if (tabs[0]) {
+          this.themeService.applyBusinessTypeTheme(tabs[0]);
         }
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
       error: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
       },
     });
   }

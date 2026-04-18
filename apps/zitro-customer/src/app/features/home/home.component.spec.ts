@@ -1,499 +1,131 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideLocationMocks } from '@angular/common/testing';
+import { Subject, of } from 'rxjs';
 import { HomeComponent } from './home.component';
-import { COMMON_CONSTANTS } from '../../core/constants/app.constants';
+import {
+  NearbyBusinessesService,
+  TagsService,
+  AnalyticsService,
+  LocationSelectionService,
+  BannerService,
+} from '@zitro/services';
+import { ThemeService } from '@zitro/theme';
+import { provideI18nForTests } from '@zitro/i18n';
+
+function createMockNearbyService() {
+  return { getNearbyBusinesses: vi.fn(() => of([])) };
+}
+
+function createMockTagsService() {
+  return { getTags: vi.fn(() => of([])) };
+}
+
+function createMockThemeService() {
+  return { applyBusinessTypeTheme: vi.fn() };
+}
+
+function createMockAnalyticsService() {
+  return { logScreenView: vi.fn(() => Promise.resolve()) };
+}
+
+function createMockLocationService() {
+  return { selectedLocation$: new Subject() };
+}
+
+function createMockBannerService() {
+  return { getBanners: vi.fn(() => Promise.resolve([])) };
+}
 
 describe('HomeComponent', () => {
-  let component: HomeComponent;
-  let mockRouter: any;
-  let mockCategoriesService: any;
-  let mockProductsService: any;
-
   beforeEach(() => {
-    mockRouter = {
-      navigate: vi.fn()
-    };
-
-    mockCategoriesService = {
-      getCategories: vi.fn()
-    };
-
-    mockProductsService = {
-      getPopularOnlineProducts: vi.fn(),
-      getRecommendedOnlineProducts: vi.fn()
-    };
-
-    component = new HomeComponent(mockRouter, mockCategoriesService, mockProductsService);
-
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('Component Initialization', () => {
-    it('should initialize with default values', () => {
-      expect(component.categories).toEqual([]);
-      expect(component.popularProducts).toEqual([]);
-      expect(component.recommendedProducts).toEqual([]);
-      expect(component.isLoadingCategories).toBe(true);
-      expect(component.isLoadingProducts).toBe(true);
-      expect(component.isLoadingRecommended).toBe(true);
-      expect(component.maxPopularItems).toBe(8);
-      expect(component.searchQuery).toBe('');
-      expect(component.showItemDialog).toBe(false);
-      expect(component.selectedItem).toBe(null);
-    });
-
-    it('should load categories, popular and recommended products on init', async () => {
-      const mockCategories = [{ id: '1', name: 'Category 1' }];
-      const mockPopularProducts = [{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }];
-      const mockRecommendedProducts = [{ id: 'r1', name: 'Recommended 1', isEnabledForOnlineOrders: true }];
-      mockCategoriesService.getCategories.mockResolvedValue(mockCategories);
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockPopularProducts);
-      mockProductsService.getRecommendedOnlineProducts.mockResolvedValue(mockRecommendedProducts);
-
-      await component.ngOnInit();
-
-      expect(mockCategoriesService.getCategories).toHaveBeenCalled();
-      expect(mockProductsService.getPopularOnlineProducts).toHaveBeenCalled();
-      expect(mockProductsService.getRecommendedOnlineProducts).toHaveBeenCalled();
-      expect(component.categories).toEqual(mockCategories);
-      expect(component.popularProducts).toEqual(mockPopularProducts);
-      expect(component.recommendedProducts).toEqual(mockRecommendedProducts);
+    TestBed.configureTestingModule({
+      imports: [HomeComponent],
+      providers: [
+        provideRouter([]),
+        provideLocationMocks(),
+        provideI18nForTests(),
+        { provide: NearbyBusinessesService, useValue: createMockNearbyService() },
+        { provide: TagsService, useValue: createMockTagsService() },
+        { provide: ThemeService, useValue: createMockThemeService() },
+        { provide: AnalyticsService, useValue: createMockAnalyticsService() },
+        { provide: LocationSelectionService, useValue: createMockLocationService() },
+        { provide: BannerService, useValue: createMockBannerService() },
+      ],
     });
   });
 
-  describe('Load Categories', () => {
-    it('should load categories successfully', async () => {
-      const mockCategories = [
-        { id: '1', name: 'Appetizers' },
-        { id: '2', name: 'Main Course' }
-      ];
-      mockCategoriesService.getCategories.mockResolvedValue(mockCategories);
-
-      await component.loadCategories();
-
-      expect(component.categories).toEqual(mockCategories);
-      expect(component.isLoadingCategories).toBe(false);
-    });
-
-    it('should handle category loading error', async () => {
-      mockCategoriesService.getCategories.mockRejectedValue(new Error('Load failed'));
-
-      await component.loadCategories();
-
-      expect(console.error).toHaveBeenCalledWith('Error loading categories:', expect.any(Error));
-      expect(component.isLoadingCategories).toBe(false);
-    });
-
-    it('should set loading state correctly', async () => {
-      mockCategoriesService.getCategories.mockResolvedValue([]);
-
-      expect(component.isLoadingCategories).toBe(true);
-      await component.loadCategories();
-      expect(component.isLoadingCategories).toBe(false);
-    });
-
-    it('should reset loading state even on error', async () => {
-      mockCategoriesService.getCategories.mockRejectedValue(new Error('Error'));
-
-      await component.loadCategories();
-
-      expect(component.isLoadingCategories).toBe(false);
-    });
+  it('should create', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  describe('Load Popular Products', () => {
-    it('should load popular products successfully', async () => {
-      const mockProducts = [
-        { id: 'p1', name: 'Pizza', isEnabledForOnlineOrders: true },
-        { id: 'p2', name: 'Burger', isEnabledForOnlineOrders: true }
-      ];
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.loadPopularProducts();
-
-      expect(component.popularProducts).toEqual(mockProducts);
-      expect(component.isLoadingProducts).toBe(false);
-    });
-
-    it('should log number of loaded products', async () => {
-      const mockProducts = [
-        { id: 'p1', name: 'Pizza', isEnabledForOnlineOrders: true },
-        { id: 'p2', name: 'Burger', isEnabledForOnlineOrders: true }
-      ];
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.loadPopularProducts();
-
-      expect(console.log).toHaveBeenCalledWith('Loaded', 2, 'popular online-enabled products');
-    });
-
-    it('should handle product loading error', async () => {
-      mockProductsService.getPopularOnlineProducts.mockRejectedValue(new Error('Load failed'));
-
-      await component.loadPopularProducts();
-
-      expect(console.error).toHaveBeenCalledWith('Error loading popular products:', expect.any(Error));
-      expect(component.popularProducts).toEqual([]);
-      expect(component.isLoadingProducts).toBe(false);
-    });
-
-    it('should set empty array on error', async () => {
-      mockProductsService.getPopularOnlineProducts.mockRejectedValue(new Error('Error'));
-
-      await component.loadPopularProducts();
-
-      expect(component.popularProducts).toEqual([]);
-    });
-
-    it('should reset loading state even on error', async () => {
-      mockProductsService.getPopularOnlineProducts.mockRejectedValue(new Error('Error'));
-
-      await component.loadPopularProducts();
-
-      expect(component.isLoadingProducts).toBe(false);
-    });
+  it('should initialise with loading state true', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    expect(component.isLoading()).toBe(true);
   });
 
-  describe('Load Recommended Products', () => {
-    it('should load recommended products successfully', async () => {
-      const mockProducts = [
-        { id: 'r1', name: 'Pasta', isEnabledForOnlineOrders: true },
-        { id: 'r2', name: 'Salad', isEnabledForOnlineOrders: true }
-      ];
-      mockProductsService.getRecommendedOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.loadRecommendedProducts();
-
-      expect(component.recommendedProducts).toEqual(mockProducts);
-      expect(component.isLoadingRecommended).toBe(false);
-    });
-
-    it('should log number of loaded recommended products', async () => {
-      const mockProducts = [
-        { id: 'r1', name: 'Pasta', isEnabledForOnlineOrders: true },
-        { id: 'r2', name: 'Salad', isEnabledForOnlineOrders: true }
-      ];
-      mockProductsService.getRecommendedOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.loadRecommendedProducts();
-
-      expect(console.log).toHaveBeenCalledWith('Loaded', 2, 'recommended products');
-    });
-
-    it.each([
-      { scenario: 'network error', error: new Error('Network failed') },
-      { scenario: 'service error', error: new Error('Service unavailable') }
-    ])('should handle $scenario gracefully', async ({ error }) => {
-      mockProductsService.getRecommendedOnlineProducts.mockRejectedValue(error);
-
-      await component.loadRecommendedProducts();
-
-      expect(console.error).toHaveBeenCalledWith('Error loading recommended products:', error);
-      expect(component.recommendedProducts).toEqual([]);
-      expect(component.isLoadingRecommended).toBe(false);
-    });
+  it('should initialise with empty banners', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    expect(fixture.componentInstance.banners()).toEqual([]);
   });
 
-  describe('Navigate to Category', () => {
-    it('should navigate to categories page for view all', () => {
-      component.navigateToCategory('');
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/categories']);
-    });
-
-    it('should navigate to listing with category filter', () => {
-      component.navigateToCategory('Appetizers');
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/listing'], {
-        queryParams: { category: 'Appetizers' }
-      });
-    });
-
-    it('should navigate with category name preserving case', () => {
-      component.navigateToCategory('Main Course');
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/listing'], {
-        queryParams: { category: 'Main Course' }
-      });
-    });
-
-    it.each([
-      { category: 'Pizza', expected: 'Pizza' },
-      { category: 'BURGERS', expected: 'BURGERS' },
-      { category: 'Ice Cream', expected: 'Ice Cream' }
-    ])('should navigate with category $category preserving case', ({ category, expected }) => {
-      component.navigateToCategory(category);
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/listing'], {
-        queryParams: { category: expected }
-      });
-    });
+  it('should initialise with veg filter off', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    expect(fixture.componentInstance.isPureVeg()).toBe(false);
   });
 
-  describe('Product Click', () => {
-    it('should show item dialog with product details', () => {
-      const product = { 
-        id: 'p1', 
-        name: 'Margherita Pizza',
-        description: 'Delicious pizza with cheese',
-        price: 12.99,
-        weight: '500g',
-        imageURL: 'pizza.jpg',
-        isOfferDisabled: false,
-        isEnabledForOnlineOrders: true 
-      } as any;
-
-      component.onProductClick(product);
-
-      expect(component.showItemDialog).toBe(true);
-      expect(component.selectedItem).toEqual({
-        imageURL: 'pizza.jpg',
-        title: 'Margherita Pizza',
-        description: 'Delicious pizza with cheese',
-        weight: '500g',
-        offer: COMMON_CONSTANTS.OFFER_APPLICABLE_TEXT,
-        price: 12.99
-      });
-    });
-
-    it('should not show offer when isOfferDisabled is true', () => {
-      const product = { 
-        id: 'p1', 
-        name: 'Special Burger',
-        description: 'Tasty burger',
-        price: 8.99,
-        imageURL: 'burger.jpg',
-        isOfferDisabled: true,
-        isEnabledForOnlineOrders: true 
-      } as any;
-
-      component.onProductClick(product);
-
-      expect(component.selectedItem.offer).toBeUndefined();
-    });
-
-    it('should handle product without optional fields', () => {
-      const product = { 
-        id: 'p1', 
-        name: 'Simple Item',
-        price: 5.99,
-        imageURL: 'item.jpg',
-        isEnabledForOnlineOrders: true 
-      } as any;
-
-      component.onProductClick(product);
-
-      expect(component.showItemDialog).toBe(true);
-      expect(component.selectedItem).toEqual({
-        imageURL: 'item.jpg',
-        title: 'Simple Item',
-        description: undefined,
-        weight: undefined,
-        offer: COMMON_CONSTANTS.OFFER_APPLICABLE_TEXT,
-        price: 5.99
-      });
-    });
+  it('should toggle veg filter', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    expect(component.isPureVeg()).toBe(false);
+    component.togglePureVeg();
+    expect(component.isPureVeg()).toBe(true);
+    component.togglePureVeg();
+    expect(component.isPureVeg()).toBe(false);
   });
 
-  describe('Item Dialog', () => {
-    it('should close item dialog and clear selected item', () => {
-      component.showItemDialog = true;
-      component.selectedItem = { title: 'Test Item', price: 10 };
-
-      component.onCloseItemDialog();
-
-      expect(component.showItemDialog).toBe(false);
-      expect(component.selectedItem).toBe(null);
-    });
-
-    it('should handle closing dialog when already closed', () => {
-      component.showItemDialog = false;
-      component.selectedItem = null;
-
-      component.onCloseItemDialog();
-
-      expect(component.showItemDialog).toBe(false);
-      expect(component.selectedItem).toBe(null);
-    });
+  it('should update search query on input event', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const event = { target: { value: 'biryani' } } as unknown as Event;
+    component.onSearchInput(event);
+    expect(component.searchQuery()).toBe('biryani');
   });
 
-  describe('View All Click', () => {
-    it('should navigate to listing page', () => {
-      component.onViewAllClick();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/listing']);
-    });
+  it('should clear search query', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const event = { target: { value: 'pizza' } } as unknown as Event;
+    component.onSearchInput(event);
+    component.clearSearch();
+    expect(component.searchQuery()).toBe('');
   });
 
-  describe('Recommended View All Click', () => {
-    it('should navigate to listing with recommended filter', () => {
-      component.onRecommendedViewAllClick();
+  it('should update active tab and reset tag filter on tab change', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const themeService = TestBed.inject(ThemeService as any);
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/listing'], {
-        queryParams: { recommended: 'true' }
-      });
-    });
+    component.onTabChange('grocery');
+    expect(component.activeTab()).toBe('grocery');
+    expect(component.activeTagFilter()).toBeNull();
+    expect(themeService.applyBusinessTypeTheme).toHaveBeenCalledWith('grocery');
   });
 
-  describe('Cart Updated', () => {
-    it('should have onCartUpdated method', () => {
-      expect(component.onCartUpdated).toBeDefined();
-      expect(() => component.onCartUpdated()).not.toThrow();
-    });
+  it('should toggle tag filter on and off', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    component.onTagFilterClick('pizza');
+    expect(component.activeTagFilter()).toBe('pizza');
+    component.onTagFilterClick('pizza');
+    expect(component.activeTagFilter()).toBeNull();
   });
 
-  describe('Search Functionality', () => {
-    it('should navigate to search with query', () => {
-      component.searchQuery = 'pizza';
-
-      component.onSearch();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/search'], {
-        queryParams: { search: 'pizza' }
-      });
-    });
-
-    it('should trim search query', () => {
-      component.searchQuery = '  burger  ';
-
-      component.onSearch();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/search'], {
-        queryParams: { search: 'burger' }
-      });
-    });
-
-    it('should not search with empty query', () => {
-      component.searchQuery = '';
-
-      component.onSearch();
-
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should not search with whitespace only', () => {
-      component.searchQuery = '   ';
-
-      component.onSearch();
-
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Edge Cases and Integration', () => {
-    it('should load all data successfully on init', async () => {
-      const mockCategories = [{ id: '1', name: 'Category 1' }];
-      const mockPopularProducts = [{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }];
-      const mockRecommendedProducts = [{ id: 'r1', name: 'Recommended 1', isEnabledForOnlineOrders: true }];
-      mockCategoriesService.getCategories.mockResolvedValue(mockCategories);
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockPopularProducts);
-      mockProductsService.getRecommendedOnlineProducts.mockResolvedValue(mockRecommendedProducts);
-
-      await component.ngOnInit();
-
-      expect(component.categories).toEqual(mockCategories);
-      expect(component.popularProducts).toEqual(mockPopularProducts);
-      expect(component.recommendedProducts).toEqual(mockRecommendedProducts);
-      expect(component.isLoadingCategories).toBe(false);
-      expect(component.isLoadingProducts).toBe(false);
-      expect(component.isLoadingRecommended).toBe(false);
-    });
-
-    it.each([
-      { 
-        failedService: 'categories',
-        categoriesResult: Promise.reject(new Error('Failed')),
-        popularResult: Promise.resolve([{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }]),
-        recommendedResult: Promise.resolve([{ id: 'r1', name: 'Recommended 1', isEnabledForOnlineOrders: true }])
-      },
-      { 
-        failedService: 'popular products',
-        categoriesResult: Promise.resolve([{ id: '1', name: 'Category 1' }]),
-        popularResult: Promise.reject(new Error('Failed')),
-        recommendedResult: Promise.resolve([{ id: 'r1', name: 'Recommended 1', isEnabledForOnlineOrders: true }])
-      },
-      { 
-        failedService: 'recommended products',
-        categoriesResult: Promise.resolve([{ id: '1', name: 'Category 1' }]),
-        popularResult: Promise.resolve([{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }]),
-        recommendedResult: Promise.reject(new Error('Failed'))
-      }
-    ])('should handle $failedService failure without blocking other data', async ({ categoriesResult, popularResult, recommendedResult }) => {
-      mockCategoriesService.getCategories.mockReturnValue(categoriesResult);
-      mockProductsService.getPopularOnlineProducts.mockReturnValue(popularResult);
-      mockProductsService.getRecommendedOnlineProducts.mockReturnValue(recommendedResult);
-
-      await component.ngOnInit();
-
-      // At least one data source should still work
-      const hasData = component.categories.length > 0 || 
-                     component.popularProducts.length > 0 || 
-                     component.recommendedProducts.length > 0;
-      expect(hasData).toBe(true);
-    });
-  });
-
-  describe('Search Input Handling', () => {
-    it('should update search query on input', () => {
-      const event = { target: { value: 'pasta' } };
-
-      component.onSearchInput(event);
-
-      expect(component.searchQuery).toBe('pasta');
-    });
-
-    it('should clear search query', () => {
-      component.searchQuery = 'pizza';
-
-      component.clearSearch();
-
-      expect(component.searchQuery).toBe('');
-    });
-  });
-
-  describe('Integration Flows', () => {
-    it('should load both categories and products on init', async () => {
-      const mockCategories = [{ id: '1', name: 'Category 1' }];
-      const mockProducts = [{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }];
-      mockCategoriesService.getCategories.mockResolvedValue(mockCategories);
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.ngOnInit();
-
-      expect(component.categories).toEqual(mockCategories);
-      expect(component.popularProducts).toEqual(mockProducts);
-      expect(component.isLoadingCategories).toBe(false);
-      expect(component.isLoadingProducts).toBe(false);
-    });
-
-    it('should handle partial failures gracefully', async () => {
-      mockCategoriesService.getCategories.mockRejectedValue(new Error('Categories failed'));
-      const mockProducts = [{ id: 'p1', name: 'Product 1', isEnabledForOnlineOrders: true }];
-      mockProductsService.getPopularOnlineProducts.mockResolvedValue(mockProducts);
-
-      await component.ngOnInit();
-
-      expect(component.categories).toEqual([]);
-      expect(component.popularProducts).toEqual(mockProducts);
-    });
-  });
-
-  describe('Search Input Edge Cases', () => {
-    it.each([
-      { input: 'burger', expected: 'burger' },
-      { input: 'PIZZA', expected: 'PIZZA' },
-      { input: '123', expected: '123' },
-      { input: '', expected: '' }
-    ])('should set searchQuery to $expected for input $input', ({ input, expected }) => {
-      const event = { target: { value: input } };
-
-      component.onSearchInput(event);
-
-      expect(component.searchQuery).toBe(expected);
-    });
+  it('should return empty displayBusinesses when no nearby businesses', () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    expect(fixture.componentInstance.displayBusinesses()).toEqual([]);
   });
 });
