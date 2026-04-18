@@ -59,6 +59,9 @@ export const EN_DEFAULTS = {
     browseByCategory: 'Browse by Category',
     loadingPopularItems: 'Loading popular items...',
     veg: 'VEG',
+    whatsOnYourMind: "What's on your mind?",
+    topRatedNearYou: 'Top rated near you',
+    noBusinessesFound: 'No businesses found in your area',
   },
   cart: {
     title: 'Your Cart',

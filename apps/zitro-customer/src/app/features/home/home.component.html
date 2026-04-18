@@ -1,23 +1,30 @@
-<app-loader [isLoading]="isLoading" [size]="100" type="spinner" color="#ff6b35"></app-loader>
+@if (isLoading()) {
+  <div class="dh-loading-overlay" data-testid="loading-overlay">
+    <lib-loader />
+  </div>
+}
 
 <div class="dh-main-content">
 
   <!-- Hero: banner fills behind transparent header; tabs and search+VEG overlay the banner -->
   <div class="dh-hero-wrapper">
-    <app-banner [autoScroll]="true" [scrollInterval]="4000"></app-banner>
+    <lib-banner-carousel [banners]="banners()" data-testid="banner-carousel" />
 
     <!-- Business type tabs — overlaid on banner -->
-    <div class="dh-tabs-row" *ngIf="businessTypeTabs.length" data-testid="business-tabs">
-      <button
-        *ngFor="let tab of businessTypeTabs"
-        class="dh-tab-btn"
-        [class.dh-tab-active]="activeTab === tab"
-        (click)="onTabChange(tab)"
-        [attr.data-testid]="'tab-' + tab">
-        <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
-        <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
-      </button>
-    </div>
+    @if (businessTypeTabs().length) {
+      <div class="dh-tabs-row" data-testid="business-tabs">
+        @for (tab of businessTypeTabs(); track tab) {
+          <button
+            class="dh-tab-btn"
+            [class.dh-tab-active]="activeTab() === tab"
+            (click)="onTabChange(tab)"
+            [attr.data-testid]="'tab-' + tab">
+            <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
+            <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+          </button>
+        }
+      </div>
+    }
 
     <!-- Search + VEG toggle — overlaid on banner, transparent background -->
     <div class="dh-search-veg-row">
@@ -27,25 +34,32 @@
           <input
             type="text"
             class="dh-search-input"
-            placeholder="Search &quot;comfort food&quot;"
-            [(ngModel)]="searchQuery"
+            [placeholder]="'home.searchPlaceholder' | i18n"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
             (keyup.enter)="onSearch()"
             data-testid="search-input"
           />
-          <button class="dh-mic-btn" [class.dh-mic-listening]="isListening" (click)="startVoiceSearch()">
+          <button
+            class="dh-mic-btn"
+            [class.dh-mic-listening]="isListening()"
+            (click)="startVoiceSearch()"
+            data-testid="voice-search">
             <span class="material-icons">mic</span>
           </button>
-          <button *ngIf="searchQuery" class="dh-search-clear" (click)="clearSearch()" data-testid="search-clear">
-            <span class="material-icons">clear</span>
-          </button>
+          @if (searchQuery()) {
+            <button class="dh-search-clear" (click)="clearSearch()" data-testid="search-clear">
+              <span class="material-icons">clear</span>
+            </button>
+          }
         </div>
       </div>
 
       <!-- VEG toggle -->
       <div class="dh-veg-toggle-wrap" (click)="togglePureVeg()" data-testid="veg-toggle">
-        <span class="dh-veg-label">VEG</span>
-        <div class="dh-veg-toggle" [class.dh-veg-on]="isPureVeg"
-             role="switch" [attr.aria-checked]="isPureVeg">
+        <span class="dh-veg-label">{{ 'home.veg' | i18n }}</span>
+        <div class="dh-veg-toggle" [class.dh-veg-on]="isPureVeg()"
+             role="switch" [attr.aria-checked]="isPureVeg()">
           <div class="dh-veg-knob"></div>
         </div>
       </div>
@@ -56,40 +70,47 @@
   <div class="dh-scroll-content">
 
     <!-- Cuisine tag chips -->
-    <div class="dh-tags-section" *ngIf="displayTags.length" data-testid="tag-chips">
-      <h3 class="dh-section-title">What's on your mind?</h3>
-      <div class="dh-tags-row">
-        <button
-          *ngFor="let tag of displayTags"
-          class="dh-tag-chip"
-          [class.dh-tag-active]="activeTagFilter === tag.slug"
-          (click)="onTagFilterClick(tag.slug)"
-          [attr.data-testid]="'tag-' + tag.slug">
-          <img *ngIf="tag.iconUrl" [src]="tag.iconUrl" [alt]="tag.name" class="dh-tag-icon" />
-          <span>{{ tag.name }}</span>
-        </button>
+    @if (displayTags().length) {
+      <div class="dh-tags-section" data-testid="tag-chips">
+        <h3 class="dh-section-title">{{ 'home.whatsOnYourMind' | i18n }}</h3>
+        <div class="dh-tags-row">
+          @for (tag of displayTags(); track tag.id) {
+            <button
+              class="dh-tag-chip"
+              [class.dh-tag-active]="activeTagFilter() === tag.slug"
+              (click)="onTagFilterClick(tag.slug)"
+              [attr.data-testid]="'tag-' + tag.slug">
+              @if (tag.iconUrl) {
+                <img [src]="tag.iconUrl" [alt]="tag.name" class="dh-tag-icon" />
+              }
+              <span>{{ tag.name }}</span>
+            </button>
+          }
+        </div>
       </div>
-    </div>
+    }
 
     <!-- Nearby businesses list -->
     <div class="dh-businesses-section" data-testid="businesses-list">
       <div class="dh-section-header">
-        <h3 class="dh-section-title">Top rated near you</h3>
+        <h3 class="dh-section-title">{{ 'home.topRatedNearYou' | i18n }}</h3>
       </div>
 
-      <div *ngIf="!isLoading && displayBusinesses.length === 0" class="dh-empty-state" data-testid="empty-state">
-        <span class="material-icons">storefront</span>
-        <p>No businesses found in your area</p>
-      </div>
+      @if (!isLoading() && displayBusinesses().length === 0) {
+        <div class="dh-empty-state" data-testid="empty-state">
+          <span class="material-icons">storefront</span>
+          <p>{{ 'home.noBusinessesFound' | i18n }}</p>
+        </div>
+      }
 
       <div class="dh-business-list">
-        <lib-business-card
-          *ngFor="let business of displayBusinesses"
-          [business]="business"
-          [tags]="allTags"
-          (businessClick)="onBusinessClick($event)"
-          [attr.data-testid]="'business-card-' + business.slug">
-        </lib-business-card>
+        @for (business of displayBusinesses(); track business.id) {
+          <lib-business-card
+            [business]="business"
+            [tags]="allTags()"
+            (businessClick)="onBusinessClick($event)"
+            [attr.data-testid]="'business-card-' + business.slug" />
+        }
       </div>
     </div>
 
