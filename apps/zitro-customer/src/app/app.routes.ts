@@ -28,9 +28,14 @@ import { SearchComponent } from './features/search/search.component';
 // MT014: cart, coupons
 import { CartComponent } from './features/cart/cart.component';
 import { CouponSelectionComponent } from './features/coupon-selection/coupon-selection.component';
-// MT015: addresses
+// T025: evolved cart page
+import { CartPage } from './features/cart/cart.page';
+// MT015: addresses (legacy)
 import { ManageAddressesComponent } from './features/manage-addresses';
 import { AddAddressComponent } from './features/add-address';
+// T026: evolved address pages
+import { AddressListPage } from './features/addresses/address-list.page';
+import { AddAddressPage } from './features/addresses/add-address.page';
 // MT016: orders
 import { OrderHistoryComponent } from './features/order-history';
 import { OrderConfirmationComponent } from './features/order-confirmation';
@@ -59,13 +64,15 @@ export const routes: Routes = [
       { path: 'listing', component: ListingComponent },
       { path: 'favorites', component: ListingComponent },
       { path: 'search', component: SearchComponent },
-      { path: 'cart', component: CartComponent },
+      // T025: evolved cart page (replaces CartComponent)
+      { path: 'cart', component: CartPage },
       { path: 'coupons', component: CouponSelectionComponent },
       { path: 'contact', component: ContactUsComponent },
       { path: 'order-confirmation', component: OrderConfirmationComponent },
       { path: 'order-confirmation/:orderId', component: OrderConfirmationComponent },
-      { path: 'addresses', component: ManageAddressesComponent, canActivate: [AuthGuard] },
-      { path: 'add-address', component: AddAddressComponent, canActivate: [AuthGuard] },
+      // T026: evolved address pages (replaces legacy manage-addresses + add-address)
+      { path: 'addresses', component: AddressListPage, canActivate: [AuthGuard] },
+      { path: 'add-address', component: AddAddressPage, canActivate: [AuthGuard] },
       { path: 'orders', component: OrderHistoryComponent, canActivate: [AuthGuard] },
       { path: 'track-order', component: OrderTrackingComponent, canActivate: [AuthGuard] },
       { path: 'track-order/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard] },

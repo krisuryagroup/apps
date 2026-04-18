@@ -1,0 +1,46 @@
+<div class="address-list-page" data-testid="address-list-page">
+
+  <header class="page-header" data-testid="page-header">
+    <h1 class="page-title">{{ 'address.title' | i18n }}</h1>
+  </header>
+
+  @if (isLoading()) {
+    <lib-loader data-testid="address-loader" />
+  } @else if (showForm()) {
+    <!-- Inline edit form -->
+    <div class="edit-form-container" data-testid="edit-form-container">
+      <h2 class="form-heading">{{ 'address.editAddress' | i18n }}</h2>
+      <lib-add-address-form
+        [config]="{ mode: 'edit' }"
+        [initialData]="editingAddress()"
+        (submitted)="onFormSubmitted($event)"
+        (cancelled)="onFormCancelled()"
+        data-testid="edit-address-form"
+      />
+      @if (errorMessage()) {
+        <p class="error-msg" data-testid="edit-error">{{ errorMessage() | i18n }}</p>
+      }
+    </div>
+  } @else {
+    @if (errorMessage()) {
+      <p class="error-msg" data-testid="error-message">{{ errorMessage() | i18n }}</p>
+    }
+
+    <lib-address-list
+      [addresses]="addresses()"
+      (select)="onSelect($event)"
+      (edit)="onEdit($event)"
+      (delete)="onDelete($event)"
+      data-testid="address-list"
+    />
+
+    <button
+      class="add-new-btn"
+      (click)="onAddNew()"
+      data-testid="add-new-address-btn"
+    >
+      + {{ 'address.addNew' | i18n }}
+    </button>
+  }
+
+</div>

@@ -1,0 +1,62 @@
+.address-list-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-background, #f5f5f5);
+  padding-bottom: 80px;
+}
+
+.page-header {
+  background: #fff;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.page-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1a1a1a);
+  margin: 0;
+}
+
+.error-msg {
+  color: #e53935;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  background: #fff3f3;
+  border-left: 3px solid #e53935;
+  margin: 0.75rem;
+  border-radius: 4px;
+}
+
+.edit-form-container {
+  background: #fff;
+  margin: 0.75rem;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.form-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.add-new-btn {
+  margin: 0.75rem;
+  width: calc(100% - 1.5rem);
+  padding: 0.875rem;
+  background: var(--color-primary, #ff6b35);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(255, 107, 53, 0.25);
+  transition: opacity 0.15s;
+
+  &:active { opacity: 0.8; }
+}

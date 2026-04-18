@@ -1,0 +1,241 @@
+<div class="cart-page" data-testid="cart-page">
+  <!-- Order processing modal -->
+  <app-order-loading-modal
+    [isVisible]="isProcessingOrder()"
+    [stage]="processingStage() ?? null"
+  />
+
+  @if (!hasItems()) {
+    <!-- Empty state -->
+    <div class="empty-cart" data-testid="empty-cart">
+      <span class="material-icons empty-icon">shopping_cart</span>
+      <h3 class="empty-title">{{ 'cart.empty' | i18n }}</h3>
+      <p class="empty-subtitle">{{ 'cart.emptySubtitle' | i18n }}</p>
+      <button class="browse-btn" (click)="goToMenu()" data-testid="browse-menu-btn">
+        <span class="material-icons">restaurant_menu</span>
+        {{ 'cart.browseMenu' | i18n }}
+      </button>
+    </div>
+  } @else {
+    <div class="cart-content" data-testid="cart-content">
+
+      <!-- Cart items -->
+      <section class="cart-items-section" data-testid="cart-items-section">
+        @for (item of cart(); track item.name + '_' + item.selectedVariationId) {
+          <lib-cart-item-row
+            [item]="item"
+            (increment)="onIncrement($event)"
+            (decrement)="onDecrement($event)"
+            data-testid="cart-item-row"
+          />
+        }
+      </section>
+
+      <!-- Coupon selector -->
+      <section class="coupon-section" data-testid="coupon-section">
+        <app-coupon-selector
+          [orderAmount]="subtotal()"
+          [cartItems]="cart()"
+          [appliedCoupon]="appliedCoupon()"
+          (couponApplied)="onCouponApplied($event)"
+          (couponRemoved)="onCouponRemoved()"
+        />
+      </section>
+
+      <!-- Order type selection -->
+      <section class="order-type-section dh-order-type-selection" data-testid="order-type-section">
+        <h3 class="section-title">{{ 'orderType.selectTitle' | i18n }}</h3>
+        <div class="order-type-cards" data-testid="order-type-cards">
+          @if (isDineInEnabled()) {
+            <button
+              class="order-type-card"
+              [class.active]="selectedOrderType() === 'dine-in'"
+              (click)="onOrderTypeChange('dine-in')"
+              data-testid="order-type-dine-in"
+            >
+              <span class="material-icons">{{ getOrderTypeIcon('dine-in') }}</span>
+              <span>{{ 'orderType.dineIn' | i18n }}</span>
+            </button>
+          }
+          @if (isTakeoutEnabled()) {
+            <button
+              class="order-type-card"
+              [class.active]="selectedOrderType() === 'takeout'"
+              (click)="onOrderTypeChange('takeout')"
+              data-testid="order-type-takeout"
+            >
+              <span class="material-icons">{{ getOrderTypeIcon('takeout') }}</span>
+              <span>{{ 'orderType.takeout' | i18n }}</span>
+            </button>
+          }
+          @if (isDeliveryEnabled()) {
+            <button
+              class="order-type-card"
+              [class.active]="selectedOrderType() === 'delivery'"
+              (click)="onOrderTypeChange('delivery')"
+              data-testid="order-type-delivery"
+            >
+              <span class="material-icons">{{ getOrderTypeIcon('delivery') }}</span>
+              <span>{{ 'orderType.delivery' | i18n }}</span>
+            </button>
+          }
+        </div>
+
+        @if (orderTypeError()) {
+          <p class="order-type-error" data-testid="order-type-error">{{ orderTypeError() }}</p>
+        }
+
+        <!-- Dine-in fields -->
+        @if (selectedOrderType() === 'dine-in') {
+          <div class="dh-dinein-fields" data-testid="dinein-fields">
+            <h4>{{ 'orderType.dineInDetails' | i18n }}</h4>
+            <div class="field-group">
+              <label>{{ 'orderType.tableNumber' | i18n }}</label>
+              <select
+                [value]="selectedTable()"
+                (change)="onTableSelect($any($event.target).value)"
+                data-testid="table-select"
+              >
+                <option value="">{{ 'orderType.tablePlaceholder' | i18n }}</option>
+                @for (table of availableTables(); track table.id) {
+                  <option [value]="table.id" [disabled]="!table.isAvailable">
+                    {{ table.displayName }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="guests-counter" data-testid="guests-counter">
+              <label>{{ 'orderType.numberOfGuests' | i18n }}</label>
+              <div class="counter-row">
+                <button
+                  class="counter-btn"
+                  (click)="decrementGuests()"
+                  data-testid="decrement-guests"
+                  [attr.aria-label]="'orderType.decreaseGuests' | i18n"
+                >−</button>
+                <span class="counter-value" data-testid="guests-value">{{ numberOfGuests() }}</span>
+                <button
+                  class="counter-btn"
+                  (click)="incrementGuests()"
+                  data-testid="increment-guests"
+                  [attr.aria-label]="'orderType.increaseGuests' | i18n"
+                >+</button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Takeout fields -->
+        @if (selectedOrderType() === 'takeout') {
+          <div class="dh-takeout-fields" data-testid="takeout-fields">
+            <h4>{{ 'orderType.pickupDetails' | i18n }}</h4>
+            <p class="pickup-message">{{ 'orderType.takeout' | i18n }}</p>
+          </div>
+        }
+      </section>
+
+      <!-- Address selection (delivery only) -->
+      @if (selectedOrderType() === 'delivery') {
+        <section class="address-section dh-address-selection" data-testid="address-section">
+          <h3 class="section-title">{{ 'address.deliveryAddress' | i18n }}</h3>
+
+          @if (isLoadingAddresses()) {
+            <p class="loading-text">{{ 'address.loadingAddresses' | i18n }}</p>
+          } @else if (!isLoggedIn()) {
+            <div class="login-prompt" data-testid="login-prompt">
+              <p>{{ 'auth.loginRequired' | i18n }}</p>
+              <button class="login-btn" (click)="goToLogin()" data-testid="login-btn">
+                {{ 'auth.login' | i18n }}
+              </button>
+            </div>
+          } @else if (addresses().length === 0) {
+            <div class="no-address" data-testid="no-address">
+              <p>{{ 'address.addFirst' | i18n }}</p>
+              <button class="add-address-btn" (click)="goToAddAddress()" data-testid="add-address-btn">
+                + {{ 'address.addNew' | i18n }}
+              </button>
+            </div>
+          } @else {
+            <select
+              class="address-select"
+              [value]="selectedAddressId()"
+              (change)="onSelectAddress($any($event.target).value)"
+              data-testid="address-select"
+            >
+              @for (addr of addresses(); track addr.id) {
+                <option [value]="addr.id">
+                  {{ addr.name }} — {{ addr.houseAndStreet }}, {{ addr.town }} - {{ addr.pincode }}
+                </option>
+              }
+            </select>
+            <button
+              class="manage-addresses-link"
+              (click)="goToAddAddress()"
+              data-testid="manage-addresses-btn"
+            >
+              + {{ 'address.addNew' | i18n }}
+            </button>
+          }
+        </section>
+      }
+
+      <!-- Pricing summary -->
+      <section class="pricing-section" data-testid="pricing-section">
+        <lib-pricing-summary
+          [pricing]="pricingBreakdown()"
+          (couponAction)="navigateToCoupons()"
+          (removeCoupon)="onCouponRemoved()"
+        />
+      </section>
+
+      <!-- Payment method -->
+      <section class="payment-section" data-testid="payment-section">
+        <h3 class="section-title">{{ 'payment.title' | i18n }}</h3>
+        <div class="payment-options" data-testid="payment-options">
+          <button
+            class="payment-option"
+            [class.active]="selectedPaymentMethod() === 'cash'"
+            (click)="onSelectPayment('cash')"
+            data-testid="payment-cash"
+          >
+            <span class="material-icons">payments</span>
+            <div class="payment-details">
+              <span class="payment-name">{{ 'payment.cash' | i18n }}</span>
+              <span class="payment-desc">{{ 'payment.cashDesc' | i18n }}</span>
+            </div>
+          </button>
+          <button
+            class="payment-option"
+            [class.active]="selectedPaymentMethod() === 'online'"
+            (click)="onSelectPayment('online')"
+            data-testid="payment-online"
+          >
+            <span class="material-icons">phone_iphone</span>
+            <div class="payment-details">
+              <span class="payment-name">{{ 'payment.online' | i18n }}</span>
+              <span class="payment-desc">{{ 'payment.onlineDesc' | i18n }}</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Place order button -->
+      <div class="checkout-bar" data-testid="checkout-bar">
+        <button
+          class="place-order-btn"
+          [class.disabled]="!canPlaceOrder()"
+          [disabled]="!canPlaceOrder() || isProcessingOrder()"
+          (click)="placeOrder()"
+          data-testid="place-order-btn"
+        >
+          {{ 'cart.checkout' | i18n }}
+          @if (total() > 0) {
+            <span class="btn-total">₹{{ total() | number:'1.0-0' }}</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>
