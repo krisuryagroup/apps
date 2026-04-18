@@ -1,59 +1,55 @@
-<div class="dh-main-content">
-  <div class="dh-section-title">
-    {{ category ? (category | titlecase) : 'All' }} Items
-    <span *ngIf="search">- Search: "{{ search }}"</span>
-  </div>
-  
-  <!-- Loading state -->
-  <div *ngIf="isLoading" class="dh-loading">
-    <div class="dh-loading-spinner"></div>
-    <p>Loading products...</p>
+<div class="category-listing-page" data-testid="category-listing-page">
+
+  <div class="page-header" data-testid="category-listing-header">
+    <button class="back-btn" (click)="goBack()" data-testid="category-listing-back-btn">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h2 class="page-title" data-testid="category-listing-title">
+      @if (categoryName()) {
+        {{ categoryName() }}
+      } @else {
+        {{ 'categoryListing.title' | i18n }}
+      }
+    </h2>
   </div>
 
-  <div *ngIf="!isLoading" class="dh-listing-grid">
-    <div *ngFor="let item of filteredItems; let i = index" class="dh-listing-card">
-      <div class="dh-listing-img-wrapper" style="position: relative; min-height: 150px; display: flex; align-items: center; justify-content: center;">
-        <app-loader 
-          [isLoading]="imageLoading[i]" 
-          [size]="50" 
-          type="spinner" 
-          color="#ff6b35">
-        </app-loader>
-        <img 
-          [cachedSrc]="item.imageUrl!"
-          [alt]="item.name" 
-          class="dh-listing-img" 
-          [fallbackSrc]="'assets/foodCategories/default.png'"
-          (load)="onImageLoad(i)"
-          (error)="onImageError2(i)" />
-      </div>
-      <div class="dh-listing-info">
-        <div class="dh-listing-title">{{ item.name }}</div>
-        <div class="dh-listing-desc">{{ item.category | titlecase }}</div>
-        <div class="dh-listing-meta">
-          <span class="dh-listing-price">{{ formatPrice(item.price) }}</span>
-          <span class="dh-listing-weight">Stock: {{ item.stock }}</span>
-        </div>
-        <div class="dh-listing-actions">
-          <div class="dh-qty-controls" *ngIf="getItemQuantity(item) > 0">
-            <button class="qty-btn decrement" (click)="decrementQuantity(item)">
-              <span class="material-icons">remove</span>
-            </button>
-            <span class="qty-value">{{ getItemQuantity(item) }}</span>
-            <button class="qty-btn increment" (click)="incrementQuantity(item)">
-              <span class="material-icons">add</span>
-            </button>
-          </div>
-          <button *ngIf="getItemQuantity(item) === 0" class="dh-add-btn" (click)="incrementQuantity(item)">
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-    <div *ngIf="filteredItems.length === 0" class="dh-listing-empty">
-      <p>No items found for this category/search.</p>
-    </div>
-  </div>
+  @if (isLoading()) {
+    <lib-loader data-testid="category-listing-loader" />
+  }
+
+  @if (hasError()) {
+    <lib-error-state
+      data-testid="category-listing-error"
+      (retryClicked)="retry()"
+    />
+  }
+
+  @if (!isLoading() && !hasError()) {
+    @if (products().length === 0) {
+      <lib-empty-state data-testid="category-listing-empty" />
+    } @else {
+      <lib-product-grid
+        data-testid="category-listing-product-grid"
+        [products]="products()"
+        [quantities]="quantities()"
+        (addToCart)="onAddToCart($event)"
+        (viewDetails)="onViewDetails($event)"
+        (increment)="onIncrement($event)"
+        (decrement)="onDecrement($event)"
+      />
+    }
+  }
+
+  <lib-item-detail-sheet
+    data-testid="category-listing-detail-sheet"
+    [product]="selectedProduct()"
+    [isOpen]="isDetailOpen()"
+    [quantity]="selectedProductQuantity()"
+    (closed)="onDetailClosed()"
+    (addToCart)="onAddToCart($event)"
+    (increment)="onIncrement($event)"
+    (decrement)="onDecrement($event)"
+  />
+
+  <app-cart-summary />
 </div>
-<app-bottom-nav></app-bottom-nav>
-<app-cart-summary></app-cart-summary>

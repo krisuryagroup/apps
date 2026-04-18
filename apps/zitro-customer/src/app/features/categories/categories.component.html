@@ -1,39 +1,39 @@
-<div class="categories-container">
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="categories-loading">
-    <div class="category-skeleton" *ngFor="let item of [1,2,3,4,5,6]">
-      <div class="skeleton-image"></div>
-      <div class="skeleton-text"></div>
-    </div>
-  </div>
+<div class="categories-page" data-testid="categories-page">
 
-  <!-- Categories Grid -->
-  <div *ngIf="!isLoading" class="categories-grid">
-    <div class="category-card" 
-         *ngFor="let category of categories" 
-         (click)="navigateToListing(category)">
-      <div class="category-image-container" style="position: relative; min-height: 100px; display: flex; align-items: center; justify-content: center;">
-        <app-loader 
-          [isLoading]="imageLoading[category.id]" 
-          [size]="50" 
-          type="spinner" 
-          color="#ff6b35">
-        </app-loader>
-        <img 
-          [cachedSrc]="category.imageURL" 
-          [alt]="category.name"
-          [fallbackSrc]="'assets/foodCategories/default.png'"
-          (load)="onImageLoad(category.id)"
-          (error)="onImageError(category.id)" />
+  @if (isLoading()) {
+    <lib-loader data-testid="categories-loader" />
+  }
+
+  @if (hasError()) {
+    <lib-error-state
+      data-testid="categories-error"
+      (retryClicked)="retry()"
+    />
+  }
+
+  @if (!isLoading() && !hasError()) {
+    @if (categories().length === 0) {
+      <lib-empty-state data-testid="categories-empty" />
+    } @else {
+      <div class="categories-grid" data-testid="categories-grid">
+        @for (category of categories(); track category.id) {
+          <button
+            class="category-card"
+            [attr.data-testid]="'category-card-' + category.id"
+            (click)="navigateToListing(category)"
+          >
+            <div class="category-image-wrapper">
+              <img
+                [cachedSrc]="category.imageUrl || 'assets/foodCategories/default.png'"
+                [alt]="category.name"
+                fallbackSrc="assets/foodCategories/default.png"
+                class="category-image"
+              />
+            </div>
+            <span class="category-name">{{ category.name }}</span>
+          </button>
+        }
       </div>
-      <div class="category-name">{{ category.name }}</div>
-    </div>
-  </div>
-
-  <!-- Empty State -->
-  <div *ngIf="!isLoading && categories.length === 0" class="categories-empty">
-    <div class="empty-icon">🍽️</div>
-    <h3>No Categories Available</h3>
-    <p>Categories will appear here when available.</p>
-  </div>
+    }
+  }
 </div>
