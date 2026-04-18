@@ -1,0 +1,169 @@
+<div class="dh-main-content dh-order-history" data-testid="order-history-page">
+
+  @if (orders().length > 0) {
+    <div class="dh-call-restaurant-section">
+      <app-call-restaurant-button data-testid="call-restaurant-btn" />
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="dh-loading-state" data-testid="orders-loading">
+      <div class="spinner"></div>
+      <p>{{ 'order.loadingOrderDetails' | i18n }}</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="dh-error-state" data-testid="orders-error">
+      <p>{{ errorMessage() | i18n }}</p>
+      <button class="dh-explore-btn" (click)="exploreMenu()" data-testid="explore-menu-error-btn">
+        {{ 'orderHistory.exploreMenu' | i18n }}
+      </button>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="dh-empty-state" data-testid="orders-empty">
+      <div class="dh-empty-illustration">
+        <svg width="240" height="200" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="60" y="40" width="120" height="80" rx="8" fill="#5DD5D9" stroke="#4ECDC4" stroke-width="2"/>
+          <rect x="68" y="48" width="104" height="64" rx="4" fill="#ffffff"/>
+          <rect x="75" y="85" width="6" height="15" fill="#FF6B35"/>
+          <rect x="85" y="75" width="6" height="25" fill="#FF6B35"/>
+          <rect x="95" y="80" width="6" height="20" fill="#FF6B35"/>
+          <rect x="105" y="70" width="6" height="30" fill="#FF6B35"/>
+          <rect x="120" y="88" width="6" height="12" fill="#FFE66D"/>
+          <rect x="130" y="82" width="6" height="18" fill="#FFE66D"/>
+          <rect x="140" y="85" width="6" height="15" fill="#FFE66D"/>
+          <rect x="150" y="78" width="6" height="22" fill="#FFE66D"/>
+          <g transform="translate(160, 120)">
+            <rect x="0" y="12" width="40" height="25" rx="4" fill="#FF6B35" stroke="#E55A2B" stroke-width="1.5"/>
+            <circle cx="10" cy="45" r="4" fill="#333"/>
+            <circle cx="30" cy="45" r="4" fill="#333"/>
+            <rect x="8" y="16" width="24" height="16" rx="2" fill="#FFE66D"/>
+          </g>
+        </svg>
+      </div>
+      <div class="dh-empty-content">
+        <h3>{{ 'orderHistory.noOrdersTitle' | i18n }}</h3>
+        <p>{{ 'orderHistory.noOrdersMessage' | i18n }}</p>
+        <button class="dh-explore-btn" (click)="exploreMenu()" data-testid="explore-menu-btn">
+          {{ 'orderHistory.exploreMenu' | i18n }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="dh-order-list" data-testid="order-list">
+      @for (order of paginatedOrders(); track order.orderId) {
+        <div class="dh-order-card" data-testid="order-card">
+          <div class="dh-order-header">
+            <h3 class="dh-restaurant-name" data-testid="restaurant-name">{{ order.restaurantId ?? 'The Hunger Point' }}</h3>
+            <div class="dh-order-total" data-testid="order-total">₹{{ order.total | number:'1.2-2' }}</div>
+          </div>
+
+          <div class="dh-order-info">
+            <div class="dh-order-first-row">
+              <div class="dh-order-meta">
+                <div class="dh-order-id" data-testid="order-id">ID: {{ order.orderId }}</div>
+                <div class="dh-order-type-badge" data-testid="order-type">{{ order.orderTypeDisplay }}</div>
+              </div>
+              <div class="dh-order-status" [class]="getStatusClass(order.status)" data-testid="order-status">
+                {{ order.statusDisplay }}
+              </div>
+            </div>
+            <div class="dh-order-datetime" data-testid="order-datetime">{{ order.date }}, {{ order.time }}</div>
+          </div>
+
+          <div class="dh-order-timeline-section" data-testid="order-timeline">
+            <h4 class="dh-timeline-title">{{ 'order.timeline' | i18n }}</h4>
+            <div class="dh-timeline-steps">
+              @for (step of getTimelineSteps(order.orderType); track step.status) {
+                <div
+                  class="dh-timeline-step"
+                  [class.completed]="isStepCompleted(order, step.status)"
+                  [attr.data-testid]="'timeline-step-' + step.status"
+                >
+                  <div class="dh-step-icon">
+                    <span class="material-icons">{{ step.icon }}</span>
+                  </div>
+                  <div class="dh-step-label">{{ step.label }}</div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="dh-order-extra-info">
+            @if (order.status !== 'delivered' && order.status !== 'completed' && order.status !== 'cancelled') {
+              <div class="dh-eta-section" data-testid="eta-section">
+                <span class="dh-label">{{ 'orderHistory.eta' | i18n }}</span>
+                <span class="dh-value">{{ getEtaMinutes(order) }} mins</span>
+              </div>
+            }
+            @if (order.customerNotes) {
+              <div class="dh-notes-section" data-testid="order-notes">
+                <span class="dh-label">{{ 'orderHistory.notes' | i18n }}</span>
+                <span class="dh-value">{{ order.customerNotes }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="dh-order-actions">
+            <button class="dh-btn-outline" (click)="trackOrder(order.orderId)" data-testid="view-details-btn">
+              {{ 'orderHistory.viewDetails' | i18n }}
+            </button>
+            @if (canCancelOrder(order)) {
+              <button class="dh-cancel-btn" (click)="openCancelDialog(order.orderId)" data-testid="cancel-order-btn">
+                {{ 'order.cancelOrder' | i18n }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (orders().length > pageSize) {
+      <div class="dh-pagination" data-testid="pagination">
+        <button
+          class="dh-pagination-btn"
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1"
+          data-testid="prev-page-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="dh-pagination-pages">
+          @for (page of pageNumbers(); track page) {
+            <button
+              class="dh-pagination-page"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)"
+              [attr.data-testid]="'page-btn-' + page"
+            >
+              {{ page }}
+            </button>
+          }
+        </div>
+        <button
+          class="dh-pagination-btn"
+          (click)="nextPage()"
+          [disabled]="currentPage() === totalPages()"
+          data-testid="next-page-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    }
+  }
+</div>
+
+@if (showCancelDialog()) {
+  <app-cancel-order-dialog
+    [isOpen]="showCancelDialog()"
+    [orderId]="selectedOrderId()"
+    [timeRemaining]="selectedOrderRemainingTime()"
+    [isProcessing]="isProcessingCancel()"
+    (closeEvent)="onCancelDialogClose()"
+    (confirmEvent)="onConfirmCancel()"
+    data-testid="cancel-dialog"
+  />
+}

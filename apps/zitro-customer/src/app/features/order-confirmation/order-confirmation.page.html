@@ -1,0 +1,296 @@
+<div class="dh-main-content dh-order-confirmation" data-testid="order-confirmation-page">
+
+  @if (isLoading()) {
+    <div class="dh-loading" data-testid="order-loading">
+      <div class="spinner"></div>
+      <p>{{ 'order.loadingOrderDetails' | i18n }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="dh-error" data-testid="order-error">
+      <div class="error-icon">⚠️</div>
+      <h2>{{ error() }}</h2>
+      <button class="dh-btn dh-btn-primary" (click)="goToHome()" data-testid="go-home-error-btn">
+        {{ 'order.goToHome' | i18n }}
+      </button>
+    </div>
+  } @else if (order()) {
+    <!-- Status Header -->
+    <div class="dh-success-section" [class]="statusClass()" data-testid="order-status-header">
+      <div class="dh-success-icon">
+        <div class="dh-icon-wrapper" [style.background-color]="statusIconColor()">
+          <span class="material-icons dh-status-icon" data-testid="status-icon">{{ statusIcon() }}</span>
+        </div>
+      </div>
+      <h1 class="dh-success-title" data-testid="status-title">{{ statusTitle() }}</h1>
+      <p class="dh-success-subtitle" data-testid="status-subtitle">{{ statusSubtitle() }}</p>
+      @if (showEta()) {
+        <div class="dh-eta-badge" data-testid="eta-badge">
+          <span class="material-icons">schedule</span>
+          <span class="dh-eta-text">{{ 'order.estimatedTimeRemaining' | i18n }}: <strong>{{ etaDisplay() }}</strong></span>
+        </div>
+      }
+    </div>
+
+    <!-- Status Timeline -->
+    <div class="dh-timeline-section" data-testid="order-timeline">
+      <h3 class="dh-timeline-title">{{ 'order.status' | i18n }}</h3>
+      <div class="dh-timeline">
+        @for (step of timelineSteps(); track step.status; let i = $index) {
+          <div
+            class="dh-timeline-step"
+            [class.completed]="isStepCompleted(step.status)"
+            [class.current]="isStepCurrent(step.status)"
+            [attr.data-testid]="'timeline-step-' + step.status"
+          >
+            <div class="dh-step-icon">
+              <span class="material-icons">{{ step.icon }}</span>
+            </div>
+            <div class="dh-step-content">
+              <div class="dh-step-label">{{ step.label }}</div>
+              @if (getStepTimestamp(step.status)) {
+                <div class="dh-step-timestamp">{{ formatTime(getStepTimestamp(step.status)) }}</div>
+              }
+            </div>
+            @if (i < timelineSteps().length - 1) {
+              <div class="dh-step-line"></div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Dine-in Info -->
+    @if (order()!.orderType === 'dine-in') {
+      <div class="dh-dine-in-section" data-testid="dine-in-section">
+        <div class="dh-section-card">
+          <div class="dh-dine-in-header">
+            <span class="material-icons">restaurant_menu</span>
+            <div>
+              <div class="dh-table-info">Table {{ order()!.tableNumber }} • {{ order()!.numberOfGuests }} Guest{{ order()!.numberOfGuests !== 1 ? 's' : '' }}</div>
+              <div class="dh-server-message">{{ 'order.serverWillAttend' | i18n }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Help Section -->
+    <div class="dh-help-section" data-testid="help-section">
+      <app-call-restaurant-button data-testid="call-restaurant-btn" />
+      <button class="dh-need-help-btn" (click)="needHelp()" data-testid="need-help-btn">
+        <span class="material-icons">help_outline</span>
+        {{ 'order.needHelp' | i18n }}
+      </button>
+    </div>
+
+    <!-- Order Details Card -->
+    <div class="dh-order-details-card" data-testid="order-details-card">
+      <div class="dh-order-header">
+        <h2>{{ 'order.details' | i18n }}</h2>
+      </div>
+
+      <div class="dh-order-info">
+        <div class="dh-info-row">
+          <div class="dh-info-label">{{ 'order.id' | i18n }}</div>
+          <div class="dh-info-value" data-testid="order-id">#{{ order()!.orderId }}</div>
+        </div>
+        <div class="dh-info-row">
+          <div class="dh-info-label">{{ 'order.dateTime' | i18n }}</div>
+          <div class="dh-info-value" data-testid="order-datetime">{{ order()!.date }} at {{ order()!.time }}</div>
+        </div>
+        <div class="dh-info-row">
+          <div class="dh-info-label">{{ 'order.orderType' | i18n }}</div>
+          <div class="dh-info-value">
+            <span class="dh-order-type-badge" data-testid="order-type-badge">{{ order()!.orderTypeDisplay }}</span>
+          </div>
+        </div>
+        @if (order()!.orderType === 'dine-in' && order()!.tableNumber) {
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.tableNumber' | i18n }}</div>
+            <div class="dh-info-value" data-testid="table-number">{{ order()!.tableNumber }}</div>
+          </div>
+        }
+        @if (order()!.orderType === 'dine-in' && order()!.numberOfGuests) {
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.numberOfGuests' | i18n }}</div>
+            <div class="dh-info-value" data-testid="number-of-guests">{{ order()!.numberOfGuests }}</div>
+          </div>
+        }
+        @if (order()!.orderType === 'takeout' && order()!.scheduledPickupTime) {
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.scheduledPickup' | i18n }}</div>
+            <div class="dh-info-value" data-testid="scheduled-pickup">{{ order()!.scheduledPickupTime | date: 'short' }}</div>
+          </div>
+        }
+        @if (order()!.orderType === 'delivery' && order()!.deliveryAddress) {
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.contactName' | i18n }}</div>
+            <div class="dh-info-value" data-testid="contact-name">{{ order()!.deliveryAddress!.name }}</div>
+          </div>
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.phoneNumber' | i18n }}</div>
+            <div class="dh-info-value">
+              <a href="tel:{{ order()!.deliveryAddress!.phone }}" class="dh-phone-link" data-testid="delivery-phone">
+                <span class="material-icons dh-phone-icon">call</span>
+                {{ order()!.deliveryAddress!.phone }}
+              </a>
+            </div>
+          </div>
+          <div class="dh-info-row">
+            <div class="dh-info-label">{{ 'order.deliveryAddress' | i18n }}</div>
+            <div class="dh-info-value" data-testid="delivery-address">
+              {{ order()!.deliveryAddress!.street }}, {{ order()!.deliveryAddress!.city }},
+              {{ order()!.deliveryAddress!.state }} - {{ order()!.deliveryAddress!.pincode }}
+            </div>
+          </div>
+        }
+        @if (hasNotes()) {
+          <div class="dh-info-row dh-notes-row" data-testid="special-instructions">
+            <div class="dh-info-label">{{ 'order.specialInstructions' | i18n }}</div>
+            <div class="dh-info-value dh-notes-content">{{ order()!.customerNotes }}</div>
+          </div>
+        }
+      </div>
+
+      <!-- Invoice -->
+      <div class="dh-invoice-section" data-testid="invoice-section">
+        <h3>{{ 'order.invoiceDetails' | i18n }}</h3>
+        <div class="dh-invoice-row">
+          <div class="dh-invoice-label">{{ 'order.itemTotal' | i18n }}</div>
+          <div class="dh-invoice-value" data-testid="item-total">₹{{ itemTotal() | number:'1.2-2' }}</div>
+        </div>
+        @if (packagingCharges() > 0) {
+          <div class="dh-invoice-row" data-testid="packaging-row">
+            <div class="dh-invoice-label">{{ 'cart.packagingCharges' | i18n }}</div>
+            <div class="dh-invoice-value">₹{{ packagingCharges() | number:'1.2-2' }}</div>
+          </div>
+        }
+        @if (platformFee() > 0) {
+          <div class="dh-invoice-row" data-testid="platform-fee-row">
+            <div class="dh-invoice-label">{{ 'cart.platformFeeLabel' | i18n }}</div>
+            <div class="dh-invoice-value">₹{{ platformFee() | number:'1.2-2' }}</div>
+          </div>
+        }
+        @if (gstAmount() > 0) {
+          <div class="dh-invoice-row" data-testid="gst-row">
+            <div class="dh-invoice-label">{{ 'cart.gst' | i18n }} (5%)</div>
+            <div class="dh-invoice-value">₹{{ gstAmount() | number:'1.2-2' }}</div>
+          </div>
+        }
+        @if (order()!.orderType === 'delivery') {
+          <div class="dh-invoice-row" data-testid="delivery-charge-row">
+            <div class="dh-invoice-label">{{ 'cart.deliveryCharge' | i18n }}</div>
+            <div class="dh-invoice-value">
+              @if (deliveryCharge() === 0) {
+                <span class="dh-free-delivery">{{ 'cart.freeDelivery' | i18n }}</span>
+              } @else {
+                ₹{{ deliveryCharge() | number:'1.2-2' }}
+              }
+            </div>
+          </div>
+        }
+        @if (hasAppliedCoupon()) {
+          <div class="dh-invoice-row" data-testid="coupon-row">
+            <div class="dh-invoice-label dh-discount-label">{{ 'cart.couponDiscount' | i18n }} ({{ couponCode() }})</div>
+            <div class="dh-invoice-value dh-discount-value">-₹{{ couponDiscount() | number:'1.2-2' }}</div>
+          </div>
+        }
+        <div class="dh-invoice-row dh-invoice-total" data-testid="grand-total-row">
+          <div class="dh-invoice-label">{{ 'order.grandTotal' | i18n }}</div>
+          <div class="dh-invoice-value">₹{{ order()!.total | number:'1.2-2' }}</div>
+        </div>
+        <div class="dh-invoice-row" data-testid="payment-method-row">
+          <div class="dh-invoice-label">{{ 'order.paymentMethod' | i18n }}</div>
+          <div class="dh-invoice-value">
+            <span class="dh-payment-method">
+              <span class="material-icons payment-icon">{{ order()!.paymentMethod === 'cash' ? 'money' : 'payment' }}</span>
+              {{ order()!.paymentMethod === 'cash' ? ('order.cashOnDelivery' | i18n) : ('order.payOnlineDelivery' | i18n) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="dh-order-items" data-testid="order-items">
+        <h3>{{ 'order.itemsOrdered' | i18n }} ({{ order()!.items.length }})</h3>
+        <div class="dh-items-bill">
+          @for (item of order()!.items; track item.id) {
+            <div class="dh-bill-item" data-testid="order-item">
+              <span class="dh-item-name">{{ getItemName(item) }}</span>
+              <span class="dh-item-qty">{{ item.qty }}</span>
+              <span class="dh-item-price">₹{{ (item.price * item.qty) | number:'1.0-0' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancellation Info -->
+    @if (canCancel()) {
+      <div class="dh-cancellation-info" data-testid="cancellation-section">
+        <div class="dh-cancel-notice">
+          <div class="dh-cancel-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 6v6m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="dh-cancel-text">
+            <p><strong>{{ 'order.cancelOrder' | i18n }} within {{ remainingCancelSeconds() }} second{{ remainingCancelSeconds() !== 1 ? 's' : '' }}</strong></p>
+            <p class="dh-cancel-subtext">{{ 'order.noChargesCancel' | i18n }}</p>
+          </div>
+        </div>
+        <button
+          class="dh-cancel-order-btn"
+          (click)="openCancelDialog()"
+          [disabled]="!canCancel()"
+          data-testid="cancel-order-btn"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ 'order.cancelOrder' | i18n }}
+        </button>
+      </div>
+    }
+
+    <!-- Action Buttons -->
+    <div class="dh-action-buttons" data-testid="action-buttons">
+      <button class="dh-btn dh-btn-primary" (click)="goToHome()" data-testid="go-home-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {{ 'order.goToHome' | i18n }}
+      </button>
+      <button class="dh-btn dh-btn-secondary" (click)="viewOrders()" data-testid="view-orders-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {{ 'order.viewOrders' | i18n }}
+      </button>
+      <button class="dh-btn dh-btn-outline" (click)="needHelp()" data-testid="need-help-action-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="17" r=".5" fill="currentColor"/>
+        </svg>
+        {{ 'order.needHelpShort' | i18n }}
+      </button>
+    </div>
+  }
+</div>
+
+<!-- Cancel Dialog -->
+@if (order()) {
+  <app-cancel-order-dialog
+    [isOpen]="showCancelDialog()"
+    [orderId]="order()!.orderId"
+    [timeRemaining]="remainingCancelSeconds()"
+    [isProcessing]="isProcessingCancel()"
+    (closeEvent)="onCancelDialogClose()"
+    (confirmEvent)="onConfirmCancel()"
+    data-testid="cancel-dialog"
+  />
+}

@@ -36,10 +36,15 @@ import { AddAddressComponent } from './features/add-address';
 // T026: evolved address pages
 import { AddressListPage } from './features/addresses/address-list.page';
 import { AddAddressPage } from './features/addresses/add-address.page';
-// MT016: orders
+// MT016: orders (legacy)
 import { OrderHistoryComponent } from './features/order-history';
 import { OrderConfirmationComponent } from './features/order-confirmation';
 import { OrderTrackingComponent } from './features/order-tracking/order-tracking.component';
+// T027: evolved order-confirmation page
+import { OrderConfirmationPage } from './features/order-confirmation/order-confirmation.page';
+// T028: evolved order-history + order-tracking pages
+import { OrderHistoryPage } from './features/order-history/order-history.page';
+import { OrderTrackingPage } from './features/order-tracking/order-tracking.page';
 // MT017: misc pages
 import { AccountComponent } from './features/account/account.component';
 import { ContactUsComponent } from './features/contact-us.component';
@@ -68,14 +73,18 @@ export const routes: Routes = [
       { path: 'cart', component: CartPage },
       { path: 'coupons', component: CouponSelectionComponent },
       { path: 'contact', component: ContactUsComponent },
-      { path: 'order-confirmation', component: OrderConfirmationComponent },
-      { path: 'order-confirmation/:orderId', component: OrderConfirmationComponent },
+      // T027: evolved order-confirmation page
+      { path: 'order-confirmation', component: OrderConfirmationPage },
+      { path: 'order-confirmation/:orderId', component: OrderConfirmationPage },
       // T026: evolved address pages (replaces legacy manage-addresses + add-address)
       { path: 'addresses', component: AddressListPage, canActivate: [AuthGuard] },
       { path: 'add-address', component: AddAddressPage, canActivate: [AuthGuard] },
-      { path: 'orders', component: OrderHistoryComponent, canActivate: [AuthGuard] },
-      { path: 'track-order', component: OrderTrackingComponent, canActivate: [AuthGuard] },
-      { path: 'track-order/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard] },
+      // T028: evolved order-history + order-tracking pages
+      { path: 'orders', component: OrderHistoryPage, canActivate: [AuthGuard] },
+      { path: 'order-tracking', component: OrderTrackingPage, canActivate: [AuthGuard] },
+      { path: 'order-tracking/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
+      { path: 'track-order', component: OrderTrackingPage, canActivate: [AuthGuard] },
+      { path: 'track-order/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
       { path: 'account', component: AccountComponent, canActivate: [AuthGuard] },
       { path: 'cache-management', component: CacheManagementComponent }, // Development only
       { path: 'game-2048', component: Game2048Component }, // 2048 Game with rewards
