@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Home Redesign — ZITRO</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#d0d0d0;display:flex;flex-direction:column;align-items:center;padding:20px 0 40px;}
+    h2{font-family:sans-serif;font-size:13px;color:#555;margin-bottom:12px;letter-spacing:.5px;}
+
+    .phones{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+    .phone-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
+    .phone-label{font-size:12px;font-weight:700;color:#444;font-family:sans-serif;background:white;padding:4px 14px;border-radius:20px;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+
+    .phone{
+      width:375px;height:812px;overflow:hidden;position:relative;
+      background:#f8f8f8;border-radius:44px;
+      box-shadow:0 0 0 10px #1a1a1a,0 0 0 12px #333,0 30px 80px rgba(0,0,0,.5);
+    }
+    .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:28px;background:#1a1a1a;border-radius:0 0 18px 18px;z-index:999;}
+
+    .scroll-area{height:100%;overflow-y:auto;padding-top:28px;padding-bottom:70px;scrollbar-width:none;}
+    /* Banner color bleeds into notch gap */
+    .phone.banner-top{background:linear-gradient(160deg,#2c0a14,#7a1828);}
+    .scroll-area::-webkit-scrollbar{display:none;}
+
+    /* ===================== HERO BANNER ZONE =====================
+       Banner image covers header + cat tabs + search + promo text.
+       All UI elements float on top of the banner background.
+    */
+    .hero{
+      background: linear-gradient(160deg, #2c0a14 0%, #7a1828 30%, #c0312a 65%, #e8503a 100%);
+      position: relative;
+      width: 100%;
+      padding-bottom: 0;
+    }
+    /* Dark overlay at very top so header text stays readable */
+    .hero::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:70px;
+      background:linear-gradient(to bottom,rgba(0,0,0,.28),transparent);
+      z-index:0;
+      pointer-events:none;
+    }
+
+    /* HEADER — transparent, floats on banner */
+    .header{
+      position:sticky;top:0;z-index:100;
+      background:transparent;
+      padding:10px 16px 8px;
+    }
+    .header.scrolled{background:#e23744;}
+    .header-row{display:flex;align-items:center;justify-content:space-between;}
+    .loc-wrap{display:flex;align-items:center;gap:6px;}
+    .loc-pin{font-size:14px;}
+    .loc-label{color:white;font-size:13px;font-weight:800;display:flex;align-items:center;gap:3px;}
+    .loc-arrow{font-size:10px;opacity:.8;}
+    .loc-addr{color:rgba(255,255,255,.85);font-size:11px;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hdr-icons{display:flex;gap:10px;}
+    .hdr-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;position:relative;}
+    .badge{position:absolute;top:-3px;right:-3px;background:white;color:#e23744;font-size:9px;font-weight:800;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+    /* CATEGORY TABS — transparent, icons float on banner */
+    .cat-tabs{
+      background:transparent;
+      margin:0;
+      border-radius:0;
+      padding:8px 12px;
+      display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+    }
+    .cat-tabs::-webkit-scrollbar{display:none;}
+    .cat-tab{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:80px;cursor:pointer;padding:4px 4px;}
+    .cat-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:25px;transition:all .2s;}
+    .cat-lbl{font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);text-shadow:0 1px 3px rgba(0,0,0,.3);}
+    .cat-tab.active .cat-lbl{color:white;font-weight:800;}
+    .cat-tab.active .cat-ico{box-shadow:0 0 0 2.5px white;}
+    .food-bg{background:rgba(255,240,238,0.92);}
+    .groc-bg{background:rgba(240,255,246,0.92);}
+    .gift-bg{background:rgba(255,248,236,0.92);}
+    .phrm-bg{background:rgba(238,244,255,0.92);}
+
+    /* SEARCH — white pill on banner */
+    .search-row{
+      margin:8px 12px 0;
+      display:flex;align-items:center;gap:10px;
+    }
+    .sbox{flex:1;display:flex;align-items:center;gap:8px;background:white;border-radius:10px;padding:9px 12px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+    .sico{color:#999;font-size:15px;}
+    .stxt{color:#aaa;font-size:13px;flex:1;}
+    .smic{color:#e23744;font-size:15px;}
+    .veg-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;background:white;border-radius:10px;padding:6px 8px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+    .veg-lbl{font-size:9px;font-weight:800;color:#2d2d2d;}
+    .tog{width:34px;height:19px;background:#ddd;border-radius:10px;position:relative;cursor:pointer;transition:background .2s;}
+    .tog.on{background:#1ba672;}
+    .tog-dot{width:15px;height:15px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+    .tog.on .tog-dot{left:17px;}
+
+    /* BANNER PROMO CONTENT — sits inside hero below search */
+    .ban-promo{
+      padding:16px 18px 18px;
+      display:flex;align-items:flex-end;justify-content:space-between;
+    }
+    .ban-badge{display:inline-block;background:#ff6b35;color:white;font-size:9px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.5px;margin-bottom:6px;}
+    .ban-offer{font-size:28px;font-weight:900;color:#ffd600;line-height:1.1;}
+    .ban-sub{font-size:12px;color:rgba(255,255,255,.85);margin-top:5px;}
+    .ban-cta{margin-top:10px;background:white;color:#e23744;font-size:11px;font-weight:800;padding:5px 14px;border-radius:20px;display:inline-block;}
+    .ban-food-img{font-size:95px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.35));align-self:flex-end;margin-bottom:-4px;}
+
+    /* Banner dots */
+    .ban-dots{display:flex;justify-content:center;gap:5px;padding:7px 0 0;background:transparent;}
+    .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);}
+    .dot.act{background:white;width:18px;border-radius:3px;}
+
+    /* ===================== BELOW HERO ===================== */
+
+    /* WHAT'S ON YOUR MIND */
+    .sec-hdr{padding:13px 16px 8px;background:white;font-size:15px;font-weight:800;color:#1c1c1c;}
+    .chips-row{background:white;padding:0 14px 13px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+    .chips-row::-webkit-scrollbar{display:none;}
+    .chip{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:60px;cursor:pointer;}
+    .chip-ico{width:60px;height:60px;border-radius:50%;background:#fff5f5;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid transparent;transition:all .2s;}
+    .chip.active .chip-ico{border-color:#e23744;background:#fff0ef;}
+    .chip-lbl{font-size:11px;color:#555;font-weight:500;text-align:center;}
+    .chip.active .chip-lbl{color:#e23744;font-weight:700;}
+
+    /* FILTER BAR */
+    .filter-bar{display:flex;gap:7px;padding:9px 14px;overflow-x:auto;scrollbar-width:none;background:white;border-top:1px solid #f2f2f2;border-bottom:6px solid #f0f0f0;}
+    .filter-bar::-webkit-scrollbar{display:none;}
+    .fpill{display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;border:1px solid #e0e0e0;background:white;font-size:11px;color:#333;font-weight:600;white-space:nowrap;cursor:pointer;}
+    .fpill.act{background:#e23744;color:white;border-color:#e23744;}
+
+    /* RESTAURANTS */
+    .sec-title{padding:14px 16px 8px;font-size:16px;font-weight:800;color:#1c1c1c;background:#f8f8f8;}
+    .r-card{background:white;margin-bottom:8px;}
+    .r-img{width:100%;height:170px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .r-img-1{background:linear-gradient(135deg,#ff9a9e,#fecfef);}
+    .r-img-2{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);}
+    .r-img-3{background:linear-gradient(135deg,#d4fc79,#96e6a1);}
+    .r-food-ico{font-size:90px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.2));}
+    .r-offer{position:absolute;bottom:0;left:0;right:0;padding:18px 12px 7px;background:linear-gradient(transparent,rgba(0,0,0,.68));color:white;font-size:11px;font-weight:700;}
+    .r-time{position:absolute;top:9px;right:9px;background:white;color:#1c1c1c;font-size:10px;font-weight:800;padding:3px 7px;border-radius:4px;}
+    .r-body{padding:9px 13px 11px;}
+    .r-row{display:flex;align-items:center;justify-content:space-between;}
+    .r-name{font-size:15px;font-weight:700;color:#1c1c1c;}
+    .r-fav{color:#ccc;font-size:17px;}
+    .r-meta{display:flex;align-items:center;gap:5px;margin-top:4px;}
+    .r-rating{display:flex;align-items:center;gap:2px;background:#1ba672;color:white;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;}
+    .sep{color:#bbb;font-size:10px;}
+    .r-dist{font-size:12px;color:#666;}
+    .r-del{font-size:12px;font-weight:700;color:#1ba672;}
+    .r-cusines{font-size:12px;color:#888;margin-top:3px;}
+
+    /* BOTTOM NAV */
+    .bottom-nav{position:sticky;bottom:0;background:white;display:flex;border-top:1px solid #eee;z-index:100;}
+    .nav-i{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 5px;gap:3px;cursor:pointer;}
+    .nav-ico{font-size:20px;color:#aaa;}
+    .nav-lbl{font-size:10px;color:#aaa;}
+    .nav-i.act .nav-ico,.nav-i.act .nav-lbl{color:#e23744;}
+    .nav-i.act .nav-lbl{font-weight:800;}
+
+    /* FAB */
+    .fab{position:absolute;bottom:80px;right:16px;width:46px;height:46px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 14px rgba(37,211,102,.45);z-index:200;}
+
+    /* scroll-hide animation */
+    .hideable{transition:max-height .3s ease,opacity .3s ease,padding .3s ease;overflow:hidden;}
+    .hideable.hidden{max-height:0!important;opacity:0;padding-top:0!important;padding-bottom:0!important;}
+
+    /* white section separator below hero */
+    .hero-end{background:white;height:8px;}
+  </style>
+</head>
+<body>
+<h2>ZITRO — Home Page Redesign Preview &nbsp;|&nbsp; Scroll inside phone to test behaviour</h2>
+
+<div class="phones">
+
+  <!-- PHONE 1: Top of page (interactive) -->
+  <div class="phone-wrap">
+    <div class="phone-label">① Top of page (scroll inside)</div>
+    <div class="phone banner-top">
+      <div class="notch"></div>
+      <div class="scroll-area" id="s1">
+
+        <!-- ═══════════════ HERO BANNER ZONE ═══════════════ -->
+        <div class="hero" id="hero1">
+
+          <!-- Header — transparent, floats on banner -->
+          <div class="header" id="hdr1">
+            <div class="header-row">
+              <div class="loc-wrap">
+                <span class="loc-pin">📍</span>
+                <div>
+                  <div class="loc-label">Home <span class="loc-arrow">▾</span></div>
+                  <div class="loc-addr">A707, Ajnara Le Garden, Panchshee...</div>
+                </div>
+              </div>
+              <div class="hdr-icons">
+                <div class="hdr-btn">🛒<span class="badge">2</span></div>
+                <div class="hdr-btn">👤</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category tabs — white card on banner -->
+          <div class="cat-tabs" id="catTabs1">
+            <div class="cat-tab active"><div class="cat-ico food-bg">🍔</div><span class="cat-lbl">Food</span></div>
+            <div class="cat-tab"><div class="cat-ico groc-bg">🛒</div><span class="cat-lbl">Grocery</span></div>
+            <div class="cat-tab"><div class="cat-ico gift-bg">🎁</div><span class="cat-lbl">Gifts</span></div>
+            <div class="cat-tab"><div class="cat-ico phrm-bg">💊</div><span class="cat-lbl">Pharma</span></div>
+          </div>
+
+          <!-- Search + VEG toggle — white pill on banner -->
+          <div class="search-row">
+            <div class="sbox"><span class="sico">🔍</span><span class="stxt">Search "comfort food"</span><span class="smic">🎙️</span></div>
+            <div class="veg-wrap"><span class="veg-lbl">VEG</span><div class="tog" id="tog1"><div class="tog-dot"></div></div></div>
+          </div>
+
+          <!-- Promo text + food image — bottom of hero -->
+          <div class="ban-promo">
+            <div class="ban-txt">
+              <span class="ban-badge">🔥 LIMITED TIME</span>
+              <div class="ban-offer">ITEMS AT<br>50% OFF</div>
+              <div class="ban-sub">Order your favourites now</div>
+              <div class="ban-cta">Order now →</div>
+            </div>
+            <div class="ban-food-img">🍩</div>
+          </div>
+
+          <!-- Carousel dots inside hero -->
+          <div class="ban-dots"><div class="dot act"></div><div class="dot"></div><div class="dot"></div></div>
+
+        </div><!-- /hero -->
+
+        <!-- White gap between hero and chips -->
+        <div class="hero-end"></div>
+
+        <!-- ═══════════════ BELOW HERO ═══════════════ -->
+
+        <!-- Cuisine chips -->
+        <div class="sec-hdr hideable" id="wom1">What's on your mind?</div>
+        <div class="chips-row hideable" id="chips1">
+          <div class="chip active"><div class="chip-ico">🍕</div><span class="chip-lbl">Pizza</span></div>
+          <div class="chip"><div class="chip-ico">🍚</div><span class="chip-lbl">Biryani</span></div>
+          <div class="chip"><div class="chip-ico">🍔</div><span class="chip-lbl">Burger</span></div>
+          <div class="chip"><div class="chip-ico">🍛</div><span class="chip-lbl">N.Indian</span></div>
+          <div class="chip"><div class="chip-ico">🍜</div><span class="chip-lbl">Chinese</span></div>
+          <div class="chip"><div class="chip-ico">🍮</div><span class="chip-lbl">Desserts</span></div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar hideable" id="fbar1">
+          <div class="fpill act">⚡ Near & Fast</div>
+          <div class="fpill">⭐ Top Rated</div>
+          <div class="fpill">✨ New</div>
+          <div class="fpill">🏷️ Offers</div>
+          <div class="fpill">🆓 Free Delivery</div>
+        </div>
+
+        <!-- Restaurants -->
+        <div class="sec-title">Top rated near you</div>
+
+        <div class="r-card">
+          <div class="r-img r-img-1"><span class="r-food-ico">🍕</span>
+            <div class="r-offer">🏷️ 60% off up to ₹120</div>
+            <div class="r-time">25–30 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">EFC Pizza</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.2</span><span class="sep">·</span><span class="r-dist">1.5 km</span><span class="sep">·</span><span class="r-del">FREE DELIVERY</span></div>
+            <div class="r-cusines">Pizza · Burger · North Indian · Chinese</div>
+          </div>
+        </div>
+
+        <div class="r-card">
+          <div class="r-img r-img-2"><span class="r-food-ico">🍚</span>
+            <div class="r-offer">🏷️ Buy 1 Get 1 Free</div>
+            <div class="r-time">20–25 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">The Hunger Point</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.5</span><span class="sep">·</span><span class="r-dist">0.8 km</span><span class="sep">·</span><span class="r-del">FREE DELIVERY</span></div>
+            <div class="r-cusines">Biryani · North Indian · South Indian</div>
+          </div>
+        </div>
+
+        <div class="r-card">
+          <div class="r-img r-img-3"><span class="r-food-ico">🥗</span>
+            <div class="r-time">30–40 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">Tularam Kirana Store</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.0</span><span class="sep">·</span><span class="r-dist">2.1 km</span><span class="sep">·</span><span class="r-dist">₹40 delivery</span></div>
+            <div class="r-cusines">Grocery · Snacks · Beverages</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-i act"><span class="nav-ico">🏠</span><span class="nav-lbl">Home</span></div>
+        <div class="nav-i"><span class="nav-ico">🔍</span><span class="nav-lbl">Search</span></div>
+        <div class="nav-i"><span class="nav-ico">♡</span><span class="nav-lbl">Favourites</span></div>
+        <div class="nav-i"><span class="nav-ico">👤</span><span class="nav-lbl">Account</span></div>
+      </div>
+      <div class="fab">💬</div>
+    </div>
+  </div>
+
+  <!-- PHONE 2: Scrolled state (chips + filter hidden, header now red) -->
+  <div class="phone-wrap">
+    <div class="phone-label">② After scrolling (chips + filter auto-hide)</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="scroll-area">
+
+        <!-- Sticky header now has red bg (post-scroll state) -->
+        <div class="header" style="background:#e23744;">
+          <div class="header-row">
+            <div class="loc-wrap">
+              <span class="loc-pin">📍</span>
+              <div>
+                <div class="loc-label">Home <span class="loc-arrow">▾</span></div>
+                <div class="loc-addr">A707, Ajnara Le Garden, Panchshee...</div>
+              </div>
+            </div>
+            <div class="hdr-icons">
+              <div class="hdr-btn">🛒<span class="badge">2</span></div>
+              <div class="hdr-btn">👤</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- chips + filter HIDDEN — showing scrolled state -->
+        <div class="sec-title" style="margin-top:0;">Top rated near you</div>
+
+        <div class="r-card">
+          <div class="r-img r-img-1"><span class="r-food-ico">🍕</span>
+            <div class="r-offer">🏷️ 60% off up to ₹120</div>
+            <div class="r-time">25–30 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">EFC Pizza</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.2</span><span class="sep">·</span><span class="r-dist">1.5 km</span><span class="sep">·</span><span class="r-del">FREE DELIVERY</span></div>
+            <div class="r-cusines">Pizza · Burger · North Indian · Chinese</div>
+          </div>
+        </div>
+
+        <div class="r-card">
+          <div class="r-img r-img-2"><span class="r-food-ico">🍚</span>
+            <div class="r-offer">🏷️ Buy 1 Get 1 Free</div>
+            <div class="r-time">20–25 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">The Hunger Point</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.5</span><span class="sep">·</span><span class="r-dist">0.8 km</span><span class="sep">·</span><span class="r-del">FREE DELIVERY</span></div>
+            <div class="r-cusines">Biryani · North Indian · South Indian</div>
+          </div>
+        </div>
+
+        <div class="r-card">
+          <div class="r-img r-img-3"><span class="r-food-ico">🥗</span>
+            <div class="r-time">30–40 MINS</div>
+          </div>
+          <div class="r-body">
+            <div class="r-row"><span class="r-name">Tularam Kirana Store</span><span class="r-fav">♡</span></div>
+            <div class="r-meta"><span class="r-rating">⭐ 4.0</span><span class="sep">·</span><span class="r-dist">2.1 km</span><span class="sep">·</span><span class="r-dist">₹40 delivery</span></div>
+            <div class="r-cusines">Grocery · Snacks · Beverages</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-i act"><span class="nav-ico">🏠</span><span class="nav-lbl">Home</span></div>
+        <div class="nav-i"><span class="nav-ico">🔍</span><span class="nav-lbl">Search</span></div>
+        <div class="nav-i"><span class="nav-ico">♡</span><span class="nav-lbl">Favourites</span></div>
+        <div class="nav-i"><span class="nav-ico">👤</span><span class="nav-lbl">Account</span></div>
+      </div>
+      <div class="fab">💬</div>
+    </div>
+  </div>
+
+</div><!-- phones -->
+
+<script>
+  // Scroll hide on phone 1 + header bg transition
+  const s1 = document.getElementById('s1');
+  const hdr1 = document.getElementById('hdr1');
+  const wom1 = document.getElementById('wom1');
+  const chips1 = document.getElementById('chips1');
+  const fbar1 = document.getElementById('fbar1');
+  let lastY = 0;
+
+  s1.addEventListener('scroll', () => {
+    const y = s1.scrollTop;
+    const goingDown = y > lastY;
+
+    // Header background: transparent on hero, red after scrolling past hero
+    const heroH = document.getElementById('hero1').offsetHeight;
+    if (y > heroH - 58) {
+      hdr1.style.background = '#e23744';
+    } else {
+      hdr1.style.background = 'transparent';
+    }
+
+    // Hide chips + filter after 300px scroll down
+    if (y > 300 && goingDown) {
+      wom1.classList.add('hidden');
+      chips1.classList.add('hidden');
+      fbar1.classList.add('hidden');
+    }
+    // Show again when scrolling back up near top
+    if (!goingDown && y < 280) {
+      wom1.classList.remove('hidden');
+      chips1.classList.remove('hidden');
+      fbar1.classList.remove('hidden');
+    }
+    lastY = y;
+  });
+
+  // Cat tab toggle
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      t.closest('.cat-tabs').querySelectorAll('.cat-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+  // Chip toggle
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => {
+      c.closest('.chips-row').querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+
+  // Filter pill toggle
+  document.querySelectorAll('.fpill').forEach(p => {
+    p.addEventListener('click', () => {
+      p.closest('.filter-bar').querySelectorAll('.fpill').forEach(x => x.classList.remove('act'));
+      p.classList.add('act');
+    });
+  });
+
+  // VEG toggle
+  document.getElementById('tog1').addEventListener('click', function(){ this.classList.toggle('on'); });
+</script>
+</body>
+</html>
