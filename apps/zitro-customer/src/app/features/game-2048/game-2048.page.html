@@ -1,0 +1,169 @@
+<div class="game-2048-container" data-testid="game-2048-page">
+  @if (!isAuthenticated()) {
+    <div class="auth-required" data-testid="game-auth-required">
+      <div class="auth-icon">🎮</div>
+      <h2>{{ 'game.loginToPlay' | i18n }}</h2>
+      <button class="btn-primary" (click)="goToLogin()" type="button" data-testid="game-login-btn">
+        {{ 'common.loginNow' | i18n }}
+      </button>
+    </div>
+  } @else if (!isTestUser()) {
+    <div class="auth-required" data-testid="game-access-restricted">
+      <div class="auth-icon">🔒</div>
+      <h2>{{ 'game.accessRestricted' | i18n }}</h2>
+      <p>{{ 'game.testUsersOnly' | i18n }}</p>
+    </div>
+  } @else {
+    <div class="game-content">
+      <div class="game-header">
+        <h1 class="game-title">2048</h1>
+        <div class="game-subtitle">{{ 'game.subtitle' | i18n }}</div>
+      </div>
+
+      <div class="score-board">
+        <div class="score-item">
+          <div class="score-label">{{ 'game.score' | i18n }}</div>
+          <div class="score-value" data-testid="game-score">{{ formatScore(gameState()?.score ?? 0) }}</div>
+        </div>
+        <div class="score-item">
+          <div class="score-label">{{ 'game.highestTile' | i18n }}</div>
+          <div class="score-value" data-testid="game-highest-tile">{{ gameState()?.highestTile ?? 0 }}</div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button
+          class="btn-status"
+          [disabled]="!isEligible() || isPlaying()"
+          (click)="!isPlaying() && startGame()"
+          type="button"
+          data-testid="game-start-btn"
+        >
+          {{ isPlaying() ? ('game.playing' | i18n) : ('game.start' | i18n) }}
+        </button>
+        <button
+          class="btn-restart"
+          [disabled]="!isPlaying()"
+          (click)="restartGame()"
+          type="button"
+          data-testid="game-restart-btn"
+        >
+          {{ 'game.restart' | i18n }}
+        </button>
+      </div>
+
+      @if (eligibilityMessage()) {
+        <div class="eligibility-message" data-testid="game-eligibility-msg">
+          <span class="material-icons">schedule</span>
+          {{ eligibilityMessage() }}
+        </div>
+      }
+
+      @if (isPlaying() && gameState()) {
+        <div class="game-board-wrapper">
+          <div class="game-board">
+            <div class="grid-container">
+              @for (row of [0, 1, 2, 3]; track row) {
+                <div class="grid-row">
+                  @for (col of [0, 1, 2, 3]; track col) {
+                    <div class="grid-cell"></div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="tiles-container">
+              @for (tile of tiles; track trackByTileId($index, tile)) {
+                <div
+                  class="tile"
+                  [class]="getTileClass(tile.value)"
+                  [class.tile-merged]="tile.merged"
+                  [ngStyle]="getTilePosition(tile)"
+                  data-testid="game-tile"
+                >
+                  @if (shouldShowImage(tile.value)) {
+                    <img [src]="getTileImage(tile.value)" [alt]="tile.value.toString()" class="tile-image" />
+                  } @else {
+                    <span class="tile-number">{{ tile.value }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (gameState()!.isGameOver) {
+              <div class="game-overlay game-over" data-testid="game-over-overlay">
+                <h2>{{ 'game.gameOver' | i18n }}</h2>
+                <p>{{ 'game.finalScore' | i18n }}: {{ formatScore(gameState()!.score) }}</p>
+                <button class="btn-primary" (click)="restartGame()" type="button">{{ 'game.tryAgain' | i18n }}</button>
+              </div>
+            }
+
+            @if (gameState()!.hasWon && !gameState()!.canContinue) {
+              <div class="game-overlay game-won" data-testid="game-won-overlay">
+                <h2>🎉 {{ 'game.youWin' | i18n }}!</h2>
+                <p>{{ 'game.reached' | i18n }} {{ gameState()!.highestTile }}!</p>
+                <div class="win-buttons">
+                  <button class="btn-primary" (click)="continueGame()" type="button">{{ 'game.keepPlaying' | i18n }}</button>
+                  <button class="btn-secondary" (click)="restartGame()" type="button">{{ 'game.newGame' | i18n }}</button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="game-instructions">
+            <p><span class="instruction-icon">🍔</span> {{ 'game.reach2048' | i18n }}</p>
+            <p><span class="instruction-icon">🍕</span> {{ 'game.reach32768' | i18n }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (showRewardModal()) {
+    <div class="modal-overlay" (click)="closeRewardModal()" data-testid="game-reward-modal">
+      <div class="modal-content reward-modal" (click)="$event.stopPropagation()">
+        <button class="modal-close" (click)="closeRewardModal()" type="button">
+          <span class="material-icons">close</span>
+        </button>
+
+        <div class="reward-header">
+          <div class="reward-icon">
+            <img [src]="getTileImage(rewardTileValue())" [alt]="rewardCouponType()" class="reward-image" />
+          </div>
+          <h2>🎉 {{ 'game.congratulations' | i18n }}! 🎉</h2>
+          <p>{{ rewardCouponType() === 'couponTypeBurger' ? ('game.earnedBurger' | i18n) : ('game.earnedPizza' | i18n) }}</p>
+        </div>
+
+        <div class="reward-body">
+          <div class="coupon-code-container">
+            <div class="coupon-label">{{ 'game.yourCouponCode' | i18n }}:</div>
+            <div class="coupon-code" data-testid="game-reward-code">{{ rewardCouponCode() }}</div>
+            <button class="btn-copy" (click)="copyCouponCode()" type="button" data-testid="game-copy-code-btn">
+              <span class="material-icons">content_copy</span>
+              {{ 'common.copyCode' | i18n }}
+            </button>
+          </div>
+
+          @if (nextEligibleDate()) {
+            <div class="next-play-info">
+              <span class="material-icons">info</span>
+              <p>{{ 'game.playAgainOn' | i18n }} {{ formatDate(nextEligibleDate()!) }}</p>
+            </div>
+          }
+        </div>
+
+        <button class="btn-primary btn-close-modal" (click)="closeRewardModal()" type="button">
+          {{ 'common.gotIt' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (showConfetti()) {
+    <div class="confetti-container" data-testid="game-confetti">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]; track i) {
+        <div class="confetti" [style.left]="(i * 5) + '%'" [style.animation-delay]="(i * 0.05) + 's'"></div>
+      }
+    </div>
+  }
+</div>

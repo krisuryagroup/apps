@@ -112,30 +112,42 @@ export class ImageCacheService {
     }
   }
 
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   async downloadAndCacheImage(url: string): Promise<string> {
-    try {
-      console.log('⬇️ Downloading image from Firebase:', url);
-      
-      const response = await fetch(url, {
-        mode: 'cors',
-        cache: 'no-cache'
-      });
+    const maxRetries = 3;
+    let lastError: unknown;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          mode: 'cors',
+          cache: 'no-cache'
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        await this.cacheImage(url, blob);
+
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('✅ Image downloaded and cached:', url);
+        return blobUrl;
+      } catch (error) {
+        lastError = error;
+        console.warn(`⚠️ Image download attempt ${attempt}/${maxRetries} failed for:`, url, error);
+        if (attempt < maxRetries) {
+          await this.sleep(500);
+        }
       }
-
-      const blob = await response.blob();
-      await this.cacheImage(url, blob);
-      
-      const blobUrl = URL.createObjectURL(blob);
-      console.log('✅ Image downloaded and cached:', url);
-      
-      return blobUrl;
-    } catch (error) {
-      console.error('Failed to download image:', error);
-      throw error;
     }
+
+    console.error('Failed to download image after 3 attempts:', url);
+    throw lastError;
   }
 
   private async cacheImage(url: string, blob: Blob): Promise<void> {

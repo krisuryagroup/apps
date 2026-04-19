@@ -1,0 +1,177 @@
+<div class="coupon-page-header" data-testid="coupon-selection-page">
+  <button class="back-button" (click)="goBack()" type="button" data-testid="coupon-back-btn">
+    <span class="material-icons">arrow_back</span>
+    <span>{{ 'coupon.title' | i18n }}</span>
+  </button>
+</div>
+
+@if (currentAppliedCoupon()) {
+  <div class="applied-coupon-section" data-testid="coupon-applied-banner">
+    <div class="applied-coupon-banner">
+      <div class="success-indicator">
+        <div class="checkmark-icon">
+          <span class="material-icons">check_circle</span>
+        </div>
+        <div class="coupon-applied-info">
+          <div class="coupon-code-applied">{{ currentAppliedCoupon()!.coupon.code }}</div>
+          <div class="savings-amount">{{ 'coupon.saved' | i18n }} ₹{{ currentAppliedCoupon()!.discountAmount }}</div>
+        </div>
+      </div>
+      <button class="remove-coupon-btn" (click)="removeCoupon()" type="button" data-testid="coupon-remove-btn">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+  </div>
+}
+
+@if (hasIneligibleItems()) {
+  <div class="eligibility-banner" data-testid="coupon-eligibility-banner">
+    <div class="eligibility-info">
+      <span class="material-icons">info</span>
+      <span>{{ eligibilityMessage() }}</span>
+    </div>
+  </div>
+}
+
+<div class="coupon-input-section">
+  <div class="section-header">
+    <h3>{{ 'coupon.haveCode' | i18n }}</h3>
+    <p>{{ 'coupon.haveCodeDesc' | i18n }}</p>
+  </div>
+
+  <div class="input-group">
+    <div class="input-prefix">
+      <span class="material-icons">confirmation_number</span>
+    </div>
+    <input
+      type="text"
+      class="coupon-input"
+      [placeholder]="'coupon.enterCode' | i18n"
+      [ngModel]="couponCode()"
+      (ngModelChange)="couponCode.set($event)"
+      (keyup.enter)="applyCoupon()"
+      [disabled]="isLoading()"
+      data-testid="coupon-code-input"
+    />
+    <button
+      class="apply-button"
+      (click)="applyCoupon()"
+      [disabled]="isLoading() || !couponCode().trim()"
+      type="button"
+      data-testid="coupon-apply-btn"
+    >
+      @if (isLoading()) {
+        <div class="loading-spinner">
+          <span class="material-icons spinning">sync</span>
+        </div>
+      } @else {
+        <span class="apply-text">{{ 'coupon.applyButton' | i18n }}</span>
+      }
+    </button>
+  </div>
+
+  @if (validationMessage()) {
+    <div
+      class="validation-message"
+      [class.error]="isValidationError()"
+      [class.success]="!isValidationError()"
+      data-testid="coupon-validation-message"
+    >
+      <span class="material-icons">{{ isValidationError() ? 'error' : 'check_circle' }}</span>
+      <span>{{ validationMessage() }}</span>
+    </div>
+  }
+</div>
+
+@if (availableCoupons().length > 0) {
+  <div class="offers-section">
+    <div class="section-header">
+      <h3>{{ 'coupon.availableOffers' | i18n }}</h3>
+      <div class="offers-count">{{ availableCoupons().length }} {{ 'coupon.offers' | i18n }}</div>
+    </div>
+
+    <div class="offers-grid">
+      @for (coupon of availableCoupons(); track coupon.id) {
+        <div
+          class="offer-card"
+          [class.disabled]="!isCouponApplicable(coupon)"
+          [class.applied]="isCouponApplied(coupon)"
+          (click)="isCouponApplicable(coupon) && selectCoupon(coupon)"
+          data-testid="coupon-offer-card"
+        >
+          <div
+            class="offer-badge"
+            [class.percentage]="coupon.discountType === 'percentage'"
+            [class.flat]="coupon.discountType === 'flat'"
+          >
+            <span class="material-icons">local_offer</span>
+            <span class="offer-type">
+              {{ coupon.discountType === 'percentage' ? coupon.discountValue + '% OFF' : '₹' + coupon.discountValue + ' OFF' }}
+            </span>
+          </div>
+
+          <div class="offer-content">
+            <div class="offer-title">{{ coupon.title }}</div>
+            <div class="offer-description">{{ coupon.description }}</div>
+            <div class="offer-code">{{ 'coupon.code' | i18n }} <span class="code">{{ coupon.code }}</span></div>
+
+            <div class="offer-details">
+              @if (isCouponApplicable(coupon) && getCouponSavings(coupon) > 0) {
+                <div class="savings">
+                  <span class="material-icons">savings</span>
+                  <span>{{ 'coupon.save' | i18n: { amount: getCouponSavings(coupon) } }}</span>
+                </div>
+              }
+              @if (coupon.minOrderAmount) {
+                <div class="requirement">
+                  <span class="material-icons">shopping_cart</span>
+                  <span>{{ 'coupon.minOrder' | i18n: { amount: coupon.minOrderAmount } }}</span>
+                </div>
+              }
+            </div>
+
+            @if (coupon.validTo) {
+              <div class="offer-validity">
+                <span class="material-icons">schedule</span>
+                <span>{{ ('coupon.validTill' | i18n) + ' ' + (coupon.validTo | date:'mediumDate') }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="offer-action">
+            <button
+              class="apply-offer-btn"
+              [class.applied]="isCouponApplied(coupon)"
+              [class.applicable]="isCouponApplicable(coupon)"
+              [disabled]="!isCouponApplicable(coupon)"
+              (click)="isCouponApplicable(coupon) && selectCoupon(coupon); $event.stopPropagation()"
+              type="button"
+              data-testid="coupon-offer-apply-btn"
+            >
+              @if (isCouponApplied(coupon)) {
+                {{ 'coupons.applied' | i18n }}
+              } @else if (isCouponApplicable(coupon)) {
+                {{ 'coupons.apply' | i18n }}
+              } @else {
+                {{ 'coupons.notApplicable' | i18n }}
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<div class="terms-section">
+  <div class="terms-header">
+    <span class="material-icons">info</span>
+    <h4>{{ 'coupon.termsTitle' | i18n }}</h4>
+  </div>
+  <ul class="terms-list">
+    <li>{{ 'coupon.termsEligible' | i18n }}</li>
+    <li>{{ 'coupon.termsOneOnly' | i18n }}</li>
+    <li>{{ 'coupon.termsCombine' | i18n }}</li>
+    <li>{{ 'coupon.termsValidity' | i18n }}</li>
+  </ul>
+</div>

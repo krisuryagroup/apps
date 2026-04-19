@@ -72,7 +72,7 @@
 | T026 | Evolve address pages | [x] | T025, T016 |
 | T027 | Evolve `order-confirmation` + checkout flow | [x] | T026 |
 | T028 | Evolve `order-history`, `order-tracking` pages | [x] | T027, T018 |
-| T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | [ ] | T028 |
+| T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | [x] | T028 |
 | T029-unit | Write ALL unit + integration tests (mappers, services, interceptors, components, pages) | [ ] | T029, T006 |
 | T030 | E2E tests — 5 critical journeys (Playwright) | [ ] | T029-unit |
 | **Phase 10 — Restaurant Partner App** |

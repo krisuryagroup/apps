@@ -25,9 +25,8 @@ import { CategoryListingComponent } from './features/category-listing/category-l
 // MT013: listing, search
 import { ListingComponent } from './features/listing/listing.component';
 import { SearchComponent } from './features/search/search.component';
-// MT014: cart, coupons
+// MT014: cart (legacy \u2014 kept for reference)
 import { CartComponent } from './features/cart/cart.component';
-import { CouponSelectionComponent } from './features/coupon-selection/coupon-selection.component';
 // T025: evolved cart page
 import { CartPage } from './features/cart/cart.page';
 // MT015: addresses (legacy)
@@ -45,11 +44,13 @@ import { OrderConfirmationPage } from './features/order-confirmation/order-confi
 // T028: evolved order-history + order-tracking pages
 import { OrderHistoryPage } from './features/order-history/order-history.page';
 import { OrderTrackingPage } from './features/order-tracking/order-tracking.page';
-// MT017: misc pages
-import { AccountComponent } from './features/account/account.component';
-import { ContactUsComponent } from './features/contact-us.component';
+// MT017: misc pages (legacy — kept for reference)
 import { CacheManagementComponent } from './shared/components/cache-management/cache-management.component';
-import { Game2048Component } from './features/game-2048/game-2048.component';
+// T029: evolved profile, coupon, contact, game pages
+import { AccountPage } from './features/account/account.page';
+import { CouponSelectionPage } from './features/coupon-selection/coupon-selection.page';
+import { ContactUsPage } from './features/contact-us.page';
+import { Game2048Page } from './features/game-2048/game-2048.page';
 
 export const routes: Routes = [
   // T021: splash entry point
@@ -71,8 +72,9 @@ export const routes: Routes = [
       { path: 'search', component: SearchComponent },
       // T025: evolved cart page (replaces CartComponent)
       { path: 'cart', component: CartPage },
-      { path: 'coupons', component: CouponSelectionComponent },
-      { path: 'contact', component: ContactUsComponent },
+      // T029: evolved coupon-selection + contact pages
+      { path: 'coupons', component: CouponSelectionPage },
+      { path: 'contact', component: ContactUsPage },
       // T027: evolved order-confirmation page
       { path: 'order-confirmation', component: OrderConfirmationPage },
       { path: 'order-confirmation/:orderId', component: OrderConfirmationPage },
@@ -85,9 +87,10 @@ export const routes: Routes = [
       { path: 'order-tracking/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
       { path: 'track-order', component: OrderTrackingPage, canActivate: [AuthGuard] },
       { path: 'track-order/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
-      { path: 'account', component: AccountComponent, canActivate: [AuthGuard] },
+      // T029: evolved account + game pages
+      { path: 'account', component: AccountPage, canActivate: [AuthGuard] },
       { path: 'cache-management', component: CacheManagementComponent }, // Development only
-      { path: 'game-2048', component: Game2048Component }, // 2048 Game with rewards
+      { path: 'game-2048', component: Game2048Page }, // 2048 Game with rewards
     ]
   },
 
