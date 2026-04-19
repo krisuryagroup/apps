@@ -278,8 +278,17 @@ Firebase Project ID: `the-hunger-point`
 
 When the user says **"start task MT008"** or **"start task T007"**:
 - `MT` prefix → read `MIGRATION-PLAN.md`, find the task
-- `T` prefix → read `TASKS.md`, find the task
+- `T` prefix → read `tasks/STATUS.md`, find the task
 - Always check `ROADMAP.md` to confirm the task's dependencies are done
+
+> ⚠️ **Two task numbering systems — do not confuse them:**
+> | Prefix | Example | Repo | Topic |
+> |--------|---------|------|-------|
+> | `T###` | `T012` | `apps/` (this repo) | Angular/Nx frontend tasks |
+> | `TASK-###` | `TASK-012` | `zitro-api/` (backend repo) | ASP.NET Core backend tasks |
+>
+> `T012` (UI loader component, done ✅) ≠ `TASK-012` (Orders Module, pending 🔲).
+> Always use the full prefix. For backend work, open Claude from `E:/Github/krisuryagroup/zitro-api/`.
 
 ### Step 1 — Identify the task
 Open the correct file. Read:

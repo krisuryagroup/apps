@@ -38,8 +38,8 @@
 | T001 | Bootstrap Nx workspace | `[x]` superseded by MT001 | — |
 | T002 | Create all library scaffolds | `[x]` superseded by MT002 | T001 |
 | **Phase 2 — Models, Mappers & Utils** |
-| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges + new User/BusinessConfig/catalog models) | [ ] | MT003 |
-| T004 | Implement `@zitro/mappers` | [ ] | MT003 |
+| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges + new User/BusinessConfig/catalog models) | [x] | MT003 |
+| T004 | Implement `@zitro/mappers` | [x] | MT003 |
 | T005 | Verify `@zitro/utils` tests pass | `[x]` superseded by MT004 (run tests only) | MT004 |
 | **Phase 3 — Test Data** |
 | T006 | Implement `@zitro/test-data` | [x] | T004, T005 |
@@ -53,25 +53,25 @@
 | T011 | FeatureFlagService (UI flags only) + CacheService | [x] | T009 |
 | **Phase 7 — UI Library (evolve existing components from MT006)** |
 | T012 | Evolve: `loader`, `no-internet`, `splash-screen` + equivalents — add config objects, signals, data-testid, i18n | [x] | T007, T008 |
-| T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [ ] | T012 |
-| T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` component | [ ] | T012 |
-| T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | [ ] | T013, T010 |
-| T016 | Evolve: address components | [ ] | T013, T010 |
-| T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | [ ] | T015 |
-| T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | [ ] | T013, T010 |
+| T013 | Evolve: `confirmation-dialog`, `bottom-sheet`, `truncated-text`, `zoomable-image`, `description-dialog`, `order-loading-modal` | [x] | T012 |
+| T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` component | [x] | T012 |
+| T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | [x] | T013, T010 |
+| T016 | Evolve: address components | [x] | T013, T010 |
+| T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | [x] | T015 |
+| T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | [x] | T013, T010 |
 | **Phase 8 — SCSS Cleanup + Security & Finalize** |
 | T019-scss | SCSS refactoring — slim down oversized component stylesheets to pass `anyComponentStyle` budget | [x] | MT018 |
 | T019 | Finalize command + Husky + audit-ci | [x] | MT002, T019-scss |
 | **Phase 9 — zitro-customer (evolve existing pages from MT009–MT017)** |
 | T020 | Evolve `app.config.ts` — add provideI18n, provideTheme, provideZitroServices (HTTP) | [x] | T008, T007, T009 |
-| T021 | Evolve `business-selection` page | [ ] | T020 |
-| T022 | Evolve auth pages | [ ] | T021, T014 |
-| T023 | Evolve `home` page | [ ] | T022, T015, T018 |
-| T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | [ ] | T023 |
-| T025 | Evolve `cart` page | [ ] | T024, T017 |
-| T026 | Evolve address pages | [ ] | T025, T016 |
-| T027 | Evolve `order-confirmation` + checkout flow | [ ] | T026 |
-| T028 | Evolve `order-history`, `order-tracking` pages | [ ] | T027, T018 |
+| T021 | Evolve `business-selection` page | [x] | T020 |
+| T022 | Evolve auth pages | [x] | T021, T014 |
+| T023 | Evolve `home` page | [x] | T022, T015, T018 |
+| T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | [x] | T023 |
+| T025 | Evolve `cart` page | [x] | T024, T017 |
+| T026 | Evolve address pages | [x] | T025, T016 |
+| T027 | Evolve `order-confirmation` + checkout flow | [x] | T026 |
+| T028 | Evolve `order-history`, `order-tracking` pages | [x] | T027, T018 |
 | T029 | Evolve `account`, `contact-us`, `coupon-selection`, `game-2048` pages | [ ] | T028 |
 | T029-unit | Write ALL unit + integration tests (mappers, services, interceptors, components, pages) | [ ] | T029, T006 |
 | T030 | E2E tests — 5 critical journeys (Playwright) | [ ] | T029-unit |

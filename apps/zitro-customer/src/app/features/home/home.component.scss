@@ -198,7 +198,7 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
-// Hero wrapper — banner fills this area; header is transparent and floats over it
+// Hero wrapper — banner fills this area; tabs/search are absolutely overlaid
 .dh-hero-wrapper {
   position: relative;
   overflow: hidden;
@@ -209,10 +209,10 @@
   }
 }
 
-// Row: search bar (flex-1) + VEG toggle — absolutely overlaid on the banner, transparent bg
+// Row: search bar (flex-1) + VEG toggle — absolutely overlaid on banner, near bottom
 .dh-search-veg-row {
   position: absolute;
-  top: 55px;
+  bottom: 16px;
   left: 0;
   right: 0;
   z-index: 10;
@@ -221,7 +221,6 @@
   gap: 10px;
   padding: 0 16px;
   background: transparent;
-  max-height: 100px;
 
   @include respond-above(tablet) {
     padding: 0 2rem;
@@ -272,7 +271,7 @@
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: $secondary-color;
+      background: #fff;
       transition: left 0.3s ease;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
     }

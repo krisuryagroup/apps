@@ -10,7 +10,7 @@
   <div class="dh-hero-wrapper">
     <lib-banner-carousel [banners]="banners()" data-testid="banner-carousel" />
 
-    <!-- Business type tabs — overlaid on banner -->
+    <!-- Business type tabs — overlaid on banner, top of hero -->
     @if (businessTypeTabs().length) {
       <div class="dh-tabs-row" data-testid="business-tabs">
         @for (tab of businessTypeTabs(); track tab) {
@@ -26,7 +26,7 @@
       </div>
     }
 
-    <!-- Search + VEG toggle — overlaid on banner, transparent background -->
+    <!-- Search + VEG toggle — overlaid on banner, near bottom, transparent background -->
     <div class="dh-search-veg-row">
       <div class="dh-search-container">
         <div class="dh-search-bar">

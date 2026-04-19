@@ -21,6 +21,13 @@
 > ⚠️ **Tasks T001, T002, T005 are superseded by migration tasks MT001–MT004. Do not run them.**
 > **T003 is now active** — models update. All other tasks start after MT018 is complete.
 
+> ⚠️ **Naming disambiguation — two task numbering systems exist in this workspace:**
+> - **`T###`** (this file, `apps/tasks/`) = Angular/Nx frontend tasks
+> - **`TASK-###`** (in `zitro-api/TASK-STATUS.md`) = ASP.NET Core backend tasks
+>
+> `T012` ≠ `TASK-012`. When telling Claude to "start task X", always use the full prefix:
+> `T012` for frontend work, `TASK-012` for backend work — and open Claude from the correct repo folder.
+
 ---
 
 ## Status Legend
@@ -42,8 +49,8 @@
 | T001 | Bootstrap Nx workspace | `[x]` superseded by MT001 | — |
 | T002 | Create all library scaffolds | `[x]` superseded by MT002 | T001 |
 | **Phase 2 — Models, Mappers & Utils** |
-| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges + new User/BusinessConfig/catalog models) | `[ ]` | MT003 |
-| T004 | Implement `@zitro/mappers` | `[ ]` | T003 |
+| T003 | `@zitro/models` structural changes (imageUrl + flat OrderCharges + new User/BusinessConfig/catalog models) | `[x]` | MT003 |
+| T004 | Implement `@zitro/mappers` | `[x]` | T003 |
 | T005 | Verify `@zitro/utils` tests pass | `[x]` superseded by MT004 | MT004 |
 | **Phase 3 — Test Data** |
 | T006 | Implement `@zitro/test-data` | `[x]` | T004, T005 |
@@ -61,17 +68,17 @@
 | T014 | Evolve: auth input components (signin, OTP) + new `theme-picker` | `[x]` | T012 |
 | T015 | Evolve: `product-card`, `product-grid`, `category-cards`, `item-details-dialog`, search | `[x]` | T013, T010 |
 | T016 | Evolve: address components | `[x]` | T013, T010 |
-| T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | `[ ]` | T015 |
+| T017 | Evolve: `cart-summary`, `pricing-summary`, coupon selector | `[x]` | T015 |
 | T018 | Evolve: `banner`, `cancel-order-dialog`, `update-dialog` + new ratings components | `[x]` | T013, T010 |
 | **Phase 8 — SCSS Cleanup + Security & Finalize** |
 | T019-scss | SCSS refactoring — slim oversized component stylesheets | `[x]` | MT018 |
 | T019 | Finalize command + Husky + audit-ci | `[x]` | MT002, T019-scss |
 | **Phase 9 — zitro-customer pages** |
-| T020 | Evolve `app.config.ts` | `[ ]` | T008, T007, T009 |
+| T020 | Evolve `app.config.ts` | `[x]` | T008, T007, T009 |
 | T021 | Evolve `business-selection` page | `[x]` | T020 |
 | T022 | Evolve auth pages | `[x]` | T021, T014 |
 | T023 | Evolve `home` page | `[x]` | T022, T015, T018 |
-| T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[~]` | T023 |
+| T024 | Evolve `listing`, `search`, `categories`, `category-listing` pages | `[x]` | T023 |
 | T025 | Evolve `cart` page | `[x]` | T024, T017 |
 | T026 | Evolve address pages | `[x]` | T025, T016 |
 | T027 | Evolve `order-confirmation` + checkout flow | `[x]` | T026 |

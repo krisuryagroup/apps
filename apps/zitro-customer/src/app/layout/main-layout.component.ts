@@ -61,7 +61,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   /** CSS color string to apply to header text, icons, location label.
    *  Returns the configured value or null (SCSS default takes over). */
   get headerTextColor(): string | null {
-    return this.activeBannerConfigs?.headerTextColor ?? "#C73E3A"; // Zitro Red as default if config is missing
+    return this.activeBannerConfigs?.headerTextColor ?? null; // null → CSS fallback to $secondary-color (white)
   }
 
   /** True when the restaurant OPEN/CLOSED badge + hours should be visible.

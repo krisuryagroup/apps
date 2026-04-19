@@ -816,7 +816,7 @@ html, body {
 }
 
 // Home route — main-content starts at top (y=0) so the banner fills behind the transparent header.
-// The search+VEG row overlays the banner absolutely — no coloured strip between header and banner.
+// Tabs and search are overlaid on the banner absolutely.
 .dh-home-active {
   .main-content {
     margin-top: 0 !important;

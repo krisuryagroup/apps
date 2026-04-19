@@ -11,11 +11,16 @@
           data-testid="banner-carousel-slide"
         >
           <img
+            src="assets/banners/1080_900_px.png"
+            [alt]="banner.title"
+            class="banner-carousel__image"
+          />
+          <!-- <img
             [cachedSrc]="banner.imageURL || 'assets/banners/1080_900_px.png'"
             [fallbackSrc]="'assets/banners/1080_900_px.png'"
             [alt]="banner.title"
             class="banner-carousel__image"
-          />
+          /> -->
           <div class="banner-carousel__text">
             <h3 class="banner-carousel__title">{{ banner.title }}</h3>
           </div>

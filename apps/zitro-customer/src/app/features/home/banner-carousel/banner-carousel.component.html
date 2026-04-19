@@ -1,11 +1,17 @@
 <div class="dh-promo-carousel">
   <div class="dh-promo-large" style="position: relative; min-height: 200px;">
     <app-loader [isLoading]="isImageLoading" [size]="50" type="spinner" color="#ff6b35"></app-loader>
-    <img 
+    <!-- <img 
          [cachedSrc]="banners[currentBanner].src" 
          alt="Promo Banner" 
          class="dh-promo-img" 
          [fallbackSrc]="'assets/banners/banner1.png'"
+         (load)="onImageLoad()"
+         (error)="onImageError()" /> -->
+    <img 
+         src="assets/banners/1080_900_px.png" 
+         alt="Promo Banner" 
+         class="dh-promo-img" 
          (load)="onImageLoad()"
          (error)="onImageError()" />
     <button class="dh-promo-arrow dh-promo-arrow-left" (click)="prevBanner()">
