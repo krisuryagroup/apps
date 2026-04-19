@@ -67,6 +67,8 @@ export class CachedImageDirective implements OnInit, OnChanges, OnDestroy {
   }
 
   private setFallbackImage() {
+    this.el.nativeElement.onload = null;
+    this.el.nativeElement.onerror = null;
     this.el.nativeElement.src = this.fallbackSrc;
     this.el.nativeElement.classList.remove(this.loadingClass);
   }
