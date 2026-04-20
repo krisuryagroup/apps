@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   computed,
   effect,
@@ -25,7 +26,6 @@ import { I18nPipe } from '@zitro/i18n';
 import {
   BusinessCardComponent,
   BannerCarouselComponent,
-  EvolvedLoaderComponent,
   CartSummaryComponent,
 } from '@zitro/ui';
 import {
@@ -43,7 +43,6 @@ import {
   imports: [
     BusinessCardComponent,
     BannerCarouselComponent,
-    EvolvedLoaderComponent,
     CartSummaryComponent,
     I18nPipe,
   ],
@@ -71,6 +70,18 @@ export class HomeComponent implements OnInit {
   readonly isPureVeg = signal(false);
   readonly searchQuery = signal('');
   readonly isListening = signal(false);
+  readonly hideScrollSection = signal(false);
+  readonly activeFilter = signal<string>('near_fast');
+
+  private lastScrollY = 0;
+
+  readonly filterPills = [
+    { key: 'near_fast',   label: '⚡ Near & Fast' },
+    { key: 'top_rated',  label: '⭐ Top Rated' },
+    { key: 'new',        label: '✨ New' },
+    { key: 'offers',     label: '🏷️ Offers' },
+    { key: 'free_del',   label: '🆓 Free Delivery' },
+  ];
 
   private readonly userLocation = signal<UserLocation | null>(null);
   readonly nearbyBusinesses = signal<NearbyBusiness[]>([]);
@@ -91,9 +102,23 @@ export class HomeComponent implements OnInit {
   });
 
   readonly displayBusinesses = computed(() => {
-    const filter = this.activeTagFilter();
-    if (!filter) return this.filteredByTab();
-    return this.filteredByTab().filter(b => b.tags.includes(filter));
+    const tagFilter = this.activeTagFilter();
+    const activeFilter = this.activeFilter();
+    let list = tagFilter
+      ? this.filteredByTab().filter(b => b.tags.includes(tagFilter))
+      : this.filteredByTab();
+
+    // Apply filter pill logic
+    if (activeFilter === 'top_rated') {
+      list = [...list].sort((a, b) => b.rating - a.rating);
+    } else if (activeFilter === 'near_fast') {
+      list = [...list].sort((a, b) => a.distanceMetres - b.distanceMetres);
+    } else if (activeFilter === 'free_del') {
+      list = list.filter(b => b.deliveryFee === 0);
+    } else if (activeFilter === 'new') {
+      list = list.filter(b => b.isFeatured);
+    }
+    return list;
   });
 
   constructor() {
@@ -124,6 +149,22 @@ export class HomeComponent implements OnInit {
         });
         this.loadData();
       });
+  }
+
+  onFilterChange(key: string): void {
+    this.activeFilter.set(key);
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    const y = window.scrollY;
+    const goingDown = y > this.lastScrollY;
+    if (goingDown && y > 300) {
+      this.hideScrollSection.set(true);
+    } else if (!goingDown) {
+      this.hideScrollSection.set(false);
+    }
+    this.lastScrollY = y;
   }
 
   onTabChange(type: string): void {
@@ -199,7 +240,8 @@ export class HomeComponent implements OnInit {
         }
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading home data', error);
         this.isLoading.set(false);
       },
     });

@@ -1,67 +1,48 @@
-@use 'theme' as *;
+﻿@use 'theme' as *;
 @use 'breakpoints' as *;
-@use 'sass:color';
 
-// ─── Location header ──────────────────────────────────────────────────────────
-.dh-location-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  background: var(--zitro-surface, #fff);
-  border-bottom: 1px solid var(--zitro-outline-variant, #e8e8e8);
+// ─── Main content wrapper ─────────────────────────────────────────────────────
+.dh-main-content {
+  width: 100%;
+  background: #f8f8f8;
+  padding-bottom: 70px;
+}
 
-  .dh-pin-icon {
-    color: $primary-color;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-  }
+// ═══════════════════════════════════════════════════════════════════════════════
+// HERO BANNER ZONE
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  .dh-location-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
+// Hero wrapper — banner carousel child determines height via aspect-ratio
+.dh-hero-wrapper {
+  position: relative;
+  overflow: hidden;
+  // Fallback gradient when no banner image loads
+  background: linear-gradient(160deg, #2c0a14 0%, #7a1828 30%, #c0312a 65%, #e8503a 100%);
 
-  .dh-location-label {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: $text-color;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-
-    .dh-chevron {
-      font-size: 1.1rem;
-    }
-  }
-
-  .dh-location-address {
-    font-size: 0.75rem;
-    color: rgba($text-color, 0.6);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 260px;
+  lib-banner-carousel {
+    display: block;
+    width: 100%;
   }
 }
 
-// ─── Business type tabs ───────────────────────────────────────────────────────
-.dh-tabs-row {
+// Overlay: all hero UI elements float on the banner image
+.dh-hero-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 8;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  // Push content below the fixed transparent header
+  padding-top: calc(70px + env(safe-area-inset-top, 0px));
+}
+
+// ─── Category Tabs (transparent bg, float on banner) ─────────────────────────
+.dh-tabs-row {
   display: flex;
   gap: 0;
   overflow-x: auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 2px solid var(--zitro-outline-variant, #e8e8e8);
-  padding: 0 0.5rem;
-  backdrop-filter: blur(4px);
-
+  background: transparent;
+  scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
 
@@ -69,93 +50,350 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 0.6rem 1.1rem;
+  gap: 5px;
+  min-width: 80px;
+  padding: 4px;
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
   cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 0.2s, color 0.2s;
 
-  .dh-tab-icon { font-size: 1.3rem; }
+  .dh-tab-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    transition: box-shadow 0.2s;
+    // Type-specific tinted backgrounds
+    background: rgba(255, 240, 238, 0.92);
+
+    &[data-type="restaurant"] { background: rgba(255, 240, 238, 0.92); }
+    &[data-type="grocery"]    { background: rgba(240, 255, 246, 0.92); }
+    &[data-type="gift_center"]{ background: rgba(255, 248, 236, 0.92); }
+    &[data-type="pharmacy"]   { background: rgba(238, 244, 255, 0.92); }
+  }
 
   .dh-tab-label {
-    font-size: 0.7rem;
+    font-size: 11px;
     font-weight: 600;
-    color: rgba($text-color, 0.55);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
+  // Active: white label + white ring on icon
   &.dh-tab-active {
-    border-bottom-color: $primary-color;
-    .dh-tab-label { color: $primary-color; }
+    .dh-tab-icon { box-shadow: 0 0 0 2.5px white; }
+    .dh-tab-label { color: white; font-weight: 800; }
   }
 }
 
-// ─── Cuisine tag chips ────────────────────────────────────────────────────────
-.dh-tags-section {
-  padding: 0.75rem 0;
-  background: var(--zitro-surface, #fff);
-  margin-bottom: 0.5rem;
+// ─── Search pill + VEG toggle (white pills on banner) ─────────────────────────
+.dh-search-veg-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 12px 0;
+  background: transparent;
 }
 
-.dh-tags-row {
+.dh-search-pill {
+  flex: 1;
   display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding: 0.25rem 1rem;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border-radius: 10px;
+  padding: 14px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
 
+  .dh-search-icon {
+    color: #999;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .dh-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: $text-color;
+    background: transparent;
+    &::placeholder { color: #aaa; }
+  }
+
+  .dh-mic-btn {
+    background: none;
+    border: none;
+    color: $primary-color;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    .material-icons { font-size: 15px; }
+
+    &.dh-mic-listening {
+      animation: mic-pulse 0.8s ease-in-out infinite;
+    }
+  }
+}
+
+.dh-veg-pill {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  user-select: none;
+
+  .dh-veg-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: #2d2d2d;
+  }
+
+  .dh-veg-track {
+    width: 34px;
+    height: 19px;
+    border-radius: 10px;
+    background: #ddd;
+    position: relative;
+    transition: background 0.2s;
+
+    &.dh-veg-on { background: #1ba672; }
+
+    .dh-veg-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: white;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+
+    &.dh-veg-on .dh-veg-knob { left: 17px; }
+  }
+}
+
+// ─── Hero Promo overlay (bottom of hero) ─────────────────────────────────────
+.dh-hero-promo {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 16px 18px 18px;
+}
+
+.dh-promo-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dh-promo-badge {
+  display: inline-block;
+  background: #ff6b35;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.dh-promo-offer {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffd600;
+  line-height: 1.1;
+}
+
+.dh-promo-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 5px;
+}
+
+.dh-promo-cta {
+  margin-top: 10px;
+  background: white;
+  color: $primary-color;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.dh-promo-food {
+  font-size: 95px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+  align-self: flex-end;
+  margin-bottom: -4px;
+  line-height: 1;
+}
+
+// White gap between hero and below-hero sections
+.dh-hero-end {
+  background: white;
+  height: 8px;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BELOW HERO — scroll-hideable (cuisine chips + filter pills)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.dh-hideable-section {
+  background: white;
+  overflow: hidden;
+  max-height: 600px;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+
+  &.dh-hidden {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+// "What's on your mind?" header
+.dh-chips-header {
+  padding: 13px 16px 8px;
+  background: white;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1c1c1c;
+}
+
+// Cuisine chips horizontal scroll row
+.dh-chips-row {
+  background: white;
+  padding: 0 14px 13px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
 
-.dh-tag-chip {
+// Chip: 60×60 circle
+.dh-chip {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.85rem;
-  border-radius: 20px;
-  border: 1.5px solid var(--zitro-outline-variant, #e0e0e0);
-  background: var(--zitro-surface, #fff);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: $text-color;
+  gap: 5px;
+  min-width: 60px;
+  background: none;
+  border: none;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  padding: 0;
 
-  .dh-tag-icon {
-    width: 18px;
-    height: 18px;
+  .dh-chip-ico {
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    object-fit: cover;
+    background: #fff5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+
+    .dh-chip-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
   }
 
-  &.dh-tag-active {
-    background: $primary-color;
-    border-color: $primary-color;
-    color: #fff;
+  .dh-chip-lbl {
+    font-size: 11px;
+    font-weight: 500;
+    color: #555;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  &.dh-chip-active {
+    .dh-chip-ico {
+      border-color: $primary-color;
+      background: #fff0ef;
+    }
+    .dh-chip-lbl {
+      color: $primary-color;
+      font-weight: 700;
+    }
   }
 }
 
-// ─── Businesses section ───────────────────────────────────────────────────────
-.dh-businesses-section {
-  padding: 0 0 1rem;
+// Filter pills bar
+.dh-filter-bar {
+  display: flex;
+  gap: 7px;
+  padding: 9px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: white;
+  border-top: 1px solid #f2f2f2;
+  border-bottom: 6px solid #f0f0f0;
+  &::-webkit-scrollbar { display: none; }
 }
 
-.dh-section-header {
+.dh-filter-pill {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1rem 0;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  font-size: 11px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &.dh-filter-pill-active {
+    background: $primary-color;
+    color: white;
+    border-color: $primary-color;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUSINESS CARDS SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.dh-section-title {
+  padding: 14px 16px 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1c1c1c;
+  background: #f8f8f8;
 }
 
 .dh-business-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
+  background: #f8f8f8;
+  gap: 8px;
+  padding-bottom: 8px;
 }
 
 .dh-empty-state {
@@ -169,522 +407,78 @@
   p { font-size: 0.9rem; margin: 0; }
 }
 
-.dh-main-content {
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOADING SKELETONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@keyframes dh-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.dh-pulse {
+  animation: dh-pulse 1.4s ease-in-out infinite;
+}
+
+.dh-skeleton-hero {
   width: 100%;
-  // max-width: 480px;
-  margin: 0 auto;
-  // Ensure content never scrolls under the bottom nav
-  padding-bottom: 70px;
-  background: $background-color;
-  
-  @include respond-above(tablet) {
-    // max-width: 768px;
-  }
-  
-  @include respond-above(desktop) {
-    // max-width: 2000px;
-    padding-bottom: 2rem;
-  }
+  aspect-ratio: 1080 / 900;
+  background: #e0e0e0;
 }
 
-// Full-page loading overlay
-.dh-loading-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
+.dh-skeleton-section {
+  background: white;
+  padding-bottom: 8px;
+}
+
+.dh-skeleton-chips-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.85);
-}
-
-// Hero wrapper — banner fills this area; tabs/search are absolutely overlaid
-.dh-hero-wrapper {
-  position: relative;
+  gap: 8px;
+  padding: 4px 14px 13px;
   overflow: hidden;
-
-  lib-banner-carousel {
-    display: block;
-    width: 100%;
-  }
 }
 
-// Row: search bar (flex-1) + VEG toggle — absolutely overlaid on banner, near bottom
-.dh-search-veg-row {
-  position: absolute;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 16px;
-  background: transparent;
-
-  @include respond-above(tablet) {
-    padding: 0 2rem;
-    bottom: 1.5rem;
-  }
-}
-
-// Content section below the hero
-.dh-scroll-content {
-  background: $background-color;
-}
-
-// VEG toggle (label on top, toggle below)
-.dh-veg-toggle-wrap {
+.dh-skeleton-chip {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #e8e8e8;
   flex-shrink: 0;
+}
+
+.dh-skeleton-bar {
+  background: #e8e8e8;
+  border-radius: 4px;
+}
+
+.dh-skeleton-card {
+  background: white;
+}
+
+.dh-skeleton-card-img {
+  width: 100%;
+  height: 170px;
+  background: #e0e0e0;
+}
+
+.dh-skeleton-card-body {
+  padding: 10px 13px 12px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  cursor: pointer;
-  user-select: none;
-
-  .dh-veg-label {
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: $secondary-color;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-
-  .dh-veg-toggle {
-    width: 44px;
-    height: 24px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.3);
-    position: relative;
-    transition: background 0.3s ease;
-
-    &.dh-veg-on {
-      background: #4CAF50;
-    }
-
-    .dh-veg-knob {
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      transition: left 0.3s ease;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-    }
-
-    &.dh-veg-on .dh-veg-knob {
-      left: 23px;
-    }
-  }
+  gap: 8px;
 }
 
-// Search bar — normal flow inside .dh-search-veg-row (NOT absolute)
-.dh-search-container {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  padding: 0;
-  background: transparent;
-
-  .dh-search-bar {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: $secondary-color;
-    border-radius: 28px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    padding: 0.625rem 1rem;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-    max-width: 100%;
-    
-    @include respond-above(tablet) {
-      padding: 0.75rem 1.25rem;
-      border-radius: 30px;
-    }
-    
-    @include respond-above(desktop) {
-      margin: 0 auto;
-      padding: 0.875rem 1.5rem;
-      border-radius: 32px;
-      box-shadow: 0 3px 16px rgba(0, 0, 0, 0.1);
-    }
-    
-    @include respond-above(large-desktop) {
-      padding: 1rem 1.75rem;
-    }
-    
-    &:focus-within {
-      border-color: $primary-color;
-      box-shadow: 0 4px 20px rgba($primary-color, 0.2);
-      transform: translateY(-1px);
-      
-      @include respond-above(desktop) {
-        box-shadow: 0 6px 24px rgba($primary-color, 0.25);
-        transform: translateY(-2px);
-      }
-    }
-    
-    &:hover {
-      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.12);
-      
-      @include respond-above(desktop) {
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
-      }
-    }
-    
-    .dh-search-icon {
-      color: #999;
-      font-size: 1.15rem;
-      margin-right: 0.625rem;
-      flex-shrink: 0;
-      
-      @include respond-above(tablet) {
-        font-size: 1.25rem;
-        margin-right: 0.75rem;
-      }
-      
-      @include respond-above(desktop) {
-        font-size: 1.35rem;
-        margin-right: 1rem;
-        color: #777;
-      }
-    }
-    
-    .dh-search-input {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 0.9rem;
-      color: $text-color;
-      background: transparent;
-      font-weight: 400;
-      line-height: 1.4;
-      
-      @include respond-above(tablet) {
-        font-size: 0.95rem;
-      }
-      
-      @include respond-above(desktop) {
-        font-size: 1rem;
-        font-weight: 500;
-      }
-      
-      &::placeholder {
-        color: #999;
-        font-weight: 400;
-        
-        @include respond-above(desktop) {
-          color: #aaa;
-        }
-      }
-      
-      &:focus::placeholder {
-        color: #ccc;
-      }
-    }
-    
-    .dh-mic-btn {
-      background: none;
-      border: none;
-      color: $primary-color;
-      cursor: pointer;
-      padding: 0.2rem;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: -2rem;
-      flex-shrink: 0;
-      transition: color 0.2s ease;
-
-      .material-icons {
-        font-size: 1.1rem;
-      }
-
-      &.dh-mic-listening {
-        color: $primary-color;
-        animation: mic-pulse 0.9s ease-in-out infinite;
-      }
-
-      &:active {
-        transform: scale(0.9);
-      }
-    }
-
-    .dh-search-clear {
-      background: rgba(0, 0, 0, 0.04);
-      border: none;
-      color: #999;
-      cursor: pointer;
-      padding: 0.375rem;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 0.5rem;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      
-      @include respond-above(tablet) {
-        width: 30px;
-        height: 30px;
-        padding: 0.4rem;
-      }
-      
-      @include respond-above(desktop) {
-        width: 32px;
-        height: 32px;
-        margin-left: 0.75rem;
-      }
-      
-      &:hover {
-        background: rgba(0, 0, 0, 0.08);
-        color: $text-color;
-        transform: scale(1.05);
-      }
-      
-      &:active {
-        transform: scale(0.95);
-      }
-      
-      .material-icons {
-        font-size: 1rem;
-        
-        @include respond-above(tablet) {
-          font-size: 1.1rem;
-        }
-        
-        @include respond-above(desktop) {
-          font-size: 1.15rem;
-        }
-      }
-    }
-  }
+.dh-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: #e8e8e8;
 }
 
-body, :host {
-  font-family: $font-family;
-  background: $background-color;
-}
-.dh-section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0rem 1rem 0.5rem 1rem;
-  color: $text-color;
-}
-
-.dh-recommended-list {
-  display: flex;
-  gap: 1.2rem;
-  margin: 0 1rem 0rem 1rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-.dh-recommended-card {
-  background: #fff;
-  border-radius: $border-radius;
-  box-shadow: $card-shadow;
-  min-width: 180px;
-  max-width: 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  .dh-recommended-img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 50%;
-    margin-bottom: 0.5rem;
-  }
-  .dh-recommended-info {
-    text-align: center;
-    .dh-recommended-title {
-      font-weight: 600;
-      font-size: 1.05rem;
-      color: $text-color;
-      margin-bottom: 0.2rem;
-    }
-    .dh-recommended-meta {
-      font-size: 0.95rem;
-      color: $primary-color;
-      span {
-        color: $text-color;
-        opacity: 0.7;
-        margin-left: 0.3rem;
-      }
-    }
-  }
-  .dh-recommended-add {
-    position: absolute;
-    right: 0.7rem;
-    bottom: 0.7rem;
-    background: $primary-color;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: $card-shadow;
-    cursor: pointer;
-    .material-icons {
-      font-size: 1.3rem;
-    }
-  }
-}
-
-// Popular Items Section
-.popular-items-section {
-  margin: 0rem 1rem 0.5rem 1rem;
-  
-  // Override grid spacing for home page
-  ::ng-deep .products-grid.horizontal-layout {
-    gap: 0.75rem;
-  }
-  
-  ::ng-deep .product-card.horizontal {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
-}
-
-// Loading State
-.loading-products {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  margin: 1rem;
-  
-  .loading-spinner {
-    color: $primary-color;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    
-    &::before {
-      content: '';
-      width: 20px;
-      height: 20px;
-      border: 2px solid $primary-color;
-      border-radius: 50%;
-      border-top-color: transparent;
-      animation: spin 1s linear infinite;
-    }
-  }
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 @keyframes mic-pulse {
   0%, 100% { color: $primary-color; transform: scale(1); }
-  50%       { color: darken($primary-color, 15%); transform: scale(1.2); }
+  50%       { transform: scale(1.2); }
 }
-
-// Responsive adjustments for search bar
-@media (max-width: 400px) {
-  .dh-search-container {
-    background: transparent;
-    padding: 0.5rem;
-    
-    .dh-search-bar {
-      padding: 0.6rem 0.8rem;
-      
-      .dh-search-input {
-        font-size: 0.95rem;
-      }
-    }
-  }
-}
-
-@media (min-width: 600px) {
-  .dh-search-container {
-    background: transparent;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 100%;
-    box-sizing: border-box;
-    display: block;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .dh-restaurant-header {
-    padding: 0.75rem 2rem;
-    min-height: 65px;
-    max-height: 65px;
-    
-    .dh-restaurant-info {
-      .dh-restaurant-name {
-        font-size: 1.25rem;
-      }
-      
-      .dh-location-text {
-        font-size: 0.85rem;
-      }
-    }
-    
-    .dh-restaurant-status {
-      .dh-status-badge {
-        font-size: 0.7rem;
-        padding: 0.3rem 0.6rem;
-      }
-    }
-  }
-}
-
-// Restaurant header responsive styles
-@media (max-width: 400px) {
-  .dh-restaurant-header {
-    padding: 0.6rem 0.75rem;
-    min-height: 55px;
-    max-height: 55px;
-    
-    .dh-restaurant-info {
-      min-height: 35px;
-      
-      .dh-restaurant-name {
-        font-size: 1rem;
-      }
-      
-      .dh-restaurant-location {
-        gap: 0.15rem;
-        
-        .dh-location-icon {
-          font-size: 0.8rem;
-        }
-        
-        .dh-location-text {
-          font-size: 0.75rem;
-        }
-      }
-    }
-    
-    .dh-restaurant-status {
-      margin-left: 0.5rem;
-      
-      .dh-status-badge {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.6rem;
-        border-radius: 10px;
-      }
-    }
-  }
-}
-

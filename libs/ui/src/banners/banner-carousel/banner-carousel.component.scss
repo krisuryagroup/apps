@@ -6,7 +6,7 @@
 
 .banner-carousel__track {
   position: relative;
-  aspect-ratio: 1080 / 900;
+  aspect-ratio: 1080 / 1200;
   width: 100%;
 }
 
@@ -64,24 +64,24 @@
 }
 
 .banner-carousel__dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   border: none;
-  background: #ddd;
+  background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   padding: 0;
   transition: all 0.2s;
 
   &--active {
-    background: var(--color-primary, #e53935);
-    width: 20px;
-    border-radius: 4px;
+    background: white;
+    width: 18px;
+    border-radius: 3px;
   }
 }
 
 .banner-carousel__empty {
   aspect-ratio: 1080 / 900;
   width: 100%;
-  background: #f5f5f5;
+  background: linear-gradient(160deg, #2c0a14 0%, #7a1828 30%, #c0312a 65%, #e8503a 100%);
 }

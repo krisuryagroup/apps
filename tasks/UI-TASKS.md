@@ -120,9 +120,183 @@
 **APIs to verify in Postman:**
 | Endpoint | Service | Purpose |
 |----------|---------|---------|
-| `GET /api/businesses/nearby?lat=X&lng=Y` | `NearbyBusinessesService` | Business cards list |
+| `GET /api/businesses/nearby` | `NearbyBusinessesService` | Business cards list — **extend with filters below** |
 | `GET /api/tags` | `TagsService` | Cuisine tag chips |
 | `GET /api/businesses/{slug}/banners` | `EngagementApiService` | Banner carousel |
+
+---
+
+### Backend Changes Required — Extend `GET /api/businesses/nearby`
+
+> ⚠️ **Flag for backend dev before UI-005 T4 starts.** Do NOT create a new endpoint — extend the existing one to avoid duplicate APIs. The existing `lat`, `lng`, `radiusKm` params stay unchanged.
+
+#### Updated Query Parameter Contract
+
+```
+# Existing (unchanged)
+lat          required  float    28.6086
+lng          required  float    77.4523
+radiusKm     optional  float    10        default: 10
+
+# New params to add
+businessType optional  string   food|grocery|gifts|pharma   — tab filter
+tagIds       optional  string   "1,2,3"   comma-separated tag IDs — cuisine chip filter
+vegOnly      optional  bool     true|false — show businesses with veg options
+sort         optional  string   distance|rating|new|offers  default: distance
+openNow      optional  bool     true|false
+hasOffers    optional  bool     true|false
+freeDelivery optional  bool     true|false
+cursor       optional  string   opaque base64 cursor (for next page)
+limit        optional  int      20    max: 40
+```
+
+#### Updated Response Shape — add these fields to each business object
+
+```json
+{
+  "businesses": [
+    {
+      "id": "uuid",
+      "slug": "efc-pizza",
+      "name": "EFC Pizza",
+      "businessType": "food",
+      "imageUrl": "https://storage.googleapis.com/...",
+      "rating": 4.2,
+      "totalRatings": 128,
+      "distanceM": 1500,
+      "deliveryTimeMinutes": { "min": 25, "max": 30 },
+      "deliveryCharge": 0,
+      "isVeg": false,
+      "isPureVeg": false,
+      "isOpen": true,
+      "tags": [{ "id": 1, "name": "Pizza" }, { "id": 2, "name": "Burger" }],
+      "activeOffer": { "label": "60% off up to ₹120", "type": "discount" }
+    }
+  ],
+  "meta": {
+    "nextCursor": "eyJkIjoxNTAwLCJpZCI6ImFiYyJ9",
+    "hasMore": true
+  }
+}
+```
+
+> **`isPureVeg`** — `true` means the entire restaurant serves only vegetarian food (e.g. a South Indian veg-only restaurant). Show a solid green "PURE VEG" badge on the card. Different from `isVeg` (which means "has veg options").
+
+#### Pagination: Cursor-based, not offset
+
+**Why not `page=2&limit=20`:**
+- `OFFSET 40` forces DB to scan and discard 40 rows — gets slower as data grows
+- If a new business is inserted between pages, page 2 shows a duplicate or skips an item
+
+**Cursor format** (base64-encoded, opaque to frontend):
+```json
+{ "distanceM": 1500, "id": "uuid-of-last-item" }
+```
+DB query: `WHERE (distance_m, id) > (cursor.distanceM, cursor.id)` — index seek, no scan.
+Response `meta.hasMore = false` tells frontend to stop calling.
+
+#### DB Indexes Required
+
+```sql
+-- Existing earthdistance index (confirm it exists)
+CREATE INDEX IF NOT EXISTS idx_businesses_location
+  ON businesses USING gist (ll_to_earth(lat, lng));
+
+-- New: type filter (most common first filter — food/grocery)
+CREATE INDEX IF NOT EXISTS idx_businesses_type_active
+  ON businesses (business_type) WHERE is_active = true;
+
+-- New: pure veg + veg filter
+CREATE INDEX IF NOT EXISTS idx_businesses_veg
+  ON businesses (is_veg, is_pure_veg) WHERE is_active = true;
+
+-- New: tag junction table
+CREATE INDEX IF NOT EXISTS idx_business_tags_tag ON business_tags (tag_id);
+CREATE INDEX IF NOT EXISTS idx_business_tags_biz ON business_tags (business_id);
+```
+
+#### Caching Strategy — Do NOT Cache the `nearby` Response
+
+`GET /api/businesses/nearby` is **user-position-specific** and cannot be cached:
+- Distance ordering is different for every user (user at 1.5km vs 1.9km from same restaurant → different sorted list)
+- Moving 500m near the radius boundary changes which businesses appear entirely
+- Cache hit rate would be near-zero — every lat/lng combination is a different key
+
+**What to cache instead:**
+
+| Endpoint | Cache | TTL constant | Reason |
+|----------|-------|-----|--------|
+| `GET /api/businesses/nearby` | ❌ None | — | User-position-specific |
+| `GET /api/businesses/{slug}` | ✅ Redis | `CacheTtl.BusinessDetails` | Same data for all users |
+| `GET /api/tags` | ✅ Redis | `CacheTtl.Tags` | Global, rarely changes |
+| `GET /api/businesses/{slug}/banners` | ✅ Redis | `CacheTtl.BusinessBanners` | Per-business, not per-user |
+| `GET /api/businesses/{slug}/config` | ✅ Redis | `CacheTtl.BusinessConfig` | Per-business pricing config |
+
+#### Centralized Cache Configuration (backend — one place to change all TTLs)
+
+All TTL values and cache key patterns must live in two files in `zitro-api/`. No magic numbers scattered across services.
+
+**`Infrastructure/Cache/CacheTtl.cs`**
+```csharp
+/// <summary>
+/// Single source of truth for all cache TTLs.
+/// Change here — takes effect everywhere.
+/// </summary>
+public static class CacheTtl
+{
+    public static readonly TimeSpan Tags           = TimeSpan.FromHours(1);
+    public static readonly TimeSpan BusinessDetails = TimeSpan.FromMinutes(5);
+    public static readonly TimeSpan BusinessBanners = TimeSpan.FromMinutes(5);
+    public static readonly TimeSpan BusinessConfig  = TimeSpan.FromMinutes(1);
+}
+```
+
+**`Infrastructure/Cache/CacheKeys.cs`**
+```csharp
+/// <summary>
+/// Single source of truth for all Redis key patterns.
+/// Prevents key typos and makes invalidation safe.
+/// </summary>
+public static class CacheKeys
+{
+    public static string Tags()                     => "tags:all";
+    public static string BusinessDetails(string slug) => $"biz:{slug}:details";
+    public static string BusinessBanners(string slug) => $"biz:{slug}:banners";
+    public static string BusinessConfig(string slug)  => $"biz:{slug}:config";
+}
+```
+
+**Usage in any service (never hardcode TTL inline):**
+```csharp
+// ✅ correct
+await _cache.SetAsync(CacheKeys.Tags(), data, CacheTtl.Tags);
+
+// ❌ never do this
+await _cache.SetAsync("tags:all", data, TimeSpan.FromHours(1));
+```
+
+**Invalidation on business update:**
+```csharp
+// When a business is saved/updated, bust all its cache entries in one call
+await _cache.RemoveAsync(CacheKeys.BusinessDetails(slug));
+await _cache.RemoveAsync(CacheKeys.BusinessBanners(slug));
+await _cache.RemoveAsync(CacheKeys.BusinessConfig(slug));
+// Tags cache is global — only invalidate when a tag is added/removed
+```
+
+**Backend pre-requisite checklist (must be done before T4 starts):**
+- [ ] Create `zitro-api/Zitro.Infrastructure/Cache/CacheTtl.cs` with all TTL constants (1 hr for Tags, 5 min for BusinessDetails/Banners, 1 min for BusinessConfig)
+- [ ] Create `zitro-api/Zitro.Infrastructure/Cache/CacheKeys.cs` with all Redis key patterns
+- [ ] Apply `CacheTtl.*` and `CacheKeys.*` in every service that touches Redis — zero inline `TimeSpan` or hardcoded key strings anywhere in the codebase
+- [ ] Code review gate: PR reviewer must reject any `TimeSpan.FromMinutes(...)` or `"biz:..."` string literal found outside these two files
+
+**How `nearby` stays fast without caching:**
+The PostgreSQL `earthdistance` extension with a GiST index on `ll_to_earth(lat, lng)` resolves a radius query in **~5–20ms** regardless of total row count (up to millions). At 10k orders/day, peak load is ~50–100 nearby API calls/min — well within what a single indexed PostgreSQL instance handles.
+
+**Scale path:**
+- Now → 10k orders/day: GiST index only. No cache.
+- 100k orders/day: Add a PostgreSQL read replica. Route all GETs to replica.
+- 1M+ orders/day: Replace with Elasticsearch `geo_distance` query or Typesense.
 
 ---
 
@@ -194,7 +368,7 @@ The banner image is the background for the **entire** top section: notch area + 
 **Restaurant Cards**
 | Element | Spec |
 |---------|------|
-| Card image | Full-width, 170px tall; real app → Firebase Storage URL in `<img>` |
+| Card image | Full-width, 170px tall; Firebase Storage URL in `<img>`; `onerror` → grey placeholder |
 | Offer badge | Bottom of image, gradient overlay `transparent → rgba(0,0,0,0.68)`, white text, 11px, 700w |
 | Delivery time | Top-right of image, white bg, `#1c1c1c`, 10px, 800w, 4px radius |
 | Restaurant name | 15px, 700w, `#1c1c1c` |
@@ -203,6 +377,7 @@ The banner image is the background for the **entire** top section: notch area + 
 | FREE DELIVERY | 12px, 700w, `#1ba672`; paid delivery → 12px, `#666` |
 | Cuisine tags | 12px, `#888` |
 | Favourite icon | `♡` 17px `#ccc`; saved → `♥ #e23744` |
+| **PURE VEG badge** | `isPureVeg: true` → small solid green square `■` + "PURE VEG" text, 9px, 700w, `#1ba672`, shown top-left of card name row |
 
 **Section Title**
 | Element | Spec |
@@ -236,7 +411,7 @@ The banner image is the background for the **entire** top section: notch area + 
 - [ ] White pill search box with shadow on banner
 - [ ] VEG toggle signal (`vegOnly = signal(false)`)
 - [ ] Tap search bar → navigate to `/search`
-- [ ] VEG on → filter business cards client-side
+- [ ] VEG on → re-calls `GET /api/businesses/nearby` with `vegOnly=true` (server-side filter, not client-side — client never has the full unfiltered list)
 
 #### T4 — Banner Carousel
 - [ ] API: `GET /api/businesses/{slug}/banners` — verify in Postman first
@@ -258,11 +433,13 @@ The banner image is the background for the **entire** top section: notch area + 
 
 #### T7 — Restaurant Cards (BusinessCard component)
 - [ ] Reuse/update `BusinessCardComponent` from `@zitro/ui`
-- [ ] `<img>` with Firebase Storage URL; fallback placeholder on error
-- [ ] Offer badge from business data (if present)
-- [ ] Delivery time badge
+- [ ] `<img>` with Firebase Storage URL; `onerror` → grey placeholder (never broken image icon)
+- [ ] Offer badge from `activeOffer.label` (if present)
+- [ ] Delivery time badge from `deliveryTimeMinutes.min–max`
+- [ ] **PURE VEG badge** — if `isPureVeg === true`, show solid green "■ PURE VEG" 9px label top-left of name
 - [ ] Favourite toggle (local signal for now, API later)
 - [ ] Tap → navigate to `/listing/:slug`
+- [ ] Infinite scroll trigger: `IntersectionObserver` on last card → call `loadMore()` → append next page
 
 #### T8 — Loading Skeletons
 - [ ] Skeleton for banner (full-width rectangle)
@@ -289,10 +466,15 @@ The banner image is the background for the **entire** top section: notch area + 
 - [ ] Banner carousel loads from API, auto-scrolls, dots sync
 - [ ] Cuisine chips auto-hide on scroll down, reappear on scroll up
 - [ ] Filter pills auto-hide with chips
-- [ ] Tab switch filters business cards and cuisine chips
-- [ ] VEG toggle filters cards client-side
-- [ ] Cuisine chip tap filters cards
+- [ ] Tab switch sends `businessType` param to API and refreshes list from page 1
+- [ ] VEG toggle sends `vegOnly=true` to API (server-side — not client-side filter)
+- [ ] Cuisine chip sends `tagIds` param to API and refreshes list
+- [ ] Filter pill sends `sort` param to API and refreshes list
+- [ ] All filter changes reset cursor to null and replace list (not append)
+- [ ] Scroll to last card → infinite scroll loads next page and appends
+- [ ] `isPureVeg` businesses show green "PURE VEG" badge on card
 - [ ] Business card tap navigates to `/listing/:slug`
+- [ ] Network tab shows `GET /api/businesses/nearby` with correct params on every filter change
 - [ ] Loading skeletons show while API resolves
 - [ ] Empty state if no nearby businesses
 - [ ] `nx build zitro-customer --configuration=production` passes clean

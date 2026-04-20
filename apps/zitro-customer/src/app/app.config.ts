@@ -21,7 +21,16 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withViewTransitions()),
-    provideZitroServices({ apiBaseUrl: environment.apiUrl }),
+    provideZitroServices({
+      apiBaseUrl: environment.apiUrl,
+      publicEndpoints: [
+        '/api/app-config',
+        '/api/platform-tags',
+        '/api/businesses/nearby',
+        '/api/tags',
+        '/api/businesses/',   // banners — read-only, guest-browsable
+      ],
+    }),
     provideI18n(),
     provideTheme(),
     provideFirebaseApp(() => initializeApp(FIREBASE_CONFIG as any)),

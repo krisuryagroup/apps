@@ -1,122 +1,156 @@
 @if (isLoading()) {
-  <div class="dh-loading-overlay" data-testid="loading-overlay">
-    <lib-loader />
+  <!-- Per-section loading skeletons -->
+  <div class="dh-main-content">
+    <div class="dh-skeleton-hero dh-pulse"></div>
+    <div class="dh-skeleton-section">
+      <div class="dh-skeleton-bar dh-pulse" style="width:45%;margin:13px 16px 8px;height:16px;border-radius:6px;"></div>
+      <div class="dh-skeleton-chips-row">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="dh-skeleton-chip dh-pulse"></div>
+        }
+      </div>
+    </div>
+    @for (i of [1,2,3]; track i) {
+      <div class="dh-skeleton-card dh-pulse">
+        <div class="dh-skeleton-card-img"></div>
+        <div class="dh-skeleton-card-body">
+          <div class="dh-skeleton-line" style="width:60%;"></div>
+          <div class="dh-skeleton-line" style="width:45%;"></div>
+          <div class="dh-skeleton-line" style="width:75%;"></div>
+        </div>
+      </div>
+    }
   </div>
-}
+} @else {
+  <div class="dh-main-content">
 
-<div class="dh-main-content">
+    <!-- ═══════════════ HERO BANNER ZONE ═══════════════ -->
+    <div class="dh-hero-wrapper">
 
-  <!-- Hero: banner fills behind transparent header; tabs and search+VEG overlay the banner -->
-  <div class="dh-hero-wrapper">
-    <lib-banner-carousel [banners]="banners()" data-testid="banner-carousel" />
+      <!-- Banner image as background (determines height via aspect-ratio) -->
+      <lib-banner-carousel [banners]="banners()" data-testid="banner-carousel" />
 
-    <!-- Business type tabs — overlaid on banner, top of hero -->
-    @if (businessTypeTabs().length) {
-      <div class="dh-tabs-row" data-testid="business-tabs">
-        @for (tab of businessTypeTabs(); track tab) {
+      <!-- Overlay: all hero UI elements float on the banner -->
+      <div class="dh-hero-overlay">
+
+        <!-- Category Tabs — only shown when API returns more than 2 business types -->
+        @if (businessTypeTabs().length > 1) {
+          <div class="dh-tabs-row" data-testid="business-tabs">
+            @for (tab of businessTypeTabs(); track tab) {
+              <button
+                class="dh-tab-btn"
+                [class.dh-tab-active]="activeTab() === tab"
+                (click)="onTabChange(tab)"
+                data-testid="business-tab"
+                [attr.aria-label]="BUSINESS_TYPE_LABELS[tab] || tab">
+                <span class="dh-tab-icon" [attr.data-type]="tab">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
+                <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Search pill + VEG toggle -->
+        <div class="dh-search-veg-row">
+          <div class="dh-search-pill" data-testid="search-bar" (click)="onSearch()">
+            <span class="material-icons dh-search-icon">search</span>
+            <input
+              type="text"
+              class="dh-search-input"
+              [placeholder]="'home.searchPlaceholder' | i18n"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+              (keyup.enter)="onSearch()"
+              (click)="$event.stopPropagation()" />
+            <button
+              class="dh-mic-btn"
+              [class.dh-mic-listening]="isListening()"
+              (click)="startVoiceSearch(); $event.stopPropagation()"
+              type="button">
+              <span class="material-icons">mic</span>
+            </button>
+          </div>
+
+          <div class="dh-veg-pill" (click)="togglePureVeg()" data-testid="veg-toggle">
+            <span class="dh-veg-label">VEG</span>
+            <div class="dh-veg-track" [class.dh-veg-on]="isPureVeg()"
+                 role="switch" [attr.aria-checked]="isPureVeg()">
+              <div class="dh-veg-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /dh-hero-overlay -->
+    </div><!-- /dh-hero-wrapper -->
+
+    <!-- White gap between hero and below-hero sections -->
+    <div class="dh-hero-end"></div>
+
+    <!-- ═══════════════ BELOW HERO ═══════════════ -->
+
+    <!-- Cuisine chips + Filter pills — scroll-hides when scrolling down -->
+    <div class="dh-hideable-section" [class.dh-hidden]="hideScrollSection()">
+
+      <!-- "What's on your mind?" section -->
+      @if (displayTags().length) {
+        <div class="dh-chips-header">{{ 'home.whatsOnYourMind' | i18n }}</div>
+        <div class="dh-chips-row" data-testid="cuisine-chips">
+          @for (tag of displayTags(); track tag.id) {
+            <button
+              class="dh-chip"
+              [class.dh-chip-active]="activeTagFilter() === tag.slug"
+              (click)="onTagFilterClick(tag.slug)"
+              data-testid="cuisine-chip">
+              <div class="dh-chip-ico">
+                @if (tag.iconUrl) {
+                  <img [src]="tag.iconUrl" [alt]="tag.name" class="dh-chip-img" />
+                } @else {
+                  <span>🍽️</span>
+                }
+              </div>
+              <span class="dh-chip-lbl">{{ tag.name }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Filter pills -->
+      <div class="dh-filter-bar">
+        @for (pill of filterPills; track pill.key) {
           <button
-            class="dh-tab-btn"
-            [class.dh-tab-active]="activeTab() === tab"
-            (click)="onTabChange(tab)"
-            [attr.data-testid]="'tab-' + tab">
-            <span class="dh-tab-icon">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
-            <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+            class="dh-filter-pill"
+            [class.dh-filter-pill-active]="activeFilter() === pill.key"
+            (click)="onFilterChange(pill.key)"
+            data-testid="filter-pill">
+            {{ pill.label }}
           </button>
         }
       </div>
-    }
 
-    <!-- Search + VEG toggle — overlaid on banner, near bottom, transparent background -->
-    <div class="dh-search-veg-row">
-      <div class="dh-search-container">
-        <div class="dh-search-bar">
-          <span class="material-icons dh-search-icon">search</span>
-          <input
-            type="text"
-            class="dh-search-input"
-            [placeholder]="'home.searchPlaceholder' | i18n"
-            [value]="searchQuery()"
-            (input)="onSearchInput($event)"
-            (keyup.enter)="onSearch()"
-            data-testid="search-input"
-          />
-          <button
-            class="dh-mic-btn"
-            [class.dh-mic-listening]="isListening()"
-            (click)="startVoiceSearch()"
-            data-testid="voice-search">
-            <span class="material-icons">mic</span>
-          </button>
-          @if (searchQuery()) {
-            <button class="dh-search-clear" (click)="clearSearch()" data-testid="search-clear">
-              <span class="material-icons">clear</span>
-            </button>
-          }
-        </div>
-      </div>
+    </div><!-- /dh-hideable-section -->
 
-      <!-- VEG toggle -->
-      <div class="dh-veg-toggle-wrap" (click)="togglePureVeg()" data-testid="veg-toggle">
-        <span class="dh-veg-label">{{ 'home.veg' | i18n }}</span>
-        <div class="dh-veg-toggle" [class.dh-veg-on]="isPureVeg()"
-             role="switch" [attr.aria-checked]="isPureVeg()">
-          <div class="dh-veg-knob"></div>
-        </div>
-      </div>
-    </div>
-  </div><!-- /dh-hero-wrapper -->
+    <!-- Section title -->
+    <div class="dh-section-title">{{ 'home.topRatedNearYou' | i18n }}</div>
 
-  <!-- Scrollable content -->
-  <div class="dh-scroll-content">
-
-    <!-- Cuisine tag chips -->
-    @if (displayTags().length) {
-      <div class="dh-tags-section" data-testid="tag-chips">
-        <h3 class="dh-section-title">{{ 'home.whatsOnYourMind' | i18n }}</h3>
-        <div class="dh-tags-row">
-          @for (tag of displayTags(); track tag.id) {
-            <button
-              class="dh-tag-chip"
-              [class.dh-tag-active]="activeTagFilter() === tag.slug"
-              (click)="onTagFilterClick(tag.slug)"
-              [attr.data-testid]="'tag-' + tag.slug">
-              @if (tag.iconUrl) {
-                <img [src]="tag.iconUrl" [alt]="tag.name" class="dh-tag-icon" />
-              }
-              <span>{{ tag.name }}</span>
-            </button>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Nearby businesses list -->
-    <div class="dh-businesses-section" data-testid="businesses-list">
-      <div class="dh-section-header">
-        <h3 class="dh-section-title">{{ 'home.topRatedNearYou' | i18n }}</h3>
-      </div>
-
-      @if (!isLoading() && displayBusinesses().length === 0) {
+    <!-- Business cards -->
+    <div class="dh-business-list" data-testid="businesses-list">
+      @if (displayBusinesses().length === 0) {
         <div class="dh-empty-state" data-testid="empty-state">
           <span class="material-icons">storefront</span>
           <p>{{ 'home.noBusinessesFound' | i18n }}</p>
         </div>
       }
-
-      <div class="dh-business-list">
-        @for (business of displayBusinesses(); track business.id) {
-          <lib-business-card
-            [business]="business"
-            [tags]="allTags()"
-            (businessClick)="onBusinessClick($event)"
-            [attr.data-testid]="'business-card-' + business.slug" />
-        }
-      </div>
+      @for (business of displayBusinesses(); track business.id) {
+        <lib-business-card
+          [business]="business"
+          [tags]="allTags()"
+          (businessClick)="onBusinessClick($event)"
+          data-testid="business-card"
+          [attr.data-business-slug]="business.slug" />
+      }
     </div>
 
-  </div><!-- /dh-scroll-content -->
-
-</div>
+  </div><!-- /dh-main-content -->
+}
 
 <!-- Cart Summary -->
 <app-cart-summary></app-cart-summary>
