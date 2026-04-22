@@ -10,6 +10,7 @@
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { getDistance } from 'geolib';
 import { forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -28,13 +29,13 @@ import {
   CartSummaryComponent,
 } from '@zitro/ui';
 import {
-  LOCATION_STORAGE_KEY,
-  UserLocation,
   BUSINESS_TYPE_ORDER,
   BUSINESS_TYPE_LABELS,
   BUSINESS_TYPE_ICONS,
   NEARBY_API_RADIUS_KM,
 } from '../../core/constants/app.constants';
+
+const DEFAULT_HOME_BUSINESS_TYPE = 'restaurant';
 
 @Component({
   selector: 'app-home',
@@ -69,6 +70,7 @@ export class HomeComponent implements OnInit {
   readonly isPureVeg = signal(false);
   readonly searchQuery = signal('');
   readonly isListening = signal(false);
+  readonly isLocationSheetOpen = signal(false);
   readonly activeFilter = signal<string>('near_fast');
 
   readonly filterPills = [
@@ -79,17 +81,16 @@ export class HomeComponent implements OnInit {
     { key: 'free_del',  label: '🆓 Free Delivery' },
   ];
 
-  private readonly userLocation = signal<UserLocation | null>(null);
+  private readonly userLocation = signal<{ lat: number; lng: number; label: string; address: string } | null>(null);
   readonly nearbyBusinesses = signal<NearbyBusiness[]>([]);
   readonly allTags = signal<PlatformTag[]>([]);
   readonly businessTypeTabs = signal<string[]>([]);
   readonly activeTab = signal('');
   readonly activeTagFilter = signal<string | null>(null); // stores tag slug
 
-  readonly displayTags = computed(() => {
-    const tagSlugsInView = new Set(this.nearbyBusinesses().flatMap(b => b.tags));
-    return this.allTags().filter(t => tagSlugsInView.has(t.slug));
-  });
+  private _lastHomeRequestParams: ReturnType<HomeComponent['buildApiParams']> | null = null;
+
+  readonly displayTags = computed(() => this.allTags());
 
   readonly displayBusinesses = computed(() => this.nearbyBusinesses());
 
@@ -102,24 +103,30 @@ export class HomeComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    this.userLocation.set(this.loadStoredLocation());
+    this.userLocation.set(this.mapSelectedLocation(this.locationSelectionService.snapshot));
     await this.analyticsService.logScreenView('Home', 'HomeComponent');
-    this.loadHomeData();
 
     this.bannerService.getBanners()
       .then(b => this.banners.set(b))
       .catch(() => this.banners.set([]));
 
+    this.locationSelectionService.sheetOpen$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isOpen => {
+        const wasOpen = this.isLocationSheetOpen();
+        this.isLocationSheetOpen.set(isOpen);
+        if (wasOpen && !isOpen && this.hasValidLocation()) {
+          this.loadHomeData();
+        }
+      });
+
     this.locationSelectionService.selectedLocation$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(selectedLoc => {
-        this.userLocation.set({
-          lat: selectedLoc.coordinates?.lat ?? 0,
-          lng: selectedLoc.coordinates?.lng ?? 0,
-          label: selectedLoc.label,
-          address: selectedLoc.address,
-        });
-        this.loadHomeData();
+        this.userLocation.set(this.mapSelectedLocation(selectedLoc));
+        if (!this.isLocationSheetOpen()) {
+          this.loadHomeData();
+        }
       });
   }
 
@@ -184,7 +191,7 @@ export class HomeComponent implements OnInit {
     recognition.start();
   }
 
-  private buildApiParams() {
+  private buildApiParams(includeDefaultBusinessType = true) {
     const loc = this.userLocation();
     const filterKey = this.activeFilter();
     const tagSlug = this.activeTagFilter();
@@ -200,7 +207,7 @@ export class HomeComponent implements OnInit {
       lat: loc?.lat ?? 0,
       lng: loc?.lng ?? 0,
       radiusKm: NEARBY_API_RADIUS_KM,
-      businessType: this.activeTab() || undefined,
+      businessType: this.activeTab() || (includeDefaultBusinessType ? DEFAULT_HOME_BUSINESS_TYPE : undefined),
       tagIds: tagId,
       vegOnly: this.isPureVeg() || undefined,
       sort,
@@ -209,12 +216,30 @@ export class HomeComponent implements OnInit {
   }
 
   private loadHomeData(): void {
-    this.activeTab.set('');
+    if (this.isLocationSheetOpen()) {
+      this.isLoading.set(false);
+      return;
+    }
+
     this.activeTagFilter.set(null);
     this.isLoading.set(true);
 
+    if (!this.hasValidLocation()) {
+      this.promptForLocationSelection();
+      return;
+    }
+
+    const requestParams = this.buildApiParams();
+    if (this.isSameHomeRequest(this._lastHomeRequestParams, requestParams)) {
+      this.isLoading.set(false);
+      return;
+    }
+    this._lastHomeRequestParams = requestParams;
+
+    const preferredActiveTab = this.activeTab() || DEFAULT_HOME_BUSINESS_TYPE;
+
     forkJoin({
-      result: this.nearbyService.getNearbyBusinesses(this.buildApiParams()),
+      result: this.nearbyService.getNearbyBusinesses(requestParams),
       tags: this.tagsService.getTags(),
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ result, tags }) => {
@@ -222,18 +247,34 @@ export class HomeComponent implements OnInit {
         this.allTags.set(tags);
         const tabs = this.buildTabs(result.businesses);
         this.businessTypeTabs.set(tabs);
-        if (tabs[0]) {
-          this.themeService.applyBusinessTypeTheme(tabs[0]);
+        const nextActiveTab = tabs.includes(preferredActiveTab)
+          ? preferredActiveTab
+          : (tabs[0] ?? '');
+        this.activeTab.set(nextActiveTab);
+        if (nextActiveTab) {
+          this.themeService.applyBusinessTypeTheme(nextActiveTab);
         }
         this.isLoading.set(false);
       },
       error: () => {
+        this._lastHomeRequestParams = null;
         this.isLoading.set(false);
       },
     });
   }
 
   private loadFilteredData(): void {
+    if (this.isLocationSheetOpen()) {
+      this.isLoading.set(false);
+      return;
+    }
+
+    if (!this.hasValidLocation()) {
+      this.isLoading.set(true);
+      this.promptForLocationSelection();
+      return;
+    }
+
     this.isLoading.set(true);
     this.nearbyService
       .getNearbyBusinesses(this.buildApiParams())
@@ -254,12 +295,58 @@ export class HomeComponent implements OnInit {
     return BUSINESS_TYPE_ORDER.filter(t => typesPresent.has(t));
   }
 
-  private loadStoredLocation(): UserLocation | null {
-    try {
-      const raw = localStorage.getItem(LOCATION_STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as UserLocation) : null;
-    } catch {
-      return null;
-    }
+  private hasValidLocation(): boolean {
+    const loc = this.userLocation();
+    return !!loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng) && (loc.lat !== 0 || loc.lng !== 0);
+  }
+
+  private promptForLocationSelection(): void {
+    this.nearbyBusinesses.set([]);
+    this.allTags.set([]);
+    this.businessTypeTabs.set([]);
+    this.isLoading.set(false);
+    this.locationSelectionService.open();
+  }
+
+  private isSameHomeRequest(
+    previousParams: ReturnType<HomeComponent['buildApiParams']> | null,
+    nextParams: ReturnType<HomeComponent['buildApiParams']>
+  ): boolean {
+    if (!previousParams) return false;
+
+    const sameBusinessType = previousParams.businessType === nextParams.businessType;
+    const sameTagIds = previousParams.tagIds === nextParams.tagIds;
+    const sameVegOnly = previousParams.vegOnly === nextParams.vegOnly;
+    const sameSort = previousParams.sort === nextParams.sort;
+    const sameFreeDelivery = previousParams.freeDelivery === nextParams.freeDelivery;
+    const sameRadius = previousParams.radiusKm === nextParams.radiusKm;
+
+    const coordinateDeltaMeters = getDistance(
+      { latitude: previousParams.lat, longitude: previousParams.lng },
+      { latitude: nextParams.lat, longitude: nextParams.lng }
+    );
+
+    return (
+      sameBusinessType &&
+      sameTagIds &&
+      sameVegOnly &&
+      sameSort &&
+      sameFreeDelivery &&
+      sameRadius &&
+      coordinateDeltaMeters < 25
+    );
+  }
+
+  private mapSelectedLocation(selectedLoc: {
+    label: string;
+    address: string;
+    coordinates?: { lat: number; lng: number };
+  }): { lat: number; lng: number; label: string; address: string } {
+    return {
+      lat: selectedLoc.coordinates?.lat ?? 0,
+      lng: selectedLoc.coordinates?.lng ?? 0,
+      label: selectedLoc.label,
+      address: selectedLoc.address,
+    };
   }
 }

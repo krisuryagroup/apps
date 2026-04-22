@@ -1,17 +1,283 @@
 @use 'theme' as *;
 
+// ── Page shell ───────────────────────────────────────────────────────────────
+// height: 100% doesn't work because .main-content has no fixed height (only min-height).
+// Use viewport units directly: header=70px, bottom-nav=56px.
 .listing-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100dvh - 126px); // 70px header + 56px bottom nav
+  max-height: calc(100dvh - 126px);
   overflow: hidden;
+  background: var(--zitro-background, #f5f7fa);
 }
 
-.listing-controls {
+// ── Sticky header ────────────────────────────────────────────────────────────
+.listing-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  top: 24px;
+  padding: 10px 14px;
+  background: var(--zitro-surface, #fff);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+
+  &__search {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+// ── Scrollable product list ──────────────────────────────────────────────────
+.listing-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 0 112px; // top breathing room + space above nav bar
+}
+
+.listing-no-results {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 8px 0 0;
-  background: var(--color-surface, #fff);
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 56px 24px;
+  text-align: center;
+
+  &__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--zitro-on-surface, #212121);
+  }
+
+  &__copy {
+    margin: 0;
+    font-size: 14px;
+    color: var(--zitro-on-surface-variant, #757575);
+  }
+}
+
+// ── Category sections ────────────────────────────────────────────────────────
+.category-section {
+  margin: 16px 0 0;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 16px 14px 20px;
+    background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 5%, var(--zitro-surface, #fff));
+    border: none;
+    cursor: pointer;
+    position: sticky;
+    top: 8px;
+    z-index: 10;
+    text-align: left;
+    border-radius: 0 14px 14px 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-left: 4px solid var(--zitro-primary, #C73E3A);
+    transition: background 0.15s;
+
+    &:active {
+      background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 10%, var(--zitro-surface, #fff));
+    }
+  }
+
+  &__name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--zitro-on-surface, #212121);
+    letter-spacing: 0.1px;
+  }
+
+  &__count {
+    // Pill badge
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 12%, transparent);
+    color: var(--zitro-primary, #C73E3A);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  &__chevron {
+    color: var(--zitro-on-surface-variant, #757575);
+    flex-shrink: 0;
+    transition: transform 0.25s ease, color 0.2s;
+
+    // When expanded (--up modifier absent = collapsed, --up = expanded)
+    &--up {
+      transform: rotate(0deg);
+      color: var(--zitro-primary, #C73E3A);
+    }
+    // Default (collapsed) state: arrow points down
+    &:not(&--up) {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__products {
+    padding: 12px 16px 0;
+  }
+}
+
+// ── Floating category menu button (bottom-right, above nav bar) ──────────────
+// Nav bar is 56px; FAB sits 154px above it
+.category-menu-fab {
+  position: fixed;
+  bottom: calc(56px + 154px);
+  right: 16px;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 0 12px;
+  height: 38px;
+  border-radius: 24px;
+  background: var(--zitro-on-surface, #212121);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  }
+}
+
+// ── Category index sheet (overlay) ──────────────────────────────────────────
+// z-index above the bottom nav bar (9999) so the sheet and close button
+// are fully accessible.
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.category-sheet {
+  position: fixed;
+  bottom: calc(56px + 154px); // same height as FAB so it appears to emerge from the button
+  left: 70px;
+  right: 80px;
+  background: var(--zitro-surface, #fff);
+  border-radius: 20px;
+  z-index: 10001;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.1s;
+
+    &:active { background: rgba(0, 0, 0, 0.04); }
+
+    &--active {
+      .category-sheet__name {
+        color: var(--zitro-primary, #c73e3a);
+        font-weight: 700;
+      }
+      .category-sheet__count {
+        color: var(--zitro-primary, #c73e3a);
+        font-weight: 700;
+      }
+    }
+  }
+
+  &__name {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--zitro-on-surface, #212121);
+    text-align: left;
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  &__count {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--zitro-on-surface, #212121);
+    min-width: 28px;
+    text-align: right;
+  }
+}
+
+// ── Sheet close button — fixed at same position as FAB ───────────────────────
+.sheet-close-fab {
+  position: fixed;
+  bottom: calc(56px + 154px);
+  right: 16px;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 0 12px;
+  height: 38px;
+  border-radius: 24px;
+  background: var(--zitro-on-surface, #212121);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.15s;
+
+  &:active { transform: scale(0.95); }
+}
+
+// ── Product card image-right override (Swiggy-style) ────────────────────────
+:host ::ng-deep lib-product-card .product-card[data-layout="list"] {
+  flex-direction: row-reverse;
+
+  .product-card__body {
+    padding-right: 0;
+    padding-left: 12px;
+  }
+}
+
+// ── Animations ───────────────────────────────────────────────────────────────
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }

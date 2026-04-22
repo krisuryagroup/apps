@@ -3,7 +3,11 @@
   gap: 12px;
   grid-template-columns: repeat(2, 1fr);
 
-  &[data-columns="1"] { grid-template-columns: 1fr; }
+  &[data-columns="1"] {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   &[data-columns="3"] { grid-template-columns: repeat(3, 1fr); }
 }
 

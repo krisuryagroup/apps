@@ -193,7 +193,13 @@ export class ImageCacheService {
       return cachedUrl;
     }
 
-    return await this.downloadAndCacheImage(url);
+    try {
+      return await this.downloadAndCacheImage(url);
+    } catch {
+      // fetch() requires CORS headers that many external hosts don't set.
+      // Returning the URL directly lets the <img> tag load it without CORS restrictions.
+      return url;
+    }
   }
 
   async deleteCachedImage(url: string): Promise<void> {

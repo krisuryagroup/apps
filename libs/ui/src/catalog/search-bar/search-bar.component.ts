@@ -1,10 +1,23 @@
-import { ChangeDetectionStrategy, Component, input, output, signal, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnChanges,
+  OnDestroy,
+  SimpleChanges,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { I18nPipe } from '@zitro/i18n';
 
 export interface SearchBarConfig {
   debounceMs: number;
+  placeholderKey: string;
 }
-export const SEARCH_BAR_DEFAULT_CONFIG: SearchBarConfig = { debounceMs: 300 };
+export const SEARCH_BAR_DEFAULT_CONFIG: SearchBarConfig = {
+  debounceMs: 300,
+  placeholderKey: 'listing.searchPlaceholder',
+};
 
 @Component({
   selector: 'lib-search-bar',
@@ -14,7 +27,7 @@ export const SEARCH_BAR_DEFAULT_CONFIG: SearchBarConfig = { debounceMs: 300 };
   styleUrl: './search-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchBarComponent implements OnChanges {
+export class SearchBarComponent implements OnChanges, OnDestroy {
   config = input<SearchBarConfig>(SEARCH_BAR_DEFAULT_CONFIG);
   value = input<string>('');
 
@@ -31,13 +44,25 @@ export class SearchBarComponent implements OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this._debounceTimer) {
+      clearTimeout(this._debounceTimer);
+    }
+  }
+
   onInput(event: Event): void {
     const val = (event.target as HTMLInputElement).value;
     this.localValue.set(val);
     if (this._debounceTimer) clearTimeout(this._debounceTimer);
+    const debounceMs = this.config().debounceMs;
+    if (debounceMs <= 0) {
+      this.searchChange.emit(val);
+      return;
+    }
+
     this._debounceTimer = setTimeout(() => {
       this.searchChange.emit(val);
-    }, this.config().debounceMs);
+    }, debounceMs);
   }
 
   onClear(): void {

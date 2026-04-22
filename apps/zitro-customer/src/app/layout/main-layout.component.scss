@@ -823,6 +823,21 @@ html, body {
   }
 }
 
+.dh-header-hidden {
+  .main-content {
+    margin-top: 0 !important;
+    min-height: calc(100vh - 56px);
+    min-height: calc(100dvh - 56px);
+  }
+
+  @include respond-above(large-desktop) {
+    .main-content {
+      min-height: calc(100vh - 70px);
+      min-height: calc(100dvh - 70px);
+    }
+  }
+}
+
 
 // ---- Header left section -----------------------------------------------
 .dh-header .dh-header-left {

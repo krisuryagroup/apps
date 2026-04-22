@@ -1,45 +1,78 @@
 <div
-  class="product-card"
+  class="pc"
   [attr.data-layout]="config().layout"
   (click)="onCardClick()"
   data-testid="product-card"
 >
-  <div class="product-card__image-wrap">
-    <img
-      [cachedSrc]="product().imageUrl || 'assets/foodCategories/default.png'"
-      [fallbackSrc]="'assets/foodCategories/default.png'"
-      [alt]="product().name"
-      class="product-card__image"
-    />
-    @if (config().showDietaryBadge) {
-      @if (isVeg()) {
-        <span class="product-card__badge product-card__badge--veg" data-testid="veg-indicator">●</span>
-      } @else {
-        <span class="product-card__badge product-card__badge--nonveg" data-testid="nonveg-indicator">●</span>
-      }
-    }
-  </div>
-
-  <div class="product-card__body">
-    <span class="product-card__name">{{ product().name }}</span>
-    <span class="product-card__price" data-testid="product-card-price">₹{{ effectivePrice() }}</span>
+  <!-- ── Image + CTA (RIGHT in list via flex row-reverse, TOP in grid via column) ── -->
+  <div class="pc__image-side">
+    <div class="pc__image-wrap">
+      <img
+        [cachedSrc]="product().imageUrl || 'assets/img/unknown.png'"
+        [fallbackSrc]="'assets/img/unknown.png'"
+        [alt]="product().name"
+        class="pc__image"
+      />
+    </div>
 
     @if (!isAvailable()) {
-      <span class="product-card__out-of-stock" data-testid="product-card-out-of-stock">
+      <span class="pc__out-of-stock" data-testid="product-card-out-of-stock">
         {{ 'listing.outOfStock' | i18n }}
       </span>
     } @else if (config().showAddButton) {
       @if (quantity() > 0) {
-        <div class="product-card__qty" data-testid="product-card-qty-controls">
-          <button class="product-card__qty-btn" (click)="onDecrement($event)" data-testid="product-card-decrement-btn" type="button">−</button>
-          <span class="product-card__qty-value" data-testid="product-card-qty">{{ quantity() }}</span>
-          <button class="product-card__qty-btn" (click)="onIncrement($event)" data-testid="product-card-increment-btn" type="button">+</button>
+        <div class="pc__qty" data-testid="product-card-qty-controls">
+          <button class="pc__qty-btn" (click)="onDecrement($event)" data-testid="product-card-decrement-btn" type="button">−</button>
+          <span class="pc__qty-value" data-testid="product-card-qty">{{ quantity() }}</span>
+          <button class="pc__qty-btn" (click)="onIncrement($event)" data-testid="product-card-increment-btn" type="button">+</button>
         </div>
       } @else {
-        <button class="product-card__add-btn" (click)="onAddClick($event)" data-testid="product-card-add-btn" type="button">
-          {{ 'listing.addToCart' | i18n }}
+        <button class="pc__add-btn" (click)="onAddClick($event)" data-testid="product-card-add-btn" type="button">
+          ADD <span class="pc__add-plus">+</span>
         </button>
       }
+    }
+
+    @if (product().isCustomisable) {
+      <span class="pc__customisable">customisable</span>
+    }
+  </div>
+
+  <!-- ── Content (LEFT in list, BOTTOM in grid) ── -->
+  <div class="pc__body">
+    @if (config().showDietaryBadge && foodType()) {
+      <div class="pc__indicators">
+        <span
+          class="pc__food-type"
+          [class.pc__food-type--veg]="isVeg()"
+          [class.pc__food-type--nonveg]="foodType() === 'NonVeg'"
+          [class.pc__food-type--egg]="foodType() === 'Egg'"
+        >
+          <span class="pc__food-type-dot"></span>
+        </span>
+        @if (product().isSpicy) {
+          <span class="pc__spicy">🌶️</span>
+        }
+      </div>
+    }
+
+    <span class="pc__name">{{ product().name }}</span>
+
+    <div class="pc__price-block">
+      @if (product().originalPrice && product().originalPrice !== effectivePrice()) {
+        <span class="pc__price-original">₹{{ product().originalPrice }}</span>
+        <span class="pc__price-discounted" data-testid="product-card-price">Get for ₹{{ effectivePrice() }}</span>
+      } @else {
+        <span class="pc__price" data-testid="product-card-price">₹{{ effectivePrice() }}</span>
+      }
+    </div>
+
+    @if (product().description) {
+      <p class="pc__desc">{{ product().description }}</p>
+    }
+
+    @if (product().isOfferDisabled) {
+      <span class="pc__no-coupon">NCT ELIGIBLE FOR COUPONS</span>
     }
   </div>
 </div>

@@ -34,7 +34,13 @@ export class CatalogProductCardComponent {
   increment = output<Product>();
   decrement = output<Product>();
 
-  isVeg = computed(() => this.product().dietaryPreferences?.includes('Veg') ?? false);
+  isVeg = computed(() => {
+    const ft = this.product().foodType;
+    if (ft) return ft === 'Veg';
+    return this.product().dietaryPreferences?.includes('Veg') ?? false;
+  });
+
+  foodType = computed(() => this.product().foodType ?? null);
 
   effectivePrice = computed(() => {
     const p = this.product();

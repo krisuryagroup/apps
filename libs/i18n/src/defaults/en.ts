@@ -259,7 +259,7 @@ export const EN_DEFAULTS = {
   },
   listing: {
     title: 'Menu',
-    searchPlaceholder: 'Search items...',
+    searchPlaceholder: 'Search for dishes...',
     noResults: 'No items found',
     addToCart: 'Add',
     outOfStock: 'Out of stock',
