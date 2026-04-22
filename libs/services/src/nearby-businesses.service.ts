@@ -1,30 +1,56 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
-import type { NearbyBusiness } from '@zitro/models';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import type { NearbyBusinessesResponse } from '@zitro/models';
 import { ZITRO_API_BASE_URL } from './tokens';
+
+export interface NearbyBusinessesParams {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+  businessType?: string;
+  tagIds?: string;
+  vegOnly?: boolean;
+  sort?: string;
+  openNow?: boolean;
+  freeDelivery?: boolean;
+  cursor?: string;
+  limit?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class NearbyBusinessesService {
   private http = inject(HttpClient);
   private baseUrl = inject(ZITRO_API_BASE_URL);
 
-  /** In-memory session cache: key = `${lat},${lng}` */
-  private readonly sessionCache = new Map<string, NearbyBusiness[]>();
+  getNearbyBusinesses(params: NearbyBusinessesParams): Observable<NearbyBusinessesResponse> {
+    let httpParams = new HttpParams()
+      .set('lat', String(params.lat))
+      .set('lng', String(params.lng))
+      .set('radiusKm', String(params.radiusKm ?? 10));
 
-  getNearbyBusinesses(lat: number, lng: number, radiusKm = 10): Observable<NearbyBusiness[]> {
-    const key = `${lat},${lng}`;
-    const cached = this.sessionCache.get(key);
-    if (cached) return of(cached);
+    if (params.businessType) httpParams = httpParams.set('businessType', params.businessType);
+    if (params.tagIds)       httpParams = httpParams.set('tagIds', params.tagIds);
+    if (params.vegOnly != null)     httpParams = httpParams.set('vegOnly', String(params.vegOnly));
+    if (params.sort)         httpParams = httpParams.set('sort', params.sort);
+    if (params.openNow != null)     httpParams = httpParams.set('openNow', String(params.openNow));
+    if (params.freeDelivery != null) httpParams = httpParams.set('freeDelivery', String(params.freeDelivery));
+    if (params.cursor)       httpParams = httpParams.set('cursor', params.cursor);
+    if (params.limit != null)       httpParams = httpParams.set('limit', String(params.limit));
 
     return this.http
-      .get<NearbyBusiness[]>(`${this.baseUrl}/api/businesses/nearby`, {
-        params: { lat: String(lat), lng: String(lng), radiusKm: String(radiusKm) },
-      })
-      .pipe(tap(businesses => this.sessionCache.set(key, businesses)));
-  }
-
-  getByType(businesses: NearbyBusiness[], type: string): NearbyBusiness[] {
-    return businesses.filter(b => b.businessType === type);
+      .get<NearbyBusinessesResponse>(`${this.baseUrl}/api/businesses/nearby`, { params: httpParams })
+      .pipe(
+        map(response => ({
+          ...response,
+          businesses: response.businesses.map(b => ({
+            ...b,
+            deliveryTimeDisplay: b.deliveryTimeMinutes
+              ? `${b.deliveryTimeMinutes.min}-${b.deliveryTimeMinutes.max} min`
+              : null,
+          })),
+        }))
+      );
   }
 }

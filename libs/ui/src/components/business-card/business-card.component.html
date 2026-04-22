@@ -26,6 +26,8 @@
         [class.business-card__product-slider--fade]="config().productSliderAnimation === 'fade'"
         [class.business-card__product-slider--slide]="config().productSliderAnimation === 'slide'"
         data-testid="product-slider"
+        (touchstart)="onSliderTouchStart($event)"
+        (touchend)="onSliderTouchEnd($event)"
       >
         @for (product of business().latestProducts; track product.id; let i = $index) {
           <div
@@ -76,12 +78,6 @@
       </span>
     }
 
-    @if (business().deliveryTimeDisplay) {
-      <span class="business-card__badge business-card__badge--time" data-testid="delivery-time">
-        {{ business().deliveryTimeDisplay }}
-      </span>
-    }
-
     @if (!business().isActive) {
       <div class="business-card__overlay-closed" data-testid="closed-overlay">
         <span>{{ 'businessCard.closed' | i18n }}</span>
@@ -93,35 +89,48 @@
   <div class="business-card__body">
     <h3 class="business-card__name" data-testid="business-name">{{ business().name }}</h3>
 
-    @if (config().showRating || config().showDistance || config().showTags) {
-      <p class="business-card__meta" data-testid="business-meta">
-        @if (config().showRating) {
-          <span class="business-card__rating">⭐ {{ business().rating }}</span>
+    <!-- Info row: rating · delivery time · distance -->
+    <div class="business-card__info-row">
+      @if (config().showRating && business().rating > 0) {
+        <span class="business-card__rating-pill" data-testid="business-rating">
+          ⭐ {{ business().rating }}
+        </span>
+        <span class="business-card__sep">·</span>
+      }
+      @if (business().deliveryTimeDisplay) {
+        <span class="business-card__info-item">
+          🕐 {{ business().deliveryTimeDisplay }}
+        </span>
+        <span class="business-card__sep">·</span>
+      }
+      @if (config().showDistance && distanceKmDisplay()) {
+        <span class="business-card__info-item" data-testid="business-distance">
+          📍 {{ distanceKmDisplay() }}
+        </span>
+      }
+    </div>
+
+    <!-- Tags: single-line horizontal scroll -->
+    @if (config().showTags && tagNames()) {
+      <div class="business-card__tags" data-testid="business-tags">
+        @for (tag of tagNames().split(', '); track tag) {
+          <span class="business-card__tag-chip">{{ tag }}</span>
         }
-        @if (config().showDistance) {
-          <span class="business-card__distance">· {{ business().distanceMetres }}{{ 'businessCard.mSuffix' | i18n }}</span>
-        }
-        @if (config().showTags && tagNames()) {
-          <span class="business-card__tags" data-testid="business-tags">· {{ tagNames() }}</span>
-        }
-      </p>
+      </div>
     }
 
-    @if (config().showMinOrder || config().showDeliveryFee) {
-      <p class="business-card__footer">
-        @if (config().showMinOrder && business().minOrderAmount > 0) {
-          <span>{{ 'businessCard.minOrder' | i18n }} ₹{{ business().minOrderAmount }}</span>
+    <!-- Footer: delivery fee + offer -->
+    <div class="business-card__footer">
+      @if (config().showDeliveryFee) {
+        @if (business().deliveryCharge === 0) {
+          <span class="business-card__free-delivery">🚚 Free Delivery</span>
+        } @else {
+          <span class="business-card__delivery-fee">₹{{ business().deliveryCharge }} delivery</span>
         }
-        @if (config().showDeliveryFee) {
-          <span>
-            @if (business().deliveryFee === 0) {
-              {{ 'businessCard.freeDelivery' | i18n }}
-            } @else {
-              {{ 'businessCard.deliveryFee' | i18n }} ₹{{ business().deliveryFee }}
-            }
-          </span>
-        }
-      </p>
-    }
+      }
+      @if (business().activeOffer) {
+        <span class="business-card__offer-badge">🏷️ {{ business().activeOffer!.label }}</span>
+      }
+    </div>
   </div>
 </div>

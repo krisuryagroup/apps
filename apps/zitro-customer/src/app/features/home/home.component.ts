@@ -1,8 +1,7 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  HostListener,
   OnInit,
   computed,
   effect,
@@ -70,17 +69,14 @@ export class HomeComponent implements OnInit {
   readonly isPureVeg = signal(false);
   readonly searchQuery = signal('');
   readonly isListening = signal(false);
-  readonly hideScrollSection = signal(false);
   readonly activeFilter = signal<string>('near_fast');
 
-  private lastScrollY = 0;
-
   readonly filterPills = [
-    { key: 'near_fast',   label: '⚡ Near & Fast' },
-    { key: 'top_rated',  label: '⭐ Top Rated' },
-    { key: 'new',        label: '✨ New' },
-    { key: 'offers',     label: '🏷️ Offers' },
-    { key: 'free_del',   label: '🆓 Free Delivery' },
+    { key: 'near_fast',  label: '⚡ Near & Fast' },
+    { key: 'top_rated', label: '⭐ Top Rated' },
+    { key: 'new',       label: '✨ New' },
+    { key: 'offers',    label: '🏷️ Offers' },
+    { key: 'free_del',  label: '🆓 Free Delivery' },
   ];
 
   private readonly userLocation = signal<UserLocation | null>(null);
@@ -88,38 +84,14 @@ export class HomeComponent implements OnInit {
   readonly allTags = signal<PlatformTag[]>([]);
   readonly businessTypeTabs = signal<string[]>([]);
   readonly activeTab = signal('');
-  readonly activeTagFilter = signal<string | null>(null);
-
-  readonly filteredByTab = computed(() => {
-    const tab = this.activeTab();
-    if (!tab) return this.nearbyBusinesses();
-    return this.nearbyBusinesses().filter(b => b.businessType === tab);
-  });
+  readonly activeTagFilter = signal<string | null>(null); // stores tag slug
 
   readonly displayTags = computed(() => {
-    const tagSlugsInTab = new Set(this.filteredByTab().flatMap(b => b.tags));
-    return this.allTags().filter(t => tagSlugsInTab.has(t.slug));
+    const tagSlugsInView = new Set(this.nearbyBusinesses().flatMap(b => b.tags));
+    return this.allTags().filter(t => tagSlugsInView.has(t.slug));
   });
 
-  readonly displayBusinesses = computed(() => {
-    const tagFilter = this.activeTagFilter();
-    const activeFilter = this.activeFilter();
-    let list = tagFilter
-      ? this.filteredByTab().filter(b => b.tags.includes(tagFilter))
-      : this.filteredByTab();
-
-    // Apply filter pill logic
-    if (activeFilter === 'top_rated') {
-      list = [...list].sort((a, b) => b.rating - a.rating);
-    } else if (activeFilter === 'near_fast') {
-      list = [...list].sort((a, b) => a.distanceMetres - b.distanceMetres);
-    } else if (activeFilter === 'free_del') {
-      list = list.filter(b => b.deliveryFee === 0);
-    } else if (activeFilter === 'new') {
-      list = list.filter(b => b.isFeatured);
-    }
-    return list;
-  });
+  readonly displayBusinesses = computed(() => this.nearbyBusinesses());
 
   constructor() {
     effect(() => {
@@ -132,7 +104,7 @@ export class HomeComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.userLocation.set(this.loadStoredLocation());
     await this.analyticsService.logScreenView('Home', 'HomeComponent');
-    this.loadData();
+    this.loadHomeData();
 
     this.bannerService.getBanners()
       .then(b => this.banners.set(b))
@@ -147,34 +119,26 @@ export class HomeComponent implements OnInit {
           label: selectedLoc.label,
           address: selectedLoc.address,
         });
-        this.loadData();
+        this.loadHomeData();
       });
   }
 
   onFilterChange(key: string): void {
     this.activeFilter.set(key);
+    this.loadFilteredData();
   }
 
-  @HostListener('window:scroll')
-  onWindowScroll(): void {
-    const y = window.scrollY;
-    const goingDown = y > this.lastScrollY;
-    if (goingDown && y > 300) {
-      this.hideScrollSection.set(true);
-    } else if (!goingDown) {
-      this.hideScrollSection.set(false);
-    }
-    this.lastScrollY = y;
-  }
 
   onTabChange(type: string): void {
     this.activeTab.set(type);
     this.activeTagFilter.set(null);
     this.themeService.applyBusinessTypeTheme(type);
+    this.loadFilteredData();
   }
 
   onTagFilterClick(slug: string): void {
     this.activeTagFilter.update(f => f === slug ? null : slug);
+    this.loadFilteredData();
   }
 
   onBusinessClick(business: NearbyBusiness): void {
@@ -183,6 +147,7 @@ export class HomeComponent implements OnInit {
 
   togglePureVeg(): void {
     this.isPureVeg.update(v => !v);
+    this.loadFilteredData();
   }
 
   onSearch(): void {
@@ -219,32 +184,69 @@ export class HomeComponent implements OnInit {
     recognition.start();
   }
 
-  private loadData(): void {
+  private buildApiParams() {
     const loc = this.userLocation();
-    const lat = loc?.lat ?? 0;
-    const lng = loc?.lng ?? 0;
+    const filterKey = this.activeFilter();
+    const tagSlug = this.activeTagFilter();
+    const tagId = tagSlug ? this.allTags().find(t => t.slug === tagSlug)?.id : undefined;
 
+    let sort = 'distance';
+    let freeDelivery: boolean | undefined;
+    if (filterKey === 'top_rated') { sort = 'rating'; }
+    else if (filterKey === 'new') { sort = 'new'; }
+    else if (filterKey === 'free_del') { sort = 'distance'; freeDelivery = true; }
+
+    return {
+      lat: loc?.lat ?? 0,
+      lng: loc?.lng ?? 0,
+      radiusKm: NEARBY_API_RADIUS_KM,
+      businessType: this.activeTab() || undefined,
+      tagIds: tagId,
+      vegOnly: this.isPureVeg() || undefined,
+      sort,
+      freeDelivery,
+    };
+  }
+
+  private loadHomeData(): void {
+    this.activeTab.set('');
+    this.activeTagFilter.set(null);
     this.isLoading.set(true);
+
     forkJoin({
-      businesses: this.nearbyService.getNearbyBusinesses(lat, lng, NEARBY_API_RADIUS_KM),
+      result: this.nearbyService.getNearbyBusinesses(this.buildApiParams()),
       tags: this.tagsService.getTags(),
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ businesses, tags }) => {
-        this.nearbyBusinesses.set(businesses);
+      next: ({ result, tags }) => {
+        this.nearbyBusinesses.set(result.businesses);
         this.allTags.set(tags);
-        const tabs = this.buildTabs(businesses);
+        const tabs = this.buildTabs(result.businesses);
         this.businessTypeTabs.set(tabs);
-        this.activeTab.set(tabs[0] ?? '');
         if (tabs[0]) {
           this.themeService.applyBusinessTypeTheme(tabs[0]);
         }
         this.isLoading.set(false);
       },
-      error: (error) => {
-        console.error('Error loading home data', error);
+      error: () => {
         this.isLoading.set(false);
       },
     });
+  }
+
+  private loadFilteredData(): void {
+    this.isLoading.set(true);
+    this.nearbyService
+      .getNearbyBusinesses(this.buildApiParams())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ businesses }) => {
+          this.nearbyBusinesses.set(businesses);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      });
   }
 
   private buildTabs(businesses: NearbyBusiness[]): string[] {

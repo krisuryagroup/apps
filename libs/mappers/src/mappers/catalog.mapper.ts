@@ -1,7 +1,7 @@
 // Maps .NET API response DTOs → @zitro/models interfaces.
 // Field name differences between DTO and legacy model are resolved here.
 import type { Product, ProductVariation, Category } from '@zitro/models';
-import type { ProductDto, ProductVariationDto, CategoryDto } from '../dtos/catalog.dto';
+import type { ProductDto, ProductVariationDto, CategoryDto, BusinessMenuProductDto } from '../dtos/catalog.dto';
 
 export const CatalogMapper = {
   /**
@@ -67,5 +67,29 @@ export const CatalogMapper = {
 
   toCategoryList(dtos: CategoryDto[]): Category[] {
     return dtos.map(CatalogMapper.toCategory);
+  },
+
+  /**
+   * Maps a BusinessMenuProductDto from GET /api/businesses/{slug}/menu → Product model.
+   * Key differences from ProductDto:
+   *   DTO.price           → model.price   (was basePrice)
+   *   DTO.displayOrder    → model.priority (was sortOrder)
+   */
+  toBusinessMenuProduct(dto: BusinessMenuProductDto): Product {
+    return {
+      id: dto.id,
+      name: dto.name,
+      price: dto.price,
+      imageUrl: dto.imageUrl ?? undefined,
+      description: dto.description ?? undefined,
+      category: dto.categoryId,
+      isEnabledForOnlineOrders: dto.isAvailable,
+      hasVariations: dto.variations.length > 0,
+      variations: dto.variations.map(CatalogMapper.toVariation),
+    };
+  },
+
+  toBusinessMenuProductList(dtos: BusinessMenuProductDto[]): Product[] {
+    return dtos.map(CatalogMapper.toBusinessMenuProduct);
   },
 };

@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, output, signal, HostListener } from '@angular/core';
 import { I18nPipe } from '@zitro/i18n';
 import { NearbyBusiness, PlatformTag } from '@zitro/models';
 
@@ -20,7 +20,7 @@ export const BUSINESS_CARD_DEFAULT_CONFIG: BusinessCardConfig = {
   showDistance: true,
   showTags: true,
   showProductSlider: true,
-  productSliderIntervalMs: 3000,
+  productSliderIntervalMs: 4500,
   productSliderAnimation: 'fade',
 };
 
@@ -35,6 +35,7 @@ export class BusinessCardComponent {
   business = input.required<NearbyBusiness>();
   tags = input<PlatformTag[]>([]);
   config = input<BusinessCardConfig>(BUSINESS_CARD_DEFAULT_CONFIG);
+  index = input<number>(0);
 
   businessClick = output<NearbyBusiness>();
 
@@ -42,14 +43,30 @@ export class BusinessCardComponent {
 
   private destroyRef = inject(DestroyRef);
   private sliderTimer: ReturnType<typeof setInterval> | null = null;
+  private touchStartX = 0;
+
+  distanceKmDisplay = computed(() => {
+    const metres = this.business().distanceMetres;
+    if (metres == null) return null;
+    const km = Math.max(1, metres / 1000);
+    const rounded = Math.round(km * 10) / 10;
+    return `${rounded.toFixed(1)} km away`;
+  });
 
   constructor() {
     effect(() => {
       const products = this.business().latestProducts;
       const cfg = this.config();
+      const idx = this.index();
       this.stopSlider();
       if (cfg.showProductSlider && products && products.length > 1) {
-        this.startSlider(products.length, cfg.productSliderIntervalMs);
+        const delay = idx * 500;
+        if (delay > 0) {
+          const t = setTimeout(() => this.startSlider(products.length, cfg.productSliderIntervalMs), delay);
+          this.destroyRef.onDestroy(() => clearTimeout(t));
+        } else {
+          this.startSlider(products.length, cfg.productSliderIntervalMs);
+        }
       }
     });
     this.destroyRef.onDestroy(() => this.stopSlider());
@@ -66,6 +83,21 @@ export class BusinessCardComponent {
 
   onCardClick(): void {
     this.businessClick.emit(this.business());
+  }
+
+  onSliderTouchStart(e: TouchEvent): void {
+    this.touchStartX = e.changedTouches[0].clientX;
+  }
+
+  onSliderTouchEnd(e: TouchEvent): void {
+    const diff = e.changedTouches[0].clientX - this.touchStartX;
+    const total = this.business().latestProducts?.length ?? 0;
+    if (total <= 1) return;
+    if (diff < -40) {
+      this.currentProductIndex.update(i => (i + 1) % total);
+    } else if (diff > 40) {
+      this.currentProductIndex.update(i => (i - 1 + total) % total);
+    }
   }
 
   private startSlider(total: number, intervalMs: number): void {

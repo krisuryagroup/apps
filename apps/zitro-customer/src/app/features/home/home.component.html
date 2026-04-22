@@ -88,7 +88,7 @@
     <!-- ═══════════════ BELOW HERO ═══════════════ -->
 
     <!-- Cuisine chips + Filter pills — scroll-hides when scrolling down -->
-    <div class="dh-hideable-section" [class.dh-hidden]="hideScrollSection()">
+    <div class="dh-hideable-section">
 
       <!-- "What's on your mind?" section -->
       @if (displayTags().length) {
@@ -139,10 +139,11 @@
           <p>{{ 'home.noBusinessesFound' | i18n }}</p>
         </div>
       }
-      @for (business of displayBusinesses(); track business.id) {
+      @for (business of displayBusinesses(); track business.id; let i = $index) {
         <lib-business-card
           [business]="business"
           [tags]="allTags()"
+          [index]="i"
           (businessClick)="onBusinessClick($event)"
           data-testid="business-card"
           [attr.data-business-slug]="business.slug" />

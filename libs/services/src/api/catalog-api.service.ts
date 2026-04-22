@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import type { Product } from '@zitro/models';
 import type { Category } from '@zitro/models';
 import { CatalogMapper } from '@zitro/mappers';
-import type { ProductDto, CategoryDto } from '@zitro/mappers';
+import type { ProductDto, CategoryDto, BusinessMenuResponseDto } from '@zitro/mappers';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
 
@@ -62,5 +62,25 @@ export class CatalogApiService {
   invalidateProductCache(businessSlug: string): void {
     this.cache.invalidate(`products:${businessSlug}`);
     this.cache.invalidate(`menu:${businessSlug}:all`);
+  }
+
+  /**
+   * Fetches the full business menu from GET /api/businesses/{slug}/menu.
+   * Returns both products and an empty categories array (the menu endpoint
+   * does not return category metadata).
+   */
+  getBusinessMenu(businessSlug: string): Observable<{ products: Product[]; categories: Category[] }> {
+    const cacheKey = `businessMenu:${businessSlug}`;
+    const cached = this.cache.get<{ products: Product[]; categories: Category[] }>(cacheKey);
+    if (cached) return of(cached);
+    return this.http
+      .get<BusinessMenuResponseDto>(`${this.baseUrl}/api/businesses/${businessSlug}/menu`)
+      .pipe(
+        map(dto => ({
+          products: CatalogMapper.toBusinessMenuProductList(dto.products),
+          categories: [] as Category[],
+        })),
+        tap(menu => this.cache.set(cacheKey, menu, { ttlHours: 1 })),
+      );
   }
 }

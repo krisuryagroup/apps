@@ -7,14 +7,20 @@ const BASE: NearbyBusiness = {
   name: 'The Hunger Point',
   businessType: 'restaurant',
   rating: 4.3,
+  totalRatings: 120,
   deliveryTimeDisplay: '25-35 min',
-  deliveryFee: 30,
+  deliveryTimeMinutes: { min: 25, max: 35 },
+  deliveryCharge: 30,
   minOrderAmount: 150,
   isActive: true,
   isFeatured: true,
+  isVeg: false,
+  isPureVeg: false,
+  isOpen: true,
   distanceMetres: 850,
   tags: ['north-indian', 'chinese', 'fast-food'],
   imageUrl: 'https://storage.googleapis.com/the-hunger-point.appspot.com/businesses/hunger_point.jpg',
+  activeOffer: null,
 };
 
 export const NearbyBusinessDtoFactory = {

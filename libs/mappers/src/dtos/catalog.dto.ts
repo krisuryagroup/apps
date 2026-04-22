@@ -36,3 +36,28 @@ export interface CategoryDto {
   isActive: boolean;
   parentCategoryId: string | null;
 }
+
+/** Product shape returned inside GET /api/businesses/{slug}/menu response. */
+export interface BusinessMenuProductDto {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  originalPrice: number | null;
+  isAvailable: boolean;
+  isPureVeg: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  categoryId: string;
+  foodType: 'Veg' | 'NonVeg' | 'Egg' | null;
+  imageUrl: string | null;
+  prepTimeMinutes: number;
+  variations: ProductVariationDto[];
+}
+
+/** Top-level shape of GET /api/businesses/{slug}/menu response. */
+export interface BusinessMenuResponseDto {
+  businessSlug: string;
+  menuMode: string;
+  products: BusinessMenuProductDto[];
+}

@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
 import { CatalogApiService, CartService } from '@zitro/services';
 import { Category, Product, ProductVariation } from '@zitro/models';
@@ -120,10 +119,8 @@ export class ListingComponent implements OnInit {
     this.isLoading.set(true);
     this.hasError.set(false);
 
-    forkJoin({
-      products: this.catalogApi.getProducts(slug),
-      categories: this.catalogApi.getCategories(slug),
-    })
+    this.catalogApi
+      .getBusinessMenu(slug)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ products, categories }) => {
