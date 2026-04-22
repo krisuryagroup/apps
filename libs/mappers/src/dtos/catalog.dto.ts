@@ -37,6 +37,18 @@ export interface CategoryDto {
   parentCategoryId: string | null;
 }
 
+/** Nested category object returned inside each product in GET /api/businesses/{slug}/menu. */
+export interface CategoryInProductDto {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  path: string;
+  parentCategoryId: string | null;
+  status: boolean;
+  isEnabledForOnlineOrders: boolean;
+  priority: number;
+}
+
 /** Product shape returned inside GET /api/businesses/{slug}/menu response. */
 export interface BusinessMenuProductDto {
   id: string;
@@ -49,6 +61,7 @@ export interface BusinessMenuProductDto {
   isActive: boolean;
   displayOrder: number;
   categoryId: string;
+  category?: CategoryInProductDto | null;
   foodType: 'Veg' | 'NonVeg' | 'Egg' | null;
   imageUrl: string | null;
   prepTimeMinutes: number;

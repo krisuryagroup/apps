@@ -1,7 +1,7 @@
 // Maps .NET API response DTOs → @zitro/models interfaces.
 // Field name differences between DTO and legacy model are resolved here.
 import type { Product, ProductVariation, Category } from '@zitro/models';
-import type { ProductDto, ProductVariationDto, CategoryDto, BusinessMenuProductDto } from '../dtos/catalog.dto';
+import type { ProductDto, ProductVariationDto, CategoryDto, BusinessMenuProductDto, BusinessMenuResponseDto } from '../dtos/catalog.dto';
 
 export const CatalogMapper = {
   /**
@@ -86,10 +86,43 @@ export const CatalogMapper = {
       isEnabledForOnlineOrders: dto.isAvailable,
       hasVariations: dto.variations.length > 0,
       variations: dto.variations.map(CatalogMapper.toVariation),
+      foodType: dto.foodType ?? null,
     };
   },
 
   toBusinessMenuProductList(dtos: BusinessMenuProductDto[]): Product[] {
     return dtos.map(CatalogMapper.toBusinessMenuProduct);
+  },
+
+  /**
+   * Extracts both products and unique categories from a BusinessMenuResponseDto.
+   * Categories are derived from the nested `category` object on each product,
+   * deduplicated by id, and sorted by priority.
+   */
+  toBusinessMenuProductsAndCategories(dto: BusinessMenuResponseDto): { products: Product[]; categories: Category[] } {
+    const categoryMap = new Map<string, { category: Category; priority: number }>();
+
+    const products = dto.products.map(productDto => {
+      const cat = productDto.category;
+      if (cat && !categoryMap.has(cat.id)) {
+        categoryMap.set(cat.id, {
+          priority: cat.priority,
+          category: {
+            id: cat.id,
+            name: cat.name,
+            imageUrl: cat.imageUrl ?? undefined,
+            displayOrder: cat.priority,
+            isActive: cat.status,
+          },
+        });
+      }
+      return CatalogMapper.toBusinessMenuProduct(productDto);
+    });
+
+    const categories = Array.from(categoryMap.values())
+      .sort((a, b) => a.priority - b.priority)
+      .map(e => e.category);
+
+    return { products, categories };
   },
 };

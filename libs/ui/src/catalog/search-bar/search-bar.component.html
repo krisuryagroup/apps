@@ -6,8 +6,14 @@
     class="search-bar__input"
     type="search"
     [value]="localValue()"
-    [placeholder]="'home.searchPlaceholder' | i18n"
+    [placeholder]="config().placeholderKey | i18n"
+    [attr.aria-label]="config().placeholderKey | i18n"
+    autocomplete="off"
+    autocapitalize="none"
+    spellcheck="false"
+    enterkeyhint="search"
     (input)="onInput($event)"
+    (keydown.escape)="onClear()"
     data-testid="search-input"
   />
   @if (localValue()) {

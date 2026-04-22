@@ -71,6 +71,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return !disable;
   }
 
+  get shouldShowHeader(): boolean {
+    if (!this.headerVisible) {
+      return false;
+    }
+
+    const isMobileOrTablet = this.breakpoint === 'mobile' || this.breakpoint === 'tablet';
+    if (isMobileOrTablet) {
+      return this.isOnHomePage;
+    }
+
+    return true;
+  }
+
   // Route-based settings refresh tracking
   private lastRouteRefreshTimestamp = 0;
   private readonly ROUTE_REFRESH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
@@ -403,20 +416,85 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       const pref = this.locationService.getLocationPermissionPreference();
       if (pref === 'denied') { return; }
       const cached = this.locationService.getCachedLocation();
-      if (cached.coordinates) {
-        const addr = await this.locationSelectionService.reverseGeocode(
-          cached.coordinates.lat, cached.coordinates.lng
-        );
-        this.locationSelectionService.setLocation({
-          label: 'Current Location',
-          address: addr,
-          coordinates: cached.coordinates,
-          type: 'gps'
-        });
+      const coordinates = cached.coordinates ?? await this.locationService.getCurrentLocation();
+
+      if (await this.userManagementService.isLoggedIn()) {
+        const nearestSavedAddress = await this.findNearestSavedAddress(coordinates);
+        if (nearestSavedAddress) {
+          this.locationSelectionService.setLocation(nearestSavedAddress.location);
+          this.locationSelectionService.setSelectedSavedAddress(nearestSavedAddress.address);
+          return;
+        }
       }
+
+      const addr = await this.locationSelectionService.reverseGeocode(
+        coordinates.lat,
+        coordinates.lng
+      );
+      this.locationSelectionService.setLocation({
+        label: 'Current Location',
+        address: addr,
+        coordinates,
+        type: 'gps'
+      });
+      this.locationSelectionService.setSelectedSavedAddress(null);
     } catch {
       // Silently fail — default text remains
     }
+  }
+
+  private async findNearestSavedAddress(coordinates: { lat: number; lng: number }): Promise<{
+    address: Awaited<ReturnType<UserManagementService['getUserDefaultAddress']>> extends infer T
+      ? Exclude<T, null>
+      : never;
+    location: {
+      label: string;
+      address: string;
+      coordinates?: { lat: number; lng: number };
+      type: 'saved';
+    };
+  } | null> {
+    const phone = await this.userManagementService.getCurrentUserPhone();
+    if (!phone) return null;
+
+    const userData = await this.userManagementService.getUserData(phone);
+    const addresses = userData?.addresses ?? [];
+    if (addresses.length === 0) return null;
+
+    const resolvedAddresses = await Promise.all(
+      addresses.map(async address => {
+        const fullAddress = [address.houseAndStreet, address.town, address.state]
+          .filter(Boolean)
+          .join(', ');
+
+        if (!fullAddress) return null;
+
+        try {
+          const suggestions = await this.locationSelectionService.searchAddresses(fullAddress, coordinates);
+          const match = suggestions[0];
+          if (!match) return null;
+
+          return {
+            address,
+            location: {
+              label: address.type || 'Home',
+              address: fullAddress,
+              coordinates: match.coordinates,
+              type: 'saved' as const,
+            },
+            distanceKm: this.locationService.calculateDistance(coordinates, match.coordinates),
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const nearestAddress = resolvedAddresses
+      .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null)
+      .sort((left, right) => left.distanceKm - right.distanceKm)[0];
+
+    return nearestAddress ?? null;
   }
 
   // Restaurant selection methods - DISABLED FOR NOW

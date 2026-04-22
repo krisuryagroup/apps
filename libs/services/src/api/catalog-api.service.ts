@@ -66,8 +66,8 @@ export class CatalogApiService {
 
   /**
    * Fetches the full business menu from GET /api/businesses/{slug}/menu.
-   * Returns both products and an empty categories array (the menu endpoint
-   * does not return category metadata).
+   * Extracts both products and categories from the response
+   * (categories are embedded in each product's `category` field).
    */
   getBusinessMenu(businessSlug: string): Observable<{ products: Product[]; categories: Category[] }> {
     const cacheKey = `businessMenu:${businessSlug}`;
@@ -76,10 +76,7 @@ export class CatalogApiService {
     return this.http
       .get<BusinessMenuResponseDto>(`${this.baseUrl}/api/businesses/${businessSlug}/menu`)
       .pipe(
-        map(dto => ({
-          products: CatalogMapper.toBusinessMenuProductList(dto.products),
-          categories: [] as Category[],
-        })),
+        map(dto => CatalogMapper.toBusinessMenuProductsAndCategories(dto)),
         tap(menu => this.cache.set(cacheKey, menu, { ttlHours: 1 })),
       );
   }

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideLocationMocks } from '@angular/common/testing';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { HomeComponent } from './home.component';
 import {
   NearbyBusinessesService,
@@ -13,9 +13,8 @@ import {
 } from '@zitro/services';
 import { ThemeService } from '@zitro/theme';
 import { provideI18nForTests } from '@zitro/i18n';
-
 function createMockNearbyService() {
-  return { getNearbyBusinesses: vi.fn(() => of([])) };
+  return { getNearbyBusinesses: vi.fn(() => of({ businesses: [] })) };
 }
 
 function createMockTagsService() {
@@ -31,7 +30,21 @@ function createMockAnalyticsService() {
 }
 
 function createMockLocationService() {
-  return { selectedLocation$: new Subject() };
+  const selectedLocation$ = new BehaviorSubject({
+    label: 'Home',
+    address: 'Set your location',
+    type: 'none' as const,
+  });
+  const sheetOpen$ = new BehaviorSubject(false);
+
+  return {
+    selectedLocation$,
+    sheetOpen$,
+    open: vi.fn(),
+    get snapshot() {
+      return selectedLocation$.value;
+    },
+  };
 }
 
 function createMockBannerService() {
@@ -127,5 +140,119 @@ describe('HomeComponent', () => {
   it('should return empty displayBusinesses when no nearby businesses', () => {
     const fixture = TestBed.createComponent(HomeComponent);
     expect(fixture.componentInstance.displayBusinesses()).toEqual([]);
+  });
+
+  it('should open location modal and skip nearby request when coordinates are missing', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const nearbyService = TestBed.inject(NearbyBusinessesService as any);
+    const locationSelectionService = TestBed.inject(LocationSelectionService as any);
+
+    await component.ngOnInit();
+
+    expect(locationSelectionService.open).toHaveBeenCalled();
+    expect(nearbyService.getNearbyBusinesses).not.toHaveBeenCalled();
+  });
+
+  it('should default nearby businessType to restaurant when no tab is selected', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const nearbyService = TestBed.inject(NearbyBusinessesService as any);
+    const locationSelectionService = TestBed.inject(LocationSelectionService as any);
+
+    locationSelectionService.selectedLocation$.next({
+      label: 'Home',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 26.8467, lng: 80.9462 },
+    });
+
+    await component.ngOnInit();
+
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lat: 26.8467,
+        lng: 80.9462,
+        businessType: 'restaurant',
+      })
+    );
+  });
+
+  it('should not call nearby while location modal is open even if coordinates arrive', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const nearbyService = TestBed.inject(NearbyBusinessesService as any);
+    const locationSelectionService = TestBed.inject(LocationSelectionService as any);
+
+    locationSelectionService.sheetOpen$.next(true);
+    await component.ngOnInit();
+    nearbyService.getNearbyBusinesses.mockClear();
+
+    locationSelectionService.selectedLocation$.next({
+      label: 'Current Location',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 26.8467, lng: 80.9462 },
+    });
+
+    expect(nearbyService.getNearbyBusinesses).not.toHaveBeenCalled();
+
+    locationSelectionService.sheetOpen$.next(false);
+
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalled();
+  });
+
+  it('should not call nearby multiple times for the same initial location state', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const nearbyService = TestBed.inject(NearbyBusinessesService as any);
+    const locationSelectionService = TestBed.inject(LocationSelectionService as any);
+
+    locationSelectionService.selectedLocation$.next({
+      label: 'Current Location',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 26.8467, lng: 80.9462 },
+    });
+
+    await component.ngOnInit();
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalledTimes(1);
+
+    locationSelectionService.sheetOpen$.next(true);
+    locationSelectionService.sheetOpen$.next(false);
+    locationSelectionService.selectedLocation$.next({
+      label: 'Current Location',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 26.8467, lng: 80.9462 },
+    });
+
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call nearby again when auto-location only shifts a few meters', async () => {
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const nearbyService = TestBed.inject(NearbyBusinessesService as any);
+    const locationSelectionService = TestBed.inject(LocationSelectionService as any);
+
+    locationSelectionService.selectedLocation$.next({
+      label: 'Current Location',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 28.608366050966605, lng: 77.45597726127718 },
+    });
+
+    await component.ngOnInit();
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalledTimes(1);
+
+    locationSelectionService.selectedLocation$.next({
+      label: 'Current Location',
+      address: 'Lucknow',
+      type: 'gps',
+      coordinates: { lat: 28.608298999999995, lng: 77.45609658 },
+    });
+
+    expect(nearbyService.getNearbyBusinesses).toHaveBeenCalledTimes(1);
   });
 });

@@ -133,7 +133,6 @@ export class CartPage implements OnDestroy {
 
   private readonly cartSub: Subscription;
   private readonly routerSub: Subscription;
-  private readonly addressSub: Subscription;
 
   constructor() {
     this.init();
@@ -154,10 +153,6 @@ export class CartPage implements OnDestroy {
         }
       });
 
-    this.addressSub = this.addressApi.getAddresses().subscribe({
-      next: addrs => this.applyAddresses(addrs),
-      error: () => this.addresses.set([]),
-    });
   }
 
   private async init(): Promise<void> {
@@ -174,6 +169,7 @@ export class CartPage implements OnDestroy {
 
     await this.calculatePricing();
     await this.checkAuth();
+    if (this.isLoggedIn()) await this.loadAddresses();
     this.cart.set(this.cartService.getCart());
     this.handleCouponReturn();
   }
@@ -562,6 +558,5 @@ export class CartPage implements OnDestroy {
   ngOnDestroy(): void {
     this.cartSub.unsubscribe();
     this.routerSub.unsubscribe();
-    this.addressSub.unsubscribe();
   }
 }

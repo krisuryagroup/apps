@@ -1,8 +1,8 @@
-<div class="main-layout" [class.dh-home-active]="isOnHomePage">
+<div class="main-layout" [class.dh-home-active]="isOnHomePage" [class.dh-header-hidden]="!shouldShowHeader">
   <header class="dh-header"
           [class.dh-header--transparent]="isOnHomePage && !scrolledPastBanner"
           [style.--header-text-color]="headerTextColor"
-          *ngIf="headerVisible">
+          *ngIf="shouldShowHeader">
 
     <!-- LEFT: Back / Hamburger (non-home only) + Location (home) or title -->
     <div class="dh-header-left">
@@ -104,7 +104,7 @@
   <app-footer></app-footer>
 
   <!-- WhatsApp Floating Button -->
-  <app-whatsapp-button *ngIf="!isOnGameRoute"></app-whatsapp-button>
+  <!-- <app-whatsapp-button *ngIf="!isOnGameRoute"></app-whatsapp-button> -->
 
   <app-bottom-nav *ngIf="!isOnGameRoute"></app-bottom-nav>
 

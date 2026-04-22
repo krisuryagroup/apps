@@ -32,7 +32,10 @@ export interface Product {
   isRecommended?: boolean; // Legacy recommended field
   isNew?: boolean; // Whether product is new
   isSpicy?: boolean; // Whether product is spicy
+  isCustomisable?: boolean; // Whether product can be customised (e.g. toppings, size)
+  originalPrice?: number; // MRP / pre-discount price; if set and differs from price, show strikethrough
   dietaryPreferences?: string[]; // Dietary preferences
+  foodType?: 'Veg' | 'NonVeg' | 'Egg' | null; // Food type from API
   
   // UI/Cart functionality
   qty?: number; // Quantity in cart
