@@ -153,6 +153,9 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
           params['businessSlug'] ||
           localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
           '';
+        if (slug) {
+          localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, slug);
+        }
         if (slug !== this._businessSlug()) {
           this._businessSlug.set(slug);
           this.loadData(slug);

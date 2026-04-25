@@ -7,27 +7,29 @@
     }
   </h3>
 
-  <label class="add-address-form__field">
-    <span>{{ 'address.fullName' | i18n }}</span>
-    <input
-      type="text"
-      [value]="name()"
-      (input)="name.set($any($event.target).value)"
-      data-testid="address-name-input"
-      autocomplete="name"
-    />
-  </label>
+  <div class="add-address-form__row">
+    <label class="add-address-form__field">
+      <span>{{ 'address.fullName' | i18n }}</span>
+      <input
+        type="text"
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+        data-testid="address-name-input"
+        autocomplete="name"
+      />
+    </label>
 
-  <label class="add-address-form__field">
-    <span>{{ 'address.phoneNumber' | i18n }}</span>
-    <input
-      type="tel"
-      [value]="phone()"
-      (input)="phone.set($any($event.target).value)"
-      data-testid="address-phone-input"
-      autocomplete="tel"
-    />
-  </label>
+    <label class="add-address-form__field">
+      <span>{{ 'address.phoneNumber' | i18n }}</span>
+      <input
+        type="tel"
+        [value]="phone()"
+        (input)="phone.set($any($event.target).value)"
+        data-testid="address-phone-input"
+        autocomplete="tel"
+      />
+    </label>
+  </div>
 
   <label class="add-address-form__field">
     <span>{{ 'address.houseStreet' | i18n }}</span>
@@ -49,39 +51,41 @@
     />
   </label>
 
-  <label class="add-address-form__field">
-    <span>{{ 'address.pincode' | i18n }}</span>
-    <input
-      type="text"
-      [value]="pincode()"
-      (input)="pincode.set($any($event.target).value)"
-      maxlength="6"
-      inputmode="numeric"
-      data-testid="address-pincode-input"
-    />
-    @if (pincodeError()) {
-      <span class="add-address-form__error" data-testid="address-pincode-error">
-        {{ 'address.pincodeError' | i18n }}
-      </span>
-    }
-  </label>
+  <div class="add-address-form__row">
+    <label class="add-address-form__field">
+      <span>{{ 'address.pincode' | i18n }}</span>
+      <input
+        type="text"
+        [value]="pincode()"
+        readonly
+        maxlength="6"
+        inputmode="numeric"
+        data-testid="address-pincode-input"
+      />
+      @if (pincodeError()) {
+        <span class="add-address-form__error" data-testid="address-pincode-error">
+          {{ 'address.pincodeError' | i18n }}
+        </span>
+      }
+    </label>
 
-  <label class="add-address-form__field">
-    <span>{{ 'address.town' | i18n }}</span>
-    <input
-      type="text"
-      [value]="town()"
-      (input)="town.set($any($event.target).value)"
-      data-testid="address-town-input"
-    />
-  </label>
+    <label class="add-address-form__field">
+      <span>{{ 'address.town' | i18n }}</span>
+      <input
+        type="text"
+        [value]="town()"
+        readonly
+        data-testid="address-town-input"
+      />
+    </label>
+  </div>
 
   <label class="add-address-form__field">
     <span>{{ 'address.state' | i18n }}</span>
     <input
       type="text"
       [value]="state()"
-      (input)="state.set($any($event.target).value)"
+      readonly
       data-testid="address-state-input"
     />
   </label>

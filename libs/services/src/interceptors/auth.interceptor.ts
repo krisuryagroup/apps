@@ -9,6 +9,9 @@ function isPublicEndpoint(url: string, publicEndpoints: string[]): boolean {
 }
 
 function isInternalApiRequest(url: string): boolean {
+  if (url.includes('googleapis.com') || url.includes('places.googleapis.com')) {
+    return false;
+  }
   return url.includes('/api/');
 }
 

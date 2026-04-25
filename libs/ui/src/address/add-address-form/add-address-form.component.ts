@@ -8,6 +8,13 @@ export interface AddAddressFormConfig {
 }
 export const ADD_ADDRESS_FORM_DEFAULT_CONFIG: AddAddressFormConfig = { mode: 'add' };
 
+export interface AddressLocationPatch {
+  pincode: string;
+  town: string;
+  state: string;
+  landmark?: string;
+}
+
 @Component({
   selector: 'lib-add-address-form',
   standalone: true,
@@ -19,6 +26,8 @@ export const ADD_ADDRESS_FORM_DEFAULT_CONFIG: AddAddressFormConfig = { mode: 'ad
 export class AddAddressFormComponent {
   config = input<AddAddressFormConfig>(ADD_ADDRESS_FORM_DEFAULT_CONFIG);
   initialData = input<Partial<Address> | null>(null);
+  locationPatch = input<AddressLocationPatch | null>(null);
+  pincodeRestricted = input<boolean>(false);
 
   submitted = output<AddressFormData>();
   cancelled = output<void>();
@@ -36,6 +45,7 @@ export class AddAddressFormComponent {
   pincodeError = computed(() => this.pincode().length > 0 && !/^\d{6}$/.test(this.pincode()));
 
   isValid = computed(() =>
+    !this.pincodeRestricted() &&
     this.name().trim().length > 0 &&
     this.phone().trim().length > 0 &&
     this.houseAndStreet().trim().length > 0 &&
@@ -59,6 +69,17 @@ export class AddAddressFormComponent {
         this.state.set(data.state ?? '');
         this.type.set(data.type ?? 'Home');
         this.isDefault.set(data.isDefault ?? false);
+      }
+    }, { allowSignalWrites: true });
+
+    // Only updates geo fields — preserves name, phone, houseAndStreet typed by user
+    effect(() => {
+      const patch = this.locationPatch();
+      if (patch) {
+        this.pincode.set(patch.pincode ?? '');
+        this.town.set(patch.town ?? '');
+        this.state.set(patch.state ?? '');
+        if (patch.landmark !== undefined) this.landmark.set(patch.landmark);
       }
     }, { allowSignalWrites: true });
   }

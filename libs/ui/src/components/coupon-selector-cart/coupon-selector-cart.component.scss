@@ -1,194 +1,77 @@
-@use 'theme' as *;
-@use "sass:color";
+// ── Coupon cart section (Swiggy-style compact rows) ─────────────────────────
+.coupon-cart {
+  background: var(--zitro-surface, #fff);
+  border-radius: 12px;
+  overflow: hidden;
+}
 
-.coupon-cart-section {
-  margin: 1rem 0;
+.coupon-cart__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  width: 100%;
 
-  .applied-coupon-display {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, #e8f5e8 0%, #f1f9f1 100%);
-    border: 1px solid #4caf50;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+  &:last-child {
+    border-bottom: none;
+  }
 
-    .coupon-success-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+  // Applied coupon row
+  &--applied {
+    .coupon-cart__applied-label {
       flex: 1;
-
-      .material-icons {
-        color: #4caf50;
-        font-size: 1.5rem;
-      }
-
-      .coupon-info {
-        .coupon-title {
-          font-weight: 700;
-          font-size: 1rem;
-          color: #2e7d32;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .coupon-savings {
-          font-size: 0.9rem;
-          color: #388e3c;
-          font-weight: 500;
-          margin-top: 0.25rem;
-        }
-      }
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--zitro-on-surface, #212121);
     }
 
-    .remove-coupon {
-      background: transparent;
-      border: none;
-      color: $text-secondary-color;
-      padding: 0.5rem;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .coupon-cart__check-icon {
+      color: #2e7d32;
       display: flex;
       align-items: center;
-      justify-content: center;
+      flex-shrink: 0;
+    }
 
-      &:hover {
-        background: rgba(255, 0, 0, 0.1);
-        color: #f44336;
-      }
-
-      .material-icons {
-        font-size: 1.25rem;
-      }
+    .coupon-cart__discount {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2e7d32;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
   }
 
-  .view-coupons-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    background: $secondary-color;
-    border: 2px dashed $primary-color;
-    border-radius: 12px;
+  // View all coupons nav row
+  &--nav {
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    text-align: left;
+    transition: background 0.15s;
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(74, 144, 226, 0.03) 0%, rgba(74, 144, 226, 0.08) 100%);
-      transition: all 0.3s ease;
-      opacity: 0;
+    &:active {
+      background: rgba(0, 0, 0, 0.04);
     }
 
-    &:hover {
-      border-color: color.scale($primary-color, $lightness: -10%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
-
-      &::before {
-        opacity: 1;
-      }
-
-      .coupon-icon .material-icons {
-        transform: scale(1.1);
-        color: color.scale($primary-color, $lightness: -10%);
-      }
-
-      .arrow-icon .material-icons {
-        transform: translateX(4px);
-      }
-    }
-
-    .coupon-icon {
-      background: linear-gradient(135deg, $primary-color, color.scale($primary-color, $lightness: 10%));
-      padding: 0.75rem;
-      border-radius: 50%;
+    .coupon-cart__coupon-icon {
+      color: var(--zitro-on-surface-variant, #6b6b6b);
       display: flex;
       align-items: center;
-      justify-content: center;
-
-      .material-icons {
-        color: $secondary-color;
-        font-size: 1.5rem;
-        transition: all 0.3s ease;
-      }
+      flex-shrink: 0;
     }
 
-    .coupon-text {
+    .coupon-cart__nav-label {
       flex: 1;
-      z-index: 1;
-
-      .main-text {
-        display: block;
-        font-weight: 600;
-        font-size: 1rem;
-        color: $primary-color;
-        margin-bottom: 0.25rem;
-      }
-
-      .sub-text {
-        display: block;
-        font-size: 0.85rem;
-        color: $text-secondary-color;
-      }
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--zitro-on-surface, #212121);
     }
 
-    .arrow-icon {
-      z-index: 1;
-
-      .material-icons {
-        color: $primary-color;
-        font-size: 1.5rem;
-        transition: all 0.3s ease;
-      }
+    .coupon-cart__arrow {
+      color: var(--zitro-on-surface-variant, #6b6b6b);
+      flex-shrink: 0;
     }
   }
 }
 
-// Mobile Responsive
-@media (max-width: 768px) {
-  .coupon-cart-section {
-    margin: 0.75rem 0;
-
-    .applied-coupon-display {
-      padding: 1rem;
-    }
-
-    .view-coupons-container {
-      padding: 1rem;
-
-      .coupon-icon {
-        padding: 0.5rem;
-
-        .material-icons {
-          font-size: 1.25rem;
-        }
-      }
-
-      .coupon-text {
-        .main-text {
-          font-size: 0.95rem;
-        }
-
-        .sub-text {
-          font-size: 0.8rem;
-        }
-      }
-
-      .arrow-icon .material-icons {
-        font-size: 1.25rem;
-      }
-    }
-  }
-}

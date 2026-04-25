@@ -376,6 +376,7 @@ export class GoogleGeocodingService {
     pincode: string;
     town: string;
     state: string;
+    landmark: string;
     formattedAddress: string;
   }> {
     for (const key of this.geocodingKeys()) {
@@ -391,14 +392,17 @@ export class GoogleGeocodingService {
 
         if (res.status === 'OK' && res.results?.length) {
           const comps = res.results[0].address_components;
-          const pincode = this.getComponent(comps, 'postal_code');
-          const town    = this.getComponent(comps, 'locality') ||
-                          this.getComponent(comps, 'sublocality_level_1') ||
-                          this.getComponent(comps, 'administrative_area_level_3') ||
-                          this.getComponent(comps, 'administrative_area_level_2');
-          const state   = this.getComponent(comps, 'administrative_area_level_1');
+          const pincode  = this.getComponent(comps, 'postal_code');
+          const town     = this.getComponent(comps, 'locality') ||
+                           this.getComponent(comps, 'sublocality_level_1') ||
+                           this.getComponent(comps, 'administrative_area_level_3') ||
+                           this.getComponent(comps, 'administrative_area_level_2');
+          const state    = this.getComponent(comps, 'administrative_area_level_1');
+          const landmark = this.getComponent(comps, 'neighborhood') ||
+                           this.getComponent(comps, 'sublocality_level_2') ||
+                           this.getComponent(comps, 'sublocality_level_1') || '';
           const formattedAddress = this.buildDisplayAddress(comps, res.results[0].formatted_address);
-          return { pincode: pincode || DEFAULT_PINCODE, town, state, formattedAddress };
+          return { pincode: pincode || DEFAULT_PINCODE, town, state, landmark, formattedAddress };
         }
         if (res.status === 'ZERO_RESULTS') break;
         console.warn(`[GoogleGeocoding] getFullAddressComponents failed (${res.status}) — trying next key`);
@@ -406,6 +410,6 @@ export class GoogleGeocodingService {
         console.warn('[GoogleGeocoding] getFullAddressComponents error:', e);
       }
     }
-    return { pincode: DEFAULT_PINCODE, town: '', state: '', formattedAddress: '' };
+    return { pincode: DEFAULT_PINCODE, town: '', state: '', landmark: '', formattedAddress: '' };
   }
 }

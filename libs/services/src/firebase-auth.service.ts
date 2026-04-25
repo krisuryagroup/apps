@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { getAuth, signInWithEmailAndPassword, UserCredential, Auth } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInWithCustomToken, UserCredential, Auth } from 'firebase/auth';
 import { UserManagementService } from './user-management.service';
 import { PHONE_CONSTANTS, AUTH_KEYS } from '@zitro/utils';
 import { getApp, getApps } from 'firebase/app';
@@ -8,6 +8,9 @@ import { Fast2SmsResponse, isFast2SmsSuccess } from '@zitro/models';
 import { FirebaseErrorHandlerService } from './firebase-error-handler.service';
 import { AppSettingsService } from './app-settings.service';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { inject } from '@angular/core';
+import { ZITRO_API_BASE_URL } from './tokens';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
@@ -24,6 +27,8 @@ export class FirebaseAuthService {
   
   // Cache for test phone numbers
   private testPhoneNumbersCache: string[] | null = null;
+
+  private readonly baseUrl = inject(ZITRO_API_BASE_URL);
 
   constructor(
     private router: Router,
@@ -74,41 +79,85 @@ export class FirebaseAuthService {
     return signInWithEmailAndPassword(this.auth, email, password);
   }
 
-  // Sign in with phone using custom SMS OTP
+  // Send OTP to phone number via backend API (POST /api/auth/otp/request)
+  async sendOtp(phone: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<void>(`${this.baseUrl}/api/auth/otp/request`, { phone })
+    );
+  }
+
+  // Verify OTP: calls backend, exchanges Firebase custom token, gets app JWT
+  async verifyOtp(phone: string, otp: string): Promise<boolean> {
+    // Not used in the new flow — verification and sign-in are combined in signInWithPhone
+    // Kept for interface compatibility
+    return true;
+  }
+
+  // Sign in with phone: verify OTP → Firebase custom token → Firebase credential → App JWT
   async signInWithPhone(phone: string, otp: string): Promise<UserCredential> {
-    // For now, allow any OTP to sign in (you should verify OTP properly in production)
-    // Clear guest mode when user logs in
     this.clearUserAuthCache();
 
-    const mockUserId = 'user_' + phone;
-    
-    localStorage.setItem(AUTH_KEYS.TOKEN, mockUserId);
+    // 1. Verify OTP with backend → Firebase custom token
+    const verifyResponse = await firstValueFrom(
+      this.http.post<{ firebaseCustomToken: string }>(
+        `${this.baseUrl}/api/auth/otp/verify`,
+        { phone, otp }
+      )
+    );
+    const { firebaseCustomToken } = verifyResponse;
+
+    // 2. Exchange custom token for Firebase credential
+    const credential = await signInWithCustomToken(this.auth, firebaseCustomToken);
+
+    // 3. Get Firebase ID token
+    const firebaseIdToken = await credential.user.getIdToken();
+
+    // 4. Exchange Firebase ID token for app JWT
+    const appResponse = await firstValueFrom(
+      this.http.post<{ appToken: string }>(
+        `${this.baseUrl}/api/auth/verify`,
+        { FirebaseIdToken: firebaseIdToken }
+      )
+    );
+
+    // 5. Persist session
+    localStorage.setItem(AUTH_KEYS.TOKEN, appResponse.appToken);
     localStorage.setItem(AUTH_KEYS.IS_GUEST, 'false');
     localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, phone);
     localStorage.setItem(AUTH_KEYS.LOGGED_IN_DATE_TIME, new Date().toISOString());
 
-    // Create or update user profile in onlineUsers collection
+    // 6. Update Firestore user profile
     try {
-      const mockUser = {
-        uid: mockUserId,
-        phoneNumber: phone,
-        displayName: null,
-        email: null,
-        photoURL: null,
-        emailVerified: false
-      } as any;
-
-      await this.userManagementService.createOrUpdateUserEntry(mockUser);
-    } catch (error) {
-      console.error('Failed to create/update user profile:', error);
+      await this.userManagementService.createOrUpdateUserEntry(credential.user as any);
+    } catch {
+      // Non-fatal — profile sync failure should not block sign-in
     }
 
-    // Return a mock successful result shaped like UserCredential
-    return Promise.resolve({ user: { uid: mockUserId, phoneNumber: phone } } as any);
+    return credential;
   }
 
-  // Send SMS OTP using Fast2SMS API
-  sendSMSViaFast2SMSQuickSMSApi(): Promise<Fast2SmsResponse> {
+  // Completes session after Firebase Phone Auth (reCAPTCHA path).
+  // Fetches the app JWT from the backend and stores all auth keys in localStorage.
+  async completeSignIn(credential: UserCredential, phone: string): Promise<void> {
+    const firebaseIdToken = await credential.user.getIdToken();
+    const appResponse = await firstValueFrom(
+      this.http.post<{ appToken: string }>(
+        `${this.baseUrl}/api/auth/verify`,
+        { FirebaseIdToken: firebaseIdToken }
+      )
+    );
+    localStorage.setItem(AUTH_KEYS.TOKEN, appResponse.appToken);
+    localStorage.setItem(AUTH_KEYS.IS_GUEST, 'false');
+    localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, phone);
+    localStorage.setItem(AUTH_KEYS.LOGGED_IN_DATE_TIME, new Date().toISOString());
+    try {
+      await this.userManagementService.createOrUpdateUserEntry(credential.user as any);
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  private sendSMSViaFast2SMSQuickSMSApi(): Promise<Fast2SmsResponse> {
     return new Promise(async (resolve, reject) => {
       if (!this.phoneNumber || !this.message) {
         this.status = '❌ Please enter phone number and message';
@@ -255,66 +304,6 @@ export class FirebaseAuthService {
     });
   }
 
-  // Send OTP to phone number
-  async sendOtp(phone: string): Promise<string> {
-    // Remove +91 prefix if present for Fast2SMS
-    this.phoneNumber = phone.replace('+91', '');
-    
-    // Fetch test phone numbers from Firebase (with caching)
-    const testPhoneNumbers = await this.getTestPhoneNumbers();
-    const isTestNumber = testPhoneNumbers.includes(this.phoneNumber);
-    
-    // Use fixed OTP for test numbers, random for real numbers
-    const otp = isTestNumber ? PHONE_CONSTANTS.TEST_OTP : Math.floor(100000 + Math.random() * 900000).toString();
-    this.message = `Your OTP for login To Zitro App is: ${otp}. Valid for 5 minutes.`;
-
-    try {
-      // Skip SMS sending for test numbers
-      if (!isTestNumber) {
-        await this.sendSMSViaFast2SMSQuickSMSApi();
-      }
-      
-      // Store OTP temporarily for verification (in production, store server-side)
-      localStorage.setItem('pending_otp_' + this.phoneNumber, otp);
-      localStorage.setItem('otp_timestamp_' + this.phoneNumber, Date.now().toString());
-      return otp; // Return OTP for testing purposes
-    } catch (error) {
-      console.error('Failed to send OTP:', error);
-      throw new Error('Failed to send OTP. Please try again.');
-    }
-  }
-
-  // Verify OTP entered by user
-  verifyOtp(phone: string, otp: string): boolean {
-    const phoneNumber = phone.replace('+91', '');
-    const storedOtp = localStorage.getItem('pending_otp_' + phoneNumber);
-    const timestamp = localStorage.getItem('otp_timestamp_' + phoneNumber);
-
-    if (!storedOtp || !timestamp) {
-      return false;
-    }
-
-    // Check if OTP is expired (5 minutes)
-    const otpAge = Date.now() - parseInt(timestamp);
-    if (otpAge > 5 * 60 * 1000) {
-      // Clean up expired OTP
-      localStorage.removeItem('pending_otp_' + phoneNumber);
-      localStorage.removeItem('otp_timestamp_' + phoneNumber);
-      return false;
-    }
-
-    // Verify OTP
-    if (storedOtp === otp) {
-      // Clean up verified OTP
-      localStorage.setItem(AUTH_KEYS.LOGGED_IN_DATE_TIME, new Date().toISOString());
-      localStorage.removeItem('pending_otp_' + phoneNumber);
-      localStorage.removeItem('otp_timestamp_' + phoneNumber);
-      return true;
-    }
-
-    return false;
-  }
-
   // Guest mode functionality
   continueAsGuest(): void {
     // Generate a unique guest identifier
@@ -332,16 +321,18 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Returns a fresh Firebase ID token for the current user.
+   * Returns the app JWT stored in localStorage after a successful sign-in.
    * Used by AuthInterceptor to attach Authorization: Bearer <token>.
-   * Throws if no user is signed in.
+   * The backend validates this token with its own symmetric signing key.
+   * Throws if no session token is present (guest / unauthenticated).
    */
   async getIdToken(): Promise<string> {
-    const user = this.auth.currentUser;
-    if (!user) {
+    const token = localStorage.getItem(AUTH_KEYS.TOKEN);
+    const isGuest = localStorage.getItem(AUTH_KEYS.IS_GUEST) === 'true';
+    if (!token || isGuest) {
       throw new Error('No authenticated user');
     }
-    return user.getIdToken();
+    return token;
   }
 
   // Sign out (including guest mode)

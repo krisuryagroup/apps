@@ -24,7 +24,7 @@ interface CartItemLike {
 @Component({
   selector: 'app-coupon-selection-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, I18nPipe, LoaderComponent],
+  imports: [DatePipe, FormsModule, I18nPipe],
   templateUrl: './coupon-selection.page.html',
   styleUrl: './coupon-selection.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

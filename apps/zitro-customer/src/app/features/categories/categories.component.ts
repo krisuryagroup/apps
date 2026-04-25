@@ -23,7 +23,6 @@ import { APP_SETTINGS_CACHE } from '../../core/constants/app.constants';
   selector: 'app-categories',
   standalone: true,
   imports: [
-    I18nPipe,
     LoaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,

@@ -25,6 +25,7 @@ export class CartItemRowComponent {
   item = input.required<CartItem>();
   increment = output<CartItem>();
   decrement = output<CartItem>();
+  edit = output<CartItem>();
 
   get variationLabel(): string {
     const it = this.item();
@@ -41,5 +42,10 @@ export class CartItemRowComponent {
 
   onDecrement(): void {
     this.decrement.emit(this.item());
+  }
+
+  onEdit(): void {
+    if (!this.item().hasVariations) return;
+    this.edit.emit(this.item());
   }
 }

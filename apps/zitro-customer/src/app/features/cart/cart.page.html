@@ -19,65 +19,135 @@
   } @else {
     <div class="cart-content" data-testid="cart-content">
 
+      <section class="restaurant-header" data-testid="cart-restaurant-header">
+        <button
+          class="restaurant-header__icon-btn"
+          type="button"
+          (click)="goBack()"
+          data-testid="cart-back-btn"
+          [attr.aria-label]="'common.back' | i18n"
+        >
+          <span class="material-icons">arrow_back</span>
+        </button>
+
+        <div class="restaurant-header__content">
+          <h2 class="restaurant-header__name">{{ restaurantName() }}</h2>
+          <p class="restaurant-header__eta">{{ deliveryEtaLabel() }}</p>
+          <p class="restaurant-header__address">{{ shortAddress() }}</p>
+        </div>
+
+        <button
+          class="restaurant-header__icon-btn"
+          type="button"
+          (click)="shareCart()"
+          data-testid="cart-share-btn"
+          [attr.aria-label]="'cart.shareCart' | i18n"
+        >
+          <span class="material-icons">share</span>
+        </button>
+      </section>
+
       <!-- Cart items -->
       <section class="cart-items-section" data-testid="cart-items-section">
-        @for (item of cart(); track item.name + '_' + item.selectedVariationId) {
-          <lib-cart-item-row
-            [item]="item"
-            (increment)="onIncrement($event)"
-            (decrement)="onDecrement($event)"
-            data-testid="cart-item-row"
-          />
+        <div class="cart-items-scroll">
+          @for (item of cart(); track item.name + '_' + item.selectedVariationId) {
+            <lib-cart-item-row
+              [item]="item"
+              (increment)="onIncrement($event)"
+              (decrement)="onDecrement($event)"
+              (edit)="openItemEditor($event)"
+              data-testid="cart-item-row"
+            />
+          }
+        </div>
+        @if (cart().length > 3) {
+          <div class="cart-scroll-hint" aria-hidden="true">
+            <span class="material-icons">keyboard_arrow_down</span>
+          </div>
         }
+      </section>
+
+      <button
+        class="add-more-items"
+        type="button"
+        (click)="addMoreItems()"
+        data-testid="add-more-items-btn"
+      >
+        <span class="material-icons">add</span>
+        <span>{{ 'cart.addMoreItems' | i18n }}</span>
+      </button>
+
+      <section class="special-instructions" data-testid="special-instructions-section">
+        <div class="special-instructions__actions">
+          <button
+            class="instruction-card"
+            type="button"
+            (click)="openNoteSheet()"
+            data-testid="add-note-btn"
+          >
+            <span class="material-icons instruction-card__icon">note_add</span>
+            <span class="instruction-card__label">
+              @if (restaurantNote()) {
+                {{ restaurantNote() }}
+              } @else {
+                {{ 'cart.addNote' | i18n }}
+              }
+            </span>
+          </button>
+
+          <button
+            class="instruction-card instruction-card--toggle"
+            type="button"
+            (click)="toggleCutlery()"
+            data-testid="cutlery-toggle-btn"
+            [class.instruction-card--active]="dontSendCutlery()"
+          >
+            <span class="material-icons instruction-card__icon">restaurant</span>
+            <span class="instruction-card__label">{{ 'cart.dontSendCutlery' | i18n }}</span>
+          </button>
+        </div>
       </section>
 
       <!-- Coupon selector -->
       <section class="coupon-section" data-testid="coupon-section">
-        <app-coupon-selector
+        <app-coupon-selector-cart
           [orderAmount]="subtotal()"
           [cartItems]="cart()"
           [appliedCoupon]="appliedCoupon()"
-          (couponApplied)="onCouponApplied($event)"
+          [businessSlug]="businessSlug()"
           (couponRemoved)="onCouponRemoved()"
         />
       </section>
 
-      <!-- Order type selection -->
-      <section class="order-type-section dh-order-type-selection" data-testid="order-type-section">
-        <h3 class="section-title">{{ 'orderType.selectTitle' | i18n }}</h3>
-        <div class="order-type-cards" data-testid="order-type-cards">
+      <!-- Order type section — pill tabs + conditional content -->
+      <section class="order-type-section" data-testid="order-type-section">
+        <div class="ot-tabs" data-testid="order-type-tabs">
           @if (isDineInEnabled()) {
             <button
-              class="order-type-card"
-              [class.active]="selectedOrderType() === 'dine-in'"
+              class="ot-tab"
+              [class.ot-tab--active]="selectedOrderType() === 'dine-in'"
+              type="button"
               (click)="onOrderTypeChange('dine-in')"
               data-testid="order-type-dine-in"
-            >
-              <span class="material-icons">{{ getOrderTypeIcon('dine-in') }}</span>
-              <span>{{ 'orderType.dineIn' | i18n }}</span>
-            </button>
+            >{{ 'orderType.dineIn' | i18n }}</button>
           }
           @if (isTakeoutEnabled()) {
             <button
-              class="order-type-card"
-              [class.active]="selectedOrderType() === 'takeout'"
+              class="ot-tab"
+              [class.ot-tab--active]="selectedOrderType() === 'takeout'"
+              type="button"
               (click)="onOrderTypeChange('takeout')"
               data-testid="order-type-takeout"
-            >
-              <span class="material-icons">{{ getOrderTypeIcon('takeout') }}</span>
-              <span>{{ 'orderType.takeout' | i18n }}</span>
-            </button>
+            >{{ 'orderType.takeout' | i18n }}</button>
           }
           @if (isDeliveryEnabled()) {
             <button
-              class="order-type-card"
-              [class.active]="selectedOrderType() === 'delivery'"
+              class="ot-tab"
+              [class.ot-tab--active]="selectedOrderType() === 'delivery'"
+              type="button"
               (click)="onOrderTypeChange('delivery')"
               data-testid="order-type-delivery"
-            >
-              <span class="material-icons">{{ getOrderTypeIcon('delivery') }}</span>
-              <span>{{ 'orderType.delivery' | i18n }}</span>
-            </button>
+            >{{ 'orderType.delivery' | i18n }}</button>
           }
         </div>
 
@@ -85,10 +155,52 @@
           <p class="order-type-error" data-testid="order-type-error">{{ orderTypeError() }}</p>
         }
 
-        <!-- Dine-in fields -->
+        <!-- Delivery content -->
+        @if (selectedOrderType() === 'delivery') {
+          <div class="ot-info-row" data-testid="delivery-eta-row">
+            <span class="material-icons ot-info-row__icon ot-info-row__icon--green">bolt</span>
+            <span class="ot-info-row__text ot-info-row__text--green">{{ 'cart.deliveryEtaShort' | i18n }}</span>
+          </div>
+
+          @if (isLoadingAddresses()) {
+            <div class="ot-info-row" data-testid="loading-addresses">
+              <span class="material-icons ot-info-row__icon">location_on</span>
+              <span class="ot-info-row__text">{{ 'address.loadingAddresses' | i18n }}</span>
+            </div>
+          } @else if (!isLoggedIn()) {
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToLogin()" data-testid="login-prompt">
+              <span class="material-icons ot-info-row__icon">location_on</span>
+              <div class="ot-info-row__body">
+                <span class="ot-info-row__title">{{ 'auth.loginRequired' | i18n }}</span>
+                <span class="ot-link">{{ 'auth.login' | i18n }}</span>
+              </div>
+              <span class="material-icons ot-info-row__chevron">chevron_right</span>
+            </button>
+          } @else if (addresses().length === 0) {
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToAddAddress()" data-testid="add-address-btn">
+              <span class="material-icons ot-info-row__icon">location_on</span>
+              <div class="ot-info-row__body">
+                <span class="ot-info-row__title">{{ 'address.addFirst' | i18n }}</span>
+                <span class="ot-link">+ {{ 'address.addNew' | i18n }}</span>
+              </div>
+              <span class="material-icons ot-info-row__chevron">chevron_right</span>
+            </button>
+          } @else {
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToAddAddress()" data-testid="address-row">
+              <span class="material-icons ot-info-row__icon">location_on</span>
+              <div class="ot-info-row__body">
+                <span class="ot-info-row__title">{{ 'orderType.deliveryAt' | i18n : { label: deliveryAddressLabel() } }}</span>
+                <span class="ot-info-row__sub">{{ deliveryAddressShort() }}</span>
+                <span class="ot-link">{{ 'orderType.addDeliveryInstructions' | i18n }}</span>
+              </div>
+              <span class="material-icons ot-info-row__chevron">chevron_right</span>
+            </button>
+          }
+        }
+
+        <!-- Dine-in content -->
         @if (selectedOrderType() === 'dine-in') {
-          <div class="dh-dinein-fields" data-testid="dinein-fields">
-            <h4>{{ 'orderType.dineInDetails' | i18n }}</h4>
+          <div class="ot-dinein" data-testid="dinein-fields">
             <div class="field-group">
               <label>{{ 'orderType.tableNumber' | i18n }}</label>
               <select
@@ -109,133 +221,208 @@
               <div class="counter-row">
                 <button
                   class="counter-btn"
+                  type="button"
                   (click)="decrementGuests()"
-                  data-testid="decrement-guests"
                   [attr.aria-label]="'orderType.decreaseGuests' | i18n"
+                  data-testid="decrement-guests"
                 >−</button>
                 <span class="counter-value" data-testid="guests-value">{{ numberOfGuests() }}</span>
                 <button
                   class="counter-btn"
+                  type="button"
                   (click)="incrementGuests()"
-                  data-testid="increment-guests"
                   [attr.aria-label]="'orderType.increaseGuests' | i18n"
+                  data-testid="increment-guests"
                 >+</button>
               </div>
             </div>
           </div>
         }
 
-        <!-- Takeout fields -->
+        <!-- Takeout content -->
         @if (selectedOrderType() === 'takeout') {
-          <div class="dh-takeout-fields" data-testid="takeout-fields">
-            <h4>{{ 'orderType.pickupDetails' | i18n }}</h4>
-            <p class="pickup-message">{{ 'orderType.takeout' | i18n }}</p>
+          <div class="ot-info-row" data-testid="takeout-eta-row">
+            <span class="material-icons ot-info-row__icon ot-info-row__icon--green">timer</span>
+            <span class="ot-info-row__text ot-info-row__text--green">{{ 'orderType.pickupReady' | i18n }}</span>
+          </div>
+          <div class="ot-info-row" data-testid="takeout-instructions-row">
+            <span class="material-icons ot-info-row__icon">sticky_note_2</span>
+            <span class="ot-info-row__text">{{ 'orderType.addPickupInstructions' | i18n }}</span>
           </div>
         }
       </section>
 
-      <!-- Address selection (delivery only) -->
-      @if (selectedOrderType() === 'delivery') {
-        <section class="address-section dh-address-selection" data-testid="address-section">
-          <h3 class="section-title">{{ 'address.deliveryAddress' | i18n }}</h3>
-
-          @if (isLoadingAddresses()) {
-            <p class="loading-text">{{ 'address.loadingAddresses' | i18n }}</p>
-          } @else if (!isLoggedIn()) {
-            <div class="login-prompt" data-testid="login-prompt">
-              <p>{{ 'auth.loginRequired' | i18n }}</p>
-              <button class="login-btn" (click)="goToLogin()" data-testid="login-btn">
-                {{ 'auth.login' | i18n }}
-              </button>
-            </div>
-          } @else if (addresses().length === 0) {
-            <div class="no-address" data-testid="no-address">
-              <p>{{ 'address.addFirst' | i18n }}</p>
-              <button class="add-address-btn" (click)="goToAddAddress()" data-testid="add-address-btn">
-                + {{ 'address.addNew' | i18n }}
-              </button>
-            </div>
-          } @else {
-            <select
-              class="address-select"
-              [value]="selectedAddressId()"
-              (change)="onSelectAddress($any($event.target).value)"
-              data-testid="address-select"
-            >
-              @for (addr of addresses(); track addr.id) {
-                <option [value]="addr.id">
-                  {{ addr.name }} — {{ addr.houseAndStreet }}, {{ addr.town }} - {{ addr.pincode }}
-                </option>
-              }
-            </select>
-            <button
-              class="manage-addresses-link"
-              (click)="goToAddAddress()"
-              data-testid="manage-addresses-btn"
-            >
-              + {{ 'address.addNew' | i18n }}
-            </button>
-          }
+      <!-- Contact row -->
+      @if (contactLabel()) {
+        <section class="contact-section" data-testid="contact-section">
+          <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToLogin()" data-testid="contact-row">
+            <span class="material-icons ot-info-row__icon">phone_iphone</span>
+            <span class="ot-info-row__text">{{ contactLabel() }}</span>
+            <span class="material-icons ot-info-row__chevron">chevron_right</span>
+          </button>
         </section>
       }
 
-      <!-- Pricing summary -->
-      <section class="pricing-section" data-testid="pricing-section">
-        <lib-pricing-summary
-          [pricing]="pricingBreakdown()"
-          (couponAction)="navigateToCoupons()"
-          (removeCoupon)="onCouponRemoved()"
-        />
+      <!-- Bill summary row -->
+      <section class="bill-summary-section" data-testid="bill-summary-section">
+        <button class="ot-info-row ot-info-row--nav" type="button" (click)="openBillSheet()" data-testid="bill-summary-row">
+          <span class="material-icons ot-info-row__icon">receipt_long</span>
+          <div class="ot-info-row__body">
+            <div class="bill-row__amounts">
+              <span class="bill-row__label">{{ 'cart.totalBill' | i18n }}</span>
+              @if ((pricingBreakdown()?.savings?.totalSavings ?? 0) > 0) {
+                <span class="bill-row__original">₹{{ billOriginalTotal() | number:'1.0-0' }}</span>
+              }
+              <span class="bill-row__total">₹{{ total() | number:'1.0-0' }}</span>
+              @if ((pricingBreakdown()?.savings?.totalSavings ?? 0) > 0) {
+                <span class="bill-row__savings-badge">{{ 'cart.youSaved' | i18n : { amount: pricingBreakdown()!.savings.totalSavings } }}</span>
+              }
+            </div>
+            <span class="ot-info-row__sub">{{ 'cart.inclTaxes' | i18n }}</span>
+          </div>
+          <span class="material-icons ot-info-row__chevron">chevron_right</span>
+        </button>
       </section>
 
-      <!-- Payment method -->
-      <section class="payment-section" data-testid="payment-section">
-        <h3 class="section-title">{{ 'payment.title' | i18n }}</h3>
-        <div class="payment-options" data-testid="payment-options">
-          <button
-            class="payment-option"
-            [class.active]="selectedPaymentMethod() === 'cash'"
-            (click)="onSelectPayment('cash')"
-            data-testid="payment-cash"
-          >
-            <span class="material-icons">payments</span>
-            <div class="payment-details">
-              <span class="payment-name">{{ 'payment.cash' | i18n }}</span>
-              <span class="payment-desc">{{ 'payment.cashDesc' | i18n }}</span>
-            </div>
-          </button>
-          <button
-            class="payment-option"
-            [class.active]="selectedPaymentMethod() === 'online'"
-            (click)="onSelectPayment('online')"
-            data-testid="payment-online"
-          >
-            <span class="material-icons">phone_iphone</span>
-            <div class="payment-details">
-              <span class="payment-name">{{ 'payment.online' | i18n }}</span>
-              <span class="payment-desc">{{ 'payment.onlineDesc' | i18n }}</span>
-            </div>
-          </button>
-        </div>
-      </section>
-
-      <!-- Place order button -->
-      <div class="checkout-bar" data-testid="checkout-bar">
+      <!-- Place order sticky bottom bar -->
+      <div class="pay-bar" data-testid="pay-bar">
         <button
-          class="place-order-btn"
-          [class.disabled]="!canPlaceOrder()"
+          class="pay-bar__method"
+          type="button"
+          (click)="openPaymentSheet()"
+          data-testid="pay-bar-method-btn"
+        >
+          <span class="pay-bar__pay-using">{{ 'payment.payUsing' | i18n }} ▲</span>
+          <span class="pay-bar__method-name">{{ paymentMethodLabel() }}</span>
+        </button>
+
+        <button
+          class="pay-bar__action"
+          type="button"
+          [class.pay-bar__action--disabled]="!canPlaceOrder()"
           [disabled]="!canPlaceOrder() || isProcessingOrder()"
           (click)="placeOrder()"
           data-testid="place-order-btn"
         >
-          {{ 'cart.checkout' | i18n }}
           @if (total() > 0) {
-            <span class="btn-total">₹{{ total() | number:'1.0-0' }}</span>
+            <span class="pay-bar__total-wrap">
+              <span class="pay-bar__amount">₹{{ total() | number:'1.2-2' }}</span>
+              <span class="pay-bar__total-label">{{ 'cart.totalBill' | i18n }}</span>
+            </span>
           }
+          <span class="pay-bar__cta">{{ 'cart.checkout' | i18n }} ▶</span>
         </button>
       </div>
 
     </div>
   }
+
+  <!-- Bill breakdown bottom sheet -->
+  @if (isBillSheetOpen()) {
+    <div class="bill-sheet-backdrop" (click)="closeBillSheet()" data-testid="bill-sheet-backdrop"></div>
+    <div class="bill-sheet" role="dialog" aria-modal="true" data-testid="bill-sheet">
+      <div class="bill-sheet__handle"></div>
+      <div class="bill-sheet__header">
+        <h3 class="bill-sheet__title">{{ 'cart.billDetails' | i18n }}</h3>
+        <button type="button" class="bill-sheet__close" (click)="closeBillSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="bill-sheet__body">
+        <lib-pricing-summary
+          [pricing]="pricingBreakdown()"
+          [config]="billSheetPricingConfig"
+          (couponAction)="navigateToCoupons()"
+          (removeCoupon)="onCouponRemoved()"
+        />
+      </div>
+    </div>
+  }
+
+  @if (isNoteSheetOpen()) {
+    <div class="note-sheet-backdrop" (click)="closeNoteSheet()" data-testid="note-sheet-backdrop"></div>
+    <div class="note-sheet" data-testid="note-sheet">
+      <div class="note-sheet__header">
+        <h3 class="note-sheet__title">{{ 'cart.addNote' | i18n }}</h3>
+        <button type="button" class="note-sheet__close" (click)="closeNoteSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <textarea
+        class="note-sheet__input"
+        [value]="noteDraft()"
+        (input)="updateNoteDraft($any($event.target).value)"
+        [placeholder]="'cart.notePlaceholder' | i18n"
+        rows="4"
+        data-testid="note-sheet-input"
+      ></textarea>
+
+      <div class="note-sheet__actions">
+        <button class="note-sheet__btn note-sheet__btn--ghost" type="button" (click)="closeNoteSheet()">
+          {{ 'common.cancel' | i18n }}
+        </button>
+        <button class="note-sheet__btn" type="button" (click)="saveNote()" data-testid="save-note-btn">
+          {{ 'common.save' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Payment method selection sheet -->
+  @if (isPaymentSheetOpen()) {
+    <div class="payment-sheet-backdrop" (click)="closePaymentSheet()" data-testid="payment-sheet-backdrop"></div>
+    <div class="payment-sheet" role="dialog" aria-modal="true" data-testid="payment-sheet">
+      <div class="payment-sheet__handle"></div>
+      <div class="payment-sheet__header">
+        <h3 class="payment-sheet__title">{{ 'payment.title' | i18n }}</h3>
+        <button type="button" class="payment-sheet__close" (click)="closePaymentSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="payment-sheet__body">
+        <button
+          class="payment-option"
+          [class.active]="selectedPaymentMethod() === 'cash'"
+          (click)="selectPaymentAndClose('cash')"
+          data-testid="payment-cash"
+        >
+          <span class="material-icons">payments</span>
+          <div class="payment-details">
+            <span class="payment-name">{{ 'payment.cash' | i18n }}</span>
+            <span class="payment-desc">{{ 'payment.cashDesc' | i18n }}</span>
+          </div>
+          @if (selectedPaymentMethod() === 'cash') {
+            <span class="material-icons payment-check">check_circle</span>
+          }
+        </button>
+        <button
+          class="payment-option"
+          [class.active]="selectedPaymentMethod() === 'online'"
+          (click)="selectPaymentAndClose('online')"
+          data-testid="payment-online"
+        >
+          <span class="material-icons">phone_iphone</span>
+          <div class="payment-details">
+            <span class="payment-name">{{ 'payment.online' | i18n }}</span>
+            <span class="payment-desc">{{ 'payment.onlineDesc' | i18n }}</span>
+          </div>
+          @if (selectedPaymentMethod() === 'online') {
+            <span class="material-icons payment-check">check_circle</span>
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <lib-item-detail-sheet
+    [product]="editingItem()"
+    [isOpen]="isEditItemSheetOpen()"
+    [quantity]="editingItemQuantity()"
+    [editMode]="true"
+    [actionLabelKey]="'cart.updateItem'"
+    (closed)="closeItemEditor()"
+    (addToCart)="onEditItemApplied($event)"
+  />
 
 </div>

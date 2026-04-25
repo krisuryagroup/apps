@@ -52,7 +52,8 @@ export class AccountPage implements OnInit {
       this.email.set(user.email ?? '');
       this.phone.set(user.phone);
       this.profileImage.set(user.photoUrl ?? '');
-    } catch {
+    } catch(error) { 
+      console.log("error: ", error);
       // Fallback to Firebase UserManagementService
       try {
         const phoneNumber = await this.userMgmt.getCurrentUserPhone();
@@ -65,7 +66,7 @@ export class AccountPage implements OnInit {
             this.profileImage.set(userData.photoURL ?? '');
           }
         }
-      } catch { /* ignore */ }
+      } catch(error2) { console.log("error2: ", error2) }
     }
   }
 

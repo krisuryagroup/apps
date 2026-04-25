@@ -1,71 +1,92 @@
 .add-address-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: 7px;
+  padding: 10px 14px;
 }
 
 .add-address-form__title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 2px;
   color: #222;
+}
+
+.add-address-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .add-address-form__field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 
   span {
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 600;
-    color: #666;
+    color: #999;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
   }
 
   input[type="text"],
   input[type="tel"] {
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 6px 9px;
+    border-radius: 6px;
     border: 1px solid #ddd;
-    font-size: 15px;
+    font-size: 12.5px;
     outline: none;
     transition: border-color 0.15s;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
 
     &:focus { border-color: var(--color-primary, #e53935); }
+
+    &[readonly] {
+      background-color: #f5f5f5;
+      color: #555;
+      cursor: default;
+      border-color: #e8e8e8;
+      &:focus { border-color: #e8e8e8; }
+    }
   }
 }
 
 .add-address-form__error {
-  font-size: 12px;
+  font-size: 10px;
   color: #c62828;
 }
 
 .add-address-form__type-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .add-address-form__type-label {
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
-  color: #666;
+  color: #999;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .add-address-form__type-btns {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .add-address-form__type-btn {
   flex: 1;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
   border: 1.5px solid #ddd;
   background: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   transition: all 0.15s;
 
@@ -80,28 +101,28 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 7px;
+  font-size: 12px;
   color: #333;
   cursor: pointer;
 
-  input { width: 18px; height: 18px; cursor: pointer; }
+  input { width: 14px; height: 14px; cursor: pointer; }
 }
 
 .add-address-form__actions {
   display: flex;
-  gap: 12px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .add-address-form__btn {
   flex: 1;
-  padding: 13px;
-  border-radius: 10px;
+  padding: 9px;
+  border-radius: 7px;
   border: none;
   font-weight: 700;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 12.5px;
   transition: opacity 0.15s;
 
   &:disabled { opacity: 0.45; cursor: not-allowed; }

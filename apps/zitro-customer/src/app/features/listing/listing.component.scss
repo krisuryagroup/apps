@@ -35,7 +35,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 0 112px; // top breathing room + space above nav bar
+  padding: 8px 0 175px; // top breathing room + space above nav bar + cart summary + FAB
 }
 
 .listing-no-results {
@@ -132,10 +132,10 @@
 }
 
 // ── Floating category menu button (bottom-right, above nav bar) ──────────────
-// Nav bar is 56px; FAB sits 154px above it
+// Nav bar is 56px; cart summary is ~120px from bottom; FAB sits just above that
 .category-menu-fab {
   position: fixed;
-  bottom: calc(56px + 154px);
+  bottom: 130px;
   right: 16px;
   z-index: 10002;
   display: flex;
@@ -174,7 +174,7 @@
 
 .category-sheet {
   position: fixed;
-  bottom: calc(56px + 154px); // same height as FAB so it appears to emerge from the button
+  bottom: 130px; // same height as FAB so it appears to emerge from the button
   left: 70px;
   right: 80px;
   background: var(--zitro-surface, #fff);
@@ -237,30 +237,6 @@
 }
 
 // ── Sheet close button — fixed at same position as FAB ───────────────────────
-.sheet-close-fab {
-  position: fixed;
-  bottom: calc(56px + 154px);
-  right: 16px;
-  z-index: 10002;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 16px 0 12px;
-  height: 38px;
-  border-radius: 24px;
-  background: var(--zitro-on-surface, #212121);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: transform 0.15s;
-
-  &:active { transform: scale(0.95); }
-}
-
 // ── Product card image-right override (Swiggy-style) ────────────────────────
 :host ::ng-deep lib-product-card .product-card[data-layout="list"] {
   flex-direction: row-reverse;

@@ -29,6 +29,8 @@ export const appConfig: ApplicationConfig = {
         '/api/businesses/nearby',
         '/api/tags',
         '/api/businesses/',   // banners — read-only, guest-browsable
+        '/api/auth/otp/request',
+        '/api/auth/otp/verify',
       ],
     }),
     provideI18n(),
