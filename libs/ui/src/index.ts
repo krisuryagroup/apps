@@ -32,6 +32,7 @@ export * from './catalog/item-detail-sheet/item-detail-sheet.component';
 export * from './cart/cart-item-row/cart-item-row.component';
 export * from './cart/cart-summary-bar/cart-summary-bar.component';
 export * from './cart/pricing-summary/pricing-summary.component';
+export * from './cart/floating-cart-preview/floating-cart-preview.component';
 
 // Address (T016)
 export * from './address/address-card/address-card.component';

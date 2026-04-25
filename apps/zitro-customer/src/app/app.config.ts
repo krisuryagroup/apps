@@ -9,6 +9,7 @@ import { provideDatabase, getDatabase } from '@angular/fire/database';
 import { APP_SETTINGS_INITIALIZER } from './core/initializers/app-settings.initializer';
 import { LOCATION_INITIALIZER } from './core/initializers/location.initializer';
 import { APP_VERSION_INITIALIZER } from './core/initializers/app-version.initializer';
+import { CART_INITIALIZER } from './core/initializers/cart.initializer';
 import { FIREBASE_CONFIG } from '@zitro/utils';
 import { ImageCacheService, provideZitroServices } from '@zitro/services';
 import { provideI18n } from '@zitro/i18n';
@@ -44,6 +45,7 @@ export const appConfig: ApplicationConfig = {
     APP_VERSION_INITIALIZER,
     APP_SETTINGS_INITIALIZER,
     LOCATION_INITIALIZER,
+    CART_INITIALIZER,
     {
       provide: APP_INITIALIZER,
       useFactory: (imageCacheService: ImageCacheService) => {

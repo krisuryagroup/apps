@@ -11,15 +11,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
-import { LoaderComponent } from '@zitro/ui';
-import { AnalyticsService, CouponApiService } from '@zitro/services';
-import type { AppliedCoupon, OnlineOrderCoupon } from '@zitro/models';
-
-interface CartItemLike {
-  price: number | string;
-  qty?: number;
-  isOfferDisabled?: boolean;
-}
+import { AnalyticsService, CartApiService, CouponApiService } from '@zitro/services';
+import type { OnlineOrderCoupon } from '@zitro/models';
 
 @Component({
   selector: 'app-coupon-selection-page',
@@ -33,6 +26,7 @@ export class CouponSelectionPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly couponApi = inject(CouponApiService);
+  private readonly cartApi = inject(CartApiService);
   private readonly analytics = inject(AnalyticsService);
 
   readonly availableCoupons = signal<OnlineOrderCoupon[]>([]);
@@ -40,64 +34,29 @@ export class CouponSelectionPage implements OnInit {
   readonly isLoading = signal(false);
   readonly validationMessage = signal('');
   readonly isValidationError = signal(false);
-
-  readonly orderAmount = signal(0);
-  readonly cartItems = signal<CartItemLike[]>([]);
-  readonly currentAppliedCoupon = signal<AppliedCoupon | null>(null);
   readonly businessSlug = signal('');
 
-  readonly eligibleAmount = computed(() => {
-    const items = this.cartItems();
-    if (items.length === 0) return this.orderAmount();
-    let eligible = 0;
-    for (const item of items) {
-      if (item.isOfferDisabled) continue;
-      const price = typeof item.price === 'number' ? item.price : parseFloat(String(item.price).replace(/[^\d.]/g, ''));
-      eligible += price * (item.qty ?? 1);
-    }
-    return eligible;
-  });
+  readonly appliedCouponCode = computed(() =>
+    this.cartApi.carts().get(this.businessSlug())?.couponCode ?? null
+  );
 
-  readonly ineligibleAmount = computed(() => {
-    const items = this.cartItems();
-    let ineligible = 0;
-    for (const item of items) {
-      if (!item.isOfferDisabled) continue;
-      const price = typeof item.price === 'number' ? item.price : parseFloat(String(item.price).replace(/[^\d.]/g, ''));
-      ineligible += price * (item.qty ?? 1);
-    }
-    return ineligible;
-  });
+  readonly appliedDiscount = computed(() =>
+    this.cartApi.carts().get(this.businessSlug())?.couponDiscountPreview ?? 0
+  );
 
-  readonly hasIneligibleItems = computed(() => this.ineligibleAmount() > 0);
-
-  readonly eligibilityMessage = computed(() => {
-    if (!this.hasIneligibleItems()) return '';
-    const eligible = this.eligibleAmount();
-    const total = eligible + this.ineligibleAmount();
-    return `Offers apply to eligible items only (₹${eligible.toFixed(2)} of ₹${total.toFixed(2)})`;
-  });
+  private readonly cartSubtotal = computed(() =>
+    this.cartApi.carts().get(this.businessSlug())?.estimatedTotal ?? 0
+  );
 
   async ngOnInit(): Promise<void> {
     this.analytics.logScreenView('Coupon Selection', 'CouponSelectionPage');
 
-    const state = history.state as Record<string, unknown>;
-    if (state && Object.keys(state).length > 0 && state['orderAmount'] != null) {
-      this.orderAmount.set((state['orderAmount'] as number) ?? 0);
-      this.cartItems.set((state['cartItems'] as CartItemLike[]) ?? []);
-      this.currentAppliedCoupon.set((state['appliedCoupon'] as AppliedCoupon | null) ?? null);
-      this.businessSlug.set((state['businessSlug'] as string) ?? '');
-    } else {
-      this.route.queryParams.subscribe(params => {
-        if (params['amount']) this.orderAmount.set(parseFloat(params['amount']));
-        if (params['businessSlug']) this.businessSlug.set(params['businessSlug']);
-      });
-    }
+    const params = await firstValueFrom(this.route.queryParams);
+    const slug = (params['business'] || params['businessSlug'] || '') as string;
+    this.businessSlug.set(slug);
 
-    const applied = this.currentAppliedCoupon();
-    if (applied) {
-      this.couponCode.set(applied.coupon.code);
-    }
+    const applied = this.appliedCouponCode();
+    if (applied) this.couponCode.set(applied);
 
     await this.loadCoupons();
   }
@@ -111,44 +70,28 @@ export class CouponSelectionPage implements OnInit {
     } catch { /* ignore */ }
   }
 
-  applyCoupon(code?: string): void {
+  async applyCoupon(code?: string): Promise<void> {
     const codeToApply = (code ?? this.couponCode()).trim().toUpperCase();
     if (!codeToApply) {
       this.showMessage('Please enter a coupon code', true);
       return;
     }
 
-    const coupon = this.availableCoupons().find(c => c.code.toUpperCase() === codeToApply);
-
-    if (!coupon) {
-      this.showMessage('Coupon not found or not available', true);
-      return;
+    this.isLoading.set(true);
+    this.validationMessage.set('');
+    try {
+      const result = await this.cartApi.applyCoupon(this.businessSlug(), codeToApply);
+      if (result.success) {
+        this.analytics.logSelectPromotion(codeToApply, codeToApply).catch(() => {});
+        this.navigateToCart();
+      } else {
+        this.showMessage(result.error ?? 'Coupon could not be applied', true);
+      }
+    } catch {
+      this.showMessage('Failed to apply coupon. Please try again.', true);
+    } finally {
+      this.isLoading.set(false);
     }
-
-    const now = new Date();
-    if (!coupon.isActive) {
-      this.showMessage('This coupon is no longer active', true);
-      return;
-    }
-    if (coupon.validTo && new Date(coupon.validTo) < now) {
-      this.showMessage('This coupon has expired', true);
-      return;
-    }
-    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      this.showMessage('This coupon has reached its usage limit', true);
-      return;
-    }
-
-    const eligible = this.eligibleAmount();
-    if (coupon.minOrderAmount && eligible < coupon.minOrderAmount) {
-      this.showMessage(`Minimum order amount of ₹${coupon.minOrderAmount} required for eligible items`, true);
-      return;
-    }
-
-    const discountAmount = this.calculateDiscount(coupon, eligible);
-    this.analytics.logSelectPromotion(coupon.id, coupon.title).catch(() => {});
-    const applied: AppliedCoupon = { coupon, discountAmount };
-    this.returnToCart(applied);
   }
 
   selectCoupon(coupon: OnlineOrderCoupon): void {
@@ -157,18 +100,18 @@ export class CouponSelectionPage implements OnInit {
     this.applyCoupon(coupon.code);
   }
 
-  removeCoupon(): void {
-    this.returnToCart(null);
-  }
-
-  returnToCart(appliedCoupon: AppliedCoupon | null): void {
-    this.router.navigate(['/cart'], {
-      state: { appliedCoupon, orderAmount: this.orderAmount(), cartItems: this.cartItems() },
-    });
+  async removeCoupon(): Promise<void> {
+    this.isLoading.set(true);
+    try {
+      await this.cartApi.removeCoupon(this.businessSlug());
+      this.navigateToCart();
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   goBack(): void {
-    this.router.navigate(['/cart']);
+    this.navigateToCart();
   }
 
   isCouponApplicable(coupon: OnlineOrderCoupon): boolean {
@@ -176,25 +119,26 @@ export class CouponSelectionPage implements OnInit {
     if (!coupon.isActive) return false;
     if (coupon.validTo && new Date(coupon.validTo) < now) return false;
     if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) return false;
-    if (coupon.minOrderAmount && this.eligibleAmount() < coupon.minOrderAmount) return false;
+    const subtotal = this.cartSubtotal();
+    if (coupon.minOrderAmount && subtotal > 0 && subtotal < coupon.minOrderAmount) return false;
     return true;
   }
 
   getCouponSavings(coupon: OnlineOrderCoupon): number {
-    if (!this.isCouponApplicable(coupon)) return 0;
-    return this.calculateDiscount(coupon, this.eligibleAmount());
-  }
-
-  isCouponApplied(coupon: OnlineOrderCoupon): boolean {
-    return this.currentAppliedCoupon()?.coupon?.code === coupon?.code;
-  }
-
-  private calculateDiscount(coupon: OnlineOrderCoupon, eligible: number): number {
+    const subtotal = this.cartSubtotal();
     if (coupon.discountType === 'percentage') {
-      const raw = (eligible * coupon.discountValue) / 100;
+      const raw = (subtotal * coupon.discountValue) / 100;
       return coupon.maxDiscount ? Math.min(raw, coupon.maxDiscount) : raw;
     }
     return coupon.discountType === 'flat' ? coupon.discountValue : 0;
+  }
+
+  isCouponApplied(coupon: OnlineOrderCoupon): boolean {
+    return this.appliedCouponCode()?.toUpperCase() === coupon.code.toUpperCase();
+  }
+
+  private navigateToCart(): void {
+    this.router.navigate(['/cart'], { queryParams: { business: this.businessSlug() } });
   }
 
   private showMessage(message: string, isError: boolean): void {

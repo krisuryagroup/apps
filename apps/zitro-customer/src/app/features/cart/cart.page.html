@@ -50,17 +50,29 @@
       <!-- Cart items -->
       <section class="cart-items-section" data-testid="cart-items-section">
         <div class="cart-items-scroll">
-          @for (item of cart(); track item.name + '_' + item.selectedVariationId) {
-            <lib-cart-item-row
-              [item]="item"
-              (increment)="onIncrement($event)"
-              (decrement)="onDecrement($event)"
-              (edit)="openItemEditor($event)"
-              data-testid="cart-item-row"
-            />
+          @for (item of items(); track item.id) {
+            <div class="cart-item-row" data-testid="cart-item-row">
+              <div class="cart-item-row__info">
+                <div class="cart-item-row__name">{{ item.productName }}</div>
+                @if (item.variationLabel) {
+                  <div class="cart-item-row__variation">{{ item.variationLabel }}</div>
+                }
+                @if (item.priceChanged) {
+                  <div class="cart-item-row__price-change">
+                    Price updated · was ₹{{ item.unitPrice | number:'1.0-0' }}, now ₹{{ item.currentPrice | number:'1.0-0' }}
+                  </div>
+                }
+                <div class="cart-item-row__price">₹{{ item.currentPrice | number:'1.0-0' }}</div>
+              </div>
+              <div class="cart-item-row__qty">
+                <button class="qty-btn" type="button" (click)="onDecrement(item)" data-testid="decrement-item">−</button>
+                <span class="qty-value" data-testid="item-qty">{{ item.quantity }}</span>
+                <button class="qty-btn" type="button" (click)="onIncrement(item)" data-testid="increment-item">+</button>
+              </div>
+            </div>
           }
         </div>
-        @if (cart().length > 3) {
+        @if (items().length > 3) {
           <div class="cart-scroll-hint" aria-hidden="true">
             <span class="material-icons">keyboard_arrow_down</span>
           </div>
@@ -108,15 +120,26 @@
         </div>
       </section>
 
-      <!-- Coupon selector -->
+      <!-- Coupon -->
       <section class="coupon-section" data-testid="coupon-section">
-        <app-coupon-selector-cart
-          [orderAmount]="subtotal()"
-          [cartItems]="cart()"
-          [appliedCoupon]="appliedCoupon()"
-          [businessSlug]="businessSlug()"
-          (couponRemoved)="onCouponRemoved()"
-        />
+        @if (couponCode()) {
+          <div class="coupon-applied-row" data-testid="coupon-applied-row">
+            <span class="material-icons coupon-applied-row__icon">local_offer</span>
+            <div class="coupon-applied-row__info">
+              <span class="coupon-applied-row__code">{{ couponCode() }}</span>
+              <span class="coupon-applied-row__saving">You save ₹{{ couponDiscount() | number:'1.0-0' }}</span>
+            </div>
+            <button class="coupon-applied-row__remove" type="button" (click)="onCouponRemoved()" data-testid="remove-coupon-btn">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+        } @else {
+          <button class="coupon-add-btn" type="button" (click)="navigateToCoupons()" data-testid="apply-coupon-btn">
+            <span class="material-icons">confirmation_number</span>
+            <span>{{ 'coupon.applyButton' | i18n }}</span>
+            <span class="material-icons coupon-add-btn__chevron">chevron_right</span>
+          </button>
+        }
       </section>
 
       <!-- Order type section — pill tabs + conditional content -->

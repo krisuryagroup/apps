@@ -38,6 +38,7 @@ export type {
   ChargesVisibility,
   PricingCalculationInput,
 } from './pricing.model';
+export * from './api-cart.model';
 export * from './product.model';
 export * from './analytics-config.model';
 export * from './search-term.model';

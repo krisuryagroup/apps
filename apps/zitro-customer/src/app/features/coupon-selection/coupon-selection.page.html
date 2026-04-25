@@ -5,7 +5,7 @@
   </button>
 </div>
 
-@if (currentAppliedCoupon()) {
+@if (appliedCouponCode()) {
   <div class="applied-coupon-section" data-testid="coupon-applied-banner">
     <div class="applied-coupon-banner">
       <div class="success-indicator">
@@ -13,22 +13,13 @@
           <span class="material-icons">check_circle</span>
         </div>
         <div class="coupon-applied-info">
-          <div class="coupon-code-applied">{{ currentAppliedCoupon()!.coupon.code }}</div>
-          <div class="savings-amount">{{ 'coupon.saved' | i18n }} ₹{{ currentAppliedCoupon()!.discountAmount }}</div>
+          <div class="coupon-code-applied">{{ appliedCouponCode() }}</div>
+          <div class="savings-amount">{{ 'coupon.saved' | i18n }} ₹{{ appliedDiscount() }}</div>
         </div>
       </div>
       <button class="remove-coupon-btn" (click)="removeCoupon()" type="button" data-testid="coupon-remove-btn">
         <span class="material-icons">close</span>
       </button>
-    </div>
-  </div>
-}
-
-@if (hasIneligibleItems()) {
-  <div class="eligibility-banner" data-testid="coupon-eligibility-banner">
-    <div class="eligibility-info">
-      <span class="material-icons">info</span>
-      <span>{{ eligibilityMessage() }}</span>
     </div>
   </div>
 }

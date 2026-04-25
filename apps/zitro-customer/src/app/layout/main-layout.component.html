@@ -106,6 +106,13 @@
   <!-- WhatsApp Floating Button -->
   <!-- <app-whatsapp-button *ngIf="!isOnGameRoute"></app-whatsapp-button> -->
 
+  <!-- Floating multi-business cart preview slider — hidden on cart page -->
+  <lib-floating-cart-preview
+    *ngIf="!isOnCartPage && cartApi.hasActiveCarts()"
+    [carts]="cartApi.cartList()"
+    (viewCart)="onViewCart($event)"
+  ></lib-floating-cart-preview>
+
   <app-bottom-nav *ngIf="!isOnGameRoute && !isOnCartPage"></app-bottom-nav>
 
   <!-- Location Selection Bottom Sheet (global, lives in layout) -->

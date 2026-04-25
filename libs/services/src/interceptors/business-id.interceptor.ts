@@ -1,6 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { BusinessContextService } from '../business-context.service';
+import { CART_BUSINESS_SLUG } from '../tokens';
 
 export const businessIdInterceptor: HttpInterceptorFn = (req, next) => {
   const businessContext = inject(BusinessContextService);
@@ -9,14 +10,13 @@ export const businessIdInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const businessId = businessContext.businessId();
+  // Per-request slug (set by CartApiService for multi-business concurrent calls) takes precedence
+  const perRequestSlug = req.context.get(CART_BUSINESS_SLUG);
+  const businessId = perRequestSlug ?? businessContext.businessId();
+
   if (!businessId) {
     return next(req);
   }
 
-  const reqWithBusinessId = req.clone({
-    setHeaders: { 'X-Business-Id': businessId },
-  });
-
-  return next(reqWithBusinessId);
+  return next(req.clone({ setHeaders: { 'X-Business-Id': businessId } }));
 };

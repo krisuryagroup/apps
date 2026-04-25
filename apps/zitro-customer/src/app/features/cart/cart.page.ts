@@ -1,58 +1,45 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   computed,
   inject,
-  OnDestroy,
   signal,
 } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, Subscription } from 'rxjs';
 import { DecimalPipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 import {
-  CartItemRowComponent,
-  CartPricingSummaryComponent,
   OrderLoadingModalComponent,
   DeliveryRangeDialogComponent,
-  CouponSelectorCartComponent,
   ItemDetailSheetComponent,
+  CartPricingSummaryComponent,
   PricingSummaryConfig,
 } from '@zitro/ui';
 import {
-  CartService,
-  OrderService,
+  CartApiService,
+  OrderApiService,
   OrderProcessingService,
   UserManagementService,
   OrderConfigService,
   PricingService,
   LocationSelectionService,
-  CouponService,
   AnalyticsService,
   AddressApiService,
-  FirebaseAuthService,
 } from '@zitro/services';
-import {
-  CartItem,
+import type {
+  ApiCartItem,
   OrderType,
   PricingBreakdown,
   PricingConfig,
-  AppliedCoupon,
   Address,
-  CreateOrderData,
-  OrderItem as OrderItemModel,
   OrderConfiguration,
-  Product,
-  ProductVariation,
   TableConfig,
 } from '@zitro/models';
-import {
-  VALIDATION_MESSAGES,
-  FALLBACK_VALUES,
-  APP_CONSTANTS,
-} from '../../core/constants/app.constants';
+import type { CreateOrderOptions } from '@zitro/services';
 
 @Component({
   selector: 'app-cart-page',
@@ -60,34 +47,46 @@ import {
   imports: [
     I18nPipe,
     DecimalPipe,
-    CartItemRowComponent,
-    CartPricingSummaryComponent,
     OrderLoadingModalComponent,
-    CouponSelectorCartComponent,
     ItemDetailSheetComponent,
+    CartPricingSummaryComponent,
   ],
   templateUrl: './cart.page.html',
   styleUrl: './cart.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CartPage implements OnDestroy {
-  private readonly cartService = inject(CartService);
-  private readonly orderService = inject(OrderService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly cartApi = inject(CartApiService);
+  private readonly orderApi = inject(OrderApiService);
   private readonly orderProcessing = inject(OrderProcessingService);
   private readonly userMgmt = inject(UserManagementService);
   private readonly orderConfigService = inject(OrderConfigService);
   private readonly pricingService = inject(PricingService);
   private readonly locationService = inject(LocationSelectionService);
-  private readonly couponService = inject(CouponService);
   private readonly analytics = inject(AnalyticsService);
   private readonly addressApi = inject(AddressApiService);
   private readonly dialog = inject(MatDialog);
-  private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
 
   readonly processingStage = toSignal(this.orderProcessing.processing$);
 
-  readonly cart = signal<CartItem[]>(this.cartService.getCart());
+  // ── Query param → current business slug ─────────────────────────────────
+  private readonly queryParams = toSignal(this.route.queryParams, { initialValue: {} });
+  readonly businessSlug = computed(() => (this.queryParams() as Record<string, string>)['business'] ?? '');
+
+  // ── Cart from API state ──────────────────────────────────────────────────
+  readonly apiCart = computed(() => this.cartApi.getCartForBusiness(this.businessSlug()));
+  readonly items = computed(() => this.apiCart()?.items ?? []);
+  readonly subtotal = computed(() => this.apiCart()?.estimatedTotal ?? 0);
+  readonly couponCode = computed(() => this.apiCart()?.couponCode ?? null);
+  readonly couponDiscount = computed(() => this.apiCart()?.couponDiscountPreview ?? 0);
+  readonly businessName = computed(() => this.apiCart()?.businessName ?? this.businessSlug());
+  readonly hasItems = computed(() => this.items().length > 0);
+  readonly itemCount = computed(() => this.items().reduce((s, i) => s + i.quantity, 0));
+
+  // ── Checkout state ───────────────────────────────────────────────────────
   readonly isLoggedIn = signal(false);
   readonly pricingConfig = signal<PricingConfig | null>(null);
   readonly pricingBreakdown = signal<PricingBreakdown | null>(null);
@@ -103,34 +102,20 @@ export class CartPage implements OnDestroy {
   readonly isProcessingOrder = signal(false);
   readonly orderConfig = signal<OrderConfiguration | null>(null);
   readonly availableTables = signal<TableConfig[]>([]);
-  readonly appliedCoupon = signal<AppliedCoupon | null>(null);
-  readonly isRestaurantOpen = signal(true);
-  readonly isNoteSheetOpen = signal(false);
-  readonly restaurantNote = signal('');
+  readonly customerNote = signal('');
   readonly noteDraft = signal('');
-  readonly dontSendCutlery = signal(false);
-  readonly editingItem = signal<CartItem | null>(null);
-  readonly isEditItemSheetOpen = signal(false);
+  readonly isNoteSheetOpen = signal(false);
+
   readonly selectedLocation = toSignal(this.locationService.selectedLocation$, {
     initialValue: this.locationService.snapshot,
   });
   readonly userProfile = toSignal(this.userMgmt.userProfile$, { initialValue: null });
-  readonly isBillSheetOpen = signal(false);
-  readonly isPaymentSheetOpen = signal(false);
 
-  readonly subtotal = computed(() => this.cartService.getTotal());
-  readonly hasItems = computed(() => this.cart().length > 0);
-  readonly total = computed(() => this.pricingBreakdown()?.total || 0);
-  readonly itemCount = computed(() =>
-    this.cart().reduce((s, i) => s + (i.qty || 1), 0)
-  );
-  readonly isAddressSelected = computed(
-    () =>
-      this.selectedAddressId() !== '' ||
-      this.locationService.snapshot.type !== 'none'
-  );
   readonly selectedAddress = computed(
     () => this.addresses().find(a => a.id === this.selectedAddressId()) ?? null
+  );
+  readonly isAddressSelected = computed(
+    () => !!this.selectedAddressId() || this.locationService.snapshot.type !== 'none'
   );
   readonly canPlaceOrder = computed(
     () =>
@@ -139,60 +124,12 @@ export class CartPage implements OnDestroy {
       this.selectedOrderType() !== null &&
       (this.selectedOrderType() !== 'delivery' || this.isAddressSelected())
   );
-  readonly isDineInEnabled = computed(() =>
-    this.orderConfigService.isOrderTypeEnabled('dine-in')
-  );
-  readonly isTakeoutEnabled = computed(() =>
-    this.orderConfigService.isOrderTypeEnabled('takeout')
-  );
-  readonly isDeliveryEnabled = computed(() =>
-    this.orderConfigService.isOrderTypeEnabled('delivery')
-  );
-  readonly restaurantName = computed(() => {
-    const storedRestaurantId = localStorage.getItem(
-      APP_CONSTANTS.APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID
-    );
-    if (!storedRestaurantId) {
-      return this.i18n.translate('cart.restaurantFallback');
-    }
+  readonly total = computed(() => this.pricingBreakdown()?.total ?? 0);
 
-    return storedRestaurantId
-      .split('-')
-      .filter(Boolean)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  });
+  readonly isDineInEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('dine-in'));
+  readonly isTakeoutEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('takeout'));
+  readonly isDeliveryEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('delivery'));
 
-  readonly businessSlug = computed(
-    () => localStorage.getItem(APP_CONSTANTS.APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ?? ''
-  );
-  readonly deliveryEtaLabel = computed(() => {
-    const locationLabel =
-      this.selectedLocation().type !== 'none'
-        ? this.selectedLocation().label
-        : this.i18n.translate('cart.locationFallback');
-    return this.i18n.translate('cart.deliveryEtaPrefix', {
-      location: locationLabel,
-    });
-  });
-  readonly shortAddress = computed(() => {
-    const address = this.selectedLocation().address || '';
-    if (address.length <= 42) return address;
-    return `${address.slice(0, 39)}...`;
-  });
-  readonly editingItemQuantity = computed(() => this.editingItem()?.qty ?? 0);
-  readonly contactLabel = computed(() => {
-    const profile = this.userProfile();
-    if (!profile) return '';
-    const name = profile.name ?? '';
-    const phone = profile.phoneNumber ?? '';
-    return name ? `${name}, ${phone}` : phone;
-  });
-  readonly paymentMethodLabel = computed(() =>
-    this.selectedPaymentMethod() === 'cash'
-      ? this.i18n.translate('payment.cash')
-      : this.i18n.translate('payment.online')
-  );
   readonly deliveryAddressLabel = computed(() => {
     const addr = this.selectedAddress();
     if (!addr) return this.selectedLocation().label ?? '';
@@ -203,49 +140,53 @@ export class CartPage implements OnDestroy {
     if (!addr) return this.selectedLocation().address ?? '';
     return [addr.houseAndStreet, addr.town].filter(Boolean).join(', ');
   });
-  readonly billOriginalTotal = computed(() => {
-    const p = this.pricingBreakdown();
-    if (!p) return 0;
-    return p.total + p.savings.totalSavings;
-  });
+
   readonly billSheetPricingConfig: PricingSummaryConfig = {
     showHeader: false,
     showCouponAction: false,
     variant: 'cart',
     freeDeliveryThreshold: 500,
   };
-  readonly specialInstructions = computed(() => {
-    const instructions: string[] = [];
-    const note = this.restaurantNote().trim();
-    if (note) instructions.push(note);
-    if (this.dontSendCutlery()) {
-      instructions.push(this.i18n.translate('cart.dontSendCutlery'));
-    }
-    return instructions.join(' | ');
+
+  readonly contactLabel = computed(() => {
+    const profile = this.userProfile();
+    if (!profile) return '';
+    return profile.name ? `${profile.name}, ${profile.phoneNumber ?? ''}` : (profile.phoneNumber ?? '');
   });
 
-  private readonly cartSub: Subscription;
-  private readonly routerSub: Subscription;
+  readonly paymentMethodLabel = computed(() =>
+    this.selectedPaymentMethod() === 'cash'
+      ? this.i18n.translate('payment.cash')
+      : this.i18n.translate('payment.online')
+  );
+
+  // ── HTML-facing aliases / display helpers ────────────────────────────────
+  readonly restaurantName = computed(() => this.businessName());
+  readonly deliveryEtaLabel = computed(() => '20–30 min');
+  readonly shortAddress = computed(() => {
+    const addr = this.selectedAddress();
+    if (addr) return [addr.houseAndStreet, addr.town].filter(Boolean).join(', ');
+    return this.selectedLocation().address ?? '';
+  });
+  readonly restaurantNote = computed(() => this.customerNote());
+  readonly billOriginalTotal = computed(() => {
+    const pb = this.pricingBreakdown();
+    return pb ? pb.total + (pb.savings?.totalSavings ?? 0) : 0;
+  });
+
+  // ── UI panel state ────────────────────────────────────────────────────────
+  readonly isBillSheetOpen = signal(false);
+  readonly isPaymentSheetOpen = signal(false);
+
+  // ── Item editing — disabled until catalog integration ────────────────────
+  readonly isEditItemSheetOpen = computed(() => false as boolean);
+  readonly editingItem = computed(() => null as null);
+  readonly editingItemQuantity = computed(() => 1);
+
+  private destroyed = false;
 
   constructor() {
     this.init();
-
-    this.cartSub = this.cartService.cartChanged.subscribe(async () => {
-      this.cart.set(this.cartService.getCart());
-      await this.calculatePricing();
-      this.recalculateCoupon();
-    });
-
-    this.routerSub = this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe(async (e: NavigationEnd) => {
-        await this.checkAuth();
-        if (e.url === '/cart') {
-          if (this.isLoggedIn()) await this.loadAddresses();
-          this.handleCouponReturn();
-        }
-      });
-
   }
 
   private async init(): Promise<void> {
@@ -260,12 +201,23 @@ export class CartPage implements OnDestroy {
       this.selectedOrderType.set('delivery');
     }
 
-    await this.calculatePricing();
     await this.checkAuth();
     if (this.isLoggedIn()) await this.loadAddresses();
-    this.cart.set(this.cartService.getCart());
-    this.handleCouponReturn();
+
+    // Load this business's cart from the API (in case it hasn't been loaded yet)
+    const slug = this.businessSlug();
+    if (slug && !this.apiCart()) {
+      await this.cartApi.loadCart(slug).catch(() => {});
+    }
+
+    await this.calculatePricing();
   }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
+  // ── Auth & Addresses ─────────────────────────────────────────────────────
 
   private async checkAuth(): Promise<void> {
     const phone = await this.userMgmt.getCurrentUserPhone();
@@ -291,10 +243,9 @@ export class CartPage implements OnDestroy {
     if (!addrs.length) return;
 
     const locSnap = this.locationService.snapshot;
-    const matchedByLabel =
-      locSnap.type === 'saved'
-        ? addrs.find(a => a.type === locSnap.label)
-        : null;
+    const matchedByLabel = locSnap.type === 'saved'
+      ? addrs.find(a => a.type === locSnap.label)
+      : null;
 
     if (matchedByLabel) {
       this.selectedAddressId.set(matchedByLabel.id);
@@ -304,6 +255,8 @@ export class CartPage implements OnDestroy {
     }
   }
 
+  // ── Pricing ──────────────────────────────────────────────────────────────
+
   private async calculatePricing(): Promise<void> {
     let config = this.pricingConfig();
     if (!config) {
@@ -311,15 +264,19 @@ export class CartPage implements OnDestroy {
       this.pricingConfig.set(config);
     }
     const breakdown = await this.pricingService.calculatePricing({
-      cartItems: this.cart(),
+      cartItems: [],          // pricing service uses subtotal, not individual items
       subtotal: this.subtotal(),
       orderType: this.selectedOrderType(),
       deliveryAddress: this.selectedAddress(),
-      appliedCoupon: this.appliedCoupon(),
+      appliedCoupon: this.couponCode()
+        ? { coupon: { code: this.couponCode()! } as never, discountAmount: this.couponDiscount() }
+        : null,
       pricingConfig: config,
     });
     this.pricingBreakdown.set(breakdown);
   }
+
+  // ── Order type / table / guests ──────────────────────────────────────────
 
   async onOrderTypeChange(type: OrderType): Promise<void> {
     if (!this.orderConfigService.isOrderTypeEnabled(type)) return;
@@ -328,7 +285,6 @@ export class CartPage implements OnDestroy {
     if (type !== 'dine-in') this.selectedTable.set('');
     if (type !== 'takeout') this.scheduledPickupTime.set('');
     await this.calculatePricing();
-    this.revalidateCoupon();
   }
 
   onSelectAddress(id: string): void {
@@ -337,19 +293,6 @@ export class CartPage implements OnDestroy {
 
   onSelectPayment(method: 'cash' | 'online'): void {
     this.selectedPaymentMethod.set(method);
-  }
-
-  openPaymentSheet(): void {
-    this.isPaymentSheetOpen.set(true);
-  }
-
-  closePaymentSheet(): void {
-    this.isPaymentSheetOpen.set(false);
-  }
-
-  selectPaymentAndClose(method: 'cash' | 'online'): void {
-    this.onSelectPayment(method);
-    this.closePaymentSheet();
   }
 
   incrementGuests(): void {
@@ -372,125 +315,84 @@ export class CartPage implements OnDestroy {
     }
   }
 
-  onIncrement(item: CartItem): void {
-    this.cartService.addToCart(item);
-  }
+  // ── Cart item qty actions ─────────────────────────────────────────────────
 
-  onDecrement(item: CartItem): void {
-    this.cartService.removeFromCart(item, true);
-  }
-
-  openItemEditor(item: CartItem): void {
-    if (!item.hasVariations) return;
-    this.editingItem.set({ ...item });
-    this.isEditItemSheetOpen.set(true);
-  }
-
-  closeItemEditor(): void {
-    this.isEditItemSheetOpen.set(false);
-    this.editingItem.set(null);
-  }
-
-  async onEditItemApplied(event: {
-    product: Product;
-    variation: ProductVariation | null;
-  }): Promise<void> {
-    const currentItem = this.editingItem();
-    if (!currentItem) return;
-
-    const updatedVariationId = event.variation?.id ?? currentItem.selectedVariationId ?? '';
-    if (updatedVariationId === (currentItem.selectedVariationId ?? '')) {
-      this.closeItemEditor();
-      return;
-    }
-
-    const replacementItem: Product = {
-      ...event.product,
-      selectedVariationId: updatedVariationId,
-      price: event.variation?.price ?? event.product.price,
-      weight: event.variation?.weight ?? event.product.weight,
-      imageUrl: event.variation?.imageUrl ?? event.product.imageUrl,
-    };
-
-    const quantity = currentItem.qty || 1;
-    for (let index = 0; index < quantity; index += 1) {
-      await this.cartService.removeFromCart(currentItem, true);
-    }
-    for (let index = 0; index < quantity; index += 1) {
-      this.cartService.addToCart(replacementItem);
-    }
-
-    this.closeItemEditor();
-  }
-
-  clearCart(): void {
-    this.cartService.clearCart();
-  }
-
-  async onCouponApplied(coupon: AppliedCoupon): Promise<void> {
-    this.appliedCoupon.set(coupon);
+  async onIncrement(item: ApiCartItem): Promise<void> {
+    const slug = this.businessSlug();
+    if (!slug) return;
+    await this.cartApi.updateQty(slug, item.id, item.quantity + 1);
     await this.calculatePricing();
-    this.analytics.logApplyCoupon(
-      coupon.coupon.code,
-      coupon.discountAmount,
-      this.subtotal()
-    );
+  }
+
+  async onDecrement(item: ApiCartItem): Promise<void> {
+    const slug = this.businessSlug();
+    if (!slug) return;
+    await this.cartApi.updateQty(slug, item.id, item.quantity - 1);
+    await this.calculatePricing();
+  }
+
+  async clearCart(): Promise<void> {
+    const slug = this.businessSlug();
+    if (!slug) return;
+    await this.cartApi.clearCart(slug);
+  }
+
+  // ── Bill / Payment sheets ─────────────────────────────────────────────────
+  openBillSheet(): void { this.isBillSheetOpen.set(true); }
+  closeBillSheet(): void { this.isBillSheetOpen.set(false); }
+  openPaymentSheet(): void { this.isPaymentSheetOpen.set(true); }
+  closePaymentSheet(): void { this.isPaymentSheetOpen.set(false); }
+  selectPaymentAndClose(method: 'cash' | 'online'): void {
+    this.selectedPaymentMethod.set(method);
+    this.isPaymentSheetOpen.set(false);
+  }
+
+  // ── Item editor (no-op until catalog integration) ─────────────────────────
+  openItemEditor(_item: ApiCartItem): void { /* noop */ }
+  closeItemEditor(): void { /* noop */ }
+  async onEditItemApplied(_event: unknown): Promise<void> { /* noop */ }
+
+  // ── Misc ──────────────────────────────────────────────────────────────────
+  shareCart(): void { /* no-op */ }
+  addMoreItems(): void { this.goToMenu(); }
+
+  // ── Coupon ────────────────────────────────────────────────────────────────
+
+  async onCouponApplied(code: string): Promise<void> {
+    const slug = this.businessSlug();
+    if (!slug) return;
+    const result = await this.cartApi.applyCoupon(slug, code);
+    if (result.success) {
+      await this.calculatePricing();
+    }
   }
 
   async onCouponRemoved(): Promise<void> {
-    this.appliedCoupon.set(null);
+    const slug = this.businessSlug();
+    if (!slug) return;
+    await this.cartApi.removeCoupon(slug);
     await this.calculatePricing();
   }
 
   navigateToCoupons(): void {
-    this.router.navigate(['/coupons']);
+    this.router.navigate(['/coupons'], {
+      queryParams: { business: this.businessSlug() },
+    });
   }
 
-  goToMenu(): void {
-    const slug = this.businessSlug();
-    if (slug) {
-      this.router.navigate(['/listing'], { queryParams: { businessSlug: slug } });
-    } else {
-      this.router.navigate(['/listing']);
-    }
-  }
-
-  goBack(): void {
-    this.router.navigate(['/home']);
-  }
-
-  async shareCart(): Promise<void> {
-    const shareData = {
-      title: this.restaurantName(),
-      text: this.deliveryEtaLabel(),
-      url: window.location.href,
-    };
-
-    if (navigator.share) {
-      await navigator.share(shareData);
-      return;
-    }
-
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(window.location.href);
-    }
-  }
-
-  addMoreItems(): void {
-    this.goToMenu();
-  }
+  // ── Notes ─────────────────────────────────────────────────────────────────
 
   openNoteSheet(): void {
-    this.noteDraft.set(this.restaurantNote());
+    this.noteDraft.set(this.customerNote());
     this.isNoteSheetOpen.set(true);
   }
 
-  closeNoteSheet(): void {
+  saveNote(): void {
+    this.customerNote.set(this.noteDraft().trim());
     this.isNoteSheetOpen.set(false);
   }
 
-  saveNote(): void {
-    this.restaurantNote.set(this.noteDraft().trim());
+  closeNoteSheet(): void {
     this.isNoteSheetOpen.set(false);
   }
 
@@ -498,32 +400,30 @@ export class CartPage implements OnDestroy {
     this.noteDraft.set(value);
   }
 
-  toggleCutlery(): void {
-    this.dontSendCutlery.update(value => !value);
+  // ── Navigation ───────────────────────────────────────────────────────────
+
+  goBack(): void {
+    this.router.navigate(['/home']);
   }
 
-  goToAddAddress(): void {
-    this.router.navigate(['/add-address'], {
-      queryParams: { mode: 'checkout' },
-    });
+  goToMenu(): void {
+    const slug = this.businessSlug();
+    this.router.navigate(['/listing'], { queryParams: slug ? { businessSlug: slug } : {} });
   }
 
   goToLogin(): void {
     this.router.navigate(['/auth/signin'], {
-      queryParams: { returnUrl: '/cart' },
+      queryParams: { returnUrl: `/cart?business=${this.businessSlug()}` },
     });
   }
 
-  openBillSheet(): void {
-    this.isBillSheetOpen.set(true);
+  goToAddAddress(): void {
+    this.router.navigate(['/add-address'], { queryParams: { mode: 'checkout' } });
   }
 
-  closeBillSheet(): void {
-    this.isBillSheetOpen.set(false);
-  }
+  // ── Order placement ──────────────────────────────────────────────────────
 
   async placeOrder(): Promise<void> {
-    if (!this.isRestaurantOpen()) return;
     if (!this.hasItems()) return;
 
     if (!this.isLoggedIn()) {
@@ -540,105 +440,64 @@ export class CartPage implements OnDestroy {
       width: '350px',
       disableClose: true,
     });
-    const proceed = await dialogRef.afterClosed().toPromise();
+    const proceed = await firstValueFrom(dialogRef.afterClosed());
     if (!proceed) return;
 
     try {
       this.isProcessingOrder.set(true);
       this.orderProcessing.startProcessing();
 
-      await this.analytics.logBeginCheckout(
-        this.subtotal(),
-        this.cart().length,
-        this.cart().map(i => ({
-          id: i.id || '',
-          name: i.name || '',
-          price: i.price || 0,
-          quantity: i.qty || 1,
-        }))
-      );
+      await this.orderProcessing.processStageWithDelay('validating', 1200);
 
-      await this.orderProcessing.processStageWithDelay('validating', 1500);
+      const slug = this.businessSlug();
+      const summary = await this.cartApi.getCheckoutSummary(slug);
 
-      const orderItems: OrderItemModel[] = this.cart()
-        .filter(i => i?.name)
-        .map(i => {
-          let variationLabel = '';
-          let variationPrice = 0;
-          if (i.hasVariations && i.selectedVariationId && i.variations) {
-            const v = i.variations.find(v => v.id === i.selectedVariationId);
-            if (v) {
-              variationLabel = v.label;
-              variationPrice = v.price;
-            }
-          }
-          return {
-            id: (i.id || i.name || FALLBACK_VALUES.UNKNOWN_ITEM).toString(),
-            name: (i.name || FALLBACK_VALUES.UNKNOWN_ITEM).toString(),
-            price: this.parsePrice(i.price),
-            qty: Math.max(1, parseInt(String(i.qty)) || 1),
-            imageUrl: (i.imageUrl || '').toString(),
-            weight: (i.weight || '').toString(),
-            selectedVariationId: i.selectedVariationId,
-            selectedVariationLabel: variationLabel,
-            selectedVariationPrice: variationPrice,
-          } as OrderItemModel;
-        });
+      if (!summary.canProceed) {
+        const unavailable = summary.unavailableItems.map(i => i.productName).join(', ');
+        this.orderProcessing.updateStage('error', `Some items are unavailable: ${unavailable}`);
+        await new Promise(r => setTimeout(r, 3000));
+        return;
+      }
 
-      if (!orderItems.length) throw new Error('No valid items in cart');
+      await this.orderProcessing.processStageWithDelay('creating', 1000);
 
-      await this.orderProcessing.processStageWithDelay('creating', 1200);
-
+      const cart = this.apiCart()!;
       const addr = this.selectedAddress();
-      const orderData: CreateOrderData = {
+
+      const options: CreateOrderOptions = {
         orderType: this.selectedOrderType()!,
-        tableNumber:
-          this.selectedOrderType() === 'dine-in'
-            ? this.selectedTable()
-            : undefined,
-        numberOfGuests:
-          this.selectedOrderType() === 'dine-in'
-            ? this.numberOfGuests()
-            : undefined,
-        scheduledPickupTime:
-          this.selectedOrderType() === 'takeout' && this.scheduledPickupTime()
-            ? new Date(this.scheduledPickupTime())
-            : undefined,
-        items: orderItems,
-        subtotal: this.subtotal(),
-        deliveryCharge:
-          this.pricingBreakdown()?.charges.delivery.applied || 0,
-        total: this.total(),
         paymentMethod: this.selectedPaymentMethod(),
-        deliveryAddress:
-          addr && this.selectedOrderType() === 'delivery'
-            ? {
-                name: addr.name,
-                phone: addr.phone,
-                street: addr.houseAndStreet,
-                city: addr.town,
-                state: addr.state,
-                pincode: addr.pincode,
-                landmark: addr.landmark || undefined,
-                type: addr.type || 'Other',
-              }
-            : undefined,
-        charges: this.pricingBreakdown()
-          ? this.pricingService.formatChargesForOrder(this.pricingBreakdown()!)
-          : undefined,
-        customerNotes: this.specialInstructions() || undefined,
+        deliveryAddressId: addr?.id ?? null,
+        tableNumber: this.selectedOrderType() === 'dine-in' ? this.selectedTable() : null,
+        numberOfGuests: this.selectedOrderType() === 'dine-in' ? this.numberOfGuests() : null,
+        couponCode: this.couponCode(),
+        customerNotes: this.customerNote() || null,
       };
 
-      await this.orderProcessing.processStageWithDelay('processing', 1000);
-      await this.analytics.logAddPaymentInfo(this.selectedPaymentMethod(), this.total());
+      // Map ApiCartItem → CartItem shape expected by OrderMapper
+      const cartItems = summary.items.map(i => ({
+        id: i.productId,
+        name: i.productName,
+        price: i.currentPrice,
+        qty: i.quantity,
+        selectedVariationId: i.variationId ?? undefined,
+      } as never));
 
-      const order = await this.orderService.createOrder(orderData);
-      await this.orderProcessing.processStageWithDelay('confirming', 1500);
+      await this.orderProcessing.processStageWithDelay('processing', 800);
+
+      const order = await firstValueFrom(
+        this.orderApi.createOrder(
+          { items: cartItems, businessId: cart.businessId },
+          options
+        )
+      );
+
+      await this.orderProcessing.processStageWithDelay('confirming', 1200);
       this.orderProcessing.updateStage('completed');
 
       await new Promise(r => setTimeout(r, 2000));
 
-      this.clearCart();
+      await this.cartApi.clearCart(slug);
       this.router.navigate(['/order-confirmation'], {
         queryParams: { orderId: order.orderId },
       });
@@ -661,112 +520,25 @@ export class CartPage implements OnDestroy {
 
   private validateOrderType(): boolean {
     if (!this.selectedOrderType()) {
-      this.orderTypeError.set(
-        this.orderConfigService.getMessage('general', 'orderTypeRequired')
-      );
+      this.orderTypeError.set(this.orderConfigService.getMessage('general', 'orderTypeRequired'));
       return false;
     }
-    if (this.selectedOrderType() === 'dine-in') {
-      if (this.orderConfigService.shouldShowDineInDetails()) {
-        if (!this.selectedTable()) {
-          this.orderTypeError.set(
-            this.orderConfigService.getMessage('dineIn', 'tableRequired')
-          );
-          return false;
-        }
-        const table = this.availableTables().find(
-          t => t.id === this.selectedTable()
-        );
-        if (!table?.isAvailable) {
-          this.orderTypeError.set(
-            this.orderConfigService.getMessage('dineIn', 'tableUnavailable')
-          );
-          return false;
-        }
+    if (this.selectedOrderType() === 'dine-in' && this.orderConfigService.shouldShowDineInDetails()) {
+      if (!this.selectedTable()) {
+        this.orderTypeError.set(this.orderConfigService.getMessage('dineIn', 'tableRequired'));
+        return false;
+      }
+      const table = this.availableTables().find(t => t.id === this.selectedTable());
+      if (!table?.isAvailable) {
+        this.orderTypeError.set(this.orderConfigService.getMessage('dineIn', 'tableUnavailable'));
+        return false;
       }
     }
-    if (
-      this.selectedOrderType() === 'delivery' &&
-      !this.isAddressSelected()
-    ) {
-      this.orderTypeError.set(
-        this.orderConfigService.getMessage('delivery', 'addressRequired')
-      );
+    if (this.selectedOrderType() === 'delivery' && !this.isAddressSelected()) {
+      this.orderTypeError.set(this.orderConfigService.getMessage('delivery', 'addressRequired'));
       return false;
     }
     this.orderTypeError.set('');
     return true;
-  }
-
-  private revalidateCoupon(): void {
-    const coupon = this.appliedCoupon()?.coupon;
-    if (!coupon || !this.selectedOrderType()) return;
-    if (
-      coupon.applicableOrderTypes?.length &&
-      !coupon.applicableOrderTypes.includes(this.selectedOrderType()!)
-    ) {
-      this.appliedCoupon.set(null);
-    }
-  }
-
-  private recalculateCoupon(): void {
-    const applied = this.appliedCoupon();
-    if (!applied) return;
-    this.couponService
-      .validateCoupon(
-        applied.coupon.code,
-        this.subtotal(),
-        this.cart(),
-        this.selectedOrderType() || undefined
-      )
-      .subscribe({
-        next: result => {
-          if (result.isValid) {
-            this.appliedCoupon.set({
-              coupon: applied.coupon,
-              discountAmount: result.discountAmount,
-            });
-          } else {
-            this.appliedCoupon.set(null);
-          }
-        },
-        error: () => this.appliedCoupon.set(null),
-      });
-  }
-
-  private handleCouponReturn(): void {
-    const state = history.state;
-    if (!state || !Object.keys(state).length) return;
-    if (state['appliedCoupon'] === null) {
-      this.appliedCoupon.set(null);
-    } else if (state['appliedCoupon']) {
-      this.appliedCoupon.set(state['appliedCoupon']);
-    }
-    if (state['appliedCoupon'] !== undefined) {
-      delete state['appliedCoupon'];
-      history.replaceState(state, '', window.location.pathname);
-    }
-  }
-
-  private parsePrice(price: unknown): number {
-    if (typeof price === 'number') return Math.max(0, price);
-    if (typeof price === 'string') {
-      const p = parseFloat(price.replace(/[^\d.]/g, ''));
-      return Math.max(0, isNaN(p) ? 0 : p);
-    }
-    return 0;
-  }
-
-  getOrderTypeIcon(type: OrderType): string {
-    return this.orderConfigService.getOrderTypeIcon(type);
-  }
-
-  getOrderTypeLabel(type: OrderType): string {
-    return this.orderConfigService.getOrderTypeDisplayName(type);
-  }
-
-  ngOnDestroy(): void {
-    this.cartSub.unsubscribe();
-    this.routerSub.unsubscribe();
   }
 }
