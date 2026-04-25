@@ -27,7 +27,7 @@ import { BannerConfigs } from '@zitro/models';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, BottomNavComponent, WhatsappButtonComponent, FooterComponent, LocationBottomSheetComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, BottomNavComponent, FooterComponent, LocationBottomSheetComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
@@ -45,6 +45,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   headerTitle: string = '';
   isOnGameRoute = false;
+  isOnCartPage = false;
   headerVisible: boolean = true;
   private lastScrollTop = 0;
 
@@ -209,6 +210,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.updateBackButtonVisibility();
         this.updateHeaderTitle();
         this.isOnGameRoute = event.urlAfterRedirects.includes('/game-2048');
+        this.isOnCartPage = event.urlAfterRedirects === '/cart';
         this.isOnHomePage = event.urlAfterRedirects === '/home' || event.urlAfterRedirects === '/';
         this.scrolledPastBanner = false;
         if (this.isOnHomePage) { this.tryGetLocation(); }
@@ -219,6 +221,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.currentRoute = this.router.url;
     this.updateBackButtonVisibility();
     this.isOnGameRoute = this.router.url.includes('/game-2048');
+    this.isOnCartPage = this.router.url === '/cart';
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
     this.updateHeaderTitle();
   }

@@ -25,7 +25,7 @@ interface BusinessOption {
 @Component({
   selector: 'app-business-selection-page',
   standalone: true,
-  imports: [FormsModule, I18nPipe, CachedImageDirective, LoaderComponent],
+  imports: [FormsModule, I18nPipe, CachedImageDirective],
   templateUrl: './business-selection.page.html',
   styleUrl: './business-selection.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

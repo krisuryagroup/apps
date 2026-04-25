@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { I18nPipe } from '@zitro/i18n';
 import { Product, ProductVariation } from '@zitro/models';
 import { BottomSheetComponent, BottomSheetConfig } from '../../common/bottom-sheet/bottom-sheet.component';
@@ -24,6 +24,8 @@ export class ItemDetailSheetComponent {
   product = input<Product | null>(null);
   isOpen = input<boolean>(false);
   quantity = input<number>(0);
+  editMode = input<boolean>(false);
+  actionLabelKey = input<string>('listing.addToCart');
 
   closed = output<void>();
   addToCart = output<{ product: Product; variation: ProductVariation | null }>();
@@ -49,6 +51,25 @@ export class ItemDetailSheetComponent {
     const v = this.selectedVariation();
     return v ? v.price : (this.product()?.price ?? 0);
   });
+
+  constructor() {
+    effect(() => {
+      const product = this.product();
+      if (!product?.hasVariations || !product.variations?.length) {
+        this.selectedVariationId.set('');
+        return;
+      }
+
+      const selectedId = product.selectedVariationId;
+      const nextId =
+        product.variations.find(v => v.id === selectedId)?.id ??
+        product.variations.find(v => v.isDefault && v.isEnabled !== false)?.id ??
+        product.variations.find(v => v.isEnabled !== false)?.id ??
+        '';
+
+      this.selectedVariationId.set(nextId);
+    });
+  }
 
   onVariationSelect(id: string): void {
     this.selectedVariationId.set(id);

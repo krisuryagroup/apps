@@ -11,13 +11,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, Subscription } from 'rxjs';
 import { DecimalPipe } from '@angular/common';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
 import {
   CartItemRowComponent,
   CartPricingSummaryComponent,
   OrderLoadingModalComponent,
   DeliveryRangeDialogComponent,
-  CouponSelectorComponent,
+  CouponSelectorCartComponent,
+  ItemDetailSheetComponent,
+  PricingSummaryConfig,
 } from '@zitro/ui';
 import {
   CartService,
@@ -42,6 +44,8 @@ import {
   CreateOrderData,
   OrderItem as OrderItemModel,
   OrderConfiguration,
+  Product,
+  ProductVariation,
   TableConfig,
 } from '@zitro/models';
 import {
@@ -59,7 +63,8 @@ import {
     CartItemRowComponent,
     CartPricingSummaryComponent,
     OrderLoadingModalComponent,
-    CouponSelectorComponent,
+    CouponSelectorCartComponent,
+    ItemDetailSheetComponent,
   ],
   templateUrl: './cart.page.html',
   styleUrl: './cart.page.scss',
@@ -78,6 +83,7 @@ export class CartPage implements OnDestroy {
   private readonly addressApi = inject(AddressApiService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   readonly processingStage = toSignal(this.orderProcessing.processing$);
 
@@ -99,6 +105,18 @@ export class CartPage implements OnDestroy {
   readonly availableTables = signal<TableConfig[]>([]);
   readonly appliedCoupon = signal<AppliedCoupon | null>(null);
   readonly isRestaurantOpen = signal(true);
+  readonly isNoteSheetOpen = signal(false);
+  readonly restaurantNote = signal('');
+  readonly noteDraft = signal('');
+  readonly dontSendCutlery = signal(false);
+  readonly editingItem = signal<CartItem | null>(null);
+  readonly isEditItemSheetOpen = signal(false);
+  readonly selectedLocation = toSignal(this.locationService.selectedLocation$, {
+    initialValue: this.locationService.snapshot,
+  });
+  readonly userProfile = toSignal(this.userMgmt.userProfile$, { initialValue: null });
+  readonly isBillSheetOpen = signal(false);
+  readonly isPaymentSheetOpen = signal(false);
 
   readonly subtotal = computed(() => this.cartService.getTotal());
   readonly hasItems = computed(() => this.cart().length > 0);
@@ -130,6 +148,81 @@ export class CartPage implements OnDestroy {
   readonly isDeliveryEnabled = computed(() =>
     this.orderConfigService.isOrderTypeEnabled('delivery')
   );
+  readonly restaurantName = computed(() => {
+    const storedRestaurantId = localStorage.getItem(
+      APP_CONSTANTS.APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID
+    );
+    if (!storedRestaurantId) {
+      return this.i18n.translate('cart.restaurantFallback');
+    }
+
+    return storedRestaurantId
+      .split('-')
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  });
+
+  readonly businessSlug = computed(
+    () => localStorage.getItem(APP_CONSTANTS.APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ?? ''
+  );
+  readonly deliveryEtaLabel = computed(() => {
+    const locationLabel =
+      this.selectedLocation().type !== 'none'
+        ? this.selectedLocation().label
+        : this.i18n.translate('cart.locationFallback');
+    return this.i18n.translate('cart.deliveryEtaPrefix', {
+      location: locationLabel,
+    });
+  });
+  readonly shortAddress = computed(() => {
+    const address = this.selectedLocation().address || '';
+    if (address.length <= 42) return address;
+    return `${address.slice(0, 39)}...`;
+  });
+  readonly editingItemQuantity = computed(() => this.editingItem()?.qty ?? 0);
+  readonly contactLabel = computed(() => {
+    const profile = this.userProfile();
+    if (!profile) return '';
+    const name = profile.name ?? '';
+    const phone = profile.phoneNumber ?? '';
+    return name ? `${name}, ${phone}` : phone;
+  });
+  readonly paymentMethodLabel = computed(() =>
+    this.selectedPaymentMethod() === 'cash'
+      ? this.i18n.translate('payment.cash')
+      : this.i18n.translate('payment.online')
+  );
+  readonly deliveryAddressLabel = computed(() => {
+    const addr = this.selectedAddress();
+    if (!addr) return this.selectedLocation().label ?? '';
+    return addr.type ?? addr.name ?? '';
+  });
+  readonly deliveryAddressShort = computed(() => {
+    const addr = this.selectedAddress();
+    if (!addr) return this.selectedLocation().address ?? '';
+    return [addr.houseAndStreet, addr.town].filter(Boolean).join(', ');
+  });
+  readonly billOriginalTotal = computed(() => {
+    const p = this.pricingBreakdown();
+    if (!p) return 0;
+    return p.total + p.savings.totalSavings;
+  });
+  readonly billSheetPricingConfig: PricingSummaryConfig = {
+    showHeader: false,
+    showCouponAction: false,
+    variant: 'cart',
+    freeDeliveryThreshold: 500,
+  };
+  readonly specialInstructions = computed(() => {
+    const instructions: string[] = [];
+    const note = this.restaurantNote().trim();
+    if (note) instructions.push(note);
+    if (this.dontSendCutlery()) {
+      instructions.push(this.i18n.translate('cart.dontSendCutlery'));
+    }
+    return instructions.join(' | ');
+  });
 
   private readonly cartSub: Subscription;
   private readonly routerSub: Subscription;
@@ -246,6 +339,19 @@ export class CartPage implements OnDestroy {
     this.selectedPaymentMethod.set(method);
   }
 
+  openPaymentSheet(): void {
+    this.isPaymentSheetOpen.set(true);
+  }
+
+  closePaymentSheet(): void {
+    this.isPaymentSheetOpen.set(false);
+  }
+
+  selectPaymentAndClose(method: 'cash' | 'online'): void {
+    this.onSelectPayment(method);
+    this.closePaymentSheet();
+  }
+
   incrementGuests(): void {
     const max = this.orderConfig()?.dineInConfig.maxGuests ?? 10;
     if (this.numberOfGuests() < max) this.numberOfGuests.update(n => n + 1);
@@ -274,6 +380,49 @@ export class CartPage implements OnDestroy {
     this.cartService.removeFromCart(item, true);
   }
 
+  openItemEditor(item: CartItem): void {
+    if (!item.hasVariations) return;
+    this.editingItem.set({ ...item });
+    this.isEditItemSheetOpen.set(true);
+  }
+
+  closeItemEditor(): void {
+    this.isEditItemSheetOpen.set(false);
+    this.editingItem.set(null);
+  }
+
+  async onEditItemApplied(event: {
+    product: Product;
+    variation: ProductVariation | null;
+  }): Promise<void> {
+    const currentItem = this.editingItem();
+    if (!currentItem) return;
+
+    const updatedVariationId = event.variation?.id ?? currentItem.selectedVariationId ?? '';
+    if (updatedVariationId === (currentItem.selectedVariationId ?? '')) {
+      this.closeItemEditor();
+      return;
+    }
+
+    const replacementItem: Product = {
+      ...event.product,
+      selectedVariationId: updatedVariationId,
+      price: event.variation?.price ?? event.product.price,
+      weight: event.variation?.weight ?? event.product.weight,
+      imageUrl: event.variation?.imageUrl ?? event.product.imageUrl,
+    };
+
+    const quantity = currentItem.qty || 1;
+    for (let index = 0; index < quantity; index += 1) {
+      await this.cartService.removeFromCart(currentItem, true);
+    }
+    for (let index = 0; index < quantity; index += 1) {
+      this.cartService.addToCart(replacementItem);
+    }
+
+    this.closeItemEditor();
+  }
+
   clearCart(): void {
     this.cartService.clearCart();
   }
@@ -298,7 +447,59 @@ export class CartPage implements OnDestroy {
   }
 
   goToMenu(): void {
-    this.router.navigate(['/listing']);
+    const slug = this.businessSlug();
+    if (slug) {
+      this.router.navigate(['/listing'], { queryParams: { businessSlug: slug } });
+    } else {
+      this.router.navigate(['/listing']);
+    }
+  }
+
+  goBack(): void {
+    this.router.navigate(['/home']);
+  }
+
+  async shareCart(): Promise<void> {
+    const shareData = {
+      title: this.restaurantName(),
+      text: this.deliveryEtaLabel(),
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(window.location.href);
+    }
+  }
+
+  addMoreItems(): void {
+    this.goToMenu();
+  }
+
+  openNoteSheet(): void {
+    this.noteDraft.set(this.restaurantNote());
+    this.isNoteSheetOpen.set(true);
+  }
+
+  closeNoteSheet(): void {
+    this.isNoteSheetOpen.set(false);
+  }
+
+  saveNote(): void {
+    this.restaurantNote.set(this.noteDraft().trim());
+    this.isNoteSheetOpen.set(false);
+  }
+
+  updateNoteDraft(value: string): void {
+    this.noteDraft.set(value);
+  }
+
+  toggleCutlery(): void {
+    this.dontSendCutlery.update(value => !value);
   }
 
   goToAddAddress(): void {
@@ -311,6 +512,14 @@ export class CartPage implements OnDestroy {
     this.router.navigate(['/auth/signin'], {
       queryParams: { returnUrl: '/cart' },
     });
+  }
+
+  openBillSheet(): void {
+    this.isBillSheetOpen.set(true);
+  }
+
+  closeBillSheet(): void {
+    this.isBillSheetOpen.set(false);
   }
 
   async placeOrder(): Promise<void> {
@@ -417,6 +626,7 @@ export class CartPage implements OnDestroy {
         charges: this.pricingBreakdown()
           ? this.pricingService.formatChargesForOrder(this.pricingBreakdown()!)
           : undefined,
+        customerNotes: this.specialInstructions() || undefined,
       };
 
       await this.orderProcessing.processStageWithDelay('processing', 1000);

@@ -1,31 +1,34 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
+import { I18nPipe } from '@zitro/i18n';
 import { AppliedCoupon } from '@zitro/models';
 
 @Component({
   selector: 'app-coupon-selector-cart',
   standalone: true,
-  imports: [CommonModule],
+  imports: [I18nPipe],
   templateUrl: './coupon-selector-cart.component.html',
-  styleUrl: './coupon-selector-cart.component.scss'
+  styleUrl: './coupon-selector-cart.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CouponSelectorCartComponent {
-  @Input() orderAmount: number = 0;
-  @Input() cartItems: any[] = [];
-  @Input() appliedCoupon: AppliedCoupon | null = null;
-  @Output() couponApplied = new EventEmitter<AppliedCoupon>();
-  @Output() couponRemoved = new EventEmitter<void>();
+  private readonly router = inject(Router);
 
-  constructor(private router: Router) {}
+  orderAmount = input<number>(0);
+  cartItems = input<unknown[]>([]);
+  appliedCoupon = input<AppliedCoupon | null>(null);
+  businessSlug = input<string>('');
+
+  couponRemoved = output<void>();
 
   viewAllCoupons(): void {
     this.router.navigate(['/coupons'], {
       state: {
-        orderAmount: this.orderAmount,
-        cartItems: this.cartItems,
-        appliedCoupon: this.appliedCoupon
-      }
+        orderAmount: this.orderAmount(),
+        cartItems: this.cartItems(),
+        appliedCoupon: this.appliedCoupon(),
+        businessSlug: this.businessSlug(),
+      },
     });
   }
 

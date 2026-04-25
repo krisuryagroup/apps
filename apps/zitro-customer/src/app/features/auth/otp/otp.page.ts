@@ -75,18 +75,16 @@ export class OtpPage implements OnDestroy {
     this.statusMessage.set('');
 
     try {
+      let credential;
       if (this.usingFirebaseOtp && this.confirmationResult) {
-        await this.confirmationResult.confirm(otp);
+        // Firebase Phone Auth path (reCAPTCHA)
+        credential = await this.confirmationResult.confirm(otp);
+        // Store app JWT and auth keys — required for AuthGuard on protected routes
+        await this.authService.completeSignIn(credential, this.phone);
       } else {
-        const valid = this.authService.verifyOtp(this.phone, otp);
-        if (!valid) {
-          this.statusMessage.set('errors.invalidOtp');
-          this.isLoading.set(false);
-          return;
-        }
+        // Backend OTP path — signInWithPhone verifies OTP + exchanges tokens
+        credential = await this.authService.signInWithPhone(this.phone, otp);
       }
-
-      const credential = await this.authService.signInWithPhone(this.phone, otp);
 
       if (credential?.user?.uid) {
         await this.fcmToken.onUserLogin(credential.user.uid);

@@ -56,13 +56,12 @@ export class SignInPage implements OnDestroy {
   async onSendOtp(): Promise<void> {
     if (!this.phone) return;
     this.isLoading.set(true);
-    this.statusMessage.set('');
+    this.statusMessage.set('auth.sendingOtp');
     const phoneWithCode = PHONE_CONSTANTS.INDIA_CODE + this.phone;
     const cfg = this.authConfig();
 
     if (cfg.sms.isFirebasePhoneAuthentication) {
       try {
-        this.statusMessage.set('auth.sendingOtp');
         this.confirmationResult = await this.otpService.sendOtp(phoneWithCode);
         this.usingFirebaseOtp = true;
         this.isLoading.set(false);
@@ -78,15 +77,14 @@ export class SignInPage implements OnDestroy {
       }
     }
 
-    if (cfg.sms.isFast2SmsPhoneAuthentication) {
-      try {
-        await this.authService.sendOtp(phoneWithCode);
-        this.isLoading.set(false);
-        this.navigateToOtp(phoneWithCode);
-      } catch {
-        this.statusMessage.set('auth.otpSentFailure');
-        this.isLoading.set(false);
-      }
+    // Backend API OTP path (replaces direct Fast2SMS)
+    try {
+      await this.authService.sendOtp(phoneWithCode);
+      this.isLoading.set(false);
+      this.navigateToOtp(phoneWithCode);
+    } catch {
+      this.statusMessage.set('auth.otpSentFailure');
+      this.isLoading.set(false);
     }
   }
 

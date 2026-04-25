@@ -34,8 +34,8 @@ export interface AuthConfig {
  */
 export const DEFAULT_AUTH_CONFIG: AuthConfig = {
   sms: {
-    isFast2SmsPhoneAuthentication: true,
-    isFirebasePhoneAuthentication: true,
+    isFast2SmsPhoneAuthentication: false,
+    isFirebasePhoneAuthentication: false,
     resendOTPAllowed: true,
     resendOTPTime: 60
   },

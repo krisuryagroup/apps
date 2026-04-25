@@ -10,7 +10,7 @@ export const UserMapper = {
       name: dto.name,
       email: dto.email,
       photoUrl: dto.photoUrl,
-      addresses: dto.addresses.map(UserMapper.toAddress),
+      addresses: (dto.addresses ?? []).map(UserMapper.toAddress),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     };

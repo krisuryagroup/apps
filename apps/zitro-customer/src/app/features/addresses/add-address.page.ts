@@ -15,12 +15,14 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { I18nPipe } from '@zitro/i18n';
 import { AddAddressFormComponent } from '@zitro/ui';
+import type { AddressLocationPatch } from '@zitro/ui';
 import {
   AddressApiService,
   LocationService,
   GoogleGeocodingService,
   GeoSearchSuggestion as SearchSuggestion,
   DialogService,
+  UserManagementService,
 } from '@zitro/services';
 import { Address, AddressFormData } from '@zitro/models';
 import { DELIVERY_PINCODE_CONFIG } from '../../core/constants/app.constants';
@@ -43,6 +45,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly locationService = inject(LocationService);
   private readonly geocodingService = inject(GoogleGeocodingService);
   private readonly dialogService = inject(DialogService);
+  private readonly userManagement = inject(UserManagementService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly ngZone = inject(NgZone);
@@ -62,6 +65,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   readonly isSearching = signal(false);
 
   readonly initialFormData = signal<Partial<Address> | null>(null);
+  readonly locationPatch = signal<AddressLocationPatch | null>(null);
 
   mode: 'checkout' | 'manage' | 'default' = 'default';
 
@@ -72,7 +76,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly search$ = new Subject<string>();
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const snap = this.route.snapshot.queryParamMap;
     const modeParam = snap.get('mode');
     if (modeParam === 'checkout') this.mode = 'checkout';
@@ -92,10 +96,13 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(q => this.runSearch(q));
 
+    const userPhone = await this.userManagement.getCurrentUserPhone().catch(() => null);
+
     this.initialFormData.set({
       type: 'Home',
       state: 'Uttar Pradesh',
       isDefault: false,
+      phone: userPhone ?? '',
     });
   }
 
@@ -142,6 +149,12 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
         const pos = (this.marker as any).getPosition();
         this.ngZone.run(() => this.onMarkerDrop(pos.lat(), pos.lng()));
       });
+      (this.map as any).addListener('click', (event: any) => {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        (this.marker as any).setPosition(event.latLng);
+        this.ngZone.run(() => this.onMarkerDrop(lat, lng));
+      });
       this.isMapLoading.set(false);
       if (this.presetCoords) {
         await this.onMarkerDrop(this.presetCoords.lat, this.presetCoords.lng);
@@ -158,9 +171,11 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     try {
       const result = await this.locationService.checkLocationPermission();
       if (result.hasLocation && result.coordinates) {
-        const pos = { lat: result.coordinates.lat, lng: result.coordinates.lng };
+        const { lat, lng } = result.coordinates;
+        const pos = { lat, lng };
         (this.map as any)?.panTo(pos);
         (this.marker as any)?.setPosition(pos);
+        await this.onMarkerDrop(lat, lng);
       }
     } catch { /* silent */ }
   }
@@ -174,11 +189,11 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       this.mapAddress.set(addr.formattedAddress);
       this.locationFromMap.set(true);
       this.checkPincodeRestriction(addr.pincode);
-      this.initialFormData.set({
-        ...this.initialFormData(),
+      this.locationPatch.set({
         pincode: addr.pincode,
         town: addr.town,
         state: addr.state,
+        landmark: addr.landmark,
       });
     } catch {
       this.errorMessage.set('Could not resolve address for this location. Please enter manually.');
@@ -257,12 +272,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.locationFromMap.set(false);
     this.mapAddress.set('');
     this.pincodeRestricted.set(false);
-    this.initialFormData.set({
-      ...this.initialFormData(),
-      pincode: '',
-      town: '',
-      state: 'Uttar Pradesh',
-    });
+    this.locationPatch.set({ pincode: '', town: '', state: 'Uttar Pradesh', landmark: '' });
   }
 
   private checkPincodeRestriction(pincode: string): void {
@@ -285,7 +295,10 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onFormSubmitted(data: AddressFormData): void {
-    if (this.pincodeRestricted() && this.pincodeConfig.enabled) return;
+    if (this.pincodeRestricted() && this.pincodeConfig.enabled) {
+      this.errorMessage.set('Delivery is not available at this pincode. Please choose a different location.');
+      return;
+    }
     this.isSaving.set(true);
     this.errorMessage.set('');
 

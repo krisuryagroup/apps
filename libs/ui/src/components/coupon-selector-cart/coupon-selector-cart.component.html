@@ -1,31 +1,38 @@
-<!-- Applied Coupon Display -->
-<div class="coupon-cart-section" *ngIf="appliedCoupon">
-  <div class="applied-coupon-display">
-    <div class="coupon-success-indicator">
-      <span class="material-icons">check_circle</span>
-      <div class="coupon-info">
-        <div class="coupon-title">{{ appliedCoupon.coupon.code }} applied</div>
-        <div class="coupon-savings">You saved ₹{{ appliedCoupon.discountAmount }}</div>
-      </div>
-    </div>
-    <button class="remove-coupon" (click)="removeCoupon()" type="button">
-      <span class="material-icons">close</span>
-    </button>
-  </div>
-</div>
+<div class="coupon-cart" data-testid="coupon-cart-section">
 
-<!-- View Coupons Link -->
-<div class="coupon-cart-section" *ngIf="!appliedCoupon">
-  <div class="view-coupons-container" (click)="viewAllCoupons()">
-    <div class="coupon-icon">
-      <span class="material-icons">local_offer</span>
+  @if (appliedCoupon()) {
+    <!-- Applied coupon row -->
+    <div class="coupon-cart__row coupon-cart__row--applied" data-testid="coupon-applied-row">
+      <span class="coupon-cart__check-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </span>
+      <span class="coupon-cart__applied-label" data-testid="coupon-applied-label">
+        {{ appliedCoupon()!.coupon.title }}
+      </span>
+      <span class="coupon-cart__discount" data-testid="coupon-discount-amount">
+        - ₹{{ appliedCoupon()!.discountAmount }}
+      </span>
     </div>
-    <div class="coupon-text">
-      <span class="main-text">Apply Coupon</span>
-      <span class="sub-text">Get instant discounts</span>
-    </div>
-    <div class="arrow-icon">
-      <span class="material-icons">keyboard_arrow_right</span>
-    </div>
-  </div>
+  }
+
+  <!-- View all coupons row — always visible -->
+  <button
+    class="coupon-cart__row coupon-cart__row--nav"
+    type="button"
+    (click)="viewAllCoupons()"
+    data-testid="view-all-coupons-btn"
+  >
+    <span class="coupon-cart__coupon-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+      </svg>
+    </span>
+    <span class="coupon-cart__nav-label">{{ 'coupon.viewAll' | i18n }}</span>
+    <svg class="coupon-cart__arrow" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+    </svg>
+  </button>
+
 </div>

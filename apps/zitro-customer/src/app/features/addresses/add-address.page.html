@@ -107,6 +107,8 @@
     <lib-add-address-form
       [config]="{ mode: 'add' }"
       [initialData]="initialFormData()"
+      [locationPatch]="locationPatch()"
+      [pincodeRestricted]="pincodeRestricted() && pincodeConfig.enabled"
       (submitted)="onFormSubmitted($event)"
       (cancelled)="onFormCancelled()"
       data-testid="add-address-form"

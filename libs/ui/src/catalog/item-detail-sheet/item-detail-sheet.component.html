@@ -41,7 +41,7 @@
       }
 
       <div class="item-detail-sheet__actions">
-        @if (quantity() > 0) {
+        @if (!editMode() && quantity() > 0) {
           <div class="item-detail-sheet__qty" data-testid="item-detail-qty-controls">
             <button class="item-detail-sheet__qty-btn" (click)="decrement.emit(product()!)" data-testid="item-detail-decrement-btn" type="button">−</button>
             <span data-testid="item-detail-qty">{{ quantity() }}</span>
@@ -49,7 +49,7 @@
           </div>
         } @else {
           <button class="item-detail-sheet__add-btn" (click)="onAdd()" data-testid="item-detail-add-btn" type="button">
-            {{ 'listing.addToCart' | i18n }}
+            {{ actionLabelKey() | i18n }}
           </button>
         }
       </div>
