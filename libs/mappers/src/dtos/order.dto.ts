@@ -1,56 +1,54 @@
-export interface OrderDto {
+/** Minimal response from POST /api/orders (PlaceOrderResponse in C#). */
+export interface PlaceOrderResponseDto {
   id: string;
-  displayId: string;
-  userId: string;
-  businessId: string;
-  businessName: string;
-  orderType: 'delivery' | 'takeout' | 'dine-in';
+  orderId: string; // display ID, e.g. "GRD751410483558"
   status: string;
-  items: OrderItemDto[];
-  charges: OrderChargesDto;
-  paymentMethod: 'cash' | 'online';
-  isPaid: boolean;
-  deliveryAddress: AddressDto | null;
-  tableNumber: string | null;
-  numberOfGuests: number | null;
-  appliedCouponCode: string | null;
-  customerNotes: string | null;
-  statusTimeline: OrderStatusEventDto[];
-  estimatedDeliveryMinutes: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface OrderChargesDto {
+  total: number;
   subtotal: number;
   deliveryCharge: number;
-  packagingCharge: number;
-  platformFee: number;
-  gst: number;
-  couponDiscount: number;
-  total: number;
+  couponDiscount: number | null;
+  couponCode: string | null;
+  paymentMethod: string;
+  orderType: string;
+  createdAt: string;
 }
 
-export interface OrderItemDto {
+/** Matches C# OrderDto.cs flat response shape (camelCase after JSON serialization). */
+export interface OrderDto {
   id: string;
-  productId: string;
-  productName: string;
-  basePrice: number;
-  quantity: number;
-  variationId: string | null;
-  variationName: string | null;
-  priceModifier: number;
-  effectivePrice: number;
-  specialInstructions: string | null;
-  imageUrl: string | null;
-}
-
-export interface OrderStatusEventDto {
+  orderId: string; // display ID, e.g. "GRD751410483558"
+  userId: string;
+  businessId: string;
   status: string;
-  timestamp: string;
-  note: string | null;
+  orderType: 'delivery' | 'takeout' | 'dine-in';
+  paymentMethod: 'cash' | 'online';
+  paymentStatus: string;
+  subtotal: number;
+  deliveryCharge: number;
+  tax: number | null;
+  couponDiscount: number | null;
+  couponCode: string | null;
+  walletDeducted: number | null;
+  total: number;
+  charges: string | null; // serialized string, not used by frontend
+  customerNotes: string | null;
+  tableNumber: string | null;
+  numberOfGuests: number | null;
+  // Flat delivery address fields
+  deliveryAddressName: string | null;
+  deliveryAddressPhone: string | null;
+  deliveryAddressHouseAndStreet: string | null;
+  deliveryAddressTown: string | null;
+  deliveryAddressState: string | null;
+  deliveryAddressPincode: string | null;
+  deliveryAddressLandmark: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItemDto[];
+  statusTimeline: OrderTimelineDto[];
 }
 
+/** Shared address DTO — also re-exported for user.dto.ts. */
 export interface AddressDto {
   id: string;
   name: string;
@@ -62,4 +60,22 @@ export interface AddressDto {
   state: string;
   type: 'Home' | 'Office' | 'Other';
   isDefault: boolean;
+}
+
+export interface OrderItemDto {
+  id: string;
+  productId: string | null;
+  name: string;
+  price: number;
+  qty: number;
+  imageUrl: string | null;
+  isOfferDisabled: boolean | null;
+  selectedVariationId: string | null;
+  selectedVariationPrice: number | null;
+}
+
+export interface OrderTimelineDto {
+  status: string;
+  timestamp: string;
+  note: string | null;
 }

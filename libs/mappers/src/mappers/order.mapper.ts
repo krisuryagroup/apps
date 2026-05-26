@@ -1,35 +1,55 @@
-import type { Order, OrderCharges, OrderItem, OrderStatusTimeline, CartItem } from '@zitro/models';
-import type { OrderDto, OrderChargesDto, OrderItemDto, OrderStatusEventDto, AddressDto } from '../dtos/order.dto';
-import type { CreateOrderRequest, CreateOrderItemRequest } from '../requests/order.request';
+import type {
+  Order,
+  OrderItem,
+  OrderStatusTimeline,
+  CartItem,
+} from '@zitro/models';
+import type {
+  OrderDto,
+  OrderItemDto,
+  OrderTimelineDto,
+} from '../dtos/order.dto';
+import type {
+  CreateOrderRequest,
+  CreateOrderItemRequest,
+} from '../requests/order.request';
 
 export const OrderMapper = {
   toOrder(dto: OrderDto): Order {
+    const hasDeliveryAddress = !!dto.deliveryAddressHouseAndStreet;
     return {
       id: dto.id,
-      orderId: dto.displayId,
+      orderId: dto.orderId,
       userId: dto.userId,
-      userPhone: '',        // not returned by API — populated by auth context if needed
+      userPhone: '',
       restaurantId: dto.businessId,
       orderType: dto.orderType,
       status: dto.status as Order['status'],
       items: dto.items.map(OrderMapper.toOrderItem),
-      subtotal: dto.charges.subtotal,
-      deliveryCharge: dto.charges.deliveryCharge,
-      couponDiscount: dto.charges.couponDiscount || undefined,
-      couponCode: dto.appliedCouponCode ?? undefined,
-      total: dto.charges.total,
+      subtotal: dto.subtotal,
+      deliveryCharge: dto.deliveryCharge,
+      couponDiscount: dto.couponDiscount ?? undefined,
+      couponCode: dto.couponCode ?? undefined,
+      total: dto.total,
       paymentMethod: dto.paymentMethod,
       tableNumber: dto.tableNumber ?? undefined,
       numberOfGuests: dto.numberOfGuests ?? undefined,
       customerNotes: dto.customerNotes ?? undefined,
-      deliveryAddress: dto.deliveryAddress
-        ? OrderMapper.toDeliveryAddress(dto.deliveryAddress)
+      tax: dto.tax ?? undefined,
+      deliveryAddress: hasDeliveryAddress
+        ? {
+            name: dto.deliveryAddressName ?? '',
+            phone: dto.deliveryAddressPhone ?? '',
+            street: dto.deliveryAddressHouseAndStreet ?? '',
+            city: dto.deliveryAddressTown ?? '',
+            state: dto.deliveryAddressState ?? '',
+            pincode: dto.deliveryAddressPincode ?? '',
+            landmark: dto.deliveryAddressLandmark ?? undefined,
+            type: 'Home',
+          }
         : undefined,
-      statusTimeline: dto.statusTimeline.map(OrderMapper.toStatusTimeline),
-      estimatedDeliveryTime: dto.estimatedDeliveryMinutes
-        ? new Date(Date.now() + dto.estimatedDeliveryMinutes * 60 * 1000)
-        : undefined,
-      charges: OrderMapper.toCharges(dto.charges),
+      statusTimeline:
+        dto.statusTimeline?.map(OrderMapper.toStatusTimeline) ?? [],
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt),
     };
@@ -37,45 +57,22 @@ export const OrderMapper = {
 
   toOrderItem(dto: OrderItemDto): OrderItem {
     return {
-      id: dto.productId,
-      name: dto.productName,
-      price: dto.effectivePrice,
-      qty: dto.quantity,
+      id: dto.productId ?? dto.id,
+      name: dto.name,
+      price: dto.price,
+      qty: dto.qty,
       imageUrl: dto.imageUrl ?? undefined,
-      selectedVariationId: dto.variationId ?? undefined,
-      selectedVariationLabel: dto.variationName ?? undefined,
-      selectedVariationPrice: dto.priceModifier !== 0 ? dto.priceModifier : undefined,
+      isOfferDisabled: dto.isOfferDisabled ?? undefined,
+      selectedVariationId: dto.selectedVariationId ?? undefined,
+      selectedVariationPrice: dto.selectedVariationPrice ?? undefined,
     };
   },
 
-  toCharges(dto: OrderChargesDto): OrderCharges {
-    return {
-      packagingCharge: dto.packagingCharge,
-      platformFee: dto.platformFee,
-      gst: dto.gst,
-      deliveryCharge: dto.deliveryCharge || undefined,
-      couponDiscount: dto.couponDiscount || undefined,
-    };
-  },
-
-  toStatusTimeline(dto: OrderStatusEventDto): OrderStatusTimeline {
+  toStatusTimeline(dto: OrderTimelineDto): OrderStatusTimeline {
     return {
       status: dto.status as OrderStatusTimeline['status'],
       timestamp: new Date(dto.timestamp),
       note: dto.note ?? undefined,
-    };
-  },
-
-  toDeliveryAddress(dto: AddressDto): Order['deliveryAddress'] {
-    return {
-      name: dto.name,
-      phone: dto.phone,
-      street: dto.houseAndStreet,
-      city: dto.town,
-      state: dto.state,
-      pincode: dto.pincode,
-      landmark: dto.landmark || undefined,
-      type: dto.type,
     };
   },
 
@@ -90,7 +87,7 @@ export const OrderMapper = {
       numberOfGuests: number | null;
       couponCode: string | null;
       customerNotes: string | null;
-    }
+    },
   ): CreateOrderRequest {
     return {
       businessId: cart.businessId,
