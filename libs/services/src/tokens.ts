@@ -1,4 +1,5 @@
-import { HttpContextToken, InjectionToken } from '@angular/common/http';
+import { InjectionToken } from '@angular/core';
+import { HttpContextToken } from '@angular/common/http';
 
 export const ZITRO_API_BASE_URL = new InjectionToken<string>('ZITRO_API_BASE_URL');
 

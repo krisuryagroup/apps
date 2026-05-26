@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18nPipe } from '@zitro/i18n';
-import { CatalogApiService, CartService } from '@zitro/services';
+import { CatalogApiService, CartApiService } from '@zitro/services';
 import { Category, Product, ProductVariation } from '@zitro/models';
 import { matchesSearch } from '@zitro/utils';
 import {
@@ -69,7 +69,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
-  private cartService = inject(CartService);
+  private cartApi = inject(CartApiService);
   private destroyRef = inject(DestroyRef);
   private _scrollCleanup?: () => void;
 
@@ -84,9 +84,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly selectedProduct = signal<Product | null>(null);
   readonly isDetailOpen = signal(false);
 
-  private readonly _businessSlug = signal('');
-  private readonly _cartVersion = signal(0);
-
+  readonly _businessSlug = signal('');
   readonly listGridConfig = LIST_GRID_CONFIG;
   readonly listingSearchConfig = LISTING_SEARCH_CONFIG;
 
@@ -131,18 +129,18 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   });
 
   readonly quantities = computed<Record<string, number>>(() => {
-    this._cartVersion();
+    const slug = this._businessSlug();
     const result: Record<string, number> = {};
     for (const p of this.allProducts()) {
-      result[p.id] = this.cartService.getItemQuantity(p);
+      result[p.id] = this.cartApi.getItemQtyInCart(slug, p.id);
     }
     return result;
   });
 
   readonly selectedProductQuantity = computed(() => {
-    this._cartVersion();
     const p = this.selectedProduct();
-    return p ? this.cartService.getItemQuantity(p) : 0;
+    if (!p) return 0;
+    return this.cartApi.getItemQtyInCart(this._businessSlug(), p.id);
   });
 
   ngOnInit(): void {
@@ -164,9 +162,6 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
         this._syncActiveCategoryToVisibleSections();
       });
 
-    this.cartService.cartChanged
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this._cartVersion.update(v => v + 1));
   }
 
   ngAfterViewInit(): void {
@@ -262,21 +257,25 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onAddToCart(event: { product: Product; variation: ProductVariation | null }): void {
-    const item = event.variation
-      ? { ...event.product, selectedVariationId: event.variation.id }
-      : event.product;
-    this.cartService.addToCart(item);
-    this._cartVersion.update(v => v + 1);
+    const slug = this._businessSlug();
+    if (!slug) return;
+    this.cartApi.addToCart(slug, event.product.id, event.variation?.id ?? undefined).catch(() => {});
   }
 
   onIncrement(product: Product): void {
-    this.cartService.addToCart(product);
-    this._cartVersion.update(v => v + 1);
+    const slug = this._businessSlug();
+    if (!slug) return;
+    this.cartApi.addToCart(slug, product.id).catch(() => {});
   }
 
   onDecrement(product: Product): void {
-    this.cartService.removeFromCart(product);
-    this._cartVersion.update(v => v + 1);
+    const slug = this._businessSlug();
+    if (!slug) return;
+    const cart = this.cartApi.getCartForBusiness(slug);
+    if (!cart) return;
+    const cartItem = cart.items.find(i => i.productId === product.id);
+    if (!cartItem) return;
+    this.cartApi.updateQty(slug, cartItem.id, cartItem.quantity - 1).catch(() => {});
   }
 
   goBack(): void {

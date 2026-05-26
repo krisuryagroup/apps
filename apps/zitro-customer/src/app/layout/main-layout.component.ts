@@ -48,6 +48,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   headerTitle: string = '';
   isOnGameRoute = false;
   isOnCartPage = false;
+  isOnListingPage = false;
   headerVisible: boolean = true;
   private lastScrollTop = 0;
 
@@ -215,6 +216,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.updateHeaderTitle();
         this.isOnGameRoute = event.urlAfterRedirects.includes('/game-2048');
         this.isOnCartPage = event.urlAfterRedirects.startsWith('/cart');
+        this.isOnListingPage = event.urlAfterRedirects.startsWith('/listing') || event.urlAfterRedirects.startsWith('/favorites');
         this.isOnHomePage = event.urlAfterRedirects === '/home' || event.urlAfterRedirects === '/';
         this.scrolledPastBanner = false;
         if (this.isOnHomePage) { this.tryGetLocation(); }
@@ -226,6 +228,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.updateBackButtonVisibility();
     this.isOnGameRoute = this.router.url.includes('/game-2048');
     this.isOnCartPage = this.router.url.startsWith('/cart');
+    this.isOnListingPage = this.router.url.startsWith('/listing') || this.router.url.startsWith('/favorites');
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
     this.updateHeaderTitle();
   }
@@ -347,12 +350,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   goToCart() {
-    const firstCart = this.cartApi.cartList()[0];
-    if (firstCart) {
-      this.router.navigate(['/cart'], { queryParams: { business: firstCart.businessSlug } });
-    } else {
-      this.router.navigate(['/cart']);
-    }
+    this.router.navigate(['/cart']);
   }
 
   onViewCart(businessSlug: string): void {

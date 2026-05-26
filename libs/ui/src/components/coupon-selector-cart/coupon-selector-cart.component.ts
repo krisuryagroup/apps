@@ -23,12 +23,7 @@ export class CouponSelectorCartComponent {
 
   viewAllCoupons(): void {
     this.router.navigate(['/coupons'], {
-      state: {
-        orderAmount: this.orderAmount(),
-        cartItems: this.cartItems(),
-        appliedCoupon: this.appliedCoupon(),
-        businessSlug: this.businessSlug(),
-      },
+      queryParams: { business: this.businessSlug() },
     });
   }
 

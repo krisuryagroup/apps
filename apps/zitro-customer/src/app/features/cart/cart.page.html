@@ -5,8 +5,70 @@
     [stage]="processingStage() ?? null"
   />
 
-  @if (!hasItems()) {
-    <!-- Empty state -->
+  @if (!businessSlug()) {
+    <!-- No slug — show all active carts or empty state -->
+    @if (allCarts().length > 0) {
+      <div class="cart-picker" data-testid="cart-picker">
+        <!-- Header -->
+        <div class="cart-picker__header">
+          <button
+            class="cart-picker__back-btn"
+            type="button"
+            (click)="goBack()"
+            aria-label="Go back"
+          >
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <div class="cart-picker__heading">
+            <h1 class="cart-picker__title">Your Carts</h1>
+            <p class="cart-picker__subtitle">{{ allCarts().length }} active cart{{ allCarts().length !== 1 ? 's' : '' }}</p>
+          </div>
+        </div>
+
+        <!-- Cart list -->
+        <div class="cart-picker__list">
+          @for (cart of allCarts(); track cart.businessSlug) {
+            <button
+              class="cart-picker__item"
+              type="button"
+              (click)="router.navigate(['/cart'], { queryParams: { business: cart.businessSlug } })"
+              data-testid="cart-picker-item"
+            >
+              <div class="cart-picker__item-icon">
+                <span class="material-icons">storefront</span>
+              </div>
+              <div class="cart-picker__info">
+                <span class="cart-picker__name">{{ cart.businessName }}</span>
+                <span class="cart-picker__meta">
+                  {{ cart.items.length }} item{{ cart.items.length !== 1 ? 's' : '' }}
+                  &nbsp;·&nbsp;
+                  ₹{{ cart.estimatedTotal | number:'1.0-0' }}
+                </span>
+              </div>
+              <span class="material-icons cart-picker__chevron">chevron_right</span>
+            </button>
+          }
+        </div>
+
+        <!-- CTA -->
+        <button class="cart-picker__browse-btn" type="button" (click)="goToMenu()">
+          <span class="material-icons">restaurant_menu</span>
+          {{ 'cart.browseMenu' | i18n }}
+        </button>
+      </div>
+    } @else {
+      <div class="empty-cart" data-testid="empty-cart">
+        <span class="material-icons empty-icon">shopping_cart</span>
+        <h3 class="empty-title">{{ 'cart.empty' | i18n }}</h3>
+        <p class="empty-subtitle">{{ 'cart.emptySubtitle' | i18n }}</p>
+        <button class="browse-btn" (click)="goToMenu()" data-testid="browse-menu-btn">
+          <span class="material-icons">restaurant_menu</span>
+          {{ 'cart.browseMenu' | i18n }}
+        </button>
+      </div>
+    }
+  } @else if (!hasItems()) {
+    <!-- Empty state for a specific business -->
     <div class="empty-cart" data-testid="empty-cart">
       <span class="material-icons empty-icon">shopping_cart</span>
       <h3 class="empty-title">{{ 'cart.empty' | i18n }}</h3>
@@ -51,25 +113,13 @@
       <section class="cart-items-section" data-testid="cart-items-section">
         <div class="cart-items-scroll">
           @for (item of items(); track item.id) {
-            <div class="cart-item-row" data-testid="cart-item-row">
-              <div class="cart-item-row__info">
-                <div class="cart-item-row__name">{{ item.productName }}</div>
-                @if (item.variationLabel) {
-                  <div class="cart-item-row__variation">{{ item.variationLabel }}</div>
-                }
-                @if (item.priceChanged) {
-                  <div class="cart-item-row__price-change">
-                    Price updated · was ₹{{ item.unitPrice | number:'1.0-0' }}, now ₹{{ item.currentPrice | number:'1.0-0' }}
-                  </div>
-                }
-                <div class="cart-item-row__price">₹{{ item.currentPrice | number:'1.0-0' }}</div>
-              </div>
-              <div class="cart-item-row__qty">
-                <button class="qty-btn" type="button" (click)="onDecrement(item)" data-testid="decrement-item">−</button>
-                <span class="qty-value" data-testid="item-qty">{{ item.quantity }}</span>
-                <button class="qty-btn" type="button" (click)="onIncrement(item)" data-testid="increment-item">+</button>
-              </div>
-            </div>
+            <lib-cart-item-row
+              [item]="item"
+              (increment)="onIncrement($event)"
+              (decrement)="onDecrement($event)"
+              (edit)="openItemEditor($event)"
+              data-testid="cart-item-row"
+            />
           }
         </div>
         @if (items().length > 3) {
@@ -122,24 +172,13 @@
 
       <!-- Coupon -->
       <section class="coupon-section" data-testid="coupon-section">
-        @if (couponCode()) {
-          <div class="coupon-applied-row" data-testid="coupon-applied-row">
-            <span class="material-icons coupon-applied-row__icon">local_offer</span>
-            <div class="coupon-applied-row__info">
-              <span class="coupon-applied-row__code">{{ couponCode() }}</span>
-              <span class="coupon-applied-row__saving">You save ₹{{ couponDiscount() | number:'1.0-0' }}</span>
-            </div>
-            <button class="coupon-applied-row__remove" type="button" (click)="onCouponRemoved()" data-testid="remove-coupon-btn">
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-        } @else {
-          <button class="coupon-add-btn" type="button" (click)="navigateToCoupons()" data-testid="apply-coupon-btn">
-            <span class="material-icons">confirmation_number</span>
-            <span>{{ 'coupon.applyButton' | i18n }}</span>
-            <span class="material-icons coupon-add-btn__chevron">chevron_right</span>
-          </button>
-        }
+        <app-coupon-selector-cart
+          [orderAmount]="subtotal()"
+          [cartItems]="items()"
+          [appliedCoupon]="appliedCoupon()"
+          [businessSlug]="businessSlug()"
+          (couponRemoved)="onCouponRemoved()"
+        />
       </section>
 
       <!-- Order type section — pill tabs + conditional content -->
@@ -209,12 +248,27 @@
               <span class="material-icons ot-info-row__chevron">chevron_right</span>
             </button>
           } @else {
-            <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToAddAddress()" data-testid="address-row">
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="openAddressSheet()" data-testid="address-row">
               <span class="material-icons ot-info-row__icon">location_on</span>
               <div class="ot-info-row__body">
                 <span class="ot-info-row__title">{{ 'orderType.deliveryAt' | i18n : { label: deliveryAddressLabel() } }}</span>
                 <span class="ot-info-row__sub">{{ deliveryAddressShort() }}</span>
-                <span class="ot-link">{{ 'orderType.addDeliveryInstructions' | i18n }}</span>
+              </div>
+              <span class="material-icons ot-info-row__chevron">chevron_right</span>
+            </button>
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToEditAddress()" data-testid="delivery-contact-row">
+              <span class="material-icons ot-info-row__icon">phone_iphone</span>
+              <span class="ot-info-row__text">{{ contactLabel() }}</span>
+              <span class="material-icons ot-info-row__chevron">chevron_right</span>
+            </button>
+            <button class="ot-info-row ot-info-row--nav" type="button" (click)="openDeliveryNoteSheet()" data-testid="delivery-note-btn">
+              <span class="material-icons ot-info-row__icon">edit_note</span>
+              <div class="ot-info-row__body">
+                @if (deliveryNote()) {
+                  <span class="ot-info-row__title">{{ deliveryNote() }}</span>
+                } @else {
+                  <span class="ot-link">{{ 'orderType.addDeliveryInstructions' | i18n }}</span>
+                }
               </div>
               <span class="material-icons ot-info-row__chevron">chevron_right</span>
             </button>
@@ -224,6 +278,8 @@
         <!-- Dine-in content -->
         @if (selectedOrderType() === 'dine-in') {
           <div class="ot-dinein" data-testid="dinein-fields">
+
+            <!-- Table selector -->
             <div class="field-group">
               <label>{{ 'orderType.tableNumber' | i18n }}</label>
               <select
@@ -234,32 +290,62 @@
                 <option value="">{{ 'orderType.tablePlaceholder' | i18n }}</option>
                 @for (table of availableTables(); track table.id) {
                   <option [value]="table.id" [disabled]="!table.isAvailable">
-                    {{ table.displayName }}
+                    {{ table.displayName }}{{ table.capacity ? ' (seats ' + table.capacity + ')' : '' }}
                   </option>
                 }
               </select>
             </div>
+
+            <!-- Guest counter card -->
             <div class="guests-counter" data-testid="guests-counter">
-              <label>{{ 'orderType.numberOfGuests' | i18n }}</label>
-              <div class="counter-row">
-                <button
-                  class="counter-btn"
-                  type="button"
-                  (click)="decrementGuests()"
-                  [attr.aria-label]="'orderType.decreaseGuests' | i18n"
-                  data-testid="decrement-guests"
-                >−</button>
-                <span class="counter-value" data-testid="guests-value">{{ numberOfGuests() }}</span>
-                <button
-                  class="counter-btn"
-                  type="button"
-                  (click)="incrementGuests()"
-                  [attr.aria-label]="'orderType.increaseGuests' | i18n"
-                  data-testid="increment-guests"
-                >+</button>
+              <div class="guests-counter__card">
+                <div class="guests-counter__left">
+                  <div class="guests-counter__icon-wrap">
+                    <span class="material-icons">group</span>
+                  </div>
+                  <div class="guests-counter__info">
+                    <span class="guests-counter__label">{{ 'orderType.numberOfGuests' | i18n }}</span>
+                    <span class="guests-counter__sub">{{ numberOfGuests() }} {{ numberOfGuests() === 1 ? 'person' : 'people' }}</span>
+                  </div>
+                </div>
+                <div class="guests-counter__controls">
+                  <button
+                    class="counter-btn"
+                    type="button"
+                    (click)="decrementGuests()"
+                    [disabled]="!canDecrementGuests()"
+                    [attr.aria-label]="'orderType.decreaseGuests' | i18n"
+                    data-testid="decrement-guests"
+                  >−</button>
+                  <span class="counter-value" data-testid="guests-value">{{ numberOfGuests() }}</span>
+                  <button
+                    class="counter-btn"
+                    type="button"
+                    (click)="incrementGuests()"
+                    [disabled]="!canIncrementGuests()"
+                    [attr.aria-label]="'orderType.increaseGuests' | i18n"
+                    data-testid="increment-guests"
+                  >+</button>
+                </div>
               </div>
             </div>
+
           </div>
+          <div class="ot-info-row" data-testid="dinein-contact-row">
+            <span class="material-icons ot-info-row__icon">phone_iphone</span>
+            <span class="ot-info-row__text">{{ contactLabel() }}</span>
+          </div>
+          <button class="ot-info-row ot-info-row--nav" type="button" (click)="openDineInNoteSheet()" data-testid="dinein-note-btn">
+            <span class="material-icons ot-info-row__icon">edit_note</span>
+            <div class="ot-info-row__body">
+              @if (dineInNote()) {
+                <span class="ot-info-row__title">{{ dineInNote() }}</span>
+              } @else {
+                <span class="ot-link">{{ 'orderType.addDineInInstructions' | i18n }}</span>
+              }
+            </div>
+            <span class="material-icons ot-info-row__chevron">chevron_right</span>
+          </button>
         }
 
         <!-- Takeout content -->
@@ -268,23 +354,23 @@
             <span class="material-icons ot-info-row__icon ot-info-row__icon--green">timer</span>
             <span class="ot-info-row__text ot-info-row__text--green">{{ 'orderType.pickupReady' | i18n }}</span>
           </div>
-          <div class="ot-info-row" data-testid="takeout-instructions-row">
-            <span class="material-icons ot-info-row__icon">sticky_note_2</span>
-            <span class="ot-info-row__text">{{ 'orderType.addPickupInstructions' | i18n }}</span>
-          </div>
-        }
-      </section>
-
-      <!-- Contact row -->
-      @if (contactLabel()) {
-        <section class="contact-section" data-testid="contact-section">
-          <button class="ot-info-row ot-info-row--nav" type="button" (click)="goToLogin()" data-testid="contact-row">
+          <div class="ot-info-row" data-testid="pickup-contact-row">
             <span class="material-icons ot-info-row__icon">phone_iphone</span>
             <span class="ot-info-row__text">{{ contactLabel() }}</span>
+          </div>
+          <button class="ot-info-row ot-info-row--nav" type="button" (click)="openPickupNoteSheet()" data-testid="pickup-note-btn">
+            <span class="material-icons ot-info-row__icon">edit_note</span>
+            <div class="ot-info-row__body">
+              @if (pickupNote()) {
+                <span class="ot-info-row__title">{{ pickupNote() }}</span>
+              } @else {
+                <span class="ot-link">{{ 'orderType.addPickupInstructions' | i18n }}</span>
+              }
+            </div>
             <span class="material-icons ot-info-row__chevron">chevron_right</span>
           </button>
-        </section>
-      }
+        }
+      </section>
 
       <!-- Bill summary row -->
       <section class="bill-summary-section" data-testid="bill-summary-section">
@@ -387,6 +473,151 @@
         </button>
         <button class="note-sheet__btn" type="button" (click)="saveNote()" data-testid="save-note-btn">
           {{ 'common.save' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (isDeliveryNoteSheetOpen()) {
+    <div class="note-sheet-backdrop" (click)="closeDeliveryNoteSheet()" data-testid="delivery-note-sheet-backdrop"></div>
+    <div class="note-sheet" data-testid="delivery-note-sheet">
+      <div class="note-sheet__header">
+        <h3 class="note-sheet__title">{{ 'orderType.addDeliveryInstructions' | i18n }}</h3>
+        <button type="button" class="note-sheet__close" (click)="closeDeliveryNoteSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <textarea
+        class="note-sheet__input"
+        [value]="deliveryNoteDraft()"
+        (input)="updateDeliveryNoteDraft($any($event.target).value)"
+        placeholder="e.g. Leave at door, call on arrival…"
+        rows="4"
+        data-testid="delivery-note-sheet-input"
+      ></textarea>
+
+      <div class="note-sheet__actions">
+        <button class="note-sheet__btn note-sheet__btn--ghost" type="button" (click)="closeDeliveryNoteSheet()">
+          {{ 'common.cancel' | i18n }}
+        </button>
+        <button class="note-sheet__btn" type="button" (click)="saveDeliveryNote()" data-testid="save-delivery-note-btn">
+          {{ 'common.save' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (isPickupNoteSheetOpen()) {
+    <div class="note-sheet-backdrop" (click)="closePickupNoteSheet()" data-testid="pickup-note-sheet-backdrop"></div>
+    <div class="note-sheet" data-testid="pickup-note-sheet">
+      <div class="note-sheet__header">
+        <h3 class="note-sheet__title">{{ 'orderType.addPickupInstructions' | i18n }}</h3>
+        <button type="button" class="note-sheet__close" (click)="closePickupNoteSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <textarea
+        class="note-sheet__input"
+        [value]="pickupNoteDraft()"
+        (input)="updatePickupNoteDraft($any($event.target).value)"
+        placeholder="e.g. I'll be there in 5 mins…"
+        rows="4"
+        data-testid="pickup-note-sheet-input"
+      ></textarea>
+
+      <div class="note-sheet__actions">
+        <button class="note-sheet__btn note-sheet__btn--ghost" type="button" (click)="closePickupNoteSheet()">
+          {{ 'common.cancel' | i18n }}
+        </button>
+        <button class="note-sheet__btn" type="button" (click)="savePickupNote()" data-testid="save-pickup-note-btn">
+          {{ 'common.save' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (isDineInNoteSheetOpen()) {
+    <div class="note-sheet-backdrop" (click)="closeDineInNoteSheet()" data-testid="dinein-note-sheet-backdrop"></div>
+    <div class="note-sheet" data-testid="dinein-note-sheet">
+      <div class="note-sheet__header">
+        <h3 class="note-sheet__title">{{ 'orderType.addDineInInstructions' | i18n }}</h3>
+        <button type="button" class="note-sheet__close" (click)="closeDineInNoteSheet()" [attr.aria-label]="'common.close' | i18n">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <textarea
+        class="note-sheet__input"
+        [value]="dineInNoteDraft()"
+        (input)="updateDineInNoteDraft($any($event.target).value)"
+        placeholder="e.g. Allergies, seating preference…"
+        rows="4"
+        data-testid="dinein-note-sheet-input"
+      ></textarea>
+
+      <div class="note-sheet__actions">
+        <button class="note-sheet__btn note-sheet__btn--ghost" type="button" (click)="closeDineInNoteSheet()">
+          {{ 'common.cancel' | i18n }}
+        </button>
+        <button class="note-sheet__btn" type="button" (click)="saveDineInNote()" data-testid="save-dinein-note-btn">
+          {{ 'common.save' | i18n }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Address picker sheet -->
+  @if (isAddressSheetOpen()) {
+    <div class="addr-sheet-backdrop" (click)="closeAddressSheet()" data-testid="addr-sheet-backdrop"></div>
+    <div class="addr-sheet" role="dialog" aria-modal="true" data-testid="addr-sheet">
+      <div class="addr-sheet__handle"></div>
+      <div class="addr-sheet__header">
+        <h3 class="addr-sheet__title">Deliver to</h3>
+        <button type="button" class="addr-sheet__close" (click)="closeAddressSheet()" aria-label="Close">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="addr-sheet__list">
+        @for (addr of addresses(); track addr.id) {
+          <button
+            class="addr-sheet__item"
+            [class.addr-sheet__item--selected]="addr.id === selectedAddressId()"
+            type="button"
+            (click)="selectAddress(addr.id)"
+            [attr.data-testid]="'addr-option-' + addr.id"
+          >
+            <div class="addr-sheet__item-icon">
+              <span class="material-icons">{{ addressTypeIcon(addr.type) }}</span>
+            </div>
+            <div class="addr-sheet__item-body">
+              <span class="addr-sheet__item-label">{{ addr.type }}</span>
+              <span class="addr-sheet__item-line">{{ addr.houseAndStreet }}{{ addr.landmark ? ', ' + addr.landmark : '' }}</span>
+              <span class="addr-sheet__item-line addr-sheet__item-line--sub">{{ addr.town }}, {{ addr.pincode }}</span>
+            </div>
+            <div class="addr-sheet__item-actions">
+              @if (addr.id === selectedAddressId()) {
+                <span class="material-icons addr-sheet__check">check_circle</span>
+              }
+              <button
+                class="addr-sheet__edit-btn"
+                type="button"
+                (click)="$event.stopPropagation(); goToEditAddress(addr.id)"
+                aria-label="Edit address"
+              >
+                <span class="material-icons">edit</span>
+              </button>
+            </div>
+          </button>
+        }
+      </div>
+
+      <div class="addr-sheet__footer">
+        <button class="addr-sheet__add-btn" type="button" (click)="goToAddAddress()" data-testid="addr-sheet-add-btn">
+          <span class="material-icons">add_location_alt</span>
+          Add new address
         </button>
       </div>
     </div>

@@ -108,7 +108,7 @@
 
   <!-- Floating multi-business cart preview slider — hidden on cart page -->
   <lib-floating-cart-preview
-    *ngIf="!isOnCartPage && cartApi.hasActiveCarts()"
+    *ngIf="!isOnCartPage && !isOnListingPage && cartApi.hasActiveCarts()"
     [carts]="cartApi.cartList()"
     (viewCart)="onViewCart($event)"
   ></lib-floating-cart-preview>

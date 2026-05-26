@@ -1,55 +1,40 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { CartService } from '@zitro/services';
-import { CartItem } from '@zitro/models';
-import { Subscription } from 'rxjs';
+import { CartApiService } from '@zitro/services';
+import { I18nPipe } from '@zitro/i18n';
 
 @Component({
   selector: 'app-cart-summary',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe, I18nPipe],
   templateUrl: './cart-summary.component.html',
-  styleUrls: ['./cart-summary.component.scss']
+  styleUrls: ['./cart-summary.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CartSummaryComponent implements OnInit, OnDestroy {
-  cartItems: CartItem[] = [];
-  totalQuantity: number = 0;
-  totalAmount: number = 0;
-  isVisible: boolean = false;
-  
-  private cartSubscription?: Subscription;
+export class CartSummaryComponent {
+  private cartApi = inject(CartApiService);
+  private router = inject(Router);
 
-  constructor(
-    private cartService: CartService,
-    private router: Router
-  ) {}
+  /** When provided, only shows the cart for that business. */
+  businessSlug = input<string>('');
 
-  ngOnInit() {
-    this.updateCartSummary();
-    
-    // Listen for cart changes
-    this.cartSubscription = this.cartService.cartChanged?.subscribe(() => {
-      this.updateCartSummary();
-    });
-  }
+  private activeCart = computed(() => {
+    const slug = this.businessSlug();
+    return slug ? this.cartApi.getCartForBusiness(slug) : null;
+  });
 
-  ngOnDestroy() {
-    this.cartSubscription?.unsubscribe();
-  }
+  readonly totalQuantity = computed(() =>
+    this.activeCart()?.items.reduce((s, i) => s + i.quantity, 0) ?? 0
+  );
 
-  private updateCartSummary() {
-    this.cartItems = this.cartService.getCart();
-    this.totalQuantity = this.cartService.getCount();
-    this.totalAmount = this.cartService.getTotal();
-    this.isVisible = this.totalQuantity > 0;
-  }
+  readonly totalAmount = computed(() => this.activeCart()?.estimatedTotal ?? 0);
+  readonly businessName = computed(() => this.activeCart()?.businessName ?? '');
+  readonly isVisible = computed(() => this.totalQuantity() > 0);
 
-  onCartClick() {
-    this.router.navigate(['/cart']);
-  }
-
-  formatPrice(price: number): string {
-    return `₹${price}`;
+  onCartClick(): void {
+    const slug = this.businessSlug();
+    this.router.navigate(['/cart'], slug ? { queryParams: { business: slug } } : {});
   }
 }
+
