@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PHONE_CONSTANTS } from '../core/constants/app.constants';
 import { AppSettingsService, ContactInfo } from '@zitro/services';
@@ -8,20 +8,21 @@ import { AppSettingsService, ContactInfo } from '@zitro/services';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './contact-us.component.html',
-  styleUrls: ['./contact-us.component.scss']
+  styleUrls: ['./contact-us.component.scss'],
 })
 export class ContactUsComponent implements OnInit {
-  emailCopied: boolean = false;
-  phoneCopied: boolean = false;
+  private appSettingsService = inject(AppSettingsService);
+
+  emailCopied = false;
+  phoneCopied = false;
 
   email = 'Loading...';
   phone = 'Loading...';
 
-  constructor(private appSettingsService: AppSettingsService) {}
-
   async ngOnInit(): Promise<void> {
     try {
-      const contactInfo: ContactInfo = await this.appSettingsService.getContactInfo();
+      const contactInfo: ContactInfo =
+        await this.appSettingsService.getContactInfo();
       this.email = contactInfo.contactEmail;
       this.phone = `${PHONE_CONSTANTS.INDIA_CODE} ${contactInfo.contactPhone}`;
     } catch (error) {
@@ -84,10 +85,10 @@ export class ContactUsComponent implements OnInit {
       // Show copied state for fallback too
       if (text === this.email) {
         this.emailCopied = true;
-        setTimeout(() => this.emailCopied = false, 2000);
+        setTimeout(() => (this.emailCopied = false), 2000);
       } else {
         this.phoneCopied = true;
-        setTimeout(() => this.phoneCopied = false, 2000);
+        setTimeout(() => (this.phoneCopied = false), 2000);
       }
     } catch (err) {
       console.error('Fallback copy failed:', err);

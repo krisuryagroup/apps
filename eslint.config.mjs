@@ -39,4 +39,10 @@ export default [
     // Override or add rules here
     rules: {},
   },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
 ];

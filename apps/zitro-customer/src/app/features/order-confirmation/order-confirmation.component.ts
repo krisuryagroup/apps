@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Observable, interval, map, startWith } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -16,11 +16,22 @@ import { PricingBreakdown } from '@zitro/models';
 @Component({
   selector: 'app-order-confirmation',
   standalone: true,
-  imports: [CommonModule, CancelOrderDialogComponent, CallRestaurantButtonComponent],
+  imports: [
+    CommonModule,
+    CancelOrderDialogComponent,
+    CallRestaurantButtonComponent,
+  ],
   templateUrl: './order-confirmation.component.html',
-  styleUrls: ['./order-confirmation.component.scss']
+  styleUrls: ['./order-confirmation.component.scss'],
 })
-export class OrderConfirmationComponent {
+export class OrderConfirmationComponent implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private orderService = inject(OrderService);
+  private analyticsService = inject(AnalyticsService);
+  private appSettingsService = inject(AppSettingsService);
+  private pricingService = inject(PricingService);
+
   orderDetails: OrderDisplay | null = null;
   isLoading = true;
   error: string | null = null;
@@ -34,32 +45,30 @@ export class OrderConfirmationComponent {
   orderCreatedAt: Date = new Date(); // Track when order was created
 
   // Preloaded cancellation configuration
-  private cancellationTimeLimit: number = 90;
-  private cancellationEnabled: boolean = true;
+  private cancellationTimeLimit = 90;
+  private cancellationEnabled = true;
   private allowedCancellationStatuses: string[] = ['pending', 'confirmed'];
-
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    private orderService: OrderService,
-    private analyticsService: AnalyticsService,
-    private appSettingsService: AppSettingsService,
-    private pricingService: PricingService
-  ) {}
 
   async ngOnInit() {
     // Preload cancellation configuration from Firebase (non-blocking)
-    this.appSettingsService.getOrderCancellationTimeLimit()
-      .then(limit => this.cancellationTimeLimit = limit)
-      .catch(err => console.error('Error loading cancellation time limit:', err));
+    this.appSettingsService
+      .getOrderCancellationTimeLimit()
+      .then((limit) => (this.cancellationTimeLimit = limit))
+      .catch((err) =>
+        console.error('Error loading cancellation time limit:', err),
+      );
 
-    this.appSettingsService.isOrderCancellationEnabled()
-      .then(enabled => this.cancellationEnabled = enabled)
-      .catch(err => console.error('Error loading cancellation enabled flag:', err));
+    this.appSettingsService
+      .isOrderCancellationEnabled()
+      .then((enabled) => (this.cancellationEnabled = enabled))
+      .catch((err) =>
+        console.error('Error loading cancellation enabled flag:', err),
+      );
 
-    this.appSettingsService.getAllowedCancellationStatuses()
-      .then(statuses => this.allowedCancellationStatuses = statuses)
-      .catch(err => console.error('Error loading allowed statuses:', err));
+    this.appSettingsService
+      .getAllowedCancellationStatuses()
+      .then((statuses) => (this.allowedCancellationStatuses = statuses))
+      .catch((err) => console.error('Error loading allowed statuses:', err));
 
     // Get order ID from query parameter
     const orderId = this.route.snapshot.queryParamMap.get('orderId');
@@ -115,20 +124,22 @@ export class OrderConfirmationComponent {
       const config = await this.pricingService.getPricingConfig();
 
       // Extract coupon info if available
-      const appliedCoupon = this.hasCoupon() ? {
-        coupon: {
-          code: this.getCouponCode(),
-          discountType: 'fixed' as const
-        },
-        discountAmount: this.getCouponDiscount()
-      } : null;
+      const appliedCoupon = this.hasCoupon()
+        ? {
+            coupon: {
+              code: this.getCouponCode(),
+              discountType: 'fixed' as const,
+            },
+            discountAmount: this.getCouponDiscount(),
+          }
+        : null;
 
       this.pricingBreakdown = await this.pricingService.calculatePricing({
         cartItems: this.orderDetails.items,
         subtotal: this.getItemTotal(),
         orderType: this.orderDetails.orderType,
         appliedCoupon: appliedCoupon,
-        pricingConfig: config
+        pricingConfig: config,
       });
 
       console.log('Order pricing calculated:', this.pricingBreakdown);
@@ -172,7 +183,7 @@ export class OrderConfirmationComponent {
         const remaining = Math.max(0, this.cancellationTimeLimit - secondsDiff);
 
         return remaining;
-      })
+      }),
     );
   }
 
@@ -191,7 +202,9 @@ export class OrderConfirmationComponent {
     this.isProcessingCancel = true;
 
     try {
-      const result = await this.orderService.cancelOrder(this.orderDetails.orderId);
+      const result = await this.orderService.cancelOrder(
+        this.orderDetails.orderId,
+      );
 
       if (result.success) {
         // Show success message
@@ -392,7 +405,10 @@ export class OrderConfirmationComponent {
   // Call waiter handler for dine-in orders
   callWaiter() {
     // TODO: Implement actual waiter call functionality (push notification, etc.)
-    console.log('Call waiter requested for table:', this.orderDetails?.tableNumber);
+    console.log(
+      'Call waiter requested for table:',
+      this.orderDetails?.tableNumber,
+    );
     alert('Your server has been notified and will attend to you shortly.');
   }
 
@@ -539,6 +555,8 @@ export class OrderConfirmationComponent {
 
   // Check if order has notes
   hasNotes(): boolean {
-    return !!(this.orderDetails?.customerNotes && this.orderDetails.customerNotes.trim());
+    return !!(
+      this.orderDetails?.customerNotes && this.orderDetails.customerNotes.trim()
+    );
   }
 }

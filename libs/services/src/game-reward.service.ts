@@ -1,17 +1,17 @@
-import { Injectable } from '@angular/core';
-import { 
-  Firestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
+import { Injectable, inject } from '@angular/core';
+import {
+  Firestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
   collection,
   query,
   where,
   getDocs,
   runTransaction,
   Timestamp,
-  serverTimestamp 
+  serverTimestamp,
 } from '@angular/fire/firestore';
 import { DeviceTokenService } from './device-token.service';
 
@@ -52,16 +52,14 @@ export interface CouponReward {
  * Service to handle game rewards and coupon generation with weekly device restrictions
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GameRewardService {
+  private firestore = inject(Firestore);
+  private deviceTokenService = inject(DeviceTokenService);
+
   private readonly COLLECTION_NAME = 'game';
   private readonly WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
-
-  constructor(
-    private firestore: Firestore,
-    private deviceTokenService: DeviceTokenService
-  ) {}
 
   /**
    * Check if user is eligible to play and win a coupon
@@ -71,7 +69,7 @@ export class GameRewardService {
   async checkEligibility(uid: string): Promise<EligibilityStatus> {
     try {
       const deviceToken = await this.deviceTokenService.getDeviceToken();
-      
+
       // Query by device token to enforce device-based restriction
       const gamesRef = collection(this.firestore, this.COLLECTION_NAME);
       const q = query(gamesRef, where('deviceToken', '==', deviceToken));
@@ -84,46 +82,49 @@ export class GameRewardService {
           nextEligibleDate: null,
           existingCoupon: null,
           couponType: null,
-          bothRewardsGivenInLastWeek: false
+          bothRewardsGivenInLastWeek: false,
         };
       }
 
       // Get the most recent record (there should be only one per device)
       const docData = querySnapshot.docs[0].data() as GameDocument;
-      
+
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - this.WEEK_IN_MS);
-      
+
       // Check if both rewards were given in the last week
       let bothRewardsGiven = false;
       if (docData.burgerRewardAt && docData.pizzaRewardAt) {
         const burgerDate = docData.burgerRewardAt.toDate();
         const pizzaDate = docData.pizzaRewardAt.toDate();
-        
+
         // Both rewards given in last week
         if (burgerDate >= oneWeekAgo && pizzaDate >= oneWeekAgo) {
           bothRewardsGiven = true;
-          
+
           // Next eligible is 7 days from the most recent reward
-          const mostRecentReward = burgerDate > pizzaDate ? burgerDate : pizzaDate;
-          const nextEligible = new Date(mostRecentReward.getTime() + this.WEEK_IN_MS);
-          
+          const mostRecentReward =
+            burgerDate > pizzaDate ? burgerDate : pizzaDate;
+          const nextEligible = new Date(
+            mostRecentReward.getTime() + this.WEEK_IN_MS,
+          );
+
           if (now < nextEligible) {
             return {
               isEligible: false,
               nextEligibleDate: nextEligible,
               existingCoupon: docData.couponCode,
               couponType: docData.couponType,
-              bothRewardsGivenInLastWeek: true
+              bothRewardsGivenInLastWeek: true,
             };
           }
         }
       }
-      
+
       // If we have nextEligibleAt, check it (legacy check)
       if (docData.nextEligibleAt) {
         const nextEligible = docData.nextEligibleAt.toDate();
-        
+
         if (now < nextEligible) {
           // Still locked
           return {
@@ -131,7 +132,7 @@ export class GameRewardService {
             nextEligibleDate: nextEligible,
             existingCoupon: docData.couponCode,
             couponType: docData.couponType,
-            bothRewardsGivenInLastWeek: bothRewardsGiven
+            bothRewardsGivenInLastWeek: bothRewardsGiven,
           };
         }
       }
@@ -142,9 +143,8 @@ export class GameRewardService {
         nextEligibleDate: null,
         existingCoupon: null,
         couponType: null,
-        bothRewardsGivenInLastWeek: false
+        bothRewardsGivenInLastWeek: false,
       };
-
     } catch (error) {
       console.error('Error checking eligibility:', error);
       throw error;
@@ -184,11 +184,11 @@ export class GameRewardService {
     while (attempts < maxAttempts) {
       const code = this.generateCouponCode();
       const isUnique = await this.isCouponUnique(code);
-      
+
       if (isUnique) {
         return code;
       }
-      
+
       attempts++;
     }
 
@@ -215,7 +215,7 @@ export class GameRewardService {
     phoneNumber: string,
     highestTile: number,
     score: number,
-    couponType: 'couponTypeBurger' | 'couponTypePizza'
+    couponType: 'couponTypeBurger' | 'couponTypePizza',
   ): Promise<CouponReward> {
     try {
       const deviceToken = await this.deviceTokenService.getDeviceToken();
@@ -224,86 +224,90 @@ export class GameRewardService {
       const couponCode = await this.generateUniqueCouponCode();
 
       // Use transaction to ensure atomic operation
-      const result = await runTransaction(this.firestore, async (transaction) => {
-        // Query for existing document with this device token
-        const gamesRef = collection(this.firestore, this.COLLECTION_NAME);
-        const q = query(gamesRef, where('deviceToken', '==', deviceToken));
-        const querySnapshot = await getDocs(q);
+      const result = await runTransaction(
+        this.firestore,
+        async (transaction) => {
+          // Query for existing document with this device token
+          const gamesRef = collection(this.firestore, this.COLLECTION_NAME);
+          const q = query(gamesRef, where('deviceToken', '==', deviceToken));
+          const querySnapshot = await getDocs(q);
 
-        let docRef;
-        let existingData: GameDocument | null = null;
+          let docRef;
+          let existingData: GameDocument | null = null;
 
-        if (!querySnapshot.empty) {
-          // Use existing document
-          docRef = querySnapshot.docs[0].ref;
-          existingData = querySnapshot.docs[0].data() as GameDocument;
+          if (!querySnapshot.empty) {
+            // Use existing document
+            docRef = querySnapshot.docs[0].ref;
+            existingData = querySnapshot.docs[0].data() as GameDocument;
 
-          // Double-check eligibility within transaction
-          if (existingData.nextEligibleAt) {
-            const nextEligible = existingData.nextEligibleAt.toDate();
-            const now = new Date();
-            
-            if (now < nextEligible) {
-              throw new Error('Not eligible: Still within weekly lock period');
+            // Double-check eligibility within transaction
+            if (existingData.nextEligibleAt) {
+              const nextEligible = existingData.nextEligibleAt.toDate();
+              const now = new Date();
+
+              if (now < nextEligible) {
+                throw new Error(
+                  'Not eligible: Still within weekly lock period',
+                );
+              }
             }
+          } else {
+            // Create new document with device token as ID for easy lookup
+            docRef = doc(gamesRef, deviceToken);
           }
-        } else {
-          // Create new document with device token as ID for easy lookup
-          docRef = doc(gamesRef, deviceToken);
-        }
 
-        // Calculate next eligible date (7 days from now)
-        const now = Timestamp.now();
-        const nextEligibleDate = new Date(Date.now() + this.WEEK_IN_MS);
-        const nextEligibleTimestamp = Timestamp.fromDate(nextEligibleDate);
+          // Calculate next eligible date (7 days from now)
+          const now = Timestamp.now();
+          const nextEligibleDate = new Date(Date.now() + this.WEEK_IN_MS);
+          const nextEligibleTimestamp = Timestamp.fromDate(nextEligibleDate);
 
-        const gameData: Partial<GameDocument> = {
-          uid,
-          displayName,
-          email,
-          phoneNumber,
-          deviceToken,
-          highestTile,
-          score,
-          couponType,
-          couponCode,
-          rewardGeneratedAt: now,
-          nextEligibleAt: nextEligibleTimestamp,
-          updatedAt: serverTimestamp()
-        };
-        
-        // Track specific reward types with timestamps
-        if (couponType === 'couponTypeBurger') {
-          gameData.burgerRewardAt = now;
-        } else if (couponType === 'couponTypePizza') {
-          gameData.pizzaRewardAt = now;
-        }
+          const gameData: Partial<GameDocument> = {
+            uid,
+            displayName,
+            email,
+            phoneNumber,
+            deviceToken,
+            highestTile,
+            score,
+            couponType,
+            couponCode,
+            rewardGeneratedAt: now,
+            nextEligibleAt: nextEligibleTimestamp,
+            updatedAt: serverTimestamp(),
+          };
 
-        if (!existingData) {
-          // New document
-          transaction.set(docRef, {
-            ...gameData,
-            createdAt: serverTimestamp()
-          });
-        } else {
-          // Update existing document
-          transaction.update(docRef, {
-            ...gameData,
-            // Only update highestTile if new one is higher
-            highestTile: Math.max(existingData.highestTile || 0, highestTile)
-          });
-        }
+          // Track specific reward types with timestamps
+          if (couponType === 'couponTypeBurger') {
+            gameData.burgerRewardAt = now;
+          } else if (couponType === 'couponTypePizza') {
+            gameData.pizzaRewardAt = now;
+          }
 
-        return {
-          couponCode,
-          couponType,
-          nextEligibleAt: nextEligibleDate
-        };
-      });
+          if (!existingData) {
+            // New document
+            transaction.set(docRef, {
+              ...gameData,
+              createdAt: serverTimestamp(),
+            });
+          } else {
+            // Update existing document
+            transaction.update(docRef, {
+              ...gameData,
+              // Only update highestTile if new one is higher
+              highestTile: Math.max(existingData.highestTile || 0, highestTile),
+            });
+          }
+
+          return {
+            couponCode,
+            couponType,
+            nextEligibleAt: nextEligibleDate,
+          };
+        },
+      );
 
       console.log('✅ Coupon awarded successfully:', result);
       return result;
-
     } catch (error) {
       console.error('❌ Error awarding coupon:', error);
       throw error;
@@ -319,7 +323,7 @@ export class GameRewardService {
   async updateGameProgress(
     uid: string,
     highestTile: number,
-    score: number
+    score: number,
   ): Promise<void> {
     try {
       const deviceToken = await this.deviceTokenService.getDeviceToken();
@@ -342,10 +346,9 @@ export class GameRewardService {
         await updateDoc(docRef, {
           highestTile,
           score: Math.max(score, existingData.score || 0),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         });
       }
-
     } catch (error) {
       console.error('Error updating game progress:', error);
       // Don't throw - this is non-critical
@@ -359,7 +362,7 @@ export class GameRewardService {
   async getUserGameHistory(uid: string): Promise<GameDocument | null> {
     try {
       const deviceToken = await this.deviceTokenService.getDeviceToken();
-      
+
       const gamesRef = collection(this.firestore, this.COLLECTION_NAME);
       const q = query(gamesRef, where('deviceToken', '==', deviceToken));
       const querySnapshot = await getDocs(q);
@@ -369,7 +372,6 @@ export class GameRewardService {
       }
 
       return querySnapshot.docs[0].data() as GameDocument;
-
     } catch (error) {
       console.error('Error fetching game history:', error);
       return null;

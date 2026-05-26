@@ -1,11 +1,14 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NavigationService {
+  private router = inject(Router);
+  private location = inject(Location);
+
   // Define hierarchical route mapping (child -> parent)
   private routeHierarchy: { [key: string]: string } = {
     '/track-order': '/orders',
@@ -19,13 +22,8 @@ export class NavigationService {
     '/listing': '/home', // Alternative route format
     '/search': '/home', // Alternative route format
     '/contact-us': '/features/account',
-    '/contact': '/home'
+    '/contact': '/home',
   };
-
-  constructor(
-    private router: Router,
-    private location: Location
-  ) {}
 
   canGoBack(): boolean {
     const currentRoute = this.router.url;
@@ -52,7 +50,7 @@ export class NavigationService {
     // Handle dynamic segments (e.g., /features/listing/:id matches /features/listing/123)
     const routeParts = route.split('/');
     const patternParts = pattern.split('/');
-    
+
     if (routeParts.length !== patternParts.length) {
       return false;
     }
@@ -66,17 +64,17 @@ export class NavigationService {
         return false;
       }
     }
-    
+
     return true;
   }
 
   goBack(): void {
     const currentRoute = this.router.url;
-    
+
     // Special handling for routes with query parameters (like search)
     const baseRoute = currentRoute.split('?')[0]; // Remove query parameters
     const parentRoute = this.getParentRoute(baseRoute);
-    
+
     if (parentRoute) {
       // For listing with search, always go back to home without search parameters
       if (baseRoute.includes('/listing') || baseRoute.includes('/search')) {
@@ -109,7 +107,7 @@ export class NavigationService {
       '/features/home',
       '/features/categories',
       '/features/search',
-      '/features/account'
+      '/features/account',
     ];
     return mainRoutes.includes(route);
   }

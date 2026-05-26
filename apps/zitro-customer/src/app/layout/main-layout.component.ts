@@ -1,6 +1,20 @@
-import { Component, Output, EventEmitter, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
+import {
+  Component,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  inject,
+  DoCheck,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
+import {
+  Router,
+  RouterOutlet,
+  RouterLink,
+  NavigationEnd,
+} from '@angular/router';
 import { SidebarComponent } from '@zitro/ui';
 import { BottomNavComponent } from '@zitro/ui';
 import { WhatsappButtonComponent } from '@zitro/ui';
@@ -11,7 +25,12 @@ import { CartApiService } from '@zitro/services';
 import { UserManagementService } from '@zitro/services';
 import { FirebaseAuthService } from '@zitro/services';
 import { NavigationService } from '@zitro/services';
-import { PHONE_CONSTANTS, RESTAURANTS, UI_TEXT, FALLBACK_VALUES } from '../core/constants/app.constants';
+import {
+  PHONE_CONSTANTS,
+  RESTAURANTS,
+  UI_TEXT,
+  FALLBACK_VALUES,
+} from '../core/constants/app.constants';
 import { FirebaseConnectionManager } from '@zitro/services';
 import { filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -29,35 +48,57 @@ import { BannerConfigs } from '@zitro/models';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, BottomNavComponent, FooterComponent, LocationBottomSheetComponent, FloatingCartPreviewComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    SidebarComponent,
+    BottomNavComponent,
+    FooterComponent,
+    LocationBottomSheetComponent,
+    FloatingCartPreviewComponent,
+  ],
   templateUrl: './main-layout.component.html',
-  styleUrls: ['./main-layout.component.scss']
+  styleUrls: ['./main-layout.component.scss'],
 })
-export class MainLayoutComponent implements OnInit, OnDestroy {
+export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
+  private router = inject(Router);
+  private cartService = inject(CartService);
+  private userManagementService = inject(UserManagementService);
+  private authService = inject(FirebaseAuthService);
+  private navigationService = inject(NavigationService);
+  private appSettingsService = inject(AppSettingsService);
+  private firebaseConnectionManager = inject(FirebaseConnectionManager);
+  private dialogService = inject(DialogService);
+  private breakpointService = inject(BreakpointService);
+  private locationService = inject(LocationService);
+  private locationSelectionService = inject(LocationSelectionService);
+  private bannerService = inject(BannerService);
+
   private destroy$ = new Subject<void>();
   sidebarOpen = false;
   @Output() sidebarOpenEvent = new EventEmitter<void>();
   cartCount = 0;
   userName: string = FALLBACK_VALUES.USER_PREFIX;
   showBackButton = false;
-  currentRoute: string = '';
+  currentRoute = '';
   isRestaurantOpen = false;
-  restaurantTime: string = '';
+  restaurantTime = '';
   breakpoint: Breakpoint = 'mobile';
   isLoggedIn = false;
-  headerTitle: string = '';
+  headerTitle = '';
   isOnGameRoute = false;
   isOnCartPage = false;
   isOnListingPage = false;
-  headerVisible: boolean = true;
+  headerVisible = true;
   private lastScrollTop = 0;
 
   // Home-page hero state
-  isOnHomePage: boolean = false;
-  isPureVeg: boolean = true;
-  scrolledPastBanner: boolean = false;
-  locationLabel: string = 'Home';
-  locationAddress: string = 'Set your location';
+  isOnHomePage = false;
+  isPureVeg = true;
+  scrolledPastBanner = false;
+  locationLabel = 'Home';
+  locationAddress = 'Set your location';
 
   /** Configs from the currently displayed banner slide (null = no banner / no config) */
   activeBannerConfigs: BannerConfigs | null = null;
@@ -80,7 +121,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const isMobileOrTablet = this.breakpoint === 'mobile' || this.breakpoint === 'tablet';
+    const isMobileOrTablet =
+      this.breakpoint === 'mobile' || this.breakpoint === 'tablet';
     if (isMobileOrTablet) {
       return this.isOnHomePage;
     }
@@ -91,16 +133,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   // Route-based settings refresh tracking
   private lastRouteRefreshTimestamp = 0;
   private readonly ROUTE_REFRESH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
-  
+
   // Desktop navigation items
   desktopNavItems = [
-    { label: UI_TEXT.HOME, icon: 'home', route: '/home' },    
+    { label: UI_TEXT.HOME, icon: 'home', route: '/home' },
     { label: UI_TEXT.PROFILE, icon: 'person', route: '/account' },
-    { label: UI_TEXT.MANAGE_ADDRESSES, icon: 'location_on', route: '/addresses' },
+    {
+      label: UI_TEXT.MANAGE_ADDRESSES,
+      icon: 'location_on',
+      route: '/addresses',
+    },
     { label: UI_TEXT.MY_ORDERS, icon: 'receipt_long', route: '/orders' },
-    { label: UI_TEXT.CONTACT_US, icon: 'contact_support', route: '/contact' }
+    { label: UI_TEXT.CONTACT_US, icon: 'contact_support', route: '/contact' },
   ];
-  
+
   // Restaurant selection properties - DISABLED FOR NOW
   // restaurants = RESTAURANTS;
   // selectedRestaurant = RESTAURANTS[0]; // Default to first restaurant
@@ -109,45 +155,32 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   readonly cartApi = inject(CartApiService);
 
-  constructor(
-    private router: Router,
-    private cartService: CartService,
-    private userManagementService: UserManagementService, 
-    private authService: FirebaseAuthService,
-    private navigationService: NavigationService,
-    private appSettingsService: AppSettingsService,
-    private firebaseConnectionManager: FirebaseConnectionManager,
-    private dialogService: DialogService,
-    private breakpointService: BreakpointService,
-    private locationService: LocationService,
-    private locationSelectionService: LocationSelectionService,
-    private bannerService: BannerService,
-  ) {}
-
   async ngOnInit() {
     window.addEventListener('scroll', this.handleScroll.bind(this));
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
-    if (this.isOnHomePage) { this.tryGetLocation(); }
+    if (this.isOnHomePage) {
+      this.tryGetLocation();
+    }
     await this.checkLoginStatus();
     await this.loadUserData();
     this.updateCartCount();
     this.setupRouteListener();
     this.subscribeToProfileChanges();
-    
+
     // Initialize with current restaurant from connection manager - DISABLED FOR NOW
     // this.selectedRestaurant = this.firebaseConnectionManager.getCurrentRestaurant() as any;
-    
+
     // Load current user profile to initialize the BehaviorSubject
     this.userManagementService.loadCurrentUserProfile();
-    
+
     // Initialize restaurant timing with selected restaurant - DISABLED FOR NOW
     // this.updateRestaurantTiming();
-    
-    var checkoutSettings = this.appSettingsService.getCheckoutSettings();
-    checkoutSettings.then(settings => {
-      var openTime = settings.openTime;
-      var closeTime = settings.closeTime;
-      
+
+    const checkoutSettings = this.appSettingsService.getCheckoutSettings();
+    checkoutSettings.then((settings) => {
+      const openTime = settings.openTime;
+      const closeTime = settings.closeTime;
+
       // Override with settings if available, otherwise use restaurant data
       if (openTime && closeTime) {
         this.isRestaurantOpen = isRestaurantOpen(openTime, closeTime);
@@ -156,22 +189,25 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     });
 
     // Listen for breakpoint changes
-    this.breakpointService.breakpointChanges().pipe(takeUntil(this.destroy$)).subscribe((bp: Breakpoint) => {
-      this.breakpoint = bp;
-    });
+    this.breakpointService
+      .breakpointChanges()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((bp: Breakpoint) => {
+        this.breakpoint = bp;
+      });
 
     // Keep header location labels in sync with the selection service
     this.locationSelectionService.selectedLocation$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(loc => {
-        this.locationLabel  = loc.label;
+      .subscribe((loc) => {
+        this.locationLabel = loc.label;
         this.locationAddress = loc.address;
       });
 
     // React to per-banner header config changes (text color, restaurant status visibility)
     this.bannerService.activeBannerConfigs$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(configs => {
+      .subscribe((configs) => {
         this.activeBannerConfigs = configs;
       });
   }
@@ -185,12 +221,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   async checkLoginStatus() {
     this.isLoggedIn = await this.userManagementService.isLoggedIn();
   }
-  
+
   subscribeToProfileChanges() {
     // Subscribe to user profile changes
     this.userManagementService.userProfile$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(async userProfile => {
+      .subscribe(async (userProfile) => {
         if (userProfile && userProfile.name) {
           this.userName = `${UI_TEXT.WELCOME} ${userProfile.name}`;
         } else if (userProfile === null) {
@@ -207,8 +243,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     // Listen to route changes to determine when to show/hide back button
     this.router.events
       .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntil(this.destroy$)
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$),
       )
       .subscribe((event: NavigationEnd) => {
         this.currentRoute = event.urlAfterRedirects;
@@ -216,19 +252,27 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.updateHeaderTitle();
         this.isOnGameRoute = event.urlAfterRedirects.includes('/game-2048');
         this.isOnCartPage = event.urlAfterRedirects.startsWith('/cart');
-        this.isOnListingPage = event.urlAfterRedirects.startsWith('/listing') || event.urlAfterRedirects.startsWith('/favorites');
-        this.isOnHomePage = event.urlAfterRedirects === '/home' || event.urlAfterRedirects === '/';
+        this.isOnListingPage =
+          event.urlAfterRedirects.startsWith('/listing') ||
+          event.urlAfterRedirects.startsWith('/favorites');
+        this.isOnHomePage =
+          event.urlAfterRedirects === '/home' ||
+          event.urlAfterRedirects === '/';
         this.scrolledPastBanner = false;
-        if (this.isOnHomePage) { this.tryGetLocation(); }
+        if (this.isOnHomePage) {
+          this.tryGetLocation();
+        }
         // // Refresh settings on critical route changes
         // this.refreshSettingsOnRouteChange(event.urlAfterRedirects);
       });
-        // Set initial state
+    // Set initial state
     this.currentRoute = this.router.url;
     this.updateBackButtonVisibility();
     this.isOnGameRoute = this.router.url.includes('/game-2048');
     this.isOnCartPage = this.router.url.startsWith('/cart');
-    this.isOnListingPage = this.router.url.startsWith('/listing') || this.router.url.startsWith('/favorites');
+    this.isOnListingPage =
+      this.router.url.startsWith('/listing') ||
+      this.router.url.startsWith('/favorites');
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
     this.updateHeaderTitle();
   }
@@ -241,10 +285,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
 
     // Find the nav item whose route matches the current route
-    const activeItem = this.desktopNavItems.find(item => this.isActiveRoute(item.route));
+    const activeItem = this.desktopNavItems.find((item) =>
+      this.isActiveRoute(item.route),
+    );
     this.headerTitle = activeItem ? activeItem.label : '';
   }
-  
+
   /**
    * Refresh app settings when navigating to critical routes
    * This ensures settings are up-to-date before loading important pages
@@ -253,39 +299,52 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private refreshSettingsOnRouteChange(url: string): void {
     // Define routes that should trigger settings refresh
     const criticalRoutes = ['/home', '/listing'];
-    
+
     // Check if current route matches any critical route
-    const shouldRefresh = criticalRoutes.some(route => 
-      url === route || url.startsWith(`${route}/`) || url.startsWith(`${route}?`)
+    const shouldRefresh = criticalRoutes.some(
+      (route) =>
+        url === route ||
+        url.startsWith(`${route}/`) ||
+        url.startsWith(`${route}?`),
     );
-    
+
     if (!shouldRefresh) {
       return;
     }
-    
+
     // Check cooldown period - only refresh if 5 minutes have passed
     const now = Date.now();
     const timeSinceLastRefresh = now - this.lastRouteRefreshTimestamp;
-    
+
     if (timeSinceLastRefresh < this.ROUTE_REFRESH_COOLDOWN) {
-      const remainingTime = Math.ceil((this.ROUTE_REFRESH_COOLDOWN - timeSinceLastRefresh) / 1000);
-      console.log(`⏳ Route refresh cooldown active. Next refresh in ${remainingTime}s`);
+      const remainingTime = Math.ceil(
+        (this.ROUTE_REFRESH_COOLDOWN - timeSinceLastRefresh) / 1000,
+      );
+      console.log(
+        `⏳ Route refresh cooldown active. Next refresh in ${remainingTime}s`,
+      );
       return;
     }
-    
+
     // Update timestamp and trigger refresh
     this.lastRouteRefreshTimestamp = now;
     console.log(`🔄 Route-based refresh triggered for: ${url}`);
-    
-    this.appSettingsService.refreshSettings().catch(error => {
+
+    this.appSettingsService.refreshSettings().catch((error) => {
       console.error('❌ Failed to refresh settings on route change:', error);
     });
   }
 
   updateBackButtonVisibility() {
     // Define routes where back button should NOT be shown (main/home routes)
-    const homeRoutes = ['/', '/home', '/features/categories', '/features/search', '/features/account'];
-    
+    const homeRoutes = [
+      '/',
+      '/home',
+      '/features/categories',
+      '/features/search',
+      '/features/account',
+    ];
+
     // Special case: always show back button for home page (will go to order history)
     if (this.currentRoute === '/features/home') {
       this.showBackButton = true;
@@ -304,15 +363,17 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   async loadUserData() {
     try {
-      const currentUserPhone = await this.userManagementService.getCurrentUserPhone();
+      const currentUserPhone =
+        await this.userManagementService.getCurrentUserPhone();
       if (currentUserPhone) {
-        const userData = await this.userManagementService.getUserData(currentUserPhone);
+        const userData =
+          await this.userManagementService.getUserData(currentUserPhone);
         if (userData && userData.name) {
           this.userName = `${UI_TEXT.WELCOME} ${userData.name}`;
         } else {
           // Fallback to a formatted phone number or default
-          this.userName = currentUserPhone.includes(PHONE_CONSTANTS.INDIA_CODE) 
-            ? `${FALLBACK_VALUES.USER_PREFIX} ${currentUserPhone.substring(3)}` 
+          this.userName = currentUserPhone.includes(PHONE_CONSTANTS.INDIA_CODE)
+            ? `${FALLBACK_VALUES.USER_PREFIX} ${currentUserPhone.substring(3)}`
             : `${FALLBACK_VALUES.USER_PREFIX} ${currentUserPhone}`;
         }
       } else {
@@ -344,7 +405,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.sidebarOpen = true;
   }
 
-
   closeSidebar() {
     this.sidebarOpen = false;
   }
@@ -354,7 +414,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   onViewCart(businessSlug: string): void {
-    this.router.navigate(['/cart'], { queryParams: { business: businessSlug } });
+    this.router.navigate(['/cart'], {
+      queryParams: { business: businessSlug },
+    });
   }
 
   goToAccount() {
@@ -390,12 +452,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   isActiveRoute(route: string): boolean {
-    return this.currentRoute === route || this.currentRoute.startsWith(route + '/');
+    return (
+      this.currentRoute === route || this.currentRoute.startsWith(route + '/')
+    );
   }
 
   handleScroll() {
     try {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
       if (scrollTop > this.lastScrollTop && scrollTop > 500) {
         // Scrolling down, hide header
         this.headerVisible = false;
@@ -403,7 +468,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         // Scrolling up or at top, show header
         this.headerVisible = true;
       }
-      this.scrolledPastBanner = scrollTop > (window.innerWidth * (700 / 1080));
+      this.scrolledPastBanner = scrollTop > window.innerWidth * (700 / 1080);
       this.lastScrollTop = scrollTop;
     } catch (error) {
       console.error('Error handling scroll event:', error);
@@ -428,28 +493,36 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     try {
       const pref = this.locationService.getLocationPermissionPreference();
-      if (pref === 'denied') { return; }
+      if (pref === 'denied') {
+        return;
+      }
       const cached = this.locationService.getCachedLocation();
-      const coordinates = cached.coordinates ?? await this.locationService.getCurrentLocation();
+      const coordinates =
+        cached.coordinates ?? (await this.locationService.getCurrentLocation());
 
       if (await this.userManagementService.isLoggedIn()) {
-        const nearestSavedAddress = await this.findNearestSavedAddress(coordinates);
+        const nearestSavedAddress =
+          await this.findNearestSavedAddress(coordinates);
         if (nearestSavedAddress) {
-          this.locationSelectionService.setLocation(nearestSavedAddress.location);
-          this.locationSelectionService.setSelectedSavedAddress(nearestSavedAddress.address);
+          this.locationSelectionService.setLocation(
+            nearestSavedAddress.location,
+          );
+          this.locationSelectionService.setSelectedSavedAddress(
+            nearestSavedAddress.address,
+          );
           return;
         }
       }
 
       const addr = await this.locationSelectionService.reverseGeocode(
         coordinates.lat,
-        coordinates.lng
+        coordinates.lng,
       );
       this.locationSelectionService.setLocation({
         label: 'Current Location',
         address: addr,
         coordinates,
-        type: 'gps'
+        type: 'gps',
       });
       this.locationSelectionService.setSelectedSavedAddress(null);
     } catch {
@@ -457,8 +530,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async findNearestSavedAddress(coordinates: { lat: number; lng: number }): Promise<{
-    address: Awaited<ReturnType<UserManagementService['getUserDefaultAddress']>> extends infer T
+  private async findNearestSavedAddress(coordinates: {
+    lat: number;
+    lng: number;
+  }): Promise<{
+    address: Awaited<
+      ReturnType<UserManagementService['getUserDefaultAddress']>
+    > extends infer T
       ? Exclude<T, null>
       : never;
     location: {
@@ -476,15 +554,23 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (addresses.length === 0) return null;
 
     const resolvedAddresses = await Promise.all(
-      addresses.map(async address => {
-        const fullAddress = [address.houseAndStreet, address.town, address.state]
+      addresses.map(async (address) => {
+        const fullAddress = [
+          address.houseAndStreet,
+          address.town,
+          address.state,
+        ]
           .filter(Boolean)
           .join(', ');
 
         if (!fullAddress) return null;
 
         try {
-          const suggestions = await this.locationSelectionService.searchAddresses(fullAddress, coordinates);
+          const suggestions =
+            await this.locationSelectionService.searchAddresses(
+              fullAddress,
+              coordinates,
+            );
           const match = suggestions[0];
           if (!match) return null;
 
@@ -496,16 +582,22 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
               coordinates: match.coordinates,
               type: 'saved' as const,
             },
-            distanceKm: this.locationService.calculateDistance(coordinates, match.coordinates),
+            distanceKm: this.locationService.calculateDistance(
+              coordinates,
+              match.coordinates,
+            ),
           };
         } catch {
           return null;
         }
-      })
+      }),
     );
 
     const nearestAddress = resolvedAddresses
-      .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null)
+      .filter(
+        (candidate): candidate is NonNullable<typeof candidate> =>
+          candidate !== null,
+      )
       .sort((left, right) => left.distanceKm - right.distanceKm)[0];
 
     return nearestAddress ?? null;
@@ -530,7 +622,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   //     const currentName = this.selectedRestaurant.name;
   //     const newName = restaurant.name;
   //     const confirmationMessage = RestaurantSwitchingUtil.getSwitchConfirmationMessage(currentName, newName);
-      
+
   //     // Show confirmation dialog
   //     const userConfirmed = await this.dialogService.showConfirmation({
   //       title: 'Switch Restaurant',
@@ -538,21 +630,21 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   //       confirmText: 'Yes, Continue',
   //       cancelText: 'Cancel'
   //     });
-      
+
   //     // If user cancels, just close dropdown and return
   //     if (!userConfirmed) {
   //       this.showRestaurantDropdown = false;
   //       return;
   //     }
-      
+
   //     this.showRestaurantDropdown = false;
   //     this.isSwitchingRestaurant = true;
-      
+
   //     // Use the Firebase connection manager to switch
   //     await this.firebaseConnectionManager.switchRestaurant(restaurant.id);
-      
+
   //     // Note: The page will reload, so code after this won't execute
-      
+
   //   } catch (error) {
   //     console.error('Error switching restaurant:', error);
   //     this.isSwitchingRestaurant = false;

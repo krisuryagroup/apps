@@ -1,20 +1,20 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { 
-  CacheType, 
-  CacheManagementConfig, 
+import {
+  CacheType,
+  CacheManagementConfig,
   DEFAULT_CACHE_CONFIG,
-  DEFAULT_CACHE_DURATIONS 
+  DEFAULT_CACHE_DURATIONS,
 } from '@zitro/models';
 import { CacheService } from './cache.service';
 
 /**
  * Centralized Cache Manager Service
- * 
+ *
  * Manages all application caching with Firebase-controlled configuration.
  * Provides dynamic cache control, force refresh capabilities, and cache
  * duration management from Firebase appSettings.
- * 
+ *
  * Features:
  * - Global cache enable/disable
  * - Individual cache type control
@@ -24,13 +24,17 @@ import { CacheService } from './cache.service';
  * - localStorage-based cache storage
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CacheManagerService {
-  private cacheConfig$ = new BehaviorSubject<CacheManagementConfig>(DEFAULT_CACHE_CONFIG);
+  private cacheService = inject(CacheService);
+
+  private cacheConfig$ = new BehaviorSubject<CacheManagementConfig>(
+    DEFAULT_CACHE_CONFIG,
+  );
   private lastForceRefreshCheck: { [key: string]: number } = {};
 
-  constructor(private cacheService: CacheService) {
+  constructor() {
     this.initializeForceRefreshTracking();
   }
 
@@ -53,7 +57,10 @@ export class CacheManagerService {
    */
   private saveForceRefreshTracking(): void {
     try {
-      localStorage.setItem('cache_force_refresh_tracking', JSON.stringify(this.lastForceRefreshCheck));
+      localStorage.setItem(
+        'cache_force_refresh_tracking',
+        JSON.stringify(this.lastForceRefreshCheck),
+      );
     } catch (error) {
       console.warn('Failed to save force refresh tracking:', error);
     }
@@ -67,12 +74,15 @@ export class CacheManagerService {
     // Merge with current configuration
     const currentConfig = this.cacheConfig$.value;
     const mergedConfig: CacheManagementConfig = {
-      cacheDurations: { ...currentConfig.cacheDurations, ...config.cacheDurations },
+      cacheDurations: {
+        ...currentConfig.cacheDurations,
+        ...config.cacheDurations,
+      },
       enableCache: { ...currentConfig.enableCache, ...config.enableCache },
       forceRefresh: { ...currentConfig.forceRefresh, ...config.forceRefresh },
-      lastCacheRefreshTimestamp: config.lastCacheRefreshTimestamp
+      lastCacheRefreshTimestamp: config.lastCacheRefreshTimestamp,
     };
-    
+
     this.cacheConfig$.next(mergedConfig);
     console.log('Cache configuration updated from Firebase', mergedConfig);
   }
@@ -107,7 +117,10 @@ export class CacheManagerService {
    */
   public getCacheDuration(cacheType: CacheType): number {
     const config = this.cacheConfig$.value;
-    const durationHours = config.cacheDurations?.[cacheType] || DEFAULT_CACHE_DURATIONS[cacheType] || 24;
+    const durationHours =
+      config.cacheDurations?.[cacheType] ||
+      DEFAULT_CACHE_DURATIONS[cacheType] ||
+      24;
     return durationHours * 60 * 60 * 1000; // Convert hours to milliseconds
   }
 
@@ -122,10 +135,10 @@ export class CacheManagerService {
     if (!this.isCacheEnabled(cacheType)) {
       return false;
     }
-    
+
     // Get cache duration
     const duration = this.getCacheDuration(cacheType);
-    
+
     // Check timestamp using CacheService
     return !this.cacheService.isCacheExpired(timestampKey, duration);
   }
@@ -137,70 +150,83 @@ export class CacheManagerService {
    * @param timestampKey localStorage key for the timestamp
    * @returns Cached data or null if invalid/not found
    */
-  public getCachedData<T>(cacheType: CacheType, cacheKey: string, timestampKey: string): T | null {
+  public getCachedData<T>(
+    cacheType: CacheType,
+    cacheKey: string,
+    timestampKey: string,
+  ): T | null {
     const config = this.cacheConfig$.value;
-    
+
     // Check if caching is enabled for this cache type
     if (!config.enableCache?.[cacheType]) {
       return null;
     }
-    
+
     // Check global clearAll flag first
     if (config.forceRefresh?.clearAll) {
       const lastClearAllTime = this.lastForceRefreshCheck['clearAll'] || 0;
-      const firebaseTimestamp = config.lastCacheRefreshTimestamp ? 
-        new Date(config.lastCacheRefreshTimestamp).getTime() : Date.now();
-      
+      const firebaseTimestamp = config.lastCacheRefreshTimestamp
+        ? new Date(config.lastCacheRefreshTimestamp).getTime()
+        : Date.now();
+
       // If Firebase timestamp is newer than our last clear, clear everything
       if (firebaseTimestamp > lastClearAllTime) {
         console.log(`🗑️ Global Clear All enabled - clearing ALL cache`);
-        
-        const keysToPreserve = ['SELECTED_RESTAURANT_ID', 'cache_force_refresh_tracking'];
+
+        const keysToPreserve = [
+          'SELECTED_RESTAURANT_ID',
+          'cache_force_refresh_tracking',
+        ];
         const allKeys = Object.keys(localStorage);
         let clearedCount = 0;
-        
-        allKeys.forEach(key => {
-          if (!keysToPreserve.some(preserve => key.includes(preserve))) {
+
+        allKeys.forEach((key) => {
+          if (!keysToPreserve.some((preserve) => key.includes(preserve))) {
             localStorage.removeItem(key);
             clearedCount++;
           }
         });
-        
+
         this.lastForceRefreshCheck['clearAll'] = Date.now();
         this.saveForceRefreshTracking();
-        
-        console.log(`✅ Global Clear All completed - ${clearedCount} items cleared`);
+
+        console.log(
+          `✅ Global Clear All completed - ${clearedCount} items cleared`,
+        );
         return null;
       }
     }
-    
+
     // Check individual force refresh for this cache type
     if (config.forceRefresh?.[cacheType]) {
       const lastRefreshTime = this.lastForceRefreshCheck[cacheType] || 0;
-      const firebaseTimestamp = config.lastCacheRefreshTimestamp ? 
-        new Date(config.lastCacheRefreshTimestamp).getTime() : Date.now();
-      
+      const firebaseTimestamp = config.lastCacheRefreshTimestamp
+        ? new Date(config.lastCacheRefreshTimestamp).getTime()
+        : Date.now();
+
       // If Firebase timestamp is newer than our last refresh, clear this cache
       if (firebaseTimestamp > lastRefreshTime) {
-        console.log(`🔄 Force refresh enabled for ${cacheType} - clearing cache`);
-        
+        console.log(
+          `🔄 Force refresh enabled for ${cacheType} - clearing cache`,
+        );
+
         this.clearCache(cacheType, cacheKey, timestampKey);
         this.clearCacheByType(cacheType);
-        
+
         this.lastForceRefreshCheck[cacheType] = Date.now();
         this.saveForceRefreshTracking();
-        
+
         console.log(`✅ Force refresh completed for ${cacheType}`);
         return null;
       }
     }
-    
+
     // Check if cache is expired based on duration
     const duration = this.getCacheDuration(cacheType);
     if (this.cacheService.isCacheExpired(timestampKey, duration)) {
       return null;
     }
-    
+
     try {
       return this.cacheService.getCachedData<T>(cacheKey);
     } catch (error) {
@@ -245,11 +271,16 @@ export class CacheManagerService {
    * @param timestampKey localStorage key for the timestamp
    * @param data Data to cache
    */
-  public setCachedData<T>(cacheType: CacheType, cacheKey: string, timestampKey: string, data: T): void {
+  public setCachedData<T>(
+    cacheType: CacheType,
+    cacheKey: string,
+    timestampKey: string,
+    data: T,
+  ): void {
     if (!this.isCacheEnabled(cacheType)) {
       return;
     }
-    
+
     try {
       this.cacheService.setCachedData(cacheKey, data);
       this.cacheService.setCacheTimestamp(timestampKey);
@@ -264,7 +295,11 @@ export class CacheManagerService {
    * @param cacheKey localStorage key for the cached data
    * @param timestampKey localStorage key for the timestamp
    */
-  public clearCache(cacheType: CacheType, cacheKey: string, timestampKey: string): void {
+  public clearCache(
+    cacheType: CacheType,
+    cacheKey: string,
+    timestampKey: string,
+  ): void {
     try {
       this.cacheService.removeItem(cacheKey);
       this.cacheService.removeItem(timestampKey);
@@ -289,34 +324,29 @@ export class CacheManagerService {
     const cacheKeys = [
       'COUPONS_CACHE',
       'COUPONS_CACHE_TIMESTAMP',
-      'cache_force_refresh_tracking'
+      'cache_force_refresh_tracking',
     ];
-    
+
     // Clear specific cache keys
     try {
-      cacheKeys.forEach(key => this.cacheService.removeItem(key));
-      
+      cacheKeys.forEach((key) => this.cacheService.removeItem(key));
+
       // Clear user-specific caches by prefix
-      const userCachePrefixes = [
-        'USER_PROFILE_CACHE',
-        'ORDER_HISTORY_CACHE'
-      ];
-      
-      userCachePrefixes.forEach(prefix => {
+      const userCachePrefixes = ['USER_PROFILE_CACHE', 'ORDER_HISTORY_CACHE'];
+
+      userCachePrefixes.forEach((prefix) => {
         this.cacheService.clearCacheByPrefix(prefix);
       });
-      
+
       // Reset force refresh tracking
       this.lastForceRefreshCheck = {};
       this.saveForceRefreshTracking();
-      
+
       console.log('All caches cleared');
     } catch (error) {
       console.error('Failed to clear all caches:', error);
     }
   }
-
-
 
   /**
    * Get cache statistics for debugging/monitoring
@@ -325,18 +355,20 @@ export class CacheManagerService {
     const config = this.cacheConfig$.value;
     const stats: any = {
       caches: {},
-      lastCacheRefreshTimestamp: config.lastCacheRefreshTimestamp
+      lastCacheRefreshTimestamp: config.lastCacheRefreshTimestamp,
     };
-    
-    Object.values(CacheType).forEach(cacheType => {
+
+    Object.values(CacheType).forEach((cacheType) => {
       stats.caches[cacheType] = {
         enabled: config.enableCache?.[cacheType] ?? false,
-        duration: config.cacheDurations?.[cacheType] || DEFAULT_CACHE_DURATIONS[cacheType],
+        duration:
+          config.cacheDurations?.[cacheType] ||
+          DEFAULT_CACHE_DURATIONS[cacheType],
         forceRefresh: config.forceRefresh?.[cacheType] ?? false,
-        lastForceRefreshCheck: this.lastForceRefreshCheck[cacheType]
+        lastForceRefreshCheck: this.lastForceRefreshCheck[cacheType],
       };
     });
-    
+
     return stats;
   }
 

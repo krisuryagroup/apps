@@ -25,7 +25,7 @@ export interface GameState {
  * - Win/loss detection
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class Game2048Service {
   private readonly GRID_SIZE = 4;
@@ -46,7 +46,7 @@ export class Game2048Service {
       highestTile: 0,
       isGameOver: false,
       hasWon: false,
-      canContinue: true
+      canContinue: true,
     };
 
     // Add two initial tiles
@@ -74,14 +74,15 @@ export class Game2048Service {
       return false;
     }
 
-    const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    const { row, col } =
+      emptyCells[Math.floor(Math.random() * emptyCells.length)];
     const value = Math.random() < 0.7 ? 2 : 4; // 70% chance for 2, 30% for 4
 
     state.grid[row][col] = {
       value,
       row,
       col,
-      id: this.nextTileId++
+      id: this.nextTileId++,
     };
 
     return true;
@@ -142,7 +143,7 @@ export class Game2048Service {
     let moved = false;
 
     for (let row = 0; row < this.GRID_SIZE; row++) {
-      let result = this.slideAndMergeRow(state.grid[row]);
+      const result = this.slideAndMergeRow(state.grid[row]);
       if (result.moved) {
         state.grid[row] = result.row;
         // Update tile positions
@@ -167,8 +168,8 @@ export class Game2048Service {
     let moved = false;
 
     for (let row = 0; row < this.GRID_SIZE; row++) {
-      let reversed = [...state.grid[row]].reverse();
-      let result = this.slideAndMergeRow(reversed);
+      const reversed = [...state.grid[row]].reverse();
+      const result = this.slideAndMergeRow(reversed);
       if (result.moved) {
         state.grid[row] = result.row.reverse();
         // Update tile positions
@@ -193,8 +194,8 @@ export class Game2048Service {
     let moved = false;
 
     for (let col = 0; col < this.GRID_SIZE; col++) {
-      let column = this.getColumn(state, col);
-      let result = this.slideAndMergeRow(column);
+      const column = this.getColumn(state, col);
+      const result = this.slideAndMergeRow(column);
       if (result.moved) {
         this.setColumn(state, col, result.row);
         state.score += result.scoreGain;
@@ -212,8 +213,8 @@ export class Game2048Service {
     let moved = false;
 
     for (let col = 0; col < this.GRID_SIZE; col++) {
-      let column = this.getColumn(state, col).reverse();
-      let result = this.slideAndMergeRow(column);
+      const column = this.getColumn(state, col).reverse();
+      const result = this.slideAndMergeRow(column);
       if (result.moved) {
         this.setColumn(state, col, result.row.reverse());
         state.score += result.scoreGain;
@@ -236,7 +237,7 @@ export class Game2048Service {
     let scoreGain = 0;
 
     // Filter out nulls
-    let tiles = row.filter(tile => tile !== null) as Tile[];
+    const tiles = row.filter((tile) => tile !== null) as Tile[];
 
     // Merge adjacent equal tiles
     const merged: Tile[] = [];
@@ -249,7 +250,7 @@ export class Game2048Service {
           ...tiles[i],
           value: newValue,
           merged: true,
-          id: this.nextTileId++
+          id: this.nextTileId++,
         });
         scoreGain += newValue;
         i += 2; // Skip the next tile
@@ -262,7 +263,7 @@ export class Game2048Service {
     // Fill with nulls
     const newRow: (Tile | null)[] = [
       ...merged,
-      ...Array(this.GRID_SIZE - merged.length).fill(null)
+      ...Array(this.GRID_SIZE - merged.length).fill(null),
     ];
 
     // Check if anything moved
@@ -275,13 +276,17 @@ export class Game2048Service {
    * Get column as array
    */
   private getColumn(state: GameState, col: number): (Tile | null)[] {
-    return state.grid.map(row => row[col]);
+    return state.grid.map((row) => row[col]);
   }
 
   /**
    * Set column from array
    */
-  private setColumn(state: GameState, col: number, column: (Tile | null)[]): void {
+  private setColumn(
+    state: GameState,
+    col: number,
+    column: (Tile | null)[],
+  ): void {
     for (let row = 0; row < this.GRID_SIZE; row++) {
       state.grid[row][col] = column[row];
       if (column[row]) {

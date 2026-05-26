@@ -27,8 +27,17 @@ export default [
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      '@angular-eslint/template/click-events-have-key-events': 'warn',
+      '@angular-eslint/template/interactive-supports-focus': 'warn',
+      '@angular-eslint/template/label-has-associated-control': 'warn',
+    },
   },
 ];

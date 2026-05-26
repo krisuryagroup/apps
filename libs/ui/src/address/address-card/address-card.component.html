@@ -1,23 +1,32 @@
 <div class="address-card" data-testid="address-card">
   @if (address().isDefault) {
-    <span class="address-card__default-badge" data-testid="address-card-default-badge">
+    <span
+      class="address-card__default-badge"
+      data-testid="address-card-default-badge"
+    >
       {{ 'address.defaultBadge' | i18n }}
     </span>
   }
 
-  <div class="address-card__type" data-testid="address-card-type">{{ address().type }}</div>
-  <div class="address-card__name" data-testid="address-card-name">{{ address().name }}</div>
+  <div class="address-card__type" data-testid="address-card-type">
+    {{ address().type }}
+  </div>
+  <div class="address-card__name" data-testid="address-card-name">
+    {{ address().name }}
+  </div>
   <div class="address-card__details" data-testid="address-card-details">
     {{ address().houseAndStreet }}, {{ address().landmark }},
     {{ address().town }}, {{ address().state }} — {{ address().pincode }}
   </div>
-  <div class="address-card__phone" data-testid="address-card-phone">{{ address().phone }}</div>
+  <div class="address-card__phone" data-testid="address-card-phone">
+    {{ address().phone }}
+  </div>
 
   <div class="address-card__actions">
     @if (config().showSelectButton) {
       <button
         class="address-card__btn address-card__btn--primary"
-        (click)="select.emit(address())"
+        (click)="addressSelect.emit(address())"
         data-testid="address-card-select-btn"
         type="button"
       >

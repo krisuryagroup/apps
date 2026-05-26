@@ -1,15 +1,30 @@
-import { Injectable } from '@angular/core';
-import { Firestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { Injectable, inject } from '@angular/core';
+import {
+  Firestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from '@angular/fire/firestore';
+import {
+  Storage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from '@angular/fire/storage';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { BehaviorSubject } from 'rxjs';
-import { 
-  FIREBASE_COLLECTIONS, 
-  FIREBASE_STORAGE_PATHS, 
-  AUTH_KEYS, 
-  CACHE_KEYS, 
+import {
+  FIREBASE_COLLECTIONS,
+  FIREBASE_STORAGE_PATHS,
+  AUTH_KEYS,
+  CACHE_KEYS,
   CACHE_DURATIONS,
-  CacheType 
+  CacheType,
 } from '@zitro/utils';
 import { CacheService } from './cache.service';
 import { CacheManagerService } from './cache-manager.service';
@@ -50,9 +65,15 @@ export interface OnlineUser {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserManagementService {
+  private router = inject(Router);
+  private firestore = inject(Firestore);
+  private storage = inject(Storage);
+  private cacheService = inject(CacheService);
+  private cacheManager = inject(CacheManagerService);
+
   // Observable for current user phone
   private currentUserPhoneSubject = new BehaviorSubject<string | null>(null);
   public currentUserPhone$ = this.currentUserPhoneSubject.asObservable();
@@ -63,15 +84,10 @@ export class UserManagementService {
 
   // Cache keys for user profile (using constants)
   private readonly USER_PROFILE_CACHE_KEY = CACHE_KEYS.USER_PROFILE_CACHE;
-  private readonly USER_PROFILE_CACHE_TIMESTAMP_KEY = CACHE_KEYS.USER_PROFILE_CACHE_TIMESTAMP;
+  private readonly USER_PROFILE_CACHE_TIMESTAMP_KEY =
+    CACHE_KEYS.USER_PROFILE_CACHE_TIMESTAMP;
 
-  constructor(
-    private router: Router,
-    private firestore: Firestore,
-    private storage: Storage,
-    private cacheService: CacheService,
-    private cacheManager: CacheManagerService
-  ) {
+  constructor() {
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
       let phone: string | null = null;
@@ -87,7 +103,7 @@ export class UserManagementService {
         }
       } else {
         // User signed out
-        // TODO undo this storage cleanup if 
+        // TODO undo this storage cleanup if
         // localStorage.removeItem(AUTH_KEYS.CURRENT_USER_PHONE);
         // this.router.navigate(['/signin']);
       }
@@ -130,28 +146,35 @@ export class UserManagementService {
     return phone.replace(/[^\d+]/g, '');
   }
 
-
-
   /**
    * Find user document by phone number (expects +91XXXXXXXXXX format only)
    * @param phoneNumber Phone number to search for
    * @returns Promise<{docId: string, userData: OnlineUser} | null>
    */
-  async findUserByPhoneNumber(phoneNumber: string): Promise<{docId: string, userData: OnlineUser} | null> {
+  async findUserByPhoneNumber(
+    phoneNumber: string,
+  ): Promise<{ docId: string; userData: OnlineUser } | null> {
     try {
       const normalized = this.normalizePhoneNumber(phoneNumber);
       // Only allow +91 and 10 digits
       if (!/^\+91\d{10}$/.test(normalized)) {
-        console.error('Bad request: phoneNumber must be in +91XXXXXXXXXX format. Provided:', phoneNumber);
+        console.error(
+          'Bad request: phoneNumber must be in +91XXXXXXXXXX format. Provided:',
+          phoneNumber,
+        );
         return null;
       }
-      const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, normalized);
+      const userDocRef = doc(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+        normalized,
+      );
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         console.log('Found user document with ID:', normalized);
         return {
           docId: normalized,
-          userData: userDoc.data() as OnlineUser
+          userData: userDoc.data() as OnlineUser,
         };
       }
       console.log('No user found with phone number:', normalized);
@@ -171,9 +194,14 @@ export class UserManagementService {
     try {
       const phoneNumber = user.phoneNumber || user.uid || 'anonymous';
       const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
-      
-      console.log('Creating/updating user entry for:', phoneNumber, 'normalized:', normalizedPhone);
-      
+
+      console.log(
+        'Creating/updating user entry for:',
+        phoneNumber,
+        'normalized:',
+        normalizedPhone,
+      );
+
       // Check if user already exists with any phone number variation
       const existingUser = await this.findUserByPhoneNumber(phoneNumber);
 
@@ -192,31 +220,42 @@ export class UserManagementService {
           totalOrders: 0, // Initialize order count to 0 for new customers
           couponUsageHistory: [], // Initialize empty coupon usage history
           created_at: now,
-          updated_at: now
+          updated_at: now,
         };
 
-        const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, normalizedPhone);
+        const userDocRef = doc(
+          this.firestore,
+          FIREBASE_COLLECTIONS.ONLINE_USERS,
+          normalizedPhone,
+        );
         await setDoc(userDocRef, newUser);
         console.log('New user entry created in onlineUsers:', normalizedPhone);
-        
+
         // Store current user info in localStorage for favorites service
         localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, normalizedPhone);
-        
+
         return true;
       } else {
         // Update existing user entry with latest auth info
         const updateData = {
           uid: user.uid,
-          updated_at: now
+          updated_at: now,
         };
 
-        const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, existingUser.docId);
+        const userDocRef = doc(
+          this.firestore,
+          FIREBASE_COLLECTIONS.ONLINE_USERS,
+          existingUser.docId,
+        );
         await updateDoc(userDocRef, updateData);
-        console.log('Existing user entry updated in onlineUsers:', existingUser.docId);
-        
+        console.log(
+          'Existing user entry updated in onlineUsers:',
+          existingUser.docId,
+        );
+
         // Store current user info in localStorage for favorites service (use existing docId format)
         // localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, existingUser.docId);
-        
+
         return true;
       }
     } catch (error) {
@@ -231,10 +270,17 @@ export class UserManagementService {
    * @param hardRefresh Force refresh from Firestore, bypassing cache (default: false)
    * @returns Promise<OnlineUser | null>
    */
-  async getUserData(phoneNumber: string, hardRefresh: boolean = false): Promise<OnlineUser | null> {
+  async getUserData(
+    phoneNumber: string,
+    hardRefresh = false,
+  ): Promise<OnlineUser | null> {
     try {
-      console.log('Getting user data for phone:', phoneNumber, hardRefresh ? '(HARD REFRESH)' : '');
-      
+      console.log(
+        'Getting user data for phone:',
+        phoneNumber,
+        hardRefresh ? '(HARD REFRESH)' : '',
+      );
+
       // Check cache first (unless hard refresh is requested)
       if (!hardRefresh) {
         const cachedProfile = this.getCachedUserProfile(phoneNumber);
@@ -243,11 +289,14 @@ export class UserManagementService {
           return cachedProfile;
         }
       } else {
-        console.log('🔄 Hard refresh requested, bypassing cache for:', phoneNumber);
+        console.log(
+          '🔄 Hard refresh requested, bypassing cache for:',
+          phoneNumber,
+        );
       }
-      
+
       console.log('⬇️ Fetching user profile from Firestore for:', phoneNumber);
-      
+
       // First, try to find by phone number variations
       const result = await this.findUserByPhoneNumber(phoneNumber);
       if (result) {
@@ -255,10 +304,17 @@ export class UserManagementService {
         this.setCachedUserProfile(phoneNumber, result.userData);
         return result.userData;
       }
-      
+
       // If not found and the phoneNumber looks like a UID, try to find by UID
-      if (phoneNumber && phoneNumber.length > 20 && phoneNumber.includes('DnJIFywiBdSKucVF4G0m')) {
-        console.log('Phone number looks like UID, searching by UID:', phoneNumber);
+      if (
+        phoneNumber &&
+        phoneNumber.length > 20 &&
+        phoneNumber.includes('DnJIFywiBdSKucVF4G0m')
+      ) {
+        console.log(
+          'Phone number looks like UID, searching by UID:',
+          phoneNumber,
+        );
         const userDataByUID = await this.getUserDataByUID(phoneNumber);
         if (userDataByUID) {
           // Cache the result
@@ -266,7 +322,7 @@ export class UserManagementService {
           return userDataByUID.user;
         }
       }
-      
+
       console.log('No user found for phone:', phoneNumber);
       return null;
       return null;
@@ -281,21 +337,26 @@ export class UserManagementService {
    * @param uid User's Firebase UID
    * @returns Promise<{user: OnlineUser, phoneNumber: string} | null>
    */
-  async getUserDataByUID(uid: string): Promise<{user: OnlineUser, phoneNumber: string} | null> {
+  async getUserDataByUID(
+    uid: string,
+  ): Promise<{ user: OnlineUser; phoneNumber: string } | null> {
     try {
-      const usersRef = collection(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS);
+      const usersRef = collection(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+      );
       const q = query(usersRef, where('uid', '==', uid));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         const userData = userDoc.data() as OnlineUser;
         return {
           user: userData,
-          phoneNumber: userData.phoneNumber || userDoc.id // Use phone number from data, fallback to document ID
+          phoneNumber: userData.phoneNumber || userDoc.id, // Use phone number from data, fallback to document ID
         };
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error getting user data by UID:', error);
@@ -309,11 +370,14 @@ export class UserManagementService {
    * @param address New address to add
    * @returns Promise<boolean>
    */
-  async addUserAddress(phoneNumber: string, address: Omit<UserAddress, 'created_at' | 'updated_at'>): Promise<boolean> {
+  async addUserAddress(
+    phoneNumber: string,
+    address: Omit<UserAddress, 'created_at' | 'updated_at'>,
+  ): Promise<boolean> {
     try {
       // Find the correct document ID by searching phone number variations
       const result = await this.findUserByPhoneNumber(phoneNumber);
-      
+
       if (!result) {
         console.error('User not found:', phoneNumber);
         return false;
@@ -321,30 +385,34 @@ export class UserManagementService {
 
       const userData = result.userData;
       const now = new Date().toISOString();
-      
+
       // If this is the first address, make it default
       const isFirstAddress = userData.addresses.length === 0;
-      
+
       // If setting as default or it's the first address, unset all other defaults
       if (address.isDefault || isFirstAddress) {
-        userData.addresses.forEach(addr => {
+        userData.addresses.forEach((addr) => {
           addr.isDefault = false;
         });
       }
-      
+
       const newAddress: UserAddress = {
         ...address,
         isDefault: address.isDefault || isFirstAddress,
         created_at: now,
-        updated_at: now
+        updated_at: now,
       };
 
       const updatedAddresses = [...userData.addresses, newAddress];
 
-      const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, result.docId);
+      const userDocRef = doc(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+        result.docId,
+      );
       await updateDoc(userDocRef, {
         addresses: updatedAddresses,
-        updated_at: now
+        updated_at: now,
       });
 
       console.log('Address added successfully for user:', result.docId);
@@ -361,22 +429,29 @@ export class UserManagementService {
    * @param addresses Updated addresses array
    * @returns Promise<boolean>
    */
-  async updateUserAddresses(phoneNumber: string, addresses: UserAddress[]): Promise<boolean> {
+  async updateUserAddresses(
+    phoneNumber: string,
+    addresses: UserAddress[],
+  ): Promise<boolean> {
     try {
       // Find the correct document ID by searching phone number variations
       const result = await this.findUserByPhoneNumber(phoneNumber);
-      
+
       if (!result) {
         console.error('User not found:', phoneNumber);
         return false;
       }
 
-      const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, result.docId);
+      const userDocRef = doc(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+        result.docId,
+      );
       const now = new Date().toISOString();
 
       await updateDoc(userDocRef, {
         addresses: addresses,
-        updated_at: now
+        updated_at: now,
       });
 
       console.log('Addresses updated successfully for user:', result.docId);
@@ -392,11 +467,13 @@ export class UserManagementService {
    * @param phoneNumber User's phone number
    * @returns Promise<UserAddress | null>
    */
-  async getUserDefaultAddress(phoneNumber: string): Promise<UserAddress | null> {
+  async getUserDefaultAddress(
+    phoneNumber: string,
+  ): Promise<UserAddress | null> {
     try {
       const userData = await this.getUserData(phoneNumber);
       if (userData?.addresses) {
-        return userData.addresses.find(addr => addr.isDefault) || null;
+        return userData.addresses.find((addr) => addr.isDefault) || null;
       }
       return null;
     } catch (error) {
@@ -411,10 +488,17 @@ export class UserManagementService {
    * @param addressIndex Index of the address to set as default
    * @returns Promise<boolean>
    */
-  async setDefaultAddress(phoneNumber: string, addressIndex: number): Promise<boolean> {
+  async setDefaultAddress(
+    phoneNumber: string,
+    addressIndex: number,
+  ): Promise<boolean> {
     try {
       const userData = await this.getUserData(phoneNumber);
-      if (!userData?.addresses || addressIndex < 0 || addressIndex >= userData.addresses.length) {
+      if (
+        !userData?.addresses ||
+        addressIndex < 0 ||
+        addressIndex >= userData.addresses.length
+      ) {
         console.error('Invalid address index or user data');
         return false;
       }
@@ -422,7 +506,7 @@ export class UserManagementService {
       // Update addresses: set all to false, then set selected to true
       const updatedAddresses = userData.addresses.map((addr, index) => ({
         ...addr,
-        isDefault: index === addressIndex
+        isDefault: index === addressIndex,
       }));
 
       return await this.updateUserAddresses(phoneNumber, updatedAddresses);
@@ -445,7 +529,9 @@ export class UserManagementService {
    * @returns Promise<string | null>
    */
   async getCurrentUserPhone(): Promise<string | null> {
-    const loggedInDateTime = localStorage.getItem(AUTH_KEYS.LOGGED_IN_DATE_TIME);
+    const loggedInDateTime = localStorage.getItem(
+      AUTH_KEYS.LOGGED_IN_DATE_TIME,
+    );
     if (loggedInDateTime) {
       const loggedInDate = new Date(loggedInDateTime);
       const now = new Date();
@@ -458,7 +544,7 @@ export class UserManagementService {
         localStorage.removeItem(AUTH_KEYS.GUEST_ID);
         localStorage.removeItem(AUTH_KEYS.CURRENT_USER_PHONE);
         localStorage.removeItem(AUTH_KEYS.LOGGED_IN_DATE_TIME);
-    
+
         // Clear user profile from the subject
         this.clearUserProfile();
         const auth = getAuth();
@@ -474,7 +560,7 @@ export class UserManagementService {
     }
     // If not in localStorage, wait for the observable to emit
     return new Promise((resolve) => {
-      const sub = this.currentUserPhone$.subscribe(phone => {
+      const sub = this.currentUserPhone$.subscribe((phone) => {
         if (phone) {
           resolve(phone);
           sub.unsubscribe();
@@ -495,26 +581,30 @@ export class UserManagementService {
    * @returns Promise<boolean>
    */
   async updateUserProfile(
-    phoneNumber: string, 
-    profileData: { name?: string; email?: string; photoURL?: string }
+    phoneNumber: string,
+    profileData: { name?: string; email?: string; photoURL?: string },
   ): Promise<boolean> {
     try {
       console.log('Updating profile for phoneNumber:', phoneNumber);
       console.log('Profile data:', profileData);
-      
+
       // Find the correct document ID by searching phone number variations
       const result = await this.findUserByPhoneNumber(phoneNumber);
-      
+
       if (!result) {
         console.error('User document not found for phone:', phoneNumber);
         return false;
       }
-      
-      const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, result.docId);
+
+      const userDocRef = doc(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+        result.docId,
+      );
       const now = new Date().toISOString();
 
       const updateData: any = {
-        updated_at: now
+        updated_at: now,
       };
 
       if (profileData.name !== undefined) {
@@ -529,16 +619,16 @@ export class UserManagementService {
 
       await updateDoc(userDocRef, updateData);
       console.log('Profile updated successfully for user:', result.docId);
-      
+
       // Clear cache to force fresh data on next fetch
       this.clearCachedUserProfile(phoneNumber);
-      
+
       // Get the updated user data (will fetch fresh from Firestore)
       const updatedUserData = await this.getUserData(phoneNumber);
       if (updatedUserData) {
         this.userProfileSubject.next(updatedUserData);
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -558,16 +648,19 @@ export class UserManagementService {
       const cleanPhone = phoneNumber.replace(/[^\d]/g, '');
       const timestamp = Date.now();
       const fileName = `${cleanPhone}_${timestamp}`;
-      
+
       // Create reference to Firebase Storage
-      const storageRef = ref(this.storage, `${FIREBASE_STORAGE_PATHS.USER_PROFILE_PICS}/${fileName}`);
-      
+      const storageRef = ref(
+        this.storage,
+        `${FIREBASE_STORAGE_PATHS.USER_PROFILE_PICS}/${fileName}`,
+      );
+
       // Upload the file
       const snapshot = await uploadBytes(storageRef, file);
-      
+
       // Get download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
-      
+
       console.log('Profile photo uploaded successfully:', downloadURL);
       return downloadURL;
     } catch (error) {
@@ -586,17 +679,17 @@ export class UserManagementService {
   async updateProfileWithPhoto(
     phoneNumber: string,
     photoFile: File,
-    profileData?: { name?: string; email?: string }
+    profileData?: { name?: string; email?: string },
   ): Promise<boolean> {
     try {
       // Upload photo first
       const photoURL = await this.uploadProfilePhoto(photoFile, phoneNumber);
-      
+
       // Update profile with new photo URL and other data
       const updateData: any = { photoURL };
       if (profileData?.name) updateData.name = profileData.name;
       if (profileData?.email) updateData.email = profileData.email;
-      
+
       return await this.updateUserProfile(phoneNumber, updateData);
     } catch (error) {
       console.error('Error updating profile with photo:', error);
@@ -614,14 +707,14 @@ export class UserManagementService {
       // Generate cache key specific to this phone number
       const cacheKey = `${this.USER_PROFILE_CACHE_KEY}_${phoneNumber}`;
       const timestampKey = `${this.USER_PROFILE_CACHE_TIMESTAMP_KEY}_${phoneNumber}`;
-      
+
       // Use CacheManagerService to get cached data
       const cachedProfile = this.cacheManager.getCachedData<OnlineUser>(
         CacheType.USER_PROFILES,
         cacheKey,
-        timestampKey
+        timestampKey,
       );
-      
+
       return cachedProfile;
     } catch (error) {
       console.error('Error getting cached user profile:', error);
@@ -634,22 +727,31 @@ export class UserManagementService {
    * @param phoneNumber User's phone number
    * @param userData User data to cache
    */
-  private setCachedUserProfile(phoneNumber: string, userData: OnlineUser): void {
+  private setCachedUserProfile(
+    phoneNumber: string,
+    userData: OnlineUser,
+  ): void {
     try {
       const cacheKey = `${this.USER_PROFILE_CACHE_KEY}_${phoneNumber}`;
       const timestampKey = `${this.USER_PROFILE_CACHE_TIMESTAMP_KEY}_${phoneNumber}`;
-      
+
       // Get dynamic cache duration from CacheManagerService
-      const duration = this.cacheManager.getCacheDuration(CacheType.USER_PROFILES);
-      
+      const duration = this.cacheManager.getCacheDuration(
+        CacheType.USER_PROFILES,
+      );
+
       this.cacheManager.setCachedData(
         CacheType.USER_PROFILES,
         cacheKey,
         timestampKey,
-        userData
+        userData,
       );
-      
-      console.log('💾 User profile cached for:', phoneNumber, `(Duration: ${duration / 60000} min)`);
+
+      console.log(
+        '💾 User profile cached for:',
+        phoneNumber,
+        `(Duration: ${duration / 60000} min)`,
+      );
     } catch (error) {
       console.error('Error caching user profile:', error);
     }
@@ -664,15 +766,21 @@ export class UserManagementService {
       if (phoneNumber) {
         const cacheKey = `${this.USER_PROFILE_CACHE_KEY}_${phoneNumber}`;
         const timestampKey = `${this.USER_PROFILE_CACHE_TIMESTAMP_KEY}_${phoneNumber}`;
-        
-        this.cacheManager.clearCache(CacheType.USER_PROFILES, cacheKey, timestampKey);
-        
+
+        this.cacheManager.clearCache(
+          CacheType.USER_PROFILES,
+          cacheKey,
+          timestampKey,
+        );
+
         console.log('🗑️ Cleared user profile cache for:', phoneNumber);
       } else {
         // Clear all user profile caches using cache prefix
         this.cacheService.clearCacheByPrefix(this.USER_PROFILE_CACHE_KEY);
-        this.cacheService.clearCacheByPrefix(this.USER_PROFILE_CACHE_TIMESTAMP_KEY);
-        
+        this.cacheService.clearCacheByPrefix(
+          this.USER_PROFILE_CACHE_TIMESTAMP_KEY,
+        );
+
         console.log('🗑️ Cleared all user profile caches');
       }
     } catch (error) {
@@ -689,16 +797,16 @@ export class UserManagementService {
     try {
       // Clear cache first
       this.clearCachedUserProfile(phoneNumber);
-      
+
       // Fetch fresh data
       const userData = await this.getUserData(phoneNumber);
-      
+
       // Update BehaviorSubject if this is current user
       const currentPhone = await this.getCurrentUserPhone();
       if (currentPhone === phoneNumber && userData) {
         this.userProfileSubject.next(userData);
       }
-      
+
       return userData;
     } catch (error) {
       console.error('Error refreshing user profile:', error);
@@ -714,11 +822,15 @@ export class UserManagementService {
    * @param orderId Order ID where coupon was applied
    * @returns Promise<boolean> - Success status
    */
-  async updateUserOrderAndCoupon(phoneNumber: string, orderId: string, couponCode?: string): Promise<boolean> {
+  async updateUserOrderAndCoupon(
+    phoneNumber: string,
+    orderId: string,
+    couponCode?: string,
+  ): Promise<boolean> {
     try {
       // Find the user document
       const result = await this.findUserByPhoneNumber(phoneNumber);
-      
+
       if (!result) {
         console.error('User not found:', phoneNumber);
         return false;
@@ -726,11 +838,11 @@ export class UserManagementService {
 
       const userData = result.userData;
       const now = new Date().toISOString();
-      
+
       // Prepare update data
       const updateData: any = {
         totalOrders: (userData.totalOrders || 0) + 1,
-        updated_at: now
+        updated_at: now,
       };
 
       // Add coupon usage if coupon was applied
@@ -738,7 +850,7 @@ export class UserManagementService {
         const newUsage: any = {
           couponCode: couponCode,
           usedAt: now,
-          orderId: orderId
+          orderId: orderId,
         };
 
         const existingHistory = userData.couponUsageHistory || [];
@@ -746,17 +858,21 @@ export class UserManagementService {
       }
 
       // Single update to Firestore
-      const userDocRef = doc(this.firestore, FIREBASE_COLLECTIONS.ONLINE_USERS, result.docId);
+      const userDocRef = doc(
+        this.firestore,
+        FIREBASE_COLLECTIONS.ONLINE_USERS,
+        result.docId,
+      );
       await updateDoc(userDocRef, updateData);
 
-      const logMessage = couponCode 
+      const logMessage = couponCode
         ? `✅ User order count incremented and coupon ${couponCode} recorded for order ${orderId}`
         : `✅ User order count incremented to ${updateData.totalOrders} for: ${phoneNumber}`;
       console.log(logMessage);
-      
+
       // Clear cache to force fresh data on next read
       this.clearCachedUserProfile(phoneNumber);
-      
+
       // Update BehaviorSubject if this is current user
       const currentPhone = await this.getCurrentUserPhone();
       if (currentPhone === phoneNumber) {
@@ -765,7 +881,7 @@ export class UserManagementService {
           this.userProfileSubject.next(updatedUserData);
         }
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error updating user order and coupon:', error);

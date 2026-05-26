@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+} from '@angular/core';
 import { I18nPipe } from '@zitro/i18n';
 import { Address } from '@zitro/models';
 
@@ -25,7 +30,7 @@ export class AddressCardComponent {
   config = input<AddressCardConfig>(ADDRESS_CARD_DEFAULT_CONFIG);
   address = input.required<Address>();
 
-  select = output<Address>();
+  addressSelect = output<Address>();
   edit = output<Address>();
   delete = output<string>();
 }

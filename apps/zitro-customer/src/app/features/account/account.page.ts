@@ -12,7 +12,11 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
 import { LoaderComponent, CachedImageDirective } from '@zitro/ui';
-import { UserApiService, UserManagementService, AnalyticsService } from '@zitro/services';
+import {
+  UserApiService,
+  UserManagementService,
+  AnalyticsService,
+} from '@zitro/services';
 
 @Component({
   selector: 'app-account-page',
@@ -52,8 +56,8 @@ export class AccountPage implements OnInit {
       this.email.set(user.email ?? '');
       this.phone.set(user.phone);
       this.profileImage.set(user.photoUrl ?? '');
-    } catch(error) { 
-      console.log("error: ", error);
+    } catch (error) {
+      console.log('error: ', error);
       // Fallback to Firebase UserManagementService
       try {
         const phoneNumber = await this.userMgmt.getCurrentUserPhone();
@@ -66,7 +70,9 @@ export class AccountPage implements OnInit {
             this.profileImage.set(userData.photoURL ?? '');
           }
         }
-      } catch(error2) { console.log("error2: ", error2) }
+      } catch (error2) {
+        console.log('error2: ', error2);
+      }
     }
   }
 
@@ -83,7 +89,8 @@ export class AccountPage implements OnInit {
 
     this.selectedFile = file;
     const reader = new FileReader();
-    reader.onload = (e) => this.profileImage.set((e.target as FileReader).result as string);
+    reader.onload = (e) =>
+      this.profileImage.set((e.target as FileReader).result as string);
     reader.readAsDataURL(file);
   }
 
@@ -105,12 +112,22 @@ export class AccountPage implements OnInit {
         );
         this.userApi.invalidateProfileCache();
       } else {
-        await firstValueFrom(this.userApi.updateProfile({ name: this.name(), email: this.email() }));
+        await firstValueFrom(
+          this.userApi.updateProfile({
+            name: this.name(),
+            email: this.email(),
+          }),
+        );
       }
 
       this.analytics
-        .logProfileUpdate(!!this.selectedFile, this.selectedFile ? ['name', 'email', 'photo'] : ['name', 'email'])
-        .catch(() => {});
+        .logProfileUpdate(
+          !!this.selectedFile,
+          this.selectedFile ? ['name', 'email', 'photo'] : ['name', 'email'],
+        )
+        .catch(() => {
+          /* no-op */
+        });
       this.selectedFile = null;
     } catch {
       this.saveError.set('account.saveFailed');

@@ -9,17 +9,17 @@ import { UI_TEXT } from '@zitro/utils';
   standalone: true,
   imports: [CommonModule, ProductCardComponent],
   templateUrl: './product-grid.component.html',
-  styleUrls: ['./product-grid.component.scss']
+  styleUrls: ['./product-grid.component.scss'],
 })
 export class ProductGridComponent {
   @Input() products: Product[] = [];
-  @Input() title: string = '';
+  @Input() title = '';
   @Input() displayStyle: 'horizontal' | 'vertical' = 'horizontal';
-  @Input() maxItems: number = 0; // 0 means show all
-  @Input() showViewAll: boolean = true;
-  @Input() compactMode: boolean = false;
-  @Input() columns: number = 2; // Number of columns for grid layout
-  
+  @Input() maxItems = 0; // 0 means show all
+  @Input() showViewAll = true;
+  @Input() compactMode = false;
+  @Input() columns = 2; // Number of columns for grid layout
+
   @Output() productClick = new EventEmitter<Product>();
   @Output() viewAllClick = new EventEmitter<void>();
   @Output() cartUpdated = new EventEmitter<void>();
@@ -34,7 +34,11 @@ export class ProductGridComponent {
   }
 
   get shouldShowViewAll(): boolean {
-    return this.showViewAll && this.maxItems > 0 && this.products.length > this.maxItems;
+    return (
+      this.showViewAll &&
+      this.maxItems > 0 &&
+      this.products.length > this.maxItems
+    );
   }
 
   onProductClick(product: Product) {

@@ -2,7 +2,13 @@ import { Injectable } from '@angular/core';
 
 // Firebase v9 modular imports
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, Auth, ConfirmationResult } from 'firebase/auth';
+import {
+  getAuth,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  Auth,
+  ConfirmationResult,
+} from 'firebase/auth';
 
 /**
  * FirebaseOtpService
@@ -17,7 +23,7 @@ import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, Auth, ConfirmationRe
  *   this.otpService.sendOtp().then(...)
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FirebaseOtpService {
   private auth: Auth;
@@ -33,12 +39,12 @@ export class FirebaseOtpService {
       } else {
         // Initialize new Firebase app if none exists
         const firebaseConfig = {
-          apiKey: "AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js",
-          authDomain: "the-hunger-point.firebaseapp.com",
-          projectId: "the-hunger-point",
-          storageBucket: "the-hunger-point.appspot.com",
-          messagingSenderId: "362195111262",
-          appId: "1:362195111262:web:17c04c5b42309ad0af53cf"
+          apiKey: 'AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js',
+          authDomain: 'the-hunger-point.firebaseapp.com',
+          projectId: 'the-hunger-point',
+          storageBucket: 'the-hunger-point.appspot.com',
+          messagingSenderId: '362195111262',
+          appId: '1:362195111262:web:17c04c5b42309ad0af53cf',
         };
         const app = initializeApp(firebaseConfig);
         this.auth = getAuth(app);
@@ -57,48 +63,67 @@ export class FirebaseOtpService {
    * @param recaptchaContainerId The HTML element ID for reCAPTCHA
    * @returns Promise with confirmationResult or error
    */
-  sendOtp(phone: string, recaptchaContainerId: string = 'recaptcha-container'): Promise<ConfirmationResult> {
+  sendOtp(
+    phone: string,
+    recaptchaContainerId = 'recaptcha-container',
+  ): Promise<ConfirmationResult> {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       try {
         // Ensure phone has country code
         const formattedPhone = phone.startsWith('+') ? phone : '+91' + phone;
-        
-        const verifier = new RecaptchaVerifier(this.auth, recaptchaContainerId, {
-          size: 'invisible',
-          callback: (token: any) => {
-            console.log('reCAPTCHA solved');
-          }
-        });
-        
+
+        const verifier = new RecaptchaVerifier(
+          this.auth,
+          recaptchaContainerId,
+          {
+            size: 'invisible',
+            callback: (token: any) => {
+              console.log('reCAPTCHA solved');
+            },
+          },
+        );
+
         try {
           const widgetId = await verifier.render();
           console.log('reCAPTCHA rendered, widgetId:', widgetId);
         } catch (err) {
           console.warn('reCAPTCHA render warning (may be fine):', err);
         }
-        
+
         console.log('Sending OTP to:', formattedPhone);
-        const confirmationResult = await signInWithPhoneNumber(this.auth, formattedPhone, verifier);
-        console.log('OTP sent successfully, verificationId:', confirmationResult.verificationId);
+        const confirmationResult = await signInWithPhoneNumber(
+          this.auth,
+          formattedPhone,
+          verifier,
+        );
+        console.log(
+          'OTP sent successfully, verificationId:',
+          confirmationResult.verificationId,
+        );
         resolve(confirmationResult);
       } catch (err: any) {
         console.error('Firebase OTP error:', err);
-        
+
         // Provide specific error messages for common issues
         let errorMessage = 'Failed to send OTP';
         if (err.code === 'auth/invalid-app-credential') {
-          errorMessage = 'Firebase Phone Authentication not configured. Please enable Phone Auth in Firebase Console and add authorized domains.';
-          console.error('Setup required: 1) Enable Phone Auth in Firebase Console 2) Add authorized domains 3) Verify reCAPTCHA configuration');
+          errorMessage =
+            'Firebase Phone Authentication not configured. Please enable Phone Auth in Firebase Console and add authorized domains.';
+          console.error(
+            'Setup required: 1) Enable Phone Auth in Firebase Console 2) Add authorized domains 3) Verify reCAPTCHA configuration',
+          );
         } else if (err.code === 'auth/captcha-check-failed') {
           errorMessage = 'reCAPTCHA verification failed. Please try again.';
         } else if (err.code === 'auth/invalid-phone-number') {
-          errorMessage = 'Invalid phone number format. Please check and try again.';
+          errorMessage =
+            'Invalid phone number format. Please check and try again.';
         } else if (err.code === 'auth/quota-exceeded') {
           errorMessage = 'SMS quota exceeded. Please try again later.';
         } else if (err.message) {
           errorMessage = err.message;
         }
-        
+
         reject(new Error(errorMessage));
       }
     });

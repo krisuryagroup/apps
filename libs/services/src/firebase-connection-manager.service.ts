@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { getAuth, signOut } from 'firebase/auth';
 import { RESTAURANTS, APP_SETTINGS_CACHE, FIREBASE_CONFIG } from '@zitro/utils';
 import { FirebaseAuthService } from './firebase-auth.service';
@@ -8,13 +8,18 @@ import { FirebaseAuthService } from './firebase-auth.service';
  * Only switches Firebase apps, all services continue to work with same structure
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FirebaseConnectionManager {
+  private authService = inject(FirebaseAuthService);
+
   private currentRestaurantId: string = (RESTAURANTS[0] as any).id;
 
-  constructor(private authService: FirebaseAuthService) {
-    console.log('🔥 Firebase Connection Manager initialized with default restaurant:', this.currentRestaurantId);
+  constructor() {
+    console.log(
+      '🔥 Firebase Connection Manager initialized with default restaurant:',
+      this.currentRestaurantId,
+    );
   }
 
   /**
@@ -33,8 +38,13 @@ export class FirebaseConnectionManager {
     }
 
     try {
-      console.log('🔄 Switching from', this.currentRestaurantId, 'to', restaurantId);
-      
+      console.log(
+        '🔄 Switching from',
+        this.currentRestaurantId,
+        'to',
+        restaurantId,
+      );
+
       // Sign out current user if any
       try {
         await this.authService.signOut();
@@ -47,20 +57,28 @@ export class FirebaseConnectionManager {
       this.clearLocalStorage();
 
       // Store new restaurant ID with extra safety
-      localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, restaurantId);
-      
+      localStorage.setItem(
+        APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID,
+        restaurantId,
+      );
+
       // Also store a flag indicating this is a restaurant switch (not a cache clear)
       sessionStorage.setItem('restaurant_switching', 'true');
-      sessionStorage.setItem('restaurant_switch_timestamp', Date.now().toString());
-      
+      sessionStorage.setItem(
+        'restaurant_switch_timestamp',
+        Date.now().toString(),
+      );
+
       this.currentRestaurantId = restaurantId;
 
       console.log('✅ Restaurant switch completed. Reloading page...');
-      console.log('🔧 Stored selectedRestaurantId:', localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID));
-      
+      console.log(
+        '🔧 Stored selectedRestaurantId:',
+        localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID),
+      );
+
       // Reload the page to reinitialize Firebase with new config
       window.location.reload();
-
     } catch (error) {
       console.error('❌ Error switching restaurant:', error);
       throw error;
@@ -72,7 +90,9 @@ export class FirebaseConnectionManager {
    */
   getCurrentRestaurantId(): string {
     // Check if there's a stored restaurant ID from previous switch
-    const storedId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID);
+    const storedId = localStorage.getItem(
+      APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID,
+    );
     if (storedId && [...RESTAURANTS].some((r: any) => r.id === storedId)) {
       this.currentRestaurantId = storedId;
     }
@@ -100,17 +120,17 @@ export class FirebaseConnectionManager {
    */
   private clearLocalStorage(): void {
     const keysToKeep = ['selectedRestaurantId']; // Keep restaurant selection
-    
+
     const keysToRemove = [
       // Authentication
       'token',
       'isGuest',
-      'guestId', 
+      'guestId',
       'currentUserPhone',
       'firebase_auth_user',
       'user_session',
       'auth_token',
-      
+
       // Cache data (restaurant-specific)
       'products_cache',
       'products_cache_timestamp',
@@ -120,10 +140,10 @@ export class FirebaseConnectionManager {
       'order_history_cache',
       'last_cache_clear_timestamp',
       'last_login_clear_timestamp',
-      'cache_clear_session_flag'
+      'cache_clear_session_flag',
     ];
 
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
       if (!keysToKeep.includes(key)) {
         localStorage.removeItem(key);
       }

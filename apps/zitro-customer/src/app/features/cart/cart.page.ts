@@ -78,23 +78,38 @@ export class CartPage implements OnDestroy {
   readonly processingStage = toSignal(this.orderProcessing.processing$);
 
   // ── Query param → current business slug ─────────────────────────────────
-  private readonly queryParams = toSignal(this.route.queryParams, { initialValue: {} });
-  readonly businessSlug = computed(() => (this.queryParams() as Record<string, string>)['business'] ?? '');
+  private readonly queryParams = toSignal(this.route.queryParams, {
+    initialValue: {},
+  });
+  readonly businessSlug = computed(
+    () => (this.queryParams() as Record<string, string>)['business'] ?? '',
+  );
 
   // ── Cart from API state ──────────────────────────────────────────────────
-  readonly apiCart = computed(() => this.cartApi.getCartForBusiness(this.businessSlug()));
+  readonly apiCart = computed(() =>
+    this.cartApi.getCartForBusiness(this.businessSlug()),
+  );
   readonly items = computed(() => this.apiCart()?.items ?? []);
   readonly subtotal = computed(() => this.apiCart()?.estimatedTotal ?? 0);
   readonly couponCode = computed(() => this.apiCart()?.couponCode ?? null);
-  readonly couponDiscount = computed(() => this.apiCart()?.couponDiscountPreview ?? 0);
+  readonly couponDiscount = computed(
+    () => this.apiCart()?.couponDiscountPreview ?? 0,
+  );
   readonly appliedCoupon = computed<AppliedCoupon | null>(() => {
     const code = this.couponCode();
     if (!code) return null;
-    return { coupon: { code, title: code } as never, discountAmount: this.couponDiscount() };
+    return {
+      coupon: { code, title: code } as never,
+      discountAmount: this.couponDiscount(),
+    };
   });
-  readonly businessName = computed(() => this.apiCart()?.businessName ?? this.businessSlug());
+  readonly businessName = computed(
+    () => this.apiCart()?.businessName ?? this.businessSlug(),
+  );
   readonly hasItems = computed(() => this.items().length > 0);
-  readonly itemCount = computed(() => this.items().reduce((s, i) => s + i.quantity, 0));
+  readonly itemCount = computed(() =>
+    this.items().reduce((s, i) => s + i.quantity, 0),
+  );
 
   // ── Checkout state ───────────────────────────────────────────────────────
   readonly isLoggedIn = signal(false);
@@ -129,31 +144,43 @@ export class CartPage implements OnDestroy {
   readonly selectedLocation = toSignal(this.locationService.selectedLocation$, {
     initialValue: this.locationService.snapshot,
   });
-  readonly userProfile = toSignal(this.userMgmt.userProfile$, { initialValue: null });
+  readonly userProfile = toSignal(this.userMgmt.userProfile$, {
+    initialValue: null,
+  });
 
   readonly allCarts = computed(() => this.cartApi.cartList());
 
   readonly selectedAddress = computed(
-    () => this.addresses().find(a => a.id === this.selectedAddressId()) ?? null
+    () =>
+      this.addresses().find((a) => a.id === this.selectedAddressId()) ?? null,
   );
   readonly isAddressSelected = computed(
-    () => !!this.selectedAddressId() || this.locationService.snapshot.type !== 'none'
+    () =>
+      !!this.selectedAddressId() ||
+      this.locationService.snapshot.type !== 'none',
   );
   readonly canPlaceOrder = computed(
     () =>
       this.hasItems() &&
       this.isLoggedIn() &&
       this.selectedOrderType() !== null &&
-      (this.selectedOrderType() !== 'delivery' || this.isAddressSelected())
+      (this.selectedOrderType() !== 'delivery' || this.isAddressSelected()),
   );
   readonly total = computed(() => this.pricingBreakdown()?.total ?? 0);
 
-  readonly isDineInEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('dine-in'));
-  readonly isTakeoutEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('takeout'));
-  readonly isDeliveryEnabled = computed(() => this.orderConfigService.isOrderTypeEnabled('delivery'));
+  readonly isDineInEnabled = computed(() =>
+    this.orderConfigService.isOrderTypeEnabled('dine-in'),
+  );
+  readonly isTakeoutEnabled = computed(() =>
+    this.orderConfigService.isOrderTypeEnabled('takeout'),
+  );
+  readonly isDeliveryEnabled = computed(() =>
+    this.orderConfigService.isOrderTypeEnabled('delivery'),
+  );
 
-  readonly selectedTableConfig = computed(() =>
-    this.availableTables().find(t => t.id === this.selectedTable()) ?? null
+  readonly selectedTableConfig = computed(
+    () =>
+      this.availableTables().find((t) => t.id === this.selectedTable()) ?? null,
   );
 
   readonly guestMax = computed(() => {
@@ -162,10 +189,16 @@ export class CartPage implements OnDestroy {
     return cap ? Math.min(globalMax, cap) : globalMax;
   });
 
-  readonly guestMin = computed(() => this.orderConfig()?.dineInConfig.minGuests ?? 1);
+  readonly guestMin = computed(
+    () => this.orderConfig()?.dineInConfig.minGuests ?? 1,
+  );
 
-  readonly canIncrementGuests = computed(() => this.numberOfGuests() < this.guestMax());
-  readonly canDecrementGuests = computed(() => this.numberOfGuests() > this.guestMin());
+  readonly canIncrementGuests = computed(
+    () => this.numberOfGuests() < this.guestMax(),
+  );
+  readonly canDecrementGuests = computed(
+    () => this.numberOfGuests() > this.guestMin(),
+  );
 
   readonly deliveryAddressLabel = computed(() => {
     const addr = this.selectedAddress();
@@ -193,13 +226,15 @@ export class CartPage implements OnDestroy {
     }
     const profile = this.userProfile();
     if (!profile) return '';
-    return profile.name ? `${profile.name}, ${profile.phoneNumber ?? ''}` : (profile.phoneNumber ?? '');
+    return profile.name
+      ? `${profile.name}, ${profile.phoneNumber ?? ''}`
+      : (profile.phoneNumber ?? '');
   });
 
   readonly paymentMethodLabel = computed(() =>
     this.selectedPaymentMethod() === 'cash'
       ? this.i18n.translate('payment.cash')
-      : this.i18n.translate('payment.online')
+      : this.i18n.translate('payment.online'),
   );
 
   // ── HTML-facing aliases / display helpers ────────────────────────────────
@@ -207,7 +242,8 @@ export class CartPage implements OnDestroy {
   readonly deliveryEtaLabel = computed(() => '20–30 min');
   readonly shortAddress = computed(() => {
     const addr = this.selectedAddress();
-    if (addr) return [addr.houseAndStreet, addr.town].filter(Boolean).join(', ');
+    if (addr)
+      return [addr.houseAndStreet, addr.town].filter(Boolean).join(', ');
     return this.selectedLocation().address ?? '';
   });
   readonly restaurantNote = computed(() => this.customerNote());
@@ -220,7 +256,7 @@ export class CartPage implements OnDestroy {
   readonly dontSendCutlery = signal(false);
 
   toggleCutlery(): void {
-    this.dontSendCutlery.update(v => !v);
+    this.dontSendCutlery.update((v) => !v);
   }
 
   // ── UI panel state ────────────────────────────────────────────────────────
@@ -256,7 +292,9 @@ export class CartPage implements OnDestroy {
     // Load this business's cart from the API (in case it hasn't been loaded yet)
     const slug = this.businessSlug();
     if (slug && !this.apiCart()) {
-      await this.cartApi.loadCart(slug).catch(() => {});
+      await this.cartApi.loadCart(slug).catch(() => {
+        /* no-op */
+      });
     }
 
     await this.calculatePricing();
@@ -276,7 +314,7 @@ export class CartPage implements OnDestroy {
   private async loadAddresses(): Promise<void> {
     this.isLoadingAddresses.set(true);
     this.addressApi.getAddresses().subscribe({
-      next: addrs => {
+      next: (addrs) => {
         this.applyAddresses(addrs);
         this.isLoadingAddresses.set(false);
       },
@@ -292,14 +330,15 @@ export class CartPage implements OnDestroy {
     if (!addrs.length) return;
 
     const locSnap = this.locationService.snapshot;
-    const matchedByLabel = locSnap.type === 'saved'
-      ? addrs.find(a => a.type === locSnap.label)
-      : null;
+    const matchedByLabel =
+      locSnap.type === 'saved'
+        ? addrs.find((a) => a.type === locSnap.label)
+        : null;
 
     if (matchedByLabel) {
       this.selectedAddressId.set(matchedByLabel.id);
     } else if (!this.selectedAddressId()) {
-      const defaultAddr = addrs.find(a => a.isDefault) ?? addrs[0];
+      const defaultAddr = addrs.find((a) => a.isDefault) ?? addrs[0];
       this.selectedAddressId.set(defaultAddr.id);
     }
   }
@@ -313,12 +352,15 @@ export class CartPage implements OnDestroy {
       this.pricingConfig.set(config);
     }
     const breakdown = await this.pricingService.calculatePricing({
-      cartItems: [],          // pricing service uses subtotal, not individual items
+      cartItems: [], // pricing service uses subtotal, not individual items
       subtotal: this.subtotal(),
       orderType: this.selectedOrderType(),
       deliveryAddress: this.selectedAddress(),
       appliedCoupon: this.couponCode()
-        ? { coupon: { code: this.couponCode()! } as never, discountAmount: this.couponDiscount() }
+        ? {
+            coupon: { code: this.couponCode()! } as never,
+            discountAmount: this.couponDiscount(),
+          }
         : null,
       pricingConfig: config,
     });
@@ -345,19 +387,22 @@ export class CartPage implements OnDestroy {
   }
 
   incrementGuests(): void {
-    if (this.canIncrementGuests()) this.numberOfGuests.update(n => n + 1);
+    if (this.canIncrementGuests()) this.numberOfGuests.update((n) => n + 1);
   }
 
   decrementGuests(): void {
-    if (this.canDecrementGuests()) this.numberOfGuests.update(n => n - 1);
+    if (this.canDecrementGuests()) this.numberOfGuests.update((n) => n - 1);
   }
 
   onTableSelect(value: string): void {
     this.selectedTable.set(value);
-    const table = this.availableTables().find(t => t.id === value);
+    const table = this.availableTables().find((t) => t.id === value);
     if (table?.capacity && this.numberOfGuests() > table.capacity) {
       this.numberOfGuests.set(
-        Math.min(this.orderConfig()?.dineInConfig.defaultGuests ?? 2, table.capacity)
+        Math.min(
+          this.orderConfig()?.dineInConfig.defaultGuests ?? 2,
+          table.capacity,
+        ),
       );
     }
   }
@@ -385,23 +430,41 @@ export class CartPage implements OnDestroy {
   }
 
   // ── Bill / Payment sheets ─────────────────────────────────────────────────
-  openBillSheet(): void { this.isBillSheetOpen.set(true); }
-  closeBillSheet(): void { this.isBillSheetOpen.set(false); }
-  openPaymentSheet(): void { this.isPaymentSheetOpen.set(true); }
-  closePaymentSheet(): void { this.isPaymentSheetOpen.set(false); }
+  openBillSheet(): void {
+    this.isBillSheetOpen.set(true);
+  }
+  closeBillSheet(): void {
+    this.isBillSheetOpen.set(false);
+  }
+  openPaymentSheet(): void {
+    this.isPaymentSheetOpen.set(true);
+  }
+  closePaymentSheet(): void {
+    this.isPaymentSheetOpen.set(false);
+  }
   selectPaymentAndClose(method: 'cash' | 'online'): void {
     this.selectedPaymentMethod.set(method);
     this.isPaymentSheetOpen.set(false);
   }
 
   // ── Item editor (no-op until catalog integration) ─────────────────────────
-  openItemEditor(_item: ApiCartItem): void { /* noop */ }
-  closeItemEditor(): void { /* noop */ }
-  async onEditItemApplied(_event: unknown): Promise<void> { /* noop */ }
+  openItemEditor(_item: ApiCartItem): void {
+    /* noop */
+  }
+  closeItemEditor(): void {
+    /* noop */
+  }
+  async onEditItemApplied(_event: unknown): Promise<void> {
+    /* noop */
+  }
 
   // ── Misc ──────────────────────────────────────────────────────────────────
-  shareCart(): void { /* no-op */ }
-  addMoreItems(): void { this.goToMenu(); }
+  shareCart(): void {
+    /* no-op */
+  }
+  addMoreItems(): void {
+    this.goToMenu();
+  }
 
   // ── Coupon ────────────────────────────────────────────────────────────────
 
@@ -509,7 +572,9 @@ export class CartPage implements OnDestroy {
 
   goToMenu(): void {
     const slug = this.businessSlug();
-    this.router.navigate(['/listing'], { queryParams: slug ? { businessSlug: slug } : {} });
+    this.router.navigate(['/listing'], {
+      queryParams: slug ? { businessSlug: slug } : {},
+    });
   }
 
   goToLogin(): void {
@@ -519,15 +584,22 @@ export class CartPage implements OnDestroy {
   }
 
   goToAddAddress(): void {
-    this.router.navigate(['/add-address'], { queryParams: { mode: 'checkout', business: this.businessSlug() } });
+    this.router.navigate(['/add-address'], {
+      queryParams: { mode: 'checkout', business: this.businessSlug() },
+    });
   }
 
   goToEditAddress(id?: string): void {
     const addressId = id ?? this.selectedAddressId();
     const slug = this.businessSlug();
-    if (!addressId) { this.goToAddAddress(); return; }
+    if (!addressId) {
+      this.goToAddAddress();
+      return;
+    }
     this.isAddressSheetOpen.set(false);
-    this.router.navigate(['/add-address'], { queryParams: { mode: 'checkout', addressId: addressId, business: slug } });
+    this.router.navigate(['/add-address'], {
+      queryParams: { mode: 'checkout', addressId: addressId, business: slug },
+    });
   }
 
   openAddressSheet(): void {
@@ -581,9 +653,14 @@ export class CartPage implements OnDestroy {
       const summary = await this.cartApi.getCheckoutSummary(slug);
 
       if (!summary.canProceed) {
-        const unavailable = summary.unavailableItems.map(i => i.productName).join(', ');
-        this.orderProcessing.updateStage('error', `Some items are unavailable: ${unavailable}`);
-        await new Promise(r => setTimeout(r, 3000));
+        const unavailable = summary.unavailableItems
+          .map((i) => i.productName)
+          .join(', ');
+        this.orderProcessing.updateStage(
+          'error',
+          `Some items are unavailable: ${unavailable}`,
+        );
+        await new Promise((r) => setTimeout(r, 3000));
         return;
       }
 
@@ -596,20 +673,25 @@ export class CartPage implements OnDestroy {
         orderType: this.selectedOrderType()!,
         paymentMethod: this.selectedPaymentMethod(),
         deliveryAddressId: addr?.id ?? null,
-        tableNumber: this.selectedOrderType() === 'dine-in' ? this.selectedTable() : null,
-        numberOfGuests: this.selectedOrderType() === 'dine-in' ? this.numberOfGuests() : null,
+        tableNumber:
+          this.selectedOrderType() === 'dine-in' ? this.selectedTable() : null,
+        numberOfGuests:
+          this.selectedOrderType() === 'dine-in' ? this.numberOfGuests() : null,
         couponCode: this.couponCode(),
         customerNotes: this.customerNote() || null,
       };
 
       // Map ApiCartItem → CartItem shape expected by OrderMapper
-      const cartItems = summary.items.map(i => ({
-        id: i.productId,
-        name: i.productName,
-        price: i.currentPrice,
-        qty: i.quantity,
-        selectedVariationId: i.variationId ?? undefined,
-      } as never));
+      const cartItems = summary.items.map(
+        (i) =>
+          ({
+            id: i.productId,
+            name: i.productName,
+            price: i.currentPrice,
+            qty: i.quantity,
+            selectedVariationId: i.variationId ?? undefined,
+          }) as never,
+      );
 
       await this.orderProcessing.processStageWithDelay('processing', 800);
 
@@ -618,13 +700,13 @@ export class CartPage implements OnDestroy {
           { items: cartItems, businessId: cart.businessId },
           options,
           slug,
-        )
+        ),
       );
 
       await this.orderProcessing.processStageWithDelay('confirming', 1200);
       this.orderProcessing.updateStage('completed');
 
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
       await this.cartApi.clearCart(slug);
       this.router.navigate(['/order-confirmation'], {
@@ -638,9 +720,9 @@ export class CartPage implements OnDestroy {
       this.orderProcessing.updateStage(
         'error',
         'Failed to place order. Please try again.',
-        err instanceof Error ? err.message : 'Unknown error'
+        err instanceof Error ? err.message : 'Unknown error',
       );
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 3000));
     } finally {
       this.isProcessingOrder.set(false);
       this.orderProcessing.reset();
@@ -649,22 +731,35 @@ export class CartPage implements OnDestroy {
 
   private validateOrderType(): boolean {
     if (!this.selectedOrderType()) {
-      this.orderTypeError.set(this.orderConfigService.getMessage('general', 'orderTypeRequired'));
+      this.orderTypeError.set(
+        this.orderConfigService.getMessage('general', 'orderTypeRequired'),
+      );
       return false;
     }
-    if (this.selectedOrderType() === 'dine-in' && this.orderConfigService.shouldShowDineInDetails()) {
+    if (
+      this.selectedOrderType() === 'dine-in' &&
+      this.orderConfigService.shouldShowDineInDetails()
+    ) {
       if (!this.selectedTable()) {
-        this.orderTypeError.set(this.orderConfigService.getMessage('dineIn', 'tableRequired'));
+        this.orderTypeError.set(
+          this.orderConfigService.getMessage('dineIn', 'tableRequired'),
+        );
         return false;
       }
-      const table = this.availableTables().find(t => t.id === this.selectedTable());
+      const table = this.availableTables().find(
+        (t) => t.id === this.selectedTable(),
+      );
       if (!table?.isAvailable) {
-        this.orderTypeError.set(this.orderConfigService.getMessage('dineIn', 'tableUnavailable'));
+        this.orderTypeError.set(
+          this.orderConfigService.getMessage('dineIn', 'tableUnavailable'),
+        );
         return false;
       }
     }
     if (this.selectedOrderType() === 'delivery' && !this.isAddressSelected()) {
-      this.orderTypeError.set(this.orderConfigService.getMessage('delivery', 'addressRequired'));
+      this.orderTypeError.set(
+        this.orderConfigService.getMessage('delivery', 'addressRequired'),
+      );
       return false;
     }
     this.orderTypeError.set('');

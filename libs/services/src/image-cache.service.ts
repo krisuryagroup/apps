@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CacheType } from '@zitro/utils';
 import { CacheManagerService } from './cache-manager.service';
 
@@ -10,16 +10,18 @@ interface CachedImage {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ImageCacheService {
+  private cacheManager = inject(CacheManagerService);
+
   private readonly DB_NAME = 'food-delivery-images-cache';
   private readonly DB_VERSION = 1;
   private readonly STORE_NAME = 'images';
   private db: IDBDatabase | null = null;
   private initPromise: Promise<void> | null = null;
 
-  constructor(private cacheManager: CacheManagerService) {
+  constructor() {
     this.initPromise = this.initDB();
   }
 
@@ -42,15 +44,19 @@ export class ImageCacheService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+
         if (db.objectStoreNames.contains(this.STORE_NAME)) {
           db.deleteObjectStore(this.STORE_NAME);
         }
-        
-        const objectStore = db.createObjectStore(this.STORE_NAME, { keyPath: 'url' });
+
+        const objectStore = db.createObjectStore(this.STORE_NAME, {
+          keyPath: 'url',
+        });
         objectStore.createIndex('timestamp', 'timestamp', { unique: false });
-        objectStore.createIndex('originalUrl', 'originalUrl', { unique: false });
-        
+        objectStore.createIndex('originalUrl', 'originalUrl', {
+          unique: false,
+        });
+
         console.log('📦 Image cache object store created');
       };
     });
@@ -74,7 +80,9 @@ export class ImageCacheService {
       if (!this.db) return null;
 
       // Get dynamic cache duration from CacheManagerService
-      const cacheDuration = this.cacheManager.getCacheDuration(CacheType.IMAGES);
+      const cacheDuration = this.cacheManager.getCacheDuration(
+        CacheType.IMAGES,
+      );
 
       return new Promise((resolve) => {
         const transaction = this.db!.transaction([this.STORE_NAME], 'readonly');
@@ -83,7 +91,7 @@ export class ImageCacheService {
 
         request.onsuccess = () => {
           const result: CachedImage = request.result;
-          
+
           if (!result) {
             resolve(null);
             return;
@@ -113,7 +121,7 @@ export class ImageCacheService {
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async downloadAndCacheImage(url: string): Promise<string> {
@@ -124,7 +132,7 @@ export class ImageCacheService {
       try {
         const response = await fetch(url, {
           mode: 'cors',
-          cache: 'no-cache'
+          cache: 'no-cache',
         });
 
         if (!response.ok) {
@@ -139,7 +147,11 @@ export class ImageCacheService {
         return blobUrl;
       } catch (error) {
         lastError = error;
-        console.warn(`⚠️ Image download attempt ${attempt}/${maxRetries} failed for:`, url, error);
+        console.warn(
+          `⚠️ Image download attempt ${attempt}/${maxRetries} failed for:`,
+          url,
+          error,
+        );
         if (attempt < maxRetries) {
           await this.sleep(500);
         }
@@ -156,23 +168,26 @@ export class ImageCacheService {
       if (!this.db) return;
 
       return new Promise((resolve, reject) => {
-        const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
+        const transaction = this.db!.transaction(
+          [this.STORE_NAME],
+          'readwrite',
+        );
         const objectStore = transaction.objectStore(this.STORE_NAME);
-        
+
         const data: CachedImage = {
           url: url,
           blob: blob,
           timestamp: Date.now(),
-          originalUrl: url
+          originalUrl: url,
         };
 
         const request = objectStore.put(data);
-        
+
         request.onsuccess = () => {
           console.log('💾 Image cached successfully');
           resolve();
         };
-        
+
         request.onerror = () => {
           console.warn('Failed to cache image:', request.error);
           reject(request.error);
@@ -208,10 +223,13 @@ export class ImageCacheService {
       if (!this.db) return;
 
       return new Promise((resolve, reject) => {
-        const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
+        const transaction = this.db!.transaction(
+          [this.STORE_NAME],
+          'readwrite',
+        );
         const objectStore = transaction.objectStore(this.STORE_NAME);
         const request = objectStore.delete(url);
-        
+
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
       });
@@ -226,10 +244,13 @@ export class ImageCacheService {
       if (!this.db) return;
 
       return new Promise((resolve, reject) => {
-        const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
+        const transaction = this.db!.transaction(
+          [this.STORE_NAME],
+          'readwrite',
+        );
         const objectStore = transaction.objectStore(this.STORE_NAME);
         const request = objectStore.clear();
-        
+
         request.onsuccess = () => {
           console.log('🗑️ All image cache cleared');
           resolve();
@@ -247,13 +268,18 @@ export class ImageCacheService {
       if (!this.db) return 0;
 
       // Get dynamic cache duration from CacheManagerService
-      const cacheDuration = this.cacheManager.getCacheDuration(CacheType.IMAGES);
+      const cacheDuration = this.cacheManager.getCacheDuration(
+        CacheType.IMAGES,
+      );
 
       return new Promise((resolve, reject) => {
-        const transaction = this.db!.transaction([this.STORE_NAME], 'readwrite');
+        const transaction = this.db!.transaction(
+          [this.STORE_NAME],
+          'readwrite',
+        );
         const objectStore = transaction.objectStore(this.STORE_NAME);
         const request = objectStore.openCursor();
-        
+
         const now = Date.now();
         let deletedCount = 0;
 
@@ -282,7 +308,11 @@ export class ImageCacheService {
     }
   }
 
-  async getCacheStats(): Promise<{ count: number; totalSizeKB: number; oldestDate: Date | null }> {
+  async getCacheStats(): Promise<{
+    count: number;
+    totalSizeKB: number;
+    oldestDate: Date | null;
+  }> {
     try {
       await this.ensureDB();
       if (!this.db) return { count: 0, totalSizeKB: 0, oldestDate: null };
@@ -296,13 +326,15 @@ export class ImageCacheService {
           const results: CachedImage[] = request.result;
           const count = results.length;
           const totalSizeKB = Math.round(
-            results.reduce((total, item) => total + (item.blob?.size || 0), 0) / 1024
+            results.reduce((total, item) => total + (item.blob?.size || 0), 0) /
+              1024,
           );
-          
-          const oldestTimestamp = results.length > 0 
-            ? Math.min(...results.map(r => r.timestamp))
-            : null;
-          
+
+          const oldestTimestamp =
+            results.length > 0
+              ? Math.min(...results.map((r) => r.timestamp))
+              : null;
+
           const oldestDate = oldestTimestamp ? new Date(oldestTimestamp) : null;
 
           resolve({ count, totalSizeKB, oldestDate });
@@ -318,14 +350,14 @@ export class ImageCacheService {
 
   async preloadImages(urls: string[]): Promise<void> {
     if (!urls || urls.length === 0) return;
-    
+
     console.log(`🔄 Preloading ${urls.length} images...`);
-    
-    const promises = urls.map(url => 
-      this.getImage(url).catch(err => {
+
+    const promises = urls.map((url) =>
+      this.getImage(url).catch((err) => {
         console.warn('Failed to preload image:', url, err);
         return null;
-      })
+      }),
     );
 
     await Promise.all(promises);

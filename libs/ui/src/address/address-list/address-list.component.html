@@ -8,7 +8,7 @@
       <lib-address-card
         [config]="config().cardConfig"
         [address]="addr"
-        (select)="select.emit($event)"
+        (addressSelect)="addressSelect.emit($event)"
         (edit)="edit.emit($event)"
         (delete)="delete.emit($event)"
       />

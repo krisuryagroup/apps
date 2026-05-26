@@ -41,7 +41,12 @@ const LISTING_SEARCH_CONFIG = {
 };
 
 const LIST_GRID_CONFIG: CatalogProductGridConfig = {
-  cardConfig: { layout: 'list', showAddButton: true, showDietaryBadge: true, showVariationPill: true },
+  cardConfig: {
+    layout: 'list',
+    showAddButton: true,
+    showDietaryBadge: true,
+    showVariationPill: true,
+  },
   columns: 1,
   emptyMessageKey: 'listing.noResults',
 };
@@ -64,7 +69,8 @@ const LIST_GRID_CONFIG: CatalogProductGridConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('scrollContainer') private scrollContainerRef!: ElementRef<HTMLElement>;
+  @ViewChild('scrollContainer')
+  private scrollContainerRef!: ElementRef<HTMLElement>;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -91,9 +97,14 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly categorySections = computed((): CategorySection[] => {
     const cats = this.categories();
     const q = this.searchQuery().toLowerCase();
-    const prods = this.allProducts().filter(p => p.isEnabledForOnlineOrders !== false);
+    const prods = this.allProducts().filter(
+      (p) => p.isEnabledForOnlineOrders !== false,
+    );
     const filtered = q
-      ? prods.filter(p => matchesSearch(p.name, q) || matchesSearch(p.description ?? '', q))
+      ? prods.filter(
+          (p) =>
+            matchesSearch(p.name, q) || matchesSearch(p.description ?? '', q),
+        )
       : prods;
 
     if (cats.length === 0) {
@@ -102,30 +113,35 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
         : [];
     }
     return cats
-      .map(cat => ({
+      .map((cat) => ({
         categoryId: cat.id,
         categoryName: cat.name,
-        products: filtered.filter(p => p.category === cat.id),
+        products: filtered.filter((p) => p.category === cat.id),
       }))
-      .filter(s => s.products.length > 0);
+      .filter((s) => s.products.length > 0);
   });
 
   readonly hasMenuItems = computed(() =>
-    this.allProducts().some(product => product.isEnabledForOnlineOrders !== false)
+    this.allProducts().some(
+      (product) => product.isEnabledForOnlineOrders !== false,
+    ),
   );
 
-  readonly showNoSearchResults = computed(() =>
-    !this.isLoading() &&
-    !this.hasError() &&
-    !!this.searchQuery().trim() &&
-    this.hasMenuItems() &&
-    this.categorySections().length === 0
+  readonly showNoSearchResults = computed(
+    () =>
+      !this.isLoading() &&
+      !this.hasError() &&
+      !!this.searchQuery().trim() &&
+      this.hasMenuItems() &&
+      this.categorySections().length === 0,
   );
 
   readonly activeCategoryName = computed(() => {
     const id = this.activeCategoryId();
-    const found = this.categorySections().find(s => s.categoryId === id);
-    return found?.categoryName ?? this.categorySections()[0]?.categoryName ?? '';
+    const found = this.categorySections().find((s) => s.categoryId === id);
+    return (
+      found?.categoryName ?? this.categorySections()[0]?.categoryName ?? ''
+    );
   });
 
   readonly quantities = computed<Record<string, number>>(() => {
@@ -146,7 +162,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(params => {
+      .subscribe((params) => {
         const slug =
           params['businessSlug'] ||
           localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
@@ -161,7 +177,6 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.searchQuery.set(params['search'] ?? '');
         this._syncActiveCategoryToVisibleSections();
       });
-
   }
 
   ngAfterViewInit(): void {
@@ -169,7 +184,8 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!container) return;
     const handler = () => this._syncActiveSectionFromScroll(container);
     container.addEventListener('scroll', handler, { passive: true });
-    this._scrollCleanup = () => container.removeEventListener('scroll', handler);
+    this._scrollCleanup = () =>
+      container.removeEventListener('scroll', handler);
   }
 
   ngOnDestroy(): void {
@@ -177,7 +193,8 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private _syncActiveSectionFromScroll(container: HTMLElement): void {
-    const sections = container.querySelectorAll<HTMLElement>('[data-section-id]');
+    const sections =
+      container.querySelectorAll<HTMLElement>('[data-section-id]');
     const containerTop = container.getBoundingClientRect().top;
     let activeId = '';
     for (const el of Array.from(sections)) {
@@ -223,7 +240,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   toggleSection(categoryId: string): void {
-    this.collapsedSections.update(set => {
+    this.collapsedSections.update((set) => {
       const next = new Set(set);
       if (next.has(categoryId)) next.delete(categoryId);
       else next.add(categoryId);
@@ -241,7 +258,9 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       const container = this.scrollContainerRef?.nativeElement;
       if (!container) return;
-      const el = container.querySelector<HTMLElement>(`[data-section-id="${categoryId}"]`);
+      const el = container.querySelector<HTMLElement>(
+        `[data-section-id="${categoryId}"]`,
+      );
       el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
   }
@@ -256,16 +275,25 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProduct.set(null);
   }
 
-  onAddToCart(event: { product: Product; variation: ProductVariation | null }): void {
+  onAddToCart(event: {
+    product: Product;
+    variation: ProductVariation | null;
+  }): void {
     const slug = this._businessSlug();
     if (!slug) return;
-    this.cartApi.addToCart(slug, event.product.id, event.variation?.id ?? undefined).catch(() => {});
+    this.cartApi
+      .addToCart(slug, event.product.id, event.variation?.id ?? undefined)
+      .catch(() => {
+        /* no-op */
+      });
   }
 
   onIncrement(product: Product): void {
     const slug = this._businessSlug();
     if (!slug) return;
-    this.cartApi.addToCart(slug, product.id).catch(() => {});
+    this.cartApi.addToCart(slug, product.id).catch(() => {
+      /* no-op */
+    });
   }
 
   onDecrement(product: Product): void {
@@ -273,9 +301,13 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!slug) return;
     const cart = this.cartApi.getCartForBusiness(slug);
     if (!cart) return;
-    const cartItem = cart.items.find(i => i.productId === product.id);
+    const cartItem = cart.items.find((i) => i.productId === product.id);
     if (!cartItem) return;
-    this.cartApi.updateQty(slug, cartItem.id, cartItem.quantity - 1).catch(() => {});
+    this.cartApi
+      .updateQty(slug, cartItem.id, cartItem.quantity - 1)
+      .catch(() => {
+        /* no-op */
+      });
   }
 
   goBack(): void {

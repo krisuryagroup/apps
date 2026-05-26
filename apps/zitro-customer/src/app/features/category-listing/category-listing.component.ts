@@ -89,8 +89,10 @@ export class CategoryListingComponent implements OnInit {
       .getMenu(this.businessSlug, this.categoryId || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: products => {
-          this.products.set(products.filter(p => p.isEnabledForOnlineOrders !== false));
+        next: (products) => {
+          this.products.set(
+            products.filter((p) => p.isEnabledForOnlineOrders !== false),
+          );
           this.isLoading.set(false);
         },
         error: () => {
@@ -110,23 +112,40 @@ export class CategoryListingComponent implements OnInit {
     this.selectedProduct.set(null);
   }
 
-  onAddToCart(event: { product: Product; variation: ProductVariation | null }): void {
+  onAddToCart(event: {
+    product: Product;
+    variation: ProductVariation | null;
+  }): void {
     if (!this.businessSlug) return;
-    this.cartApi.addToCart(this.businessSlug, event.product.id, event.variation?.id ?? undefined).catch(() => {});
+    this.cartApi
+      .addToCart(
+        this.businessSlug,
+        event.product.id,
+        event.variation?.id ?? undefined,
+      )
+      .catch(() => {
+        /* no-op */
+      });
   }
 
   onIncrement(product: Product): void {
     if (!this.businessSlug) return;
-    this.cartApi.addToCart(this.businessSlug, product.id).catch(() => {});
+    this.cartApi.addToCart(this.businessSlug, product.id).catch(() => {
+      /* no-op */
+    });
   }
 
   onDecrement(product: Product): void {
     if (!this.businessSlug) return;
     const cart = this.cartApi.getCartForBusiness(this.businessSlug);
     if (!cart) return;
-    const cartItem = cart.items.find(i => i.productId === product.id);
+    const cartItem = cart.items.find((i) => i.productId === product.id);
     if (!cartItem) return;
-    this.cartApi.updateQty(this.businessSlug, cartItem.id, cartItem.quantity - 1).catch(() => {});
+    this.cartApi
+      .updateQty(this.businessSlug, cartItem.id, cartItem.quantity - 1)
+      .catch(() => {
+        /* no-op */
+      });
   }
 
   goBack(): void {

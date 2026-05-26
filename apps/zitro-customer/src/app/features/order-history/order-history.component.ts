@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { OrderService } from '@zitro/services';
@@ -10,11 +10,17 @@ import { CallRestaurantButtonComponent } from '@zitro/ui';
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [CommonModule, CancelOrderDialogComponent, CallRestaurantButtonComponent],
+  imports: [
+    CommonModule,
+    CancelOrderDialogComponent,
+    CallRestaurantButtonComponent,
+  ],
   templateUrl: './order-history.component.html',
-  styleUrls: ['./order-history.component.scss']
+  styleUrls: ['./order-history.component.scss'],
 })
-export class OrderHistoryComponent {
+export class OrderHistoryComponent implements OnInit {
+  private router = inject(Router);
+  private orderService = inject(OrderService);
 
   orders: OrderDisplay[] = [];
   isCancelling: { [orderId: string]: boolean } = {};
@@ -29,8 +35,6 @@ export class OrderHistoryComponent {
   currentPage = 1;
   pageSize = 5;
   totalPages = 1;
-
-  constructor(private router: Router, private orderService: OrderService) {}
 
   async ngOnInit() {
     await this.loadOrders();
@@ -88,7 +92,7 @@ export class OrderHistoryComponent {
 
   async cancelOrder(orderId: string) {
     this.selectedOrderId = orderId;
-    const order = this.orders.find(o => o.orderId === orderId);
+    const order = this.orders.find((o) => o.orderId === orderId);
     if (order) {
       // Preload remaining time for the dialog
       this.selectedOrderRemainingTime = await this.getRemainingTime(order);
@@ -145,7 +149,10 @@ export class OrderHistoryComponent {
   }
 
   getSelectedOrder(): OrderDisplay | null {
-    return this.orders.find(order => order.orderId === this.selectedOrderId) || null;
+    return (
+      this.orders.find((order) => order.orderId === this.selectedOrderId) ||
+      null
+    );
   }
 
   // Pagination methods

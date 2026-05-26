@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,26 +15,24 @@ import { UI_TEXT } from '../../core/constants/app.constants';
   standalone: true,
   imports: [CommonModule, FormsModule, CallRestaurantButtonComponent],
   templateUrl: './order-tracking.component.html',
-  styleUrls: ['./order-tracking.component.scss']
+  styleUrls: ['./order-tracking.component.scss'],
 })
 export class OrderTrackingComponent implements OnInit, OnDestroy {
-  orderDetails: OrderDisplay | null = null;
-  orderId: string = '';
-  loading: boolean = false;
-  error: string = '';
-  autoRefreshEnabled: boolean = true;
-  private refreshSubscription?: Subscription;
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private orderService = inject(OrderService);
+  private navigationService = inject(NavigationService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private orderService: OrderService,
-    private navigationService: NavigationService
-  ) {}
+  orderDetails: OrderDisplay | null = null;
+  orderId = '';
+  loading = false;
+  error = '';
+  autoRefreshEnabled = true;
+  private refreshSubscription?: Subscription;
 
   async ngOnInit() {
     // Get order ID from route params or query params
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const orderIdFromRoute = params.get('orderId');
       if (orderIdFromRoute) {
         this.orderId = orderIdFromRoute;
@@ -43,7 +41,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     });
 
     // Also check query params
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       const orderIdFromQuery = params['orderId'];
       if (orderIdFromQuery && !this.orderId) {
         this.orderId = orderIdFromQuery;
@@ -69,7 +67,9 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     this.error = '';
 
     try {
-      this.orderDetails = await this.orderService.getOrderById(this.orderId.trim());
+      this.orderDetails = await this.orderService.getOrderById(
+        this.orderId.trim(),
+      );
 
       if (!this.orderDetails) {
         this.error = 'Order not found. Please check your Order ID.';
@@ -91,19 +91,24 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
   async refreshOrder() {
     if (this.orderId) {
-    await this.loadOrderDetails();
+      await this.loadOrderDetails();
     }
   }
 
   startAutoRefresh() {
     // Don't auto-refresh for delivered or cancelled orders
-    if (this.autoRefreshEnabled &&
-        this.orderDetails?.status !== 'delivered' &&
-        this.orderDetails?.status !== 'cancelled') {
+    if (
+      this.autoRefreshEnabled &&
+      this.orderDetails?.status !== 'delivered' &&
+      this.orderDetails?.status !== 'cancelled'
+    ) {
       this.refreshSubscription = interval(30000).subscribe(() => {
-        if (this.orderId && !this.loading &&
-            this.orderDetails?.status !== 'delivered' &&
-            this.orderDetails?.status !== 'cancelled') {
+        if (
+          this.orderId &&
+          !this.loading &&
+          this.orderDetails?.status !== 'delivered' &&
+          this.orderDetails?.status !== 'cancelled'
+        ) {
           this.refreshOrder();
         }
       });
@@ -131,13 +136,20 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
   getStatusProgress(status: string): number {
     switch (status) {
-      case 'pending': return 20;
-      case 'confirmed': return 40;
-      case 'preparing': return 60;
-      case 'shipped': return 80;
-      case 'delivered': return 100;
-      case 'cancelled': return 0;
-      default: return 0;
+      case 'pending':
+        return 20;
+      case 'confirmed':
+        return 40;
+      case 'preparing':
+        return 60;
+      case 'shipped':
+        return 80;
+      case 'delivered':
+        return 100;
+      case 'cancelled':
+        return 0;
+      default:
+        return 0;
     }
   }
 
@@ -147,7 +159,9 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   getStatusTimestamp(status: string): Date | null {
     if (!this.orderDetails?.statusTimeline) return null;
 
-    const timelineEntry = this.orderDetails.statusTimeline.find(timeline => timeline.status === status);
+    const timelineEntry = this.orderDetails.statusTimeline.find(
+      (timeline) => timeline.status === status,
+    );
     return timelineEntry ? timelineEntry.timestamp : null;
   }
 
@@ -157,7 +171,9 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   getStatusNote(status: string): string | null {
     if (!this.orderDetails?.statusTimeline) return null;
 
-    const timelineEntry = this.orderDetails.statusTimeline.find(timeline => timeline.status === status);
+    const timelineEntry = this.orderDetails.statusTimeline.find(
+      (timeline) => timeline.status === status,
+    );
     return timelineEntry ? timelineEntry.note || null : null;
   }
 
@@ -165,21 +181,27 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
    * Get the latest timeline entry's status display
    */
   getLatestStatusDisplay(): string {
-    if (!this.orderDetails?.statusTimeline || this.orderDetails.statusTimeline.length === 0) {
+    if (
+      !this.orderDetails?.statusTimeline ||
+      this.orderDetails.statusTimeline.length === 0
+    ) {
       return 'Unknown';
     }
 
     // Get the latest timeline entry (last in the array)
-    const latestEntry = this.orderDetails.statusTimeline[this.orderDetails.statusTimeline.length - 1];
+    const latestEntry =
+      this.orderDetails.statusTimeline[
+        this.orderDetails.statusTimeline.length - 1
+      ];
 
     // Map timeline status to display text matching the timeline labels
     const statusMap: { [key: string]: string } = {
-      'pending': 'Order Placed',
-      'confirmed': 'Order Confirmed',
-      'preparing': 'Preparing',
-      'shipped': 'Out for Delivery',
-      'delivered': 'Delivered',
-      'cancelled': 'Cancelled'
+      pending: 'Order Placed',
+      confirmed: 'Order Confirmed',
+      preparing: 'Preparing',
+      shipped: 'Out for Delivery',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled',
     };
 
     return statusMap[latestEntry.status] || latestEntry.status;
@@ -204,7 +226,10 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
     const now = new Date();
     const estimatedTime = new Date(this.orderDetails.estimatedDeliveryTime);
-    const diffInMinutes = Math.max(0, Math.floor((estimatedTime.getTime() - now.getTime()) / (1000 * 60)));
+    const diffInMinutes = Math.max(
+      0,
+      Math.floor((estimatedTime.getTime() - now.getTime()) / (1000 * 60)),
+    );
 
     if (diffInMinutes === 0) {
       return 'Should arrive soon';
@@ -219,9 +244,11 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
 
   // Charge helper methods — OrderCharges is now flat (applied values only)
   getPackagingCharges(): number {
-    return this.orderDetails?.charges?.packagingCharge
-      ?? this.orderDetails?.totalPackagingCharges
-      ?? 0;
+    return (
+      this.orderDetails?.charges?.packagingCharge ??
+      this.orderDetails?.totalPackagingCharges ??
+      0
+    );
   }
 
   getCalculatedPackaging(): number {
@@ -245,9 +272,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   }
 
   getGSTAmount(): number {
-    return this.orderDetails?.charges?.gst
-      ?? this.orderDetails?.tax
-      ?? 0;
+    return this.orderDetails?.charges?.gst ?? this.orderDetails?.tax ?? 0;
   }
 
   getCalculatedGST(): number {
@@ -263,10 +288,12 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   }
 
   getDeliveryCharge(): number {
-    return this.orderDetails?.charges?.deliveryCharge
-      ?? this.orderDetails?.deliveryCharge
-      ?? this.orderDetails?.deliveryFee
-      ?? 0;
+    return (
+      this.orderDetails?.charges?.deliveryCharge ??
+      this.orderDetails?.deliveryCharge ??
+      this.orderDetails?.deliveryFee ??
+      0
+    );
   }
 
   getCalculatedDeliveryCharge(): number {
@@ -282,9 +309,11 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   }
 
   getCouponDiscount(): number {
-    return this.orderDetails?.charges?.couponDiscount
-      ?? this.orderDetails?.couponDiscount
-      ?? 0;
+    return (
+      this.orderDetails?.charges?.couponDiscount ??
+      this.orderDetails?.couponDiscount ??
+      0
+    );
   }
 
   hasCoupon(): boolean {

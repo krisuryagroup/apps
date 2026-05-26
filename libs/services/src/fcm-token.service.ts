@@ -1,8 +1,25 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import { getMessaging, getToken, deleteToken, Messaging } from 'firebase/messaging';
-import { Firestore, doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, Timestamp, FieldValue } from '@angular/fire/firestore';
+import {
+  getMessaging,
+  getToken,
+  deleteToken,
+  Messaging,
+} from 'firebase/messaging';
+import {
+  Firestore,
+  doc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+  FieldValue,
+} from '@angular/fire/firestore';
 import { FIREBASE_COLLECTIONS } from '@zitro/utils';
 import { getAppVersion } from '@zitro/utils';
 
@@ -46,29 +63,31 @@ export interface FcmTokenManagerPlugin {
   requestNotificationPermission(): Promise<void>;
 }
 
-const FcmTokenManager = registerPlugin<FcmTokenManagerPlugin>('FcmTokenManager');
+const FcmTokenManager =
+  registerPlugin<FcmTokenManagerPlugin>('FcmTokenManager');
 
 /**
  * Service to manage FCM token lifecycle
  * Supports both web (Firebase Messaging) and native Android (Capacitor plugin)
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FcmTokenService {
+  private platformId = inject<object>(PLATFORM_ID);
+  private firestore = inject(Firestore);
+
   private messaging: Messaging | null = null;
   private currentUserId: string | null = null;
-  private readonly VAPID_KEY = 'BOk-2MVemkErwEl_l6XjsmQoaE8cyJHVXUo3fjdPYrT41OWztQulUWqIW8DYYm9fLwZ4RLDg_e_s_OSedcTBkPc'; // VAPID key from Firebase Console
-  private deviceId: string = '';
-  private appVersion: string = '1.0.0';
+  private readonly VAPID_KEY =
+    'BOk-2MVemkErwEl_l6XjsmQoaE8cyJHVXUo3fjdPYrT41OWztQulUWqIW8DYYm9fLwZ4RLDg_e_s_OSedcTBkPc'; // VAPID key from Firebase Console
+  private deviceId = '';
+  private appVersion = '1.0.0';
 
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: Object,
-    private firestore: Firestore
-  ) {
+  constructor() {
     this.initializeWebMessaging();
     // Initialize device info asynchronously
-    this.initializeDeviceInfo().catch(error => {
+    this.initializeDeviceInfo().catch((error) => {
       console.error('FCM Token: Failed to initialize device info:', error);
     });
   }
@@ -90,7 +109,10 @@ export class FcmTokenService {
       this.appVersion = await getAppVersion();
       console.log('FCM Token: App version:', this.appVersion);
     } catch (error) {
-      console.warn('FCM Token: Could not get app version, using default:', error);
+      console.warn(
+        'FCM Token: Could not get app version, using default:',
+        error,
+      );
       this.appVersion = '1.0.0';
     }
   }
@@ -128,7 +150,9 @@ export class FcmTokenService {
    * Check if running on native Android platform
    */
   private isNativeAndroid(): boolean {
-    return Capacitor.getPlatform() === 'android' && Capacitor.isNativePlatform();
+    return (
+      Capacitor.getPlatform() === 'android' && Capacitor.isNativePlatform()
+    );
   }
 
   /**
@@ -153,7 +177,7 @@ export class FcmTokenService {
   /**
    * Called after successful user login
    * Syncs FCM token to Firestore with user ID
-   * 
+   *
    * @param userId The authenticated user's ID (typically Firebase Auth UID or phone number)
    */
   async onUserLogin(userId: string): Promise<void> {
@@ -167,7 +191,10 @@ export class FcmTokenService {
     try {
       if (this.isNativeAndroid()) {
         // Use native Android plugin
-        console.log('FCM Token: Calling native onUserLogin for userId:', userId);
+        console.log(
+          'FCM Token: Calling native onUserLogin for userId:',
+          userId,
+        );
         await FcmTokenManager.onUserLogin({ userId });
         console.log('FCM Token: Successfully synced token on login (Android)');
       } else if (this.isWeb()) {
@@ -204,7 +231,7 @@ export class FcmTokenService {
 
       // Request notification permission
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== 'granted') {
         console.warn('FCM Token: Notification permission denied');
         return;
@@ -212,7 +239,7 @@ export class FcmTokenService {
 
       // Get FCM token
       const token = await getToken(this.messaging, {
-        vapidKey: this.VAPID_KEY
+        vapidKey: this.VAPID_KEY,
       });
 
       if (!token) {
@@ -224,7 +251,7 @@ export class FcmTokenService {
         this.firestore,
         FIREBASE_COLLECTIONS.ONLINE_USERS,
         userId,
-        'fcmTokens'
+        'fcmTokens',
       );
 
       const tokenData: FCMToken = {
@@ -234,7 +261,7 @@ export class FcmTokenService {
         appVersion: this.appVersion,
         isActive: true,
         createdAt: serverTimestamp(),
-        lastUsedAt: serverTimestamp()
+        lastUsedAt: serverTimestamp(),
       };
 
       // Use token as document ID to ensure uniqueness
@@ -260,14 +287,18 @@ export class FcmTokenService {
         // Use native Android plugin
         console.log('FCM Token: Calling native onUserLogout');
         await FcmTokenManager.onUserLogout();
-        console.log('FCM Token: Successfully removed token on logout (Android)');
+        console.log(
+          'FCM Token: Successfully removed token on logout (Android)',
+        );
       } else if (this.isWeb() && userId) {
         // Use web Firebase Messaging
         console.log('FCM Token: Removing web FCM token');
         await this.removeWebTokenFromFirestore(userId);
         console.log('FCM Token: Successfully removed token on logout (Web)');
       } else {
-        console.log('FCM Token: Platform not supported or no user ID available');
+        console.log(
+          'FCM Token: Platform not supported or no user ID available',
+        );
       }
     } catch (error) {
       console.error('FCM Token: Failed to remove token on logout:', error);
@@ -286,8 +317,10 @@ export class FcmTokenService {
 
     try {
       // Check if service worker is already registered
-      const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-      
+      const registration = await navigator.serviceWorker.getRegistration(
+        '/firebase-messaging-sw.js',
+      );
+
       if (registration) {
         console.log('FCM Token: Service worker already registered');
         return;
@@ -313,7 +346,10 @@ export class FcmTokenService {
         try {
           await deleteToken(this.messaging);
         } catch (error) {
-          console.warn('FCM Token: Could not delete token from Firebase:', error);
+          console.warn(
+            'FCM Token: Could not delete token from Firebase:',
+            error,
+          );
         }
       }
 
@@ -323,19 +359,24 @@ export class FcmTokenService {
         FIREBASE_COLLECTIONS.ONLINE_USERS,
         userId,
         'fcmTokens',
-        this.deviceId
+        this.deviceId,
       );
 
       await updateDoc(tokenDocRef, {
         isActive: false,
-        lastUsedAt: serverTimestamp()
+        lastUsedAt: serverTimestamp(),
       });
 
       console.log('FCM Token: Web token marked as inactive in Firestore');
     } catch (error) {
       console.error('FCM Token: Error removing web token:', error);
       // Don't throw error if token document doesn't exist
-      if (error && typeof error === 'object' && 'code' in error && error.code !== 'not-found') {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code !== 'not-found'
+      ) {
         throw error;
       }
     }
@@ -386,7 +427,10 @@ export class FcmTokenService {
         console.log('FCM Token: Platform not supported');
       }
     } catch (error) {
-      console.error('FCM Token: Failed to request notification permission:', error);
+      console.error(
+        'FCM Token: Failed to request notification permission:',
+        error,
+      );
     }
   }
 }

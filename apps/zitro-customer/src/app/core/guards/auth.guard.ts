@@ -1,13 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router, UrlTree } from '@angular/router';
 import { UserManagementService } from '@zitro/services';
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
-  constructor(
-    private router: Router,
-    private userManagement: UserManagementService
-  ) {}
+  private router = inject(Router);
+  private userManagement = inject(UserManagementService);
 
   async canActivate(): Promise<boolean | UrlTree> {
     console.log('🔐 AuthGuard: Checking authentication state...');
@@ -23,7 +21,9 @@ export class AuthGuard implements CanActivate {
     // If not authenticated or partial/mismatched state, force sign out and cleanup
     try {
       // Clear all auth-related localStorage
-      ['token', 'isGuest', 'guestId', 'currentUserPhone'].forEach(key => localStorage.removeItem(key));
+      ['token', 'isGuest', 'guestId', 'currentUserPhone'].forEach((key) =>
+        localStorage.removeItem(key),
+      );
       sessionStorage.clear();
       console.log('🧹 AuthGuard: Cleared localStorage and sessionStorage');
     } catch (error) {
@@ -33,20 +33,28 @@ export class AuthGuard implements CanActivate {
     console.log('🚫 AuthGuard: Redirecting to /auth/signin');
     return this.router.createUrlTree(['/auth/signin']);
   }
-  
+
   // ...existing code...
 }
 
 @Injectable({ providedIn: 'root' })
 export class LoginGuard implements CanActivate {
-  constructor(private router: Router, private userManagement: UserManagementService) {}
+  private router = inject(Router);
+  private userManagement = inject(UserManagementService);
 
   async canActivate(): Promise<boolean | UrlTree> {
     console.log('🔐 LoginGuard: Checking if user can access auth pages...');
     const hasToken = !!localStorage.getItem('token');
     const isGuest = localStorage.getItem('isGuest') === 'true';
     const currentUserPhone = await this.userManagement.getCurrentUserPhone();
-    console.log('🔐 LoginGuard: hasToken =', hasToken, '| isGuest =', isGuest, '| currentUserPhone =', !!currentUserPhone);
+    console.log(
+      '🔐 LoginGuard: hasToken =',
+      hasToken,
+      '| isGuest =',
+      isGuest,
+      '| currentUserPhone =',
+      !!currentUserPhone,
+    );
     // Only redirect to home if user is truly authenticated (not a guest)
     if (hasToken && !isGuest && !!currentUserPhone) {
       console.log('✅ LoginGuard: User is authenticated, redirecting to home');

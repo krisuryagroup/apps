@@ -1,4 +1,11 @@
-import { Component, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FirebaseAuthService } from '@zitro/services';
@@ -20,9 +27,18 @@ import { FcmTokenService } from '@zitro/services';
   standalone: true,
   imports: [CommonModule, FormsModule, WhatsappButtonComponent],
   templateUrl: './signin.component.html',
-  styleUrls: ['./signin.component.scss']
+  styleUrls: ['./signin.component.scss'],
 })
 export class SigninComponent implements OnDestroy, AfterViewInit {
+  private authService = inject(FirebaseAuthService);
+  private favoritesService = inject(FavoritesService);
+  private userManagementService = inject(UserManagementService);
+  private router = inject(Router);
+  private analyticsService = inject(AnalyticsService);
+  private firebaseOtpService = inject(FirebaseOtpService);
+  private appSettingsService = inject(AppSettingsService);
+  private fcmTokenService = inject(FcmTokenService);
+
   @ViewChild('phoneInput') phoneInput!: ElementRef<HTMLInputElement>;
   @ViewChild('otpInput') otpInput!: ElementRef<HTMLInputElement>;
   email = '';
@@ -38,31 +54,22 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
   loginWithPhone = true;
   errorMsg = '';
   emailError = '';
-  
+
   // Firebase confirmation result for OTP verification
   private confirmationResult: ConfirmationResult | null = null;
-  
+
   // Retry timer for OTP
   canResendOtp = false;
   resendCountdown = 0;
   private resendTimer: any = null;
-  
+
   // Track which OTP method is being used
   private usingFirebaseOtp = false;
-  
+
   // Auth configuration from Firebase
   authConfig: AuthConfig = DEFAULT_AUTH_CONFIG;
 
-  constructor(
-    private authService: FirebaseAuthService,
-    private favoritesService: FavoritesService,
-    private userManagementService: UserManagementService,
-    private router: Router,
-    private analyticsService: AnalyticsService,
-    private firebaseOtpService: FirebaseOtpService,
-    private appSettingsService: AppSettingsService,
-    private fcmTokenService: FcmTokenService
-  ) {
+  constructor() {
     this.loadAuthConfig();
   }
 
@@ -93,19 +100,23 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
    * Check if user has addresses, redirect to address page if none exist
    */
   private async handlePostLoginNavigation(): Promise<void> {
-    const isPendingCheckout = localStorage.getItem('pendingCheckout') === 'true';
-    
+    const isPendingCheckout =
+      localStorage.getItem('pendingCheckout') === 'true';
+
     if (isPendingCheckout) {
       // Clear the flag
       localStorage.removeItem('pendingCheckout');
-      
+
       try {
         // Check if user has any addresses
-        const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+        const phoneNumber =
+          await this.userManagementService.getCurrentUserPhone();
         if (phoneNumber) {
-          const userData = await this.userManagementService.getUserData(phoneNumber);
-          const hasAddresses = userData?.addresses && userData.addresses.length > 0;
-          
+          const userData =
+            await this.userManagementService.getUserData(phoneNumber);
+          const hasAddresses =
+            userData?.addresses && userData.addresses.length > 0;
+
           if (!hasAddresses) {
             // No addresses, redirect to address management page
             localStorage.setItem('redirectAfterAddress', 'checkout');
@@ -116,7 +127,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
       } catch (error) {
         console.error('Error checking user addresses:', error);
       }
-      
+
       // Has addresses or error occurred, go to cart
       this.router.navigate(['/cart']);
     } else {
@@ -178,12 +189,13 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
     }
 
     const phoneWithCode = PHONE_CONSTANTS.INDIA_CODE + this.phone;
-    
+
     // Try Firebase OTP first if enabled
     if (this.authConfig.sms.isFirebasePhoneAuthentication) {
       try {
         this.errorMsg = 'Validating device and sending OTP';
-        this.confirmationResult = await this.firebaseOtpService.sendOtp(phoneWithCode);
+        this.confirmationResult =
+          await this.firebaseOtpService.sendOtp(phoneWithCode);
         this.usingFirebaseOtp = true;
         this.showOtp = true;
         if (this.authConfig.sms.resendOTPAllowed) {
@@ -191,7 +203,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
         }
         this.errorMsg = this.authConfig.ui.otpSentSuccessMessage;
         console.log('Firebase OTP sent to:', phoneWithCode);
-        
+
         // Auto-focus OTP input after successful send
         setTimeout(() => {
           if (this.otpInput) {
@@ -202,7 +214,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
       } catch (firebaseErr: any) {
         console.warn('Firebase OTP failed:', firebaseErr);
         this.usingFirebaseOtp = false;
-        
+
         // If Fast2SMS is not enabled, show error and return
         if (!this.authConfig.sms.isFast2SmsPhoneAuthentication) {
           this.errorMsg = this.authConfig.ui.otpSentFailureMessage;
@@ -211,7 +223,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
         }
       }
     }
-    
+
     // Fallback to Fast2SMS if enabled and Firebase failed or not enabled
     if (this.authConfig.sms.isFast2SmsPhoneAuthentication) {
       try {
@@ -223,7 +235,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
         }
         this.errorMsg = this.authConfig.ui.otpSentSuccessMessage;
         console.log('Fast2SMS OTP sent to:', phoneWithCode);
-        
+
         // Auto-focus OTP input after successful send
         setTimeout(() => {
           if (this.otpInput) {
@@ -251,16 +263,19 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
       try {
         this.errorMsg = 'Validating device and sending OTP';
         const phoneWithCode = PHONE_CONSTANTS.INDIA_CODE + this.phone;
-        
+
         // Use Firebase OTP service
-        this.confirmationResult = await this.firebaseOtpService.sendOtp(phoneWithCode);
+        this.confirmationResult =
+          await this.firebaseOtpService.sendOtp(phoneWithCode);
         this.showOtp = true;
-        
-        this.errorMsg = 'OTP sent successfully via Firebase. Please check your SMS messages.';
+
+        this.errorMsg =
+          'OTP sent successfully via Firebase. Please check your SMS messages.';
         console.log('Firebase OTP sent to:', phoneWithCode);
       } catch (err: any) {
         console.error('Firebase OTP send error:', err);
-        this.errorMsg = err?.message || 'Failed to send OTP via Firebase. Please try again.';
+        this.errorMsg =
+          err?.message || 'Failed to send OTP via Firebase. Please try again.';
         this.showOtp = false;
       }
     }
@@ -273,13 +288,18 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
 
     try {
       this.errorMsg = 'Verifying OTP...';
-      
+
       // Verify based on which method was used
       if (this.usingFirebaseOtp && this.confirmationResult) {
         // Firebase verification
         try {
-          const userCredential = await this.confirmationResult.confirm(this.otp);
-          console.log('Firebase OTP verified successfully:', userCredential.user.uid);
+          const userCredential = await this.confirmationResult.confirm(
+            this.otp,
+          );
+          console.log(
+            'Firebase OTP verified successfully:',
+            userCredential.user.uid,
+          );
         } catch (firebaseErr: any) {
           console.error('Firebase OTP verification error:', firebaseErr);
           this.errorMsg = this.getFriendlyOtpErrorMessage(firebaseErr);
@@ -287,37 +307,47 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
         }
       } else {
         // Fast2SMS verification
-        const isValid = this.authService.verifyOtp(PHONE_CONSTANTS.INDIA_CODE + this.phone, this.otp);
+        const isValid = this.authService.verifyOtp(
+          PHONE_CONSTANTS.INDIA_CODE + this.phone,
+          this.otp,
+        );
         if (!isValid) {
           this.errorMsg = 'Invalid or expired OTP. Please try again.';
           return;
         }
       }
-      
+
       // Sign in with phone after OTP verification
-      const userCredential = await this.authService.signInWithPhone(PHONE_CONSTANTS.INDIA_CODE + this.phone, this.otp);
+      const userCredential = await this.authService.signInWithPhone(
+        PHONE_CONSTANTS.INDIA_CODE + this.phone,
+        this.otp,
+      );
       this.errorMsg = 'Login successful!';
-      console.log('Login successful for phone: ' + PHONE_CONSTANTS.INDIA_CODE + this.phone);
-      
+      console.log(
+        'Login successful for phone: ' +
+          PHONE_CONSTANTS.INDIA_CODE +
+          this.phone,
+      );
+
       // Sync FCM token with user account
       if (userCredential?.user?.uid) {
         await this.fcmTokenService.onUserLogin(userCredential.user.uid);
       }
-      
+
       // Clear timer on successful login
       this.clearResendTimer();
-      
+
       // Track login event
       await this.analyticsService.logLogin('phone');
-      
+
       // Refresh the favorites service user context
       this.favoritesService.refreshCurrentUser();
-      
+
       // Check for guest favorites migration after successful login
       setTimeout(() => {
         this.favoritesService.checkAndOfferFavoritesMigration();
       }, 500);
-      
+
       this.router.navigate(['/home']);
     } catch (err: any) {
       console.error('OTP verification error:', err);
@@ -341,32 +371,44 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
 
     try {
       this.errorMsg = 'Verifying OTP with Firebase...';
-      
+
       // Verify OTP using Firebase confirmationResult
-      const otpValidationResults = await this.confirmationResult.confirm(this.otp);
-      console.log('Firebase OTP verified successfully:', otpValidationResults.user.uid);
-      
+      const otpValidationResults = await this.confirmationResult.confirm(
+        this.otp,
+      );
+      console.log(
+        'Firebase OTP verified successfully:',
+        otpValidationResults.user.uid,
+      );
+
       // Sign in with phone after OTP verification
-      const userCredential = await this.authService.signInWithPhone(PHONE_CONSTANTS.INDIA_CODE + this.phone, this.otp);
+      const userCredential = await this.authService.signInWithPhone(
+        PHONE_CONSTANTS.INDIA_CODE + this.phone,
+        this.otp,
+      );
       this.errorMsg = 'Login successful!';
-      console.log('Login successful for phone: ' + PHONE_CONSTANTS.INDIA_CODE + this.phone);
-      
+      console.log(
+        'Login successful for phone: ' +
+          PHONE_CONSTANTS.INDIA_CODE +
+          this.phone,
+      );
+
       // Sync FCM token with user account
       if (userCredential?.user?.uid) {
         await this.fcmTokenService.onUserLogin(userCredential.user.uid);
       }
-      
+
       // Track login event
       await this.analyticsService.logLogin('phone');
-      
+
       // Refresh the favorites service user context
       this.favoritesService.refreshCurrentUser();
-      
+
       // Check for guest favorites migration after successful login
       setTimeout(() => {
         this.favoritesService.checkAndOfferFavoritesMigration();
       }, 500);
-      
+
       this.router.navigate(['/home']);
     } catch (err: any) {
       console.error('Firebase OTP verification error:', err);
@@ -377,35 +419,38 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
   async onEmailLogin(form: any) {
     if (this.validateEmail() && form.valid) {
       try {
-        var user = await this.authService.signInWithEmail(this.email, this.password);
-        if(user){
+        const user = await this.authService.signInWithEmail(
+          this.email,
+          this.password,
+        );
+        if (user) {
           // Clear guest mode when user logs in
           localStorage.removeItem('isGuest');
           localStorage.removeItem('guestId');
-          
+
           // Set a token for AuthGuard
           localStorage.setItem('token', user.user?.uid || '1');
           this.errorMsg = '';
-          
+
           // Sync FCM token with user account
           if (user.user?.uid) {
             await this.fcmTokenService.onUserLogin(user.user.uid);
           }
-          
+
           // Track login event
           await this.analyticsService.logLogin('email');
-          
+
           // Refresh the favorites service user context
           this.favoritesService.refreshCurrentUser();
-          
+
           // Check for guest favorites migration after successful login
           setTimeout(() => {
             this.favoritesService.checkAndOfferFavoritesMigration();
           }, 500);
-          
+
           // Check if user was trying to checkout
           await this.handlePostLoginNavigation();
-        }else{
+        } else {
           this.errorMsg = 'Login failed';
         }
       } catch (err: any) {
@@ -424,12 +469,12 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
    * Start the countdown timer for resending OTP
    * @param seconds Number of seconds to wait before allowing resend
    */
-  private startResendTimer(seconds: number = 60) {
+  private startResendTimer(seconds = 60) {
     this.canResendOtp = false;
     this.resendCountdown = seconds;
-    
+
     this.clearResendTimer();
-    
+
     this.resendTimer = setInterval(() => {
       this.resendCountdown--;
       if (this.resendCountdown <= 0) {
@@ -456,12 +501,12 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
     if (!this.canResendOtp) {
       return;
     }
-    
+
     // Reset OTP state
     this.otp = '';
     this.otpError = '';
     this.confirmationResult = null;
-    
+
     // Resend OTP
     await this.onPhoneSubmit();
   }
@@ -471,7 +516,7 @@ export class SigninComponent implements OnDestroy, AfterViewInit {
    */
   private getFriendlyOtpErrorMessage(err: any): string {
     const errorCode = err?.code || '';
-    
+
     switch (errorCode) {
       case 'auth/invalid-verification-code':
         return 'Invalid OTP. Please check and try again.';

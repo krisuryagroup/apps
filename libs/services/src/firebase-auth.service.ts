@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { getAuth, signInWithEmailAndPassword, signInWithCustomToken, UserCredential, Auth } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signInWithCustomToken,
+  UserCredential,
+  Auth,
+} from 'firebase/auth';
 import { UserManagementService } from './user-management.service';
 import { PHONE_CONSTANTS, AUTH_KEYS } from '@zitro/utils';
 import { getApp, getApps } from 'firebase/app';
@@ -14,29 +20,29 @@ import { ZITRO_API_BASE_URL } from './tokens';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
+  private router = inject(Router);
+  private userManagementService = inject(UserManagementService);
+  private http = inject(HttpClient);
+  private errorHandler = inject(FirebaseErrorHandlerService);
+  private appSettingsService = inject(AppSettingsService);
+
   private auth: Auth;
-  
+
   // SMS properties
   phoneNumber = '';
   message = '';
   status = 'Ready to send SMS';
   loading = false;
-  private apiUrl: string = '';
-  private authorization: string = '';
+  private apiUrl = '';
+  private authorization = '';
   private smsConfigsInitialized = false;
-  
+
   // Cache for test phone numbers
   private testPhoneNumbersCache: string[] | null = null;
 
   private readonly baseUrl = inject(ZITRO_API_BASE_URL);
 
-  constructor(
-    private router: Router,
-    private userManagementService: UserManagementService,
-    private http: HttpClient,
-    private errorHandler: FirebaseErrorHandlerService,
-    private appSettingsService: AppSettingsService
-  ) {
+  constructor() {
     // Prefer the already-initialized default Firebase app (created by AngularFire or manual init).
     try {
       if (getApps && getApps().length) {
@@ -49,7 +55,7 @@ export class FirebaseAuthService {
       // Fallback to default getAuth() if anything goes wrong
       this.auth = getAuth();
     }
-    
+
     // Initialize SMS configs from Firebase
     this.initializeSmsConfigs();
   }
@@ -67,7 +73,9 @@ export class FirebaseAuthService {
         this.smsConfigsInitialized = true;
         console.log('✅ SMS configs initialized from Firebase');
       } else {
-        console.warn('⚠️ SMS configs not found in Firebase, using default values');
+        console.warn(
+          '⚠️ SMS configs not found in Firebase, using default values',
+        );
       }
     } catch (error) {
       console.error('❌ Failed to initialize SMS configs:', error);
@@ -82,7 +90,7 @@ export class FirebaseAuthService {
   // Send OTP to phone number via backend API (POST /api/auth/otp/request)
   async sendOtp(phone: string): Promise<void> {
     await firstValueFrom(
-      this.http.post<void>(`${this.baseUrl}/api/auth/otp/request`, { phone })
+      this.http.post<void>(`${this.baseUrl}/api/auth/otp/request`, { phone }),
     );
   }
 
@@ -101,34 +109,41 @@ export class FirebaseAuthService {
     const verifyResponse = await firstValueFrom(
       this.http.post<{ firebaseCustomToken: string }>(
         `${this.baseUrl}/api/auth/otp/verify`,
-        { phone, otp }
-      )
+        { phone, otp },
+      ),
     );
     const { firebaseCustomToken } = verifyResponse;
 
     // 2. Exchange custom token for Firebase credential
-    const credential = await signInWithCustomToken(this.auth, firebaseCustomToken);
+    const credential = await signInWithCustomToken(
+      this.auth,
+      firebaseCustomToken,
+    );
 
     // 3. Get Firebase ID token
     const firebaseIdToken = await credential.user.getIdToken();
 
     // 4. Exchange Firebase ID token for app JWT
     const appResponse = await firstValueFrom(
-      this.http.post<{ appToken: string }>(
-        `${this.baseUrl}/api/auth/verify`,
-        { FirebaseIdToken: firebaseIdToken }
-      )
+      this.http.post<{ appToken: string }>(`${this.baseUrl}/api/auth/verify`, {
+        FirebaseIdToken: firebaseIdToken,
+      }),
     );
 
     // 5. Persist session
     localStorage.setItem(AUTH_KEYS.TOKEN, appResponse.appToken);
     localStorage.setItem(AUTH_KEYS.IS_GUEST, 'false');
     localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, phone);
-    localStorage.setItem(AUTH_KEYS.LOGGED_IN_DATE_TIME, new Date().toISOString());
+    localStorage.setItem(
+      AUTH_KEYS.LOGGED_IN_DATE_TIME,
+      new Date().toISOString(),
+    );
 
     // 6. Update Firestore user profile
     try {
-      await this.userManagementService.createOrUpdateUserEntry(credential.user as any);
+      await this.userManagementService.createOrUpdateUserEntry(
+        credential.user as any,
+      );
     } catch {
       // Non-fatal — profile sync failure should not block sign-in
     }
@@ -138,34 +153,48 @@ export class FirebaseAuthService {
 
   // Completes session after Firebase Phone Auth (reCAPTCHA path).
   // Fetches the app JWT from the backend and stores all auth keys in localStorage.
-  async completeSignIn(credential: UserCredential, phone: string): Promise<void> {
+  async completeSignIn(
+    credential: UserCredential,
+    phone: string,
+  ): Promise<void> {
     const firebaseIdToken = await credential.user.getIdToken();
     const appResponse = await firstValueFrom(
-      this.http.post<{ appToken: string }>(
-        `${this.baseUrl}/api/auth/verify`,
-        { FirebaseIdToken: firebaseIdToken }
-      )
+      this.http.post<{ appToken: string }>(`${this.baseUrl}/api/auth/verify`, {
+        FirebaseIdToken: firebaseIdToken,
+      }),
     );
     localStorage.setItem(AUTH_KEYS.TOKEN, appResponse.appToken);
     localStorage.setItem(AUTH_KEYS.IS_GUEST, 'false');
     localStorage.setItem(AUTH_KEYS.CURRENT_USER_PHONE, phone);
-    localStorage.setItem(AUTH_KEYS.LOGGED_IN_DATE_TIME, new Date().toISOString());
+    localStorage.setItem(
+      AUTH_KEYS.LOGGED_IN_DATE_TIME,
+      new Date().toISOString(),
+    );
     try {
-      await this.userManagementService.createOrUpdateUserEntry(credential.user as any);
+      await this.userManagementService.createOrUpdateUserEntry(
+        credential.user as any,
+      );
     } catch {
       // Non-fatal
     }
   }
 
   private sendSMSViaFast2SMSQuickSMSApi(): Promise<Fast2SmsResponse> {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       if (!this.phoneNumber || !this.message) {
         this.status = '❌ Please enter phone number and message';
-        const validationError = new Error('Phone number and message are required');
-        this.errorHandler.handleAndLogError(validationError, 'Fast2SMS-Validation', {
-          phoneNumber: this.phoneNumber ? 'present' : 'missing',
-          message: this.message ? 'present' : 'missing'
-        });
+        const validationError = new Error(
+          'Phone number and message are required',
+        );
+        this.errorHandler.handleAndLogError(
+          validationError,
+          'Fast2SMS-Validation',
+          {
+            phoneNumber: this.phoneNumber ? 'present' : 'missing',
+            message: this.message ? 'present' : 'missing',
+          },
+        );
         reject(validationError);
         return;
       }
@@ -179,7 +208,7 @@ export class FirebaseAuthService {
       this.status = 'Sending SMS...';
 
       const headers = {
-        'accept': 'application/json'
+        accept: 'application/json',
       };
 
       const params = {
@@ -187,120 +216,159 @@ export class FirebaseAuthService {
         message: this.message,
         route: 'q',
         numbers: this.phoneNumber,
-        sms_details: '1'
+        sms_details: '1',
       };
 
-      this.http.get<Fast2SmsResponse>(this.apiUrl, { headers, params }).subscribe({
-        next: async (response: Fast2SmsResponse) => {
-          // Check if response is successful
-          if (isFast2SmsSuccess(response)) {
-            this.status = '✅ SMS sent successfully!';
-            this.loading = false;
-            resolve(response);
-          } else {
-            // Handle error responses
-            this.loading = false;
-            let errorMessage = 'Unknown error';
-            let errorCode = 'unknown';
-            
-            if ('status_code' in response) {
-              switch (response.status_code) {
-                case 999:
-                  errorCode = 'fast2sms-activation-required';
-                  errorMessage = 'API activation required: ' + response.message;
-                  this.status = '❌ API needs activation';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 999, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                case 401:
-                  errorCode = 'fast2sms-auth-error';
-                  errorMessage = 'Invalid authorization key: ' + response.message;
-                  this.status = '❌ Invalid API key';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 401, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                case 400:
-                  errorCode = 'fast2sms-bad-request';
-                  errorMessage = 'Bad request: ' + response.message;
-                  this.status = '❌ Invalid parameters';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 400, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                case 412:
-                  errorCode = 'fast2sms-dlt-error';
-                  errorMessage = 'DLT template error: ' + response.message;
-                  this.status = '❌ DLT template issue';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 412, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                case 402:
-                  errorCode = 'fast2sms-insufficient-balance';
-                  errorMessage = 'Insufficient balance: ' + response.message;
-                  this.status = '❌ Low balance';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 402, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                case 429:
-                  errorCode = 'fast2sms-rate-limit';
-                  errorMessage = 'Rate limit exceeded: ' + response.message;
-                  this.status = '❌ Too many requests';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 429, phoneNumber: this.phoneNumber, response }
-                  );
-                  break;
-                default:
-                  errorCode = 'fast2sms-unknown';
-                  errorMessage = 'message' in response ? (response as any).message : 'Unknown error';
-                  this.status = '❌ SMS failed';
-                  await this.errorHandler.handleAndLogError(
-                    { code: errorCode, message: errorMessage },
-                    'Fast2SMS-API',
-                    { status_code: 'status_code' in response ? (response as any).status_code : 'unknown', phoneNumber: this.phoneNumber, response }
-                  );
+      this.http
+        .get<Fast2SmsResponse>(this.apiUrl, { headers, params })
+        .subscribe({
+          next: async (response: Fast2SmsResponse) => {
+            // Check if response is successful
+            if (isFast2SmsSuccess(response)) {
+              this.status = '✅ SMS sent successfully!';
+              this.loading = false;
+              resolve(response);
+            } else {
+              // Handle error responses
+              this.loading = false;
+              let errorMessage = 'Unknown error';
+              let errorCode = 'unknown';
+
+              if ('status_code' in response) {
+                switch (response.status_code) {
+                  case 999:
+                    errorCode = 'fast2sms-activation-required';
+                    errorMessage =
+                      'API activation required: ' + response.message;
+                    this.status = '❌ API needs activation';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 999,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  case 401:
+                    errorCode = 'fast2sms-auth-error';
+                    errorMessage =
+                      'Invalid authorization key: ' + response.message;
+                    this.status = '❌ Invalid API key';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 401,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  case 400:
+                    errorCode = 'fast2sms-bad-request';
+                    errorMessage = 'Bad request: ' + response.message;
+                    this.status = '❌ Invalid parameters';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 400,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  case 412:
+                    errorCode = 'fast2sms-dlt-error';
+                    errorMessage = 'DLT template error: ' + response.message;
+                    this.status = '❌ DLT template issue';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 412,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  case 402:
+                    errorCode = 'fast2sms-insufficient-balance';
+                    errorMessage = 'Insufficient balance: ' + response.message;
+                    this.status = '❌ Low balance';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 402,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  case 429:
+                    errorCode = 'fast2sms-rate-limit';
+                    errorMessage = 'Rate limit exceeded: ' + response.message;
+                    this.status = '❌ Too many requests';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code: 429,
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                    break;
+                  default:
+                    errorCode = 'fast2sms-unknown';
+                    errorMessage =
+                      'message' in response
+                        ? (response as any).message
+                        : 'Unknown error';
+                    this.status = '❌ SMS failed';
+                    await this.errorHandler.handleAndLogError(
+                      { code: errorCode, message: errorMessage },
+                      'Fast2SMS-API',
+                      {
+                        status_code:
+                          'status_code' in response
+                            ? (response as any).status_code
+                            : 'unknown',
+                        phoneNumber: this.phoneNumber,
+                        response,
+                      },
+                    );
+                }
               }
+
+              console.error('Fast2SMS Error:', errorMessage, response);
+              reject(new Error(errorMessage));
             }
-            
-            console.error('Fast2SMS Error:', errorMessage, response);
-            reject(new Error(errorMessage));
-          }
-        },
-        error: async (error) => {
-          console.error('HTTP Error:', error);
-          this.status = '❌ Failed to send SMS: ' + (error.message || 'Network error');
-          this.loading = false;
-          
-          // Log HTTP/Network errors
-          await this.errorHandler.handleAndLogError(
-            error,
-            'Fast2SMS-Network',
-            {
-              phoneNumber: this.phoneNumber,
-              httpStatus: error.status,
-              httpStatusText: error.statusText,
-              url: this.apiUrl
-            }
-          );
-          
-          reject(error);
-        }
-      });
+          },
+          error: async (error) => {
+            console.error('HTTP Error:', error);
+            this.status =
+              '❌ Failed to send SMS: ' + (error.message || 'Network error');
+            this.loading = false;
+
+            // Log HTTP/Network errors
+            await this.errorHandler.handleAndLogError(
+              error,
+              'Fast2SMS-Network',
+              {
+                phoneNumber: this.phoneNumber,
+                httpStatus: error.status,
+                httpStatusText: error.statusText,
+                url: this.apiUrl,
+              },
+            );
+
+            reject(error);
+          },
+        });
     });
   }
 
@@ -308,7 +376,7 @@ export class FirebaseAuthService {
   continueAsGuest(): void {
     // Generate a unique guest identifier
     const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Set guest mode in localStorage
     localStorage.setItem(AUTH_KEYS.IS_GUEST, 'true');
     localStorage.setItem(AUTH_KEYS.GUEST_ID, guestId);
@@ -338,7 +406,7 @@ export class FirebaseAuthService {
   // Sign out (including guest mode)
   signOut(): void {
     this.clearUserAuthCache();
-    
+
     // Clear user profile from the subject
     this.userManagementService.clearUserProfile();
     this.auth.signOut();
@@ -367,13 +435,16 @@ export class FirebaseAuthService {
     try {
       // Fetch from Firebase
       const testNumbers = await this.appSettingsService.getTestPhoneNumbers();
-      
+
       // Cache the result
       this.testPhoneNumbersCache = testNumbers;
-      
+
       return testNumbers;
     } catch (error) {
-      console.error('Error fetching test phone numbers, using empty array:', error);
+      console.error(
+        'Error fetching test phone numbers, using empty array:',
+        error,
+      );
       // Cache empty array to prevent repeated failed fetches
       this.testPhoneNumbersCache = [];
       return [];

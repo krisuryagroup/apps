@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { ValidatorsUtil } from '@zitro/utils';
@@ -10,15 +10,16 @@ import { FirebaseAuthService } from '@zitro/services';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './forgot-password.component.html',
-  styleUrls: ['./forgot-password.component.scss']
+  styleUrls: ['./forgot-password.component.scss'],
 })
 export class ForgotPasswordComponent {
+  private authService = inject(FirebaseAuthService);
+  private router = inject(Router);
+
   email = '';
   emailError = '';
   isSubmitted = false;
   successMessage = '';
-
-  constructor(private authService: FirebaseAuthService, private router: Router) {}
 
   validateEmail() {
     this.emailError = ValidatorsUtil.getEmailValidationError(this.email);
@@ -29,7 +30,7 @@ export class ForgotPasswordComponent {
     if (this.validateEmail()) {
       this.isSubmitted = true;
       this.successMessage = `Password reset link has been sent to ${this.email}`;
-      
+
       // Here you would typically call a service to send password reset email
       // For now, just show success message
       console.log('Password reset requested for:', this.email);

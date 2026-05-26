@@ -1,10 +1,18 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PricingBreakdown } from '@zitro/models';
 
 /**
  * PricingSummaryComponent - Reusable component for displaying order pricing breakdown
- * 
+ *
  * Can be used in:
  * - Cart page
  * - Checkout page
@@ -16,14 +24,14 @@ import { PricingBreakdown } from '@zitro/models';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './pricing-summary.component.html',
-  styleUrls: ['./pricing-summary.component.scss']
+  styleUrls: ['./pricing-summary.component.scss'],
 })
 export class PricingSummaryComponent implements OnInit, OnChanges {
   /**
    * Pricing breakdown data
    */
   @Input() pricing: PricingBreakdown | null = null;
-  
+
   /**
    * Display variant
    * - cart: Full display with all details
@@ -31,38 +39,38 @@ export class PricingSummaryComponent implements OnInit, OnChanges {
    * - confirmation: Read-only display for order confirmation
    */
   @Input() variant: 'cart' | 'checkout' | 'confirmation' = 'cart';
-  
+
   /**
    * Show or hide coupon input section
    */
-  @Input() showCouponSection: boolean = true;
-  
+  @Input() showCouponSection = true;
+
   /**
    * Show or hide the header
    */
-  @Input() showHeader: boolean = true;
-  
+  @Input() showHeader = true;
+
   /**
    * Custom header title
    */
-  @Input() headerTitle: string = 'Bill Details';
-  
+  @Input() headerTitle = 'Bill Details';
+
   /**
    * Show expanded view by default
    */
-  @Input() expandedByDefault: boolean = true;
-  
+  @Input() expandedByDefault = true;
+
   /**
    * Event emitted when user wants to apply/change coupon
    */
   @Output() couponAction = new EventEmitter<void>();
-  
+
   /**
    * Event emitted when user removes coupon
    */
   @Output() removeCoupon = new EventEmitter<void>();
-  
-  isExpanded: boolean = true;
+
+  isExpanded = true;
 
   ngOnInit(): void {
     this.isExpanded = this.expandedByDefault;

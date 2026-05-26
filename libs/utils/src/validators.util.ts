@@ -4,7 +4,6 @@
 import { VALIDATION_MESSAGES } from './app.constants';
 
 export class ValidatorsUtil {
-
   /**
    * Validate email format
    * @param email Email string to validate
@@ -111,7 +110,7 @@ export class ValidatorsUtil {
    * @param minLength Minimum length requirement (default: 6)
    * @returns boolean - true if valid, false if invalid
    */
-  static isValidPassword(password: string, minLength: number = 6): boolean {
+  static isValidPassword(password: string, minLength = 6): boolean {
     if (!password || password.length === 0) {
       return false;
     }
@@ -125,13 +124,16 @@ export class ValidatorsUtil {
    * @param minLength Minimum length requirement (default: 6)
    * @returns string - error message or empty string if valid
    */
-  static getPasswordValidationError(password: string, minLength: number = 6): string {
+  static getPasswordValidationError(password: string, minLength = 6): string {
     if (!password || password.length === 0) {
       return VALIDATION_MESSAGES.PASSWORD_REQUIRED;
     }
 
     if (password.length < minLength) {
-      return VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH.replace('{0}', minLength.toString());
+      return VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH.replace(
+        '{0}',
+        minLength.toString(),
+      );
     }
 
     return '';

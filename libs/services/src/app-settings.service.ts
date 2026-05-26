@@ -1,20 +1,34 @@
-import { Injectable, Injector } from '@angular/core';
-import { Firestore, doc, getDoc, collection, query, getDocs, limit, updateDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Injectable, Injector, inject } from '@angular/core';
+import {
+  Firestore,
+  doc,
+  getDoc,
+  collection,
+  query,
+  getDocs,
+  limit,
+  updateDoc,
+  serverTimestamp,
+} from '@angular/fire/firestore';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { ProductsService } from './products.service';
 import { CategoriesService } from './categories.service';
 import { Router } from '@angular/router';
 import { CacheManagerService } from './cache-manager.service';
-import { CacheManagementConfig, AppSettingsCacheConfig, OrderCancellationMessages } from '@zitro/models';
-import { 
-  FIREBASE_COLLECTIONS, 
+import {
+  CacheManagementConfig,
+  AppSettingsCacheConfig,
+  OrderCancellationMessages,
+} from '@zitro/models';
+import {
+  FIREBASE_COLLECTIONS,
   FIREBASE_DOCUMENTS,
-  FIREBASE_SUBCOLLECTIONS, 
-  APP_SETTINGS_CACHE, 
-  AUTH_KEYS, 
+  FIREBASE_SUBCOLLECTIONS,
+  APP_SETTINGS_CACHE,
+  AUTH_KEYS,
   CACHE_KEYS,
   UI_CONSTANTS,
-  SUCCESS_MESSAGES 
+  SUCCESS_MESSAGES,
 } from '@zitro/utils';
 import { Checkout } from '@zitro/models';
 import { AuthConfig, DEFAULT_AUTH_CONFIG } from '@zitro/models';
@@ -40,9 +54,16 @@ export interface SmsConfigs {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AppSettingsService {
+  private firestore = inject(Firestore);
+  private injector = inject(Injector);
+  private productsService = inject(ProductsService);
+  private categoriesService = inject(CategoriesService);
+  private router = inject(Router);
+  private cacheManager = inject(CacheManagerService);
+
   private isInitialized = false;
   private isInitializing = false;
   private initializationPromise: Promise<void> | null = null;
@@ -52,20 +73,11 @@ export class AppSettingsService {
   private static readonly CACHE_CLEAR_COOLDOWN = 2 * 60 * 1000; // 2 minutes
   private _authService: FirebaseAuthService | null = null;
   private _fcmTokenService: FcmTokenService | null = null;
-  
+
   // Cache checkout settings to avoid repeated Firebase calls
   private _checkoutSettingsCache: Checkout | null = null;
-  private _checkoutSettingsCacheTime: number = 0;
-  private static readonly CHECKOUT_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-
-  constructor(
-    private firestore: Firestore,
-    private injector: Injector,
-    private productsService: ProductsService,
-    private categoriesService: CategoriesService,
-    private router: Router,
-    private cacheManager: CacheManagerService
-  ) {}
+  private _checkoutSettingsCacheTime = 0;
+  private static readonly CHECKOUT_CACHE_DURATION = 10 * 60 * 1000;
 
   // Lazy getter for auth service to avoid circular dependency during APP_INITIALIZER
   private get authService(): FirebaseAuthService {
@@ -87,7 +99,9 @@ export class AppSettingsService {
    * Generate restaurant-specific cache key by appending restaurant ID
    */
   private getRestaurantSpecificCacheKey(baseKey: string): string {
-    const restaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
+    const restaurantId =
+      localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+      'default';
     return `${baseKey}_${restaurantId}`;
   }
 
@@ -104,11 +118,13 @@ export class AppSettingsService {
       CACHE_KEYS.CART_STORAGE,
       CACHE_KEYS.ORDER_HISTORY_CACHE,
       APP_SETTINGS_CACHE.LAST_CACHE_CLEAR,
-      APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR
+      APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR,
     ];
-    
-    const restaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
-    return baseKeys.map(key => `${key}_${restaurantId}`);
+
+    const restaurantId =
+      localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+      'default';
+    return baseKeys.map((key) => `${key}_${restaurantId}`);
   }
 
   /**
@@ -117,13 +133,19 @@ export class AppSettingsService {
    */
   async getAnalyticConfigs(): Promise<AnalyticsConfigModel | null> {
     try {
-      const docRef = doc(this.firestore, 'appSettings', 'restaurantDetails', 'onlineorders', 'analyticConfigs');
+      const docRef = doc(
+        this.firestore,
+        'appSettings',
+        'restaurantDetails',
+        'onlineorders',
+        'analyticConfigs',
+      );
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         return docSnap.data() as AnalyticsConfigModel;
       }
-      
+
       console.warn('⚠️ analyticConfigs document not found');
       return null;
     } catch (error) {
@@ -139,40 +161,57 @@ export class AppSettingsService {
   async getCheckoutSettings(): Promise<Checkout> {
     // Return cached value if available and not expired
     const now = Date.now();
-    if (this._checkoutSettingsCache && (now - this._checkoutSettingsCacheTime) < AppSettingsService.CHECKOUT_CACHE_DURATION) {
+    if (
+      this._checkoutSettingsCache &&
+      now - this._checkoutSettingsCacheTime <
+        AppSettingsService.CHECKOUT_CACHE_DURATION
+    ) {
       return this._checkoutSettingsCache;
     }
-    
+
     try {
       const checkoutDocRef = doc(
         this.firestore,
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        'checkout'
+        'checkout',
       );
       const checkoutSnap = await getDoc(checkoutDocRef);
       if (checkoutSnap.exists()) {
         const data = checkoutSnap.data();
 
         const settings = {
-          deliveryFee: typeof data['deliveryFee'] === 'number' ? data['deliveryFee'] : 40,
-          packagingChargesPerItem: typeof data['packagingChargesPerItem'] === 'number' ? data['packagingChargesPerItem'] : 10,
-          openTime: data['openTime'] || "10:00",
-          closeTime: data['closeTime'] || "21:00",
-          orderCancellationTimeLimit: typeof data['orderCancellationTimeLimit'] === 'number' ? data['orderCancellationTimeLimit'] : 90,
+          deliveryFee:
+            typeof data['deliveryFee'] === 'number' ? data['deliveryFee'] : 40,
+          packagingChargesPerItem:
+            typeof data['packagingChargesPerItem'] === 'number'
+              ? data['packagingChargesPerItem']
+              : 10,
+          openTime: data['openTime'] || '10:00',
+          closeTime: data['closeTime'] || '21:00',
+          orderCancellationTimeLimit:
+            typeof data['orderCancellationTimeLimit'] === 'number'
+              ? data['orderCancellationTimeLimit']
+              : 90,
           orderCancellationMessages: data['orderCancellationMessages'],
-          orderCancellationConfig: data['orderCancellationConfig']
+          orderCancellationConfig: data['orderCancellationConfig'],
         } as Checkout;
-        
+
         // Cache the settings
         this._checkoutSettingsCache = settings;
         this._checkoutSettingsCacheTime = now;
-        
+
         return settings;
       }
-      
-      const defaultSettings = { deliveryFee: 0, packagingChargesPerItem: 0, openTime: "10:00", closeTime: "21:00", orderCancellationTimeLimit: 90 } as Checkout;
+
+      const defaultSettings = {
+        deliveryFee: 0,
+        packagingChargesPerItem: 0,
+        openTime: '10:00',
+        closeTime: '21:00',
+        orderCancellationTimeLimit: 90,
+      } as Checkout;
       this._checkoutSettingsCache = defaultSettings;
       this._checkoutSettingsCacheTime = now;
       return defaultSettings;
@@ -182,7 +221,13 @@ export class AppSettingsService {
       if (this._checkoutSettingsCache) {
         return this._checkoutSettingsCache;
       }
-      return { deliveryFee: 0, packagingChargesPerItem: 0, openTime: "10:00", closeTime: "21:00", orderCancellationTimeLimit: 90 } as Checkout;
+      return {
+        deliveryFee: 0,
+        packagingChargesPerItem: 0,
+        openTime: '10:00',
+        closeTime: '21:00',
+        orderCancellationTimeLimit: 90,
+      } as Checkout;
     }
   }
 
@@ -197,12 +242,14 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const appSettingsSnap = await getDoc(appSettingsDocRef);
       if (appSettingsSnap.exists()) {
         const data = appSettingsSnap.data();
-        return typeof data['deliveryTime'] === 'number' ? data['deliveryTime'] : 45; // Default 45 minutes
+        return typeof data['deliveryTime'] === 'number'
+          ? data['deliveryTime']
+          : 45; // Default 45 minutes
       }
       return 45; // Fallback
     } catch (error) {
@@ -215,14 +262,16 @@ export class AppSettingsService {
    * Fetch category configs from Firestore
    * Path: appSettings/restaurantDetails/onlineorders/appSettings
    */
-  async getCategoryConfigs(configName: string = 'categoryConfigs'): Promise<any | null> {
+  async getCategoryConfigs(
+    configName = 'categoryConfigs',
+  ): Promise<any | null> {
     try {
       const appSettingsDocRef = doc(
         this.firestore,
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const appSettingsSnap = await getDoc(appSettingsDocRef);
       if (appSettingsSnap.exists()) {
@@ -251,7 +300,7 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const appSettingsSnap = await getDoc(appSettingsDocRef);
       if (appSettingsSnap.exists()) {
@@ -276,14 +325,14 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const contactSnap = await getDoc(contactDocRef);
       if (contactSnap.exists()) {
         const data = contactSnap.data();
         return {
           contactEmail: data['contactEmail'] || '',
-          contactPhone: data['contactPhone'] || ''
+          contactPhone: data['contactPhone'] || '',
         };
       } else {
         console.warn('Contact info document not found, using defaults');
@@ -291,10 +340,10 @@ export class AppSettingsService {
     } catch (error) {
       console.error('Error fetching contact info:', error);
     }
-    
+
     return {
-        contactEmail: '',
-        contactPhone: ''
+      contactEmail: '',
+      contactPhone: '',
     };
   }
 
@@ -310,33 +359,41 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const appSettingsSnap = await getDoc(appSettingsDocRef);
       if (appSettingsSnap.exists()) {
         const data = appSettingsSnap.data();
         const testNumbers = data['testPhoneNumbers'];
-        
+
         // Validate that it's an array and convert all values to strings
         if (Array.isArray(testNumbers) && testNumbers.length > 0) {
           // Convert all numbers to strings (handle both string and number types)
           const convertedNumbers = testNumbers
-            .map(num => String(num))
-            .filter(num => num && num.trim().length > 0);
-          
+            .map((num) => String(num))
+            .filter((num) => num && num.trim().length > 0);
+
           if (convertedNumbers.length > 0) {
-            console.log('✅ Test phone numbers fetched from Firebase:', convertedNumbers);
+            console.log(
+              '✅ Test phone numbers fetched from Firebase:',
+              convertedNumbers,
+            );
             return convertedNumbers;
           }
         }
         console.warn('⚠️ Test phone numbers field is invalid or empty');
       } else {
-        console.warn('⚠️ App settings document not found for test phone numbers');
+        console.warn(
+          '⚠️ App settings document not found for test phone numbers',
+        );
       }
     } catch (error) {
-      console.error('❌ Error fetching test phone numbers from Firebase:', error);
+      console.error(
+        '❌ Error fetching test phone numbers from Firebase:',
+        error,
+      );
     }
-    
+
     // Return empty array if fetch fails or data is invalid
     return [];
   }
@@ -353,35 +410,63 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        'auh'
+        'auh',
       );
       const authSnap = await getDoc(authDocRef);
-      
+
       if (authSnap.exists()) {
         const data = authSnap.data();
         console.log('✅ Auth config fetched from Firebase:', data);
-        
+
         // Merge fetched data with defaults to ensure all fields exist
         return {
           sms: {
-            isFast2SmsPhoneAuthentication: data['sms']?.['isFast2SmsPhoneAuthentication'] ?? DEFAULT_AUTH_CONFIG.sms.isFast2SmsPhoneAuthentication,
-            isFirebasePhoneAuthentication: data['sms']?.['isFirebasePhoneAuthentication'] ?? DEFAULT_AUTH_CONFIG.sms.isFirebasePhoneAuthentication,
-            resendOTPAllowed: data['sms']?.['resendOTPAllowed'] ?? DEFAULT_AUTH_CONFIG.sms.resendOTPAllowed,
-            resendOTPTime: data['sms']?.['resendOTPTime'] ?? DEFAULT_AUTH_CONFIG.sms.resendOTPTime
+            isFast2SmsPhoneAuthentication:
+              data['sms']?.['isFast2SmsPhoneAuthentication'] ??
+              DEFAULT_AUTH_CONFIG.sms.isFast2SmsPhoneAuthentication,
+            isFirebasePhoneAuthentication:
+              data['sms']?.['isFirebasePhoneAuthentication'] ??
+              DEFAULT_AUTH_CONFIG.sms.isFirebasePhoneAuthentication,
+            resendOTPAllowed:
+              data['sms']?.['resendOTPAllowed'] ??
+              DEFAULT_AUTH_CONFIG.sms.resendOTPAllowed,
+            resendOTPTime:
+              data['sms']?.['resendOTPTime'] ??
+              DEFAULT_AUTH_CONFIG.sms.resendOTPTime,
           },
           ui: {
-            guestButtonLabel: data['ui']?.['guestButtonLabel'] ?? DEFAULT_AUTH_CONFIG.ui.guestButtonLabel,
-            guestDescription: data['ui']?.['guestDescription'] ?? DEFAULT_AUTH_CONFIG.ui.guestDescription,
+            guestButtonLabel:
+              data['ui']?.['guestButtonLabel'] ??
+              DEFAULT_AUTH_CONFIG.ui.guestButtonLabel,
+            guestDescription:
+              data['ui']?.['guestDescription'] ??
+              DEFAULT_AUTH_CONFIG.ui.guestDescription,
             header: data['ui']?.['header'] ?? DEFAULT_AUTH_CONFIG.ui.header,
-            headerDescription: data['ui']?.['headerDescription'] ?? DEFAULT_AUTH_CONFIG.ui.headerDescription,
-            sendOTPButtonLabel: data['ui']?.['sendOTPButtonLabel'] ?? DEFAULT_AUTH_CONFIG.ui.sendOTPButtonLabel,
-            sendOTPPlaceholder: data['ui']?.['sendOTPPlaceholder'] ?? DEFAULT_AUTH_CONFIG.ui.sendOTPPlaceholder,
-            validateOTPButtonLabel: data['ui']?.['validateOTPButtonLabel'] ?? DEFAULT_AUTH_CONFIG.ui.validateOTPButtonLabel,
-            verifyOTPPlaceholder: data['ui']?.['verifyOTPPlaceholder'] ?? DEFAULT_AUTH_CONFIG.ui.verifyOTPPlaceholder,
-            otpSentSuccessMessage: data['ui']?.['otpSentSuccessMessage'] ?? DEFAULT_AUTH_CONFIG.ui.otpSentSuccessMessage,
-            otpSentFailureMessage: data['ui']?.['otpSentFailureMessage'] ?? DEFAULT_AUTH_CONFIG.ui.otpSentFailureMessage,
-            resendOTPLabel: data['ui']?.['resendOTPLabel'] ?? DEFAULT_AUTH_CONFIG.ui.resendOTPLabel
-          }
+            headerDescription:
+              data['ui']?.['headerDescription'] ??
+              DEFAULT_AUTH_CONFIG.ui.headerDescription,
+            sendOTPButtonLabel:
+              data['ui']?.['sendOTPButtonLabel'] ??
+              DEFAULT_AUTH_CONFIG.ui.sendOTPButtonLabel,
+            sendOTPPlaceholder:
+              data['ui']?.['sendOTPPlaceholder'] ??
+              DEFAULT_AUTH_CONFIG.ui.sendOTPPlaceholder,
+            validateOTPButtonLabel:
+              data['ui']?.['validateOTPButtonLabel'] ??
+              DEFAULT_AUTH_CONFIG.ui.validateOTPButtonLabel,
+            verifyOTPPlaceholder:
+              data['ui']?.['verifyOTPPlaceholder'] ??
+              DEFAULT_AUTH_CONFIG.ui.verifyOTPPlaceholder,
+            otpSentSuccessMessage:
+              data['ui']?.['otpSentSuccessMessage'] ??
+              DEFAULT_AUTH_CONFIG.ui.otpSentSuccessMessage,
+            otpSentFailureMessage:
+              data['ui']?.['otpSentFailureMessage'] ??
+              DEFAULT_AUTH_CONFIG.ui.otpSentFailureMessage,
+            resendOTPLabel:
+              data['ui']?.['resendOTPLabel'] ??
+              DEFAULT_AUTH_CONFIG.ui.resendOTPLabel,
+          },
         };
       } else {
         console.warn('⚠️ Auth config document not found, using defaults');
@@ -389,7 +474,7 @@ export class AppSettingsService {
     } catch (error) {
       console.error('❌ Error fetching auth config from Firebase:', error);
     }
-    
+
     // Return default config if fetch fails
     return DEFAULT_AUTH_CONFIG;
   }
@@ -406,22 +491,22 @@ export class AppSettingsService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
       const appSettingsSnap = await getDoc(appSettingsDocRef);
       if (appSettingsSnap.exists()) {
         const data = appSettingsSnap.data();
         const smsConfigs = data['smsConfigs'];
-        
+
         if (smsConfigs && typeof smsConfigs === 'object') {
           const apiUrl = smsConfigs['apiUrl'];
           const authKey = smsConfigs['authKey'];
-          
+
           if (apiUrl && authKey) {
             console.log('✅ SMS configs fetched from Firebase');
             return {
               apiUrl: String(apiUrl),
-              authKey: String(authKey)
+              authKey: String(authKey),
             };
           } else {
             console.warn('⚠️ SMS configs missing apiUrl or authKey');
@@ -435,18 +520,17 @@ export class AppSettingsService {
     } catch (error) {
       console.error('❌ Error fetching SMS configs from Firebase:', error);
     }
-    
+
     return null;
   }
-  
-  
+
   /**
    * Main initialization method for APP_INITIALIZER
    * Ensures settings are checked only once during app startup
    */
   async initializeAndCheckSettings(): Promise<void> {
     console.log('🚀 App Settings Service: Initializing...');
-    
+
     // Prevent multiple simultaneous initializations
     if (this.isInitialized) {
       console.log('✅ App Settings Service: Already initialized, skipping');
@@ -465,7 +549,9 @@ export class AppSettingsService {
       await this.initializationPromise;
       this.isInitialized = true;
       this.lastCheckTimestamp = Date.now();
-      console.log('✅ App Settings Service: Initialization completed successfully');
+      console.log(
+        '✅ App Settings Service: Initialization completed successfully',
+      );
     } catch (error) {
       console.error('❌ App Settings Service: Failed to initialize:', error);
       // Don't block app initialization on settings failure
@@ -485,7 +571,9 @@ export class AppSettingsService {
 
     // Respect cooldown period
     if (timeSinceLastCheck < AppSettingsService.CHECK_COOLDOWN) {
-      console.log(`Settings check cooldown active. Try again in ${Math.ceil((AppSettingsService.CHECK_COOLDOWN - timeSinceLastCheck) / 1000)} seconds.`);
+      console.log(
+        `Settings check cooldown active. Try again in ${Math.ceil((AppSettingsService.CHECK_COOLDOWN - timeSinceLastCheck) / 1000)} seconds.`,
+      );
       return;
     }
 
@@ -498,15 +586,17 @@ export class AppSettingsService {
    */
   private async performSettingsCheck(): Promise<void> {
     try {
-      console.log('🔍 App Settings Service: Fetching settings from Firebase...');
+      console.log(
+        '🔍 App Settings Service: Fetching settings from Firebase...',
+      );
       const settings = await this.getAppSettings();
-      
+
       if (settings) {
         // Update cache manager with new configuration
         if (settings.cacheManagement) {
           this.cacheManager.updateCacheConfig(settings.cacheManagement);
         }
-        
+
         await this.handleCacheClearRequirement(settings);
         await this.handleLoginClearRequirement(settings);
       } else {
@@ -524,41 +614,52 @@ export class AppSettingsService {
    */
   private async getAppSettings(): Promise<AppSettings | null> {
     try {
-      console.log('🔥 App Settings Service: Connecting to Firebase path:', 
-        `${FIREBASE_COLLECTIONS.APP_SETTINGS}/${FIREBASE_DOCUMENTS.APP_SETTINGS}/${FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS}`);
-      
+      console.log(
+        '🔥 App Settings Service: Connecting to Firebase path:',
+        `${FIREBASE_COLLECTIONS.APP_SETTINGS}/${FIREBASE_DOCUMENTS.APP_SETTINGS}/${FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS}`,
+      );
+
       // Create reference to the subcollection: appSettings/appSettings/onlineorders
       const subcollectionRef = collection(
-        this.firestore, 
-        FIREBASE_COLLECTIONS.APP_SETTINGS, 
-        FIREBASE_DOCUMENTS.APP_SETTINGS, 
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS
+        this.firestore,
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
+        FIREBASE_DOCUMENTS.APP_SETTINGS,
+        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
       );
-      
+
       // Get the first document from the subcollection (assuming there's only one settings document)
       const q = query(subcollectionRef, limit(1));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         const settingsDoc = querySnapshot.docs[0];
         const data = settingsDoc.data();
-        
+
         const settings: AppSettings = {
           id: settingsDoc.id,
-          isClearCacheMandatoryForOnlineOrder: data['isClearCacheMandatoryForOnlineOrder'] || false,
-          isLoginClearCacheMandatoryForOnlineOrder: data['isLoginClearCacheMandatoryForOnlineOrder'] || false,
+          isClearCacheMandatoryForOnlineOrder:
+            data['isClearCacheMandatoryForOnlineOrder'] || false,
+          isLoginClearCacheMandatoryForOnlineOrder:
+            data['isLoginClearCacheMandatoryForOnlineOrder'] || false,
           lastUpdated: this.convertFirebaseTimestamp(data['lastUpdated']),
-          cacheManagement: data['cacheManagement'] as CacheManagementConfig | undefined
+          cacheManagement: data['cacheManagement'] as
+            | CacheManagementConfig
+            | undefined,
         };
-        
+
         return settings;
       } else {
-        console.warn('⚠️ App Settings Service: No settings documents found in subcollection');
+        console.warn(
+          '⚠️ App Settings Service: No settings documents found in subcollection',
+        );
       }
-      
+
       return null;
     } catch (error) {
-      console.error('❌ App Settings Service: Error fetching app settings from subcollection:', error);
+      console.error(
+        '❌ App Settings Service: Error fetching app settings from subcollection:',
+        error,
+      );
       return null;
     }
   }
@@ -572,23 +673,23 @@ export class AppSettingsService {
     if (!timestamp) {
       return new Date().toISOString();
     }
-    
+
     try {
       // Check if it's a Firebase Timestamp object
       if (timestamp && typeof timestamp.toDate === 'function') {
         return timestamp.toDate().toISOString();
       }
-      
+
       // Check if it's already a Date object
       if (timestamp instanceof Date) {
         return timestamp.toISOString();
       }
-      
+
       // Check if it's a timestamp number
       if (typeof timestamp === 'number') {
         return new Date(timestamp).toISOString();
       }
-      
+
       // Check if it's a string
       if (typeof timestamp === 'string') {
         const date = new Date(timestamp);
@@ -596,12 +697,18 @@ export class AppSettingsService {
           return date.toISOString();
         }
       }
-      
+
       // Fallback to current time
-      console.warn('⚠️ App Settings Service: Unable to convert timestamp, using current time:', timestamp);
+      console.warn(
+        '⚠️ App Settings Service: Unable to convert timestamp, using current time:',
+        timestamp,
+      );
       return new Date().toISOString();
     } catch (error) {
-      console.error('❌ App Settings Service: Error converting timestamp:', error);
+      console.error(
+        '❌ App Settings Service: Error converting timestamp:',
+        error,
+      );
       return new Date().toISOString();
     }
   }
@@ -609,77 +716,116 @@ export class AppSettingsService {
   /**
    * Handle cache clear requirement
    */
-  private async handleCacheClearRequirement(settings: AppSettings): Promise<void> {
+  private async handleCacheClearRequirement(
+    settings: AppSettings,
+  ): Promise<void> {
     console.log('🧹 App Settings Service: Checking cache clear requirement...');
-    
+
     // Check if we're in the middle of a restaurant switch
-    const isRestaurantSwitching = sessionStorage.getItem('restaurant_switching') === 'true';
-    const restaurantSwitchTimestamp = sessionStorage.getItem('restaurant_switch_timestamp');
-    
+    const isRestaurantSwitching =
+      sessionStorage.getItem('restaurant_switching') === 'true';
+    const restaurantSwitchTimestamp = sessionStorage.getItem(
+      'restaurant_switch_timestamp',
+    );
+
     if (isRestaurantSwitching && restaurantSwitchTimestamp) {
       const switchTime = parseInt(restaurantSwitchTimestamp);
       const timeSinceSwitch = Date.now() - switchTime;
-      
+
       // If restaurant switch happened recently (within 10 seconds), skip cache clear to avoid conflicts
       if (timeSinceSwitch < 10000) {
-        console.log('🔄 App Settings Service: Restaurant switch in progress - skipping cache clear to preserve restaurant selection');
+        console.log(
+          '🔄 App Settings Service: Restaurant switch in progress - skipping cache clear to preserve restaurant selection',
+        );
         // Clear the restaurant switching flags after checking
         sessionStorage.removeItem('restaurant_switching');
         sessionStorage.removeItem('restaurant_switch_timestamp');
         return;
       }
     }
-    
+
     if (!settings.isClearCacheMandatoryForOnlineOrder) {
-      console.log('ℹ️ App Settings Service: Cache clear not required by settings');
+      console.log(
+        'ℹ️ App Settings Service: Cache clear not required by settings',
+      );
       return;
     }
 
     // Get the timestamp when we last cleared cache locally (restaurant-specific)
-    const lastCacheClearTimestamp = localStorage.getItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR));
+    const lastCacheClearTimestamp = localStorage.getItem(
+      this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR),
+    );
     const settingsTimestamp = new Date(settings.lastUpdated).getTime();
-    
+
     // If no previous cache clear timestamp exists, consider it as never cleared (0)
-    const lastLocalClearTime = lastCacheClearTimestamp ? parseInt(lastCacheClearTimestamp) : 0;
+    const lastLocalClearTime = lastCacheClearTimestamp
+      ? parseInt(lastCacheClearTimestamp)
+      : 0;
 
     console.log('📅 App Settings Service: Timestamp comparison:', {
       firebaseLastUpdated: new Date(settingsTimestamp).toISOString(),
-      localLastClearTime: lastLocalClearTime ? new Date(lastLocalClearTime).toISOString() : 'Never cleared',
+      localLastClearTime: lastLocalClearTime
+        ? new Date(lastLocalClearTime).toISOString()
+        : 'Never cleared',
       shouldClearCache: settingsTimestamp > lastLocalClearTime,
-      restaurantId: localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default'
+      restaurantId:
+        localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+        'default',
     });
 
     // If Firebase settings were updated AFTER our last local cache clear, perform cache clear
     if (settingsTimestamp > lastLocalClearTime) {
-      console.log('🚨 App Settings Service: Cache clear required - Firebase settings updated after last local clear');
-      
+      console.log(
+        '🚨 App Settings Service: Cache clear required - Firebase settings updated after last local clear',
+      );
+
       // Check if we already cleared cache in this session to prevent infinite loops
-      const sessionFlag = sessionStorage.getItem(APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG);
+      const sessionFlag = sessionStorage.getItem(
+        APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG,
+      );
       if (sessionFlag) {
-        console.log('🛑 App Settings Service: Cache already cleared in this session - skipping to prevent infinite loop');
+        console.log(
+          '🛑 App Settings Service: Cache already cleared in this session - skipping to prevent infinite loop',
+        );
         return;
       }
-      
+
       // Check if we recently cleared cache to prevent rapid multiple clears
       const now = Date.now();
       const timeSinceLastClear = now - this.lastCacheClearTimestamp;
-      
+
       if (timeSinceLastClear < AppSettingsService.CACHE_CLEAR_COOLDOWN) {
-        console.log(`⏳ App Settings Service: Cache clear cooldown active. Skipping clear (${Math.ceil((AppSettingsService.CACHE_CLEAR_COOLDOWN - timeSinceLastClear) / 1000)}s remaining)`);
+        console.log(
+          `⏳ App Settings Service: Cache clear cooldown active. Skipping clear (${Math.ceil((AppSettingsService.CACHE_CLEAR_COOLDOWN - timeSinceLastClear) / 1000)}s remaining)`,
+        );
         return;
       }
-      
+
       try {
         // Set session flag BEFORE clearing to prevent repeated attempts
-        sessionStorage.setItem(APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG, Date.now().toString());
-        
+        sessionStorage.setItem(
+          APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG,
+          Date.now().toString(),
+        );
+
         this.lastCacheClearTimestamp = now;
         await this.clearAllCacheExceptLogin();
-        
+
         // Save the FIREBASE TIMESTAMP as the cache clear timestamp ONLY AFTER successful cache clear
         // This ensures future Firebase updates will be properly detected
-        localStorage.setItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR), settingsTimestamp.toString());
-        console.log('✅ App Settings Service: Cache cleared successfully, saved Firebase timestamp:', new Date(settingsTimestamp).toISOString(), 'for restaurant:', localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default');
+        localStorage.setItem(
+          this.getRestaurantSpecificCacheKey(
+            APP_SETTINGS_CACHE.LAST_CACHE_CLEAR,
+          ),
+          settingsTimestamp.toString(),
+        );
+        console.log(
+          '✅ App Settings Service: Cache cleared successfully, saved Firebase timestamp:',
+          new Date(settingsTimestamp).toISOString(),
+          'for restaurant:',
+          localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+            'default',
+        );
       } catch (error) {
         console.error('❌ App Settings Service: Failed to clear cache:', error);
         // Clear the session flag if cache clear failed so we can try again
@@ -687,9 +833,15 @@ export class AppSettingsService {
         this.lastCacheClearTimestamp = 0;
       }
     } else {
-      console.log('✅ App Settings Service: Cache is up to date - no clear needed');
-      console.log(`   Last Firebase update: ${new Date(settingsTimestamp).toISOString()}`);
-      console.log(`   Last local cache clear: ${new Date(lastLocalClearTime).toISOString()}`);
+      console.log(
+        '✅ App Settings Service: Cache is up to date - no clear needed',
+      );
+      console.log(
+        `   Last Firebase update: ${new Date(settingsTimestamp).toISOString()}`,
+      );
+      console.log(
+        `   Last local cache clear: ${new Date(lastLocalClearTime).toISOString()}`,
+      );
     }
   }
 
@@ -698,49 +850,71 @@ export class AppSettingsService {
    * Force logout is triggered ONCE per device when enabled in Firebase
    * Admin controls this through the cache management component
    */
-  private async handleLoginClearRequirement(settings: AppSettings): Promise<void> {
+  private async handleLoginClearRequirement(
+    settings: AppSettings,
+  ): Promise<void> {
     console.log('🔐 App Settings Service: Checking login clear requirement...');
-    
+
     // **CRITICAL: Only proceed if force logout is explicitly enabled**
     if (!settings.isLoginClearCacheMandatoryForOnlineOrder) {
-      console.log('ℹ️ App Settings Service: Force logout is DISABLED in Firebase - users will stay logged in');
+      console.log(
+        'ℹ️ App Settings Service: Force logout is DISABLED in Firebase - users will stay logged in',
+      );
       return;
     }
 
-    console.log('⚠️ App Settings Service: Force logout is ENABLED in Firebase - checking if logout is needed for this device...');
-    
+    console.log(
+      '⚠️ App Settings Service: Force logout is ENABLED in Firebase - checking if logout is needed for this device...',
+    );
+
     // Check if we're in the middle of a restaurant switch
-    const isRestaurantSwitching = sessionStorage.getItem('restaurant_switching') === 'true';
-    const restaurantSwitchTimestamp = sessionStorage.getItem('restaurant_switch_timestamp');
-    
+    const isRestaurantSwitching =
+      sessionStorage.getItem('restaurant_switching') === 'true';
+    const restaurantSwitchTimestamp = sessionStorage.getItem(
+      'restaurant_switch_timestamp',
+    );
+
     if (isRestaurantSwitching && restaurantSwitchTimestamp) {
       const switchTime = parseInt(restaurantSwitchTimestamp);
       const timeSinceSwitch = Date.now() - switchTime;
-      
+
       // If restaurant switch happened recently (within 10 seconds), skip login clear to avoid conflicts
       if (timeSinceSwitch < 10000) {
-        console.log('🔄 App Settings Service: Restaurant switch in progress - skipping login clear to preserve restaurant selection');
+        console.log(
+          '🔄 App Settings Service: Restaurant switch in progress - skipping login clear to preserve restaurant selection',
+        );
         return;
       }
     }
 
     // Get the timestamp when we last cleared login locally (restaurant-specific)
-    const lastLoginClearTimestamp = localStorage.getItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR));
+    const lastLoginClearTimestamp = localStorage.getItem(
+      this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR),
+    );
     const settingsTimestamp = new Date(settings.lastUpdated).getTime();
-    
+
     // **KEY LOGIC: First time or app update - initialize without logout**
     if (!lastLoginClearTimestamp) {
-      console.log('📱 App Settings Service: First launch or new installation detected');
-      console.log('   Initializing login timestamp to prevent unnecessary logout');
-      
+      console.log(
+        '📱 App Settings Service: First launch or new installation detected',
+      );
+      console.log(
+        '   Initializing login timestamp to prevent unnecessary logout',
+      );
+
       // Save current Firebase timestamp to prevent logout on first launch
       localStorage.setItem(
-        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR), 
-        settingsTimestamp.toString()
+        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR),
+        settingsTimestamp.toString(),
       );
-      
-      console.log('✅ App Settings Service: Login timestamp initialized:', new Date(settingsTimestamp).toISOString());
-      console.log('   Device will only logout if Firebase timestamp is updated in future');
+
+      console.log(
+        '✅ App Settings Service: Login timestamp initialized:',
+        new Date(settingsTimestamp).toISOString(),
+      );
+      console.log(
+        '   Device will only logout if Firebase timestamp is updated in future',
+      );
       return;
     }
 
@@ -751,37 +925,60 @@ export class AppSettingsService {
       localLastLoginClearTime: new Date(lastLocalLoginClearTime).toISOString(),
       shouldForceLogout: settingsTimestamp > lastLocalLoginClearTime,
       timeDifference: `${Math.round((settingsTimestamp - lastLocalLoginClearTime) / 1000)}s`,
-      forceLogoutEnabled: settings.isLoginClearCacheMandatoryForOnlineOrder
+      forceLogoutEnabled: settings.isLoginClearCacheMandatoryForOnlineOrder,
     });
 
     // **FORCE LOGOUT: Only if Firebase timestamp is NEWER than local timestamp**
     // This means admin intentionally updated Firebase to trigger logout
     if (settingsTimestamp > lastLocalLoginClearTime) {
-      console.log('🚨 App Settings Service: Force logout required - Firebase timestamp is newer');
-      console.log('   Admin triggered force logout by updating Firebase timestamp');
-      console.log('   This device will logout ONCE and won\'t logout again unless Firebase is updated');
-      
+      console.log(
+        '🚨 App Settings Service: Force logout required - Firebase timestamp is newer',
+      );
+      console.log(
+        '   Admin triggered force logout by updating Firebase timestamp',
+      );
+      console.log(
+        "   This device will logout ONCE and won't logout again unless Firebase is updated",
+      );
+
       try {
         await this.forceLogout();
-        
+
         // **CRITICAL: Save Firebase timestamp AFTER successful logout**
         // This prevents the same device from logging out again
         localStorage.setItem(
-          this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR), 
-          settingsTimestamp.toString()
+          this.getRestaurantSpecificCacheKey(
+            APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR,
+          ),
+          settingsTimestamp.toString(),
         );
-        
+
         console.log('✅ App Settings Service: Logout completed successfully');
-        console.log('   Saved Firebase timestamp:', new Date(settingsTimestamp).toISOString());
-        console.log('   Device will not logout again unless Firebase timestamp is updated');
+        console.log(
+          '   Saved Firebase timestamp:',
+          new Date(settingsTimestamp).toISOString(),
+        );
+        console.log(
+          '   Device will not logout again unless Firebase timestamp is updated',
+        );
       } catch (error) {
-        console.error('❌ App Settings Service: Failed to force logout:', error);
+        console.error(
+          '❌ App Settings Service: Failed to force logout:',
+          error,
+        );
         // Don't save timestamp if logout failed - device will retry on next app launch
       }
     } else {
-      console.log('✅ App Settings Service: Device is up to date - no logout needed');
-      console.log('   This device already logged out for the current Firebase timestamp');
-      console.log('   Last logout was at:', new Date(lastLocalLoginClearTime).toISOString());
+      console.log(
+        '✅ App Settings Service: Device is up to date - no logout needed',
+      );
+      console.log(
+        '   This device already logged out for the current Firebase timestamp',
+      );
+      console.log(
+        '   Last logout was at:',
+        new Date(lastLocalLoginClearTime).toISOString(),
+      );
     }
   }
 
@@ -791,59 +988,75 @@ export class AppSettingsService {
   private async clearAllCacheExceptLogin(): Promise<void> {
     try {
       console.log('🧽 App Settings Service: Starting cache clear process...');
-      
+
       // List of base cache keys to preserve (login-related, cache management, AND restaurant selection keys)
       const preserveBaseKeys: string[] = [
         AUTH_KEYS.FIREBASE_AUTH_USER,
         AUTH_KEYS.GUEST_MODE,
         AUTH_KEYS.USER_SESSION,
         AUTH_KEYS.AUTH_TOKEN,
-        APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID  // CRITICAL: Preserve restaurant selection during cache clear
+        APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, // CRITICAL: Preserve restaurant selection during cache clear
       ];
 
       // Add restaurant-specific cache management keys
       const restaurantSpecificKeys: string[] = [
-        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR),  // CRITICAL: Preserve this to prevent infinite loop
-        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR)
+        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR), // CRITICAL: Preserve this to prevent infinite loop
+        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR),
       ];
 
       const preserveKeys = [...preserveBaseKeys, ...restaurantSpecificKeys];
 
       // Get all localStorage keys BEFORE starting the clear process
       const allKeys = Object.keys(localStorage);
-      console.log('🔑 App Settings Service: Found localStorage keys:', allKeys.length, 'Will preserve keys:', preserveKeys);
-      
+      console.log(
+        '🔑 App Settings Service: Found localStorage keys:',
+        allKeys.length,
+        'Will preserve keys:',
+        preserveKeys,
+      );
+
       // Create a backup of keys we want to preserve
       const preservedData: { [key: string]: string } = {};
-      preserveKeys.forEach(key => {
+      preserveKeys.forEach((key) => {
         const value = localStorage.getItem(key);
         if (value !== null) {
           preservedData[key] = value;
         }
       });
-      
-      console.log('💾 App Settings Service: Preserving keys:', Object.keys(preservedData));
-      
+
+      console.log(
+        '💾 App Settings Service: Preserving keys:',
+        Object.keys(preservedData),
+      );
+
       // Remove all keys except preserved ones
       let removedKeysCount = 0;
-      allKeys.forEach(key => {
+      allKeys.forEach((key) => {
         if (!preserveKeys.includes(key)) {
           localStorage.removeItem(key);
           removedKeysCount++;
         }
       });
-      
-      console.log('🗑️ App Settings Service: Removed', removedKeysCount, 'localStorage keys');
+
+      console.log(
+        '🗑️ App Settings Service: Removed',
+        removedKeysCount,
+        'localStorage keys',
+      );
 
       // Restore the preserved keys (in case they were accidentally removed)
-      Object.keys(preservedData).forEach(key => {
+      Object.keys(preservedData).forEach((key) => {
         localStorage.setItem(key, preservedData[key]);
       });
 
       // Clear sessionStorage (usually doesn't contain login data)
       const sessionKeysCount = Object.keys(sessionStorage).length;
       sessionStorage.clear();
-      console.log('🗑️ App Settings Service: Cleared', sessionKeysCount, 'sessionStorage keys');
+      console.log(
+        '🗑️ App Settings Service: Cleared',
+        sessionKeysCount,
+        'sessionStorage keys',
+      );
 
       // Clear application caches
       await this.clearApplicationCaches();
@@ -853,39 +1066,55 @@ export class AppSettingsService {
       this.categoriesService.clearCache();
       console.log('🧹 App Settings Service: Service caches cleared');
 
-      console.log('✅ App Settings Service: Cache cleared successfully (except login data and timestamps)');
-      
+      console.log(
+        '✅ App Settings Service: Cache cleared successfully (except login data and timestamps)',
+      );
+
       // Show user notification
       this.showCacheClearNotification();
-      
+
       // SAFER: Instead of immediate reload, let the app naturally refresh its data
       // The cleared cache will force fresh data loading on next requests
-      console.log('ℹ️ App Settings Service: Cache cleared - data will be refreshed on next requests');
-      
+      console.log(
+        'ℹ️ App Settings Service: Cache cleared - data will be refreshed on next requests',
+      );
+
       // Optional: Only reload after a significant delay and with additional safety checks
-      console.log('🔄 App Settings Service: Scheduling optional page reload in', UI_CONSTANTS.RELOAD_DELAY + 5000, 'ms');
+      console.log(
+        '🔄 App Settings Service: Scheduling optional page reload in',
+        UI_CONSTANTS.RELOAD_DELAY + 5000,
+        'ms',
+      );
       setTimeout(() => {
         // Check if user is still on the page and if app is stable
         if (document.hidden) {
-          console.log('⚠️ App Settings Service: Page is hidden - skipping reload');
+          console.log(
+            '⚠️ App Settings Service: Page is hidden - skipping reload',
+          );
           return;
         }
-        
+
         // Check if we have the session flag (meaning we're in the reload cycle)
-        const sessionFlag = sessionStorage.getItem(APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG);
+        const sessionFlag = sessionStorage.getItem(
+          APP_SETTINGS_CACHE.CACHE_CLEAR_SESSION_FLAG,
+        );
         if (sessionFlag) {
           const flagTime = parseInt(sessionFlag);
           const timeSinceFlag = Date.now() - flagTime;
-          if (timeSinceFlag < 30000) { // Less than 30 seconds
-            console.log('⚠️ App Settings Service: Recently cleared cache - skipping reload to prevent loops');
+          if (timeSinceFlag < 30000) {
+            // Less than 30 seconds
+            console.log(
+              '⚠️ App Settings Service: Recently cleared cache - skipping reload to prevent loops',
+            );
             return;
           }
         }
-        
-        console.log('🔄 App Settings Service: Executing cautious page reload now');
+
+        console.log(
+          '🔄 App Settings Service: Executing cautious page reload now',
+        );
         window.location.reload();
       }, UI_CONSTANTS.RELOAD_DELAY + 5000); // Add extra 5 seconds for safety
-
     } catch (error) {
       console.error('❌ App Settings Service: Error clearing cache:', error);
     }
@@ -902,10 +1131,10 @@ export class AppSettingsService {
       CACHE_KEYS.CATEGORIES_CACHE,
       CACHE_KEYS.USER_FAVORITES,
       CACHE_KEYS.CART_STORAGE,
-      CACHE_KEYS.ORDER_HISTORY_CACHE
+      CACHE_KEYS.ORDER_HISTORY_CACHE,
     ];
 
-    cacheKeysToRemove.forEach(key => {
+    cacheKeysToRemove.forEach((key) => {
       localStorage.removeItem(key);
     });
   }
@@ -917,9 +1146,11 @@ export class AppSettingsService {
     try {
       // Remove FCM token from Firestore before logout
       await this.fcmTokenService.onUserLogout();
-      
+
       // Preserve restaurant selection during force logout
-      const selectedRestaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID);
+      const selectedRestaurantId = localStorage.getItem(
+        APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID,
+      );
 
       // Clear all localStorage and sessionStorage
       localStorage.clear();
@@ -927,7 +1158,10 @@ export class AppSettingsService {
 
       // Restore restaurant selection
       if (selectedRestaurantId) {
-        localStorage.setItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID, selectedRestaurantId);
+        localStorage.setItem(
+          APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID,
+          selectedRestaurantId,
+        );
       }
 
       // Sign out from Firebase Auth
@@ -940,7 +1174,6 @@ export class AppSettingsService {
       setTimeout(() => {
         this.router.navigate(['/auth/signin']);
       }, UI_CONSTANTS.RELOAD_DELAY);
-
     } catch (error) {
       console.error('Error during force logout:', error);
     }
@@ -971,9 +1204,9 @@ export class AppSettingsService {
         ${SUCCESS_MESSAGES.CACHE_CLEARED}
       </div>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove notification after 3 seconds
     setTimeout(() => {
       if (notification.parentNode) {
@@ -1006,9 +1239,9 @@ export class AppSettingsService {
         ${SUCCESS_MESSAGES.LOGOUT_SUCCESS}
       </div>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove notification after 4 seconds
     setTimeout(() => {
       if (notification.parentNode) {
@@ -1035,24 +1268,34 @@ export class AppSettingsService {
    * Get cache clear status for debugging (restaurant-specific)
    */
   getCacheStatus(): any {
-    const lastCacheClearTimestamp = localStorage.getItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR));
-    const lastLoginClearTimestamp = localStorage.getItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR));
-    const restaurantId = localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default';
-    
+    const lastCacheClearTimestamp = localStorage.getItem(
+      this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR),
+    );
+    const lastLoginClearTimestamp = localStorage.getItem(
+      this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR),
+    );
+    const restaurantId =
+      localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+      'default';
+
     return {
       restaurantId,
-      lastCacheClear: lastCacheClearTimestamp ? {
-        timestamp: parseInt(lastCacheClearTimestamp),
-        date: new Date(parseInt(lastCacheClearTimestamp)).toISOString()
-      } : 'Never',
-      lastLoginClear: lastLoginClearTimestamp ? {
-        timestamp: parseInt(lastLoginClearTimestamp), 
-        date: new Date(parseInt(lastLoginClearTimestamp)).toISOString()
-      } : 'Never',
+      lastCacheClear: lastCacheClearTimestamp
+        ? {
+            timestamp: parseInt(lastCacheClearTimestamp),
+            date: new Date(parseInt(lastCacheClearTimestamp)).toISOString(),
+          }
+        : 'Never',
+      lastLoginClear: lastLoginClearTimestamp
+        ? {
+            timestamp: parseInt(lastLoginClearTimestamp),
+            date: new Date(parseInt(lastLoginClearTimestamp)).toISOString(),
+          }
+        : 'Never',
       currentTime: {
         timestamp: Date.now(),
-        date: new Date().toISOString()
-      }
+        date: new Date().toISOString(),
+      },
     };
   }
 
@@ -1064,7 +1307,11 @@ export class AppSettingsService {
     localStorage.removeItem(APP_SETTINGS_CACHE.LAST_LOGIN_CLEAR);
     localStorage.removeItem('last_cache_clear_restaurant-123');
 
-    console.log('🔄 App Settings Service: Cache timestamps reset for restaurant:', localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) || 'default');
+    console.log(
+      '🔄 App Settings Service: Cache timestamps reset for restaurant:',
+      localStorage.getItem(APP_SETTINGS_CACHE.SELECTED_RESTAURANT_ID) ||
+        'default',
+    );
   }
 
   /**
@@ -1074,20 +1321,31 @@ export class AppSettingsService {
     try {
       const settings = await this.getAppSettings();
       if (!settings) {
-        console.error('❌ App Settings Service: Cannot force cache clear - no settings available');
+        console.error(
+          '❌ App Settings Service: Cannot force cache clear - no settings available',
+        );
         return;
       }
 
       const settingsTimestamp = new Date(settings.lastUpdated).getTime();
-      
+
       console.log('🔧 App Settings Service: Force clearing cache...');
       await this.clearAllCacheExceptLogin();
-      
+
       // Save Firebase timestamp to prevent future unnecessary clears (restaurant-specific)
-      localStorage.setItem(this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR), settingsTimestamp.toString());
-      console.log('✅ App Settings Service: Force cache clear completed, saved Firebase timestamp:', new Date(settingsTimestamp).toISOString());
+      localStorage.setItem(
+        this.getRestaurantSpecificCacheKey(APP_SETTINGS_CACHE.LAST_CACHE_CLEAR),
+        settingsTimestamp.toString(),
+      );
+      console.log(
+        '✅ App Settings Service: Force cache clear completed, saved Firebase timestamp:',
+        new Date(settingsTimestamp).toISOString(),
+      );
     } catch (error) {
-      console.error('❌ App Settings Service: Force cache clear failed:', error);
+      console.error(
+        '❌ App Settings Service: Force cache clear failed:',
+        error,
+      );
     }
   }
 
@@ -1113,17 +1371,20 @@ export class AppSettingsService {
    * @param key - Message key from OrderCancellationMessages interface
    * @param remainingSeconds - Optional: remaining seconds to replace {time} placeholder
    */
-  async getOrderCancellationMessage(key: keyof OrderCancellationMessages, remainingSeconds?: number): Promise<string> {
+  async getOrderCancellationMessage(
+    key: keyof OrderCancellationMessages,
+    remainingSeconds?: number,
+  ): Promise<string> {
     try {
       const checkout = await this.getCheckoutSettings();
       const messages = checkout?.orderCancellationMessages;
-      
+
       if (!messages || !messages[key]) {
         return this.getDefaultCancellationMessage(key, remainingSeconds);
       }
 
       let message = messages[key];
-      
+
       // Replace {time} placeholder with formatted time
       if (remainingSeconds !== undefined && typeof message === 'string') {
         const formattedTime = this.formatRemainingTime(remainingSeconds);
@@ -1149,7 +1410,7 @@ export class AppSettingsService {
 
       if (remainingSeconds !== undefined) {
         const formattedTime = this.formatRemainingTime(remainingSeconds);
-        return refundInfo.map(info => info.replace('{time}', formattedTime));
+        return refundInfo.map((info) => info.replace('{time}', formattedTime));
       }
 
       return refundInfo;
@@ -1209,36 +1470,42 @@ export class AppSettingsService {
     const remainingSeconds = seconds % 60;
 
     if (minutes > 0) {
-      return remainingSeconds > 0 
+      return remainingSeconds > 0
         ? `${minutes} minute${minutes > 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`
         : `${minutes} minute${minutes > 1 ? 's' : ''}`;
     }
-    
+
     return `${seconds} second${seconds > 1 ? 's' : ''}`;
   }
 
   /**
    * Get default message fallback
    */
-  private getDefaultCancellationMessage(key: keyof OrderCancellationMessages, remainingSeconds?: number): string {
+  private getDefaultCancellationMessage(
+    key: keyof OrderCancellationMessages,
+    remainingSeconds?: number,
+  ): string {
     const defaults: Record<string, string | string[]> = {
       canCancelWithin: 'Order can be cancelled within {time}',
-      noChargesMessage: 'No charges will be applied for cancellation within this time frame',
+      noChargesMessage:
+        'No charges will be applied for cancellation within this time frame',
       confirmationPrompt: 'Are you sure you want to cancel this order?',
       successMessage: 'Your order has been cancelled successfully',
-      timeExpiredMessage: 'The cancellation window has expired. Please contact restaurant for assistance.',
+      timeExpiredMessage:
+        'The cancellation window has expired. Please contact restaurant for assistance.',
       refundInfo: this.getDefaultRefundInfo(),
-      policyNotice: 'Order can be cancelled within {time} of order placement without any charges. If you face any issue contact restaurant, check contact us page for contact details.'
+      policyNotice:
+        'Order can be cancelled within {time} of order placement without any charges. If you face any issue contact restaurant, check contact us page for contact details.',
     };
-    
+
     let message = defaults[key] as string;
-    
+
     // Replace {time} placeholder if seconds provided
     if (remainingSeconds !== undefined && typeof message === 'string') {
       const formattedTime = this.formatRemainingTime(remainingSeconds);
       message = message.replace('{time}', formattedTime);
     }
-    
+
     return message;
   }
 
@@ -1249,7 +1516,7 @@ export class AppSettingsService {
     return [
       'Orders can only be cancelled within {time} of placing',
       'Your refund will be processed if payment was made online',
-      'This action cannot be undone'
+      'This action cannot be undone',
     ];
   }
 
@@ -1262,12 +1529,12 @@ export class AppSettingsService {
       const checkout = await this.getCheckoutSettings();
       const messages = checkout?.orderCancellationMessages;
       const timeLimit = checkout?.orderCancellationTimeLimit || 90;
-      
+
       if (messages?.policyNotice) {
         const formattedTime = this.formatRemainingTime(timeLimit);
         return messages.policyNotice.replace('{time}', formattedTime);
       }
-      
+
       // Default fallback with formatted time
       const formattedTime = this.formatRemainingTime(timeLimit);
       return `Order can be cancelled within ${formattedTime} of order placement without any charges. If you face any issue contact restaurant, check contact us page for contact details.`;
@@ -1288,44 +1555,52 @@ export class AppSettingsService {
    */
   async triggerForceLogoutAllDevices(): Promise<void> {
     try {
-      console.log('🚨 App Settings Service: Triggering force logout for all devices...');
-      
+      console.log(
+        '🚨 App Settings Service: Triggering force logout for all devices...',
+      );
+
       // Get the current settings document
       const subcollectionRef = collection(
-        this.firestore, 
-        FIREBASE_COLLECTIONS.APP_SETTINGS, 
-        FIREBASE_DOCUMENTS.APP_SETTINGS, 
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS
+        this.firestore,
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
+        FIREBASE_DOCUMENTS.APP_SETTINGS,
+        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
       );
-      
+
       const q = query(subcollectionRef, limit(1));
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         throw new Error('Settings document not found in Firebase');
       }
-      
+
       const settingsDoc = querySnapshot.docs[0];
       const docRef = doc(
         this.firestore,
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        settingsDoc.id
+        settingsDoc.id,
       );
-      
+
       // Update Firebase document to trigger force logout
       await updateDoc(docRef, {
         isLoginClearCacheMandatoryForOnlineOrder: true,
-        lastUpdated: serverTimestamp()
+        lastUpdated: serverTimestamp(),
       });
-      
-      console.log('✅ App Settings Service: Force logout triggered successfully');
+
+      console.log(
+        '✅ App Settings Service: Force logout triggered successfully',
+      );
       console.log('   Updated document:', settingsDoc.id);
-      console.log('   All devices will logout on next app launch when they detect the new timestamp');
-      
+      console.log(
+        '   All devices will logout on next app launch when they detect the new timestamp',
+      );
     } catch (error) {
-      console.error('❌ App Settings Service: Failed to trigger force logout:', error);
+      console.error(
+        '❌ App Settings Service: Failed to trigger force logout:',
+        error,
+      );
       throw error;
     }
   }

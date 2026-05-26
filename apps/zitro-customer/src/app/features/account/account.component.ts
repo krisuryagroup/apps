@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -12,9 +18,13 @@ import { AnalyticsService } from '@zitro/services';
   standalone: true,
   imports: [FormsModule, CommonModule, CachedImageDirective, LoaderComponent],
   templateUrl: './account.component.html',
-  styleUrls: ['./account.component.scss']
+  styleUrls: ['./account.component.scss'],
 })
 export class AccountComponent implements OnInit {
+  private router = inject(Router);
+  private userManagementService = inject(UserManagementService);
+  private analyticsService = inject(AnalyticsService);
+
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   name = '';
@@ -28,12 +38,6 @@ export class AccountComponent implements OnInit {
   currentUserPhone: string | null = null;
   isImageLoading = true;
 
-  constructor(
-    private router: Router,
-    private userManagementService: UserManagementService,
-    private analyticsService: AnalyticsService
-  ) {}
-
   ngOnInit() {
     // Track screen view
     this.analyticsService.logScreenView('Account', 'AccountComponent');
@@ -42,11 +46,14 @@ export class AccountComponent implements OnInit {
   }
 
   async loadUserProfile() {
-    this.currentUserPhone = await this.userManagementService.getCurrentUserPhone();
+    this.currentUserPhone =
+      await this.userManagementService.getCurrentUserPhone();
     if (this.currentUserPhone) {
       try {
         // Load user data from Firestore only
-        const userData = await this.userManagementService.getUserData(this.currentUserPhone);
+        const userData = await this.userManagementService.getUserData(
+          this.currentUserPhone,
+        );
         if (userData) {
           this.name = userData.name || '';
           this.email = userData.email || '';
@@ -118,13 +125,14 @@ export class AccountComponent implements OnInit {
         const success = await this.userManagementService.updateProfileWithPhoto(
           this.currentUserPhone,
           this.selectedFile,
-          { name: this.name, email: this.email }
+          { name: this.name, email: this.email },
         );
 
         if (success) {
           // Track successful profile update with photo
-          this.analyticsService.logProfileUpdate(true, fieldsUpdated)
-            .catch(err => console.warn('Failed to log profile update:', err));
+          this.analyticsService
+            .logProfileUpdate(true, fieldsUpdated)
+            .catch((err) => console.warn('Failed to log profile update:', err));
 
           alert('Profile updated successfully with new photo!');
           this.selectedFile = null;
@@ -135,13 +143,14 @@ export class AccountComponent implements OnInit {
         // Update profile without photo
         const success = await this.userManagementService.updateUserProfile(
           this.currentUserPhone,
-          { name: this.name, email: this.email }
+          { name: this.name, email: this.email },
         );
 
         if (success) {
           // Track successful profile update without photo
-          this.analyticsService.logProfileUpdate(false, fieldsUpdated)
-            .catch(err => console.warn('Failed to log profile update:', err));
+          this.analyticsService
+            .logProfileUpdate(false, fieldsUpdated)
+            .catch((err) => console.warn('Failed to log profile update:', err));
 
           alert('Profile updated successfully!');
         } else {

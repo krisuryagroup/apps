@@ -1,4 +1,15 @@
-import { Component, OnInit, OnChanges, AfterViewInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnChanges,
+  AfterViewInit,
+  Input,
+  Output,
+  EventEmitter,
+  ViewChild,
+  ElementRef,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CachedImageDirective } from '../../directives/cached-image.directive';
@@ -13,18 +24,28 @@ import { APP_CONSTANTS } from '@zitro/utils';
 @Component({
   selector: 'app-item-slider',
   standalone: true,
-  imports: [CommonModule, CachedImageDirective, ViewAllCardComponent, LoaderComponent],
+  imports: [
+    CommonModule,
+    CachedImageDirective,
+    ViewAllCardComponent,
+    LoaderComponent,
+  ],
   templateUrl: './item-slider.component.html',
-  styleUrls: ['./item-slider.component.scss']
+  styleUrls: ['./item-slider.component.scss'],
 })
 export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
+  private router = inject(Router);
+  private productsService = inject(ProductsService);
+  private cartService = inject(CartService);
+  private favoritesService = inject(FavoritesService);
+
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
-  
+
   @Input() products: Product[] = []; // Accept products as input
-  @Input() maxItems: number = 0; // 0 means show all
-  @Input() title: string = 'Items';
-  @Input() showViewAll: boolean = true;
-  
+  @Input() maxItems = 0; // 0 means show all
+  @Input() title = 'Items';
+  @Input() showViewAll = true;
+
   @Output() productClick = new EventEmitter<Product>();
   @Output() viewAllClick = new EventEmitter<void>();
   @Output() cartUpdated = new EventEmitter<void>();
@@ -34,13 +55,6 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
   isAtScrollEnd = false;
   imageLoading: { [key: string]: boolean } = {};
 
-  constructor(
-    private router: Router,
-    private productsService: ProductsService,
-    private cartService: CartService,
-    private favoritesService: FavoritesService
-  ) {}
-
   ngOnInit() {
     this.updateDisplayProducts();
   }
@@ -48,7 +62,7 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
   ngOnChanges() {
     this.updateDisplayProducts();
     // Initialize image loading states for all display products
-    this.displayProducts.forEach(product => {
+    this.displayProducts.forEach((product) => {
       this.imageLoading[product.id] = true;
     });
   }
@@ -59,12 +73,12 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
       container.addEventListener('scroll', () => {
         this.updateScrollState();
       });
-      
+
       // Initial scroll state check
       setTimeout(() => {
         this.updateScrollState();
       }, 100);
-      
+
       // Additional check after content fully renders
       setTimeout(() => {
         this.updateScrollState();
@@ -74,11 +88,11 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
 
   updateScrollState() {
     if (!this.scrollContainer) return;
-    
+
     const container = this.scrollContainer.nativeElement;
     const scrollLeft = container.scrollLeft;
     const maxScroll = container.scrollWidth - container.clientWidth;
-    
+
     // Update scroll position states
     this.isAtScrollStart = scrollLeft <= 1; // Changed from 5 to 1 for more precision
     this.isAtScrollEnd = scrollLeft >= maxScroll - 1; // Changed from 5 to 1 for more precision
@@ -86,15 +100,15 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
 
   scrollLeft() {
     if (!this.scrollContainer) return;
-    
+
     const container = this.scrollContainer.nativeElement;
     const scrollAmount = 300;
-    
+
     container.scrollBy({
       left: -scrollAmount,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
-    
+
     // Update state after scroll animation
     setTimeout(() => {
       this.updateScrollState();
@@ -103,15 +117,15 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
 
   scrollRight() {
     if (!this.scrollContainer) return;
-    
+
     const container = this.scrollContainer.nativeElement;
     const scrollAmount = 300;
-    
+
     container.scrollBy({
       left: scrollAmount,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
-    
+
     // Update state after scroll animation
     setTimeout(() => {
       this.updateScrollState();
@@ -120,13 +134,16 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
 
   updateDisplayProducts() {
     // Apply maxItems limit if specified
-    this.displayProducts = this.maxItems > 0 
-      ? this.products.slice(0, this.maxItems)
-      : this.products;
+    this.displayProducts =
+      this.maxItems > 0 ? this.products.slice(0, this.maxItems) : this.products;
   }
 
   get shouldShowViewAll(): boolean {
-    return this.showViewAll && this.maxItems > 0 && this.products.length > this.maxItems;
+    return (
+      this.showViewAll &&
+      this.maxItems > 0 &&
+      this.products.length > this.maxItems
+    );
   }
 
   onProductClick(product: Product) {
@@ -140,7 +157,11 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
   // Cart management methods
   incrementQuantity(product: Product) {
     // If product has variations, open dialog instead by emitting product click
-    if (product.hasVariations && product.variations && product.variations.length > 0) {
+    if (
+      product.hasVariations &&
+      product.variations &&
+      product.variations.length > 0
+    ) {
       this.onProductClick(product);
       return;
     }
@@ -158,7 +179,7 @@ export class ItemSliderComponent implements OnInit, OnChanges, AfterViewInit {
     if (product.hasVariations && product.variations) {
       const cart = this.cartService.getCart();
       return cart
-        .filter(cartItem => cartItem.name === product.name)
+        .filter((cartItem) => cartItem.name === product.name)
         .reduce((total, cartItem) => total + (cartItem.qty || 0), 0);
     }
     return this.cartService.getItemQuantity(product);

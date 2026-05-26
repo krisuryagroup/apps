@@ -1,4 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedImageDirective } from '../../directives/cached-image.directive';
 
@@ -20,19 +27,19 @@ export interface ZoomableImageConfig {
   standalone: true,
   imports: [CommonModule, CachedImageDirective],
   templateUrl: './zoomable-image.component.html',
-  styleUrls: ['./zoomable-image.component.scss']
+  styleUrls: ['./zoomable-image.component.scss'],
 })
 export class ZoomableImageComponent implements OnChanges {
-  @Input() src: string = '';
-  @Input() fallbackSrc: string = 'assets/foodCategories/default.png';
-  @Input() alt: string = 'Image';
+  @Input() src = '';
+  @Input() fallbackSrc = 'assets/foodCategories/default.png';
+  @Input() alt = 'Image';
   @Input() config: ZoomableImageConfig = {};
   @Output() imageLoaded = new EventEmitter<void>();
   @Output() imageError = new EventEmitter<Event>();
 
   // Image state
   imageLoading = true;
-  
+
   // Zoom properties
   imageZoomed = false;
   zoomLevel = 1;
@@ -40,7 +47,7 @@ export class ZoomableImageComponent implements OnChanges {
   maxZoom = 3;
   zoomStep = 0.3;
   imageTransform = { x: 0, y: 0 };
-  
+
   // Pan properties
   private isPanning = false;
   private startPan = { x: 0, y: 0 };
@@ -59,7 +66,7 @@ export class ZoomableImageComponent implements OnChanges {
     enablePinchZoom: true,
     enableClickZoom: true,
     borderRadius: '8px',
-    objectFit: 'cover'
+    objectFit: 'cover',
   };
 
   get mergedConfig(): Required<ZoomableImageConfig> {
@@ -71,7 +78,7 @@ export class ZoomableImageComponent implements OnChanges {
       this.imageLoading = true;
       this.resetZoom();
     }
-    
+
     if (changes['config']) {
       this.applyConfig();
     }
@@ -87,7 +94,7 @@ export class ZoomableImageComponent implements OnChanges {
   // Zoom methods
   toggleImageZoom() {
     if (!this.mergedConfig.enableClickZoom) return;
-    
+
     this.imageZoomed = !this.imageZoomed;
     if (this.imageZoomed) {
       this.zoomLevel = 2;
@@ -123,50 +130,52 @@ export class ZoomableImageComponent implements OnChanges {
     return `translate(${this.imageTransform.x}px, ${this.imageTransform.y}px) scale(${this.zoomLevel})`;
   }
 
-  private constrainPan(x: number, y: number): { x: number, y: number } {
+  private constrainPan(x: number, y: number): { x: number; y: number } {
     if (!this.imageZoomed || this.zoomLevel <= 1) {
       return { x: 0, y: 0 };
     }
 
     // Get container dimensions
-    const container = document.querySelector('.zoomable-image-container') as HTMLElement;
+    const container = document.querySelector(
+      '.zoomable-image-container',
+    ) as HTMLElement;
     const image = container?.querySelector('img') as HTMLImageElement;
-    
+
     if (!container || !image) {
       return { x, y };
     }
 
     const containerRect = container.getBoundingClientRect();
     const imageRect = image.getBoundingClientRect();
-    
+
     // Calculate the scaled image dimensions
     const scaledWidth = imageRect.width * this.zoomLevel;
     const scaledHeight = imageRect.height * this.zoomLevel;
-    
+
     // Calculate maximum allowed translation
     // The image should not be dragged so far that it leaves the container completely
     const maxX = (scaledWidth - containerRect.width) / 2;
     const maxY = (scaledHeight - containerRect.height) / 2;
-    
+
     // Constrain the values
     const constrainedX = Math.max(-maxX, Math.min(maxX, x));
     const constrainedY = Math.max(-maxY, Math.min(maxY, y));
-    
+
     return { x: constrainedX, y: constrainedY };
   }
 
   getContainerStyle(): { [key: string]: string } {
     const cfg = this.mergedConfig;
     return {
-      'width': cfg.width,
-      'height': cfg.height,
-      'border-radius': cfg.borderRadius
+      width: cfg.width,
+      height: cfg.height,
+      'border-radius': cfg.borderRadius,
     };
   }
 
   getImageStyle(): { [key: string]: string } {
     return {
-      'object-fit': this.mergedConfig.objectFit
+      'object-fit': this.mergedConfig.objectFit,
     };
   }
 
@@ -176,7 +185,7 @@ export class ZoomableImageComponent implements OnChanges {
       this.isPanning = true;
       this.startPan = {
         x: event.clientX - this.imageTransform.x,
-        y: event.clientY - this.imageTransform.y
+        y: event.clientY - this.imageTransform.y,
       };
       event.preventDefault();
     }
@@ -186,7 +195,7 @@ export class ZoomableImageComponent implements OnChanges {
     if (this.isPanning && this.imageZoomed) {
       this.imageTransform = {
         x: event.clientX - this.startPan.x,
-        y: event.clientY - this.startPan.y
+        y: event.clientY - this.startPan.y,
       };
       event.preventDefault();
     }
@@ -208,7 +217,7 @@ export class ZoomableImageComponent implements OnChanges {
       this.isPanning = true;
       this.startPan = {
         x: event.touches[0].clientX - this.imageTransform.x,
-        y: event.touches[0].clientY - this.imageTransform.y
+        y: event.touches[0].clientY - this.imageTransform.y,
       };
     }
   }
@@ -221,12 +230,19 @@ export class ZoomableImageComponent implements OnChanges {
       if (this.lastPinchDistance > 0) {
         const delta = distance - this.lastPinchDistance;
         const zoomChange = delta * 0.01;
-        this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel + zoomChange));
+        this.zoomLevel = Math.max(
+          this.minZoom,
+          Math.min(this.maxZoom, this.zoomLevel + zoomChange),
+        );
         this.imageZoomed = this.zoomLevel > 1;
       }
       this.lastPinchDistance = distance;
       event.preventDefault();
-    } else if (event.touches.length === 1 && this.isPanning && this.imageZoomed) {
+    } else if (
+      event.touches.length === 1 &&
+      this.isPanning &&
+      this.imageZoomed
+    ) {
       const newX = event.touches[0].clientX - this.startPan.x;
       const newY = event.touches[0].clientY - this.startPan.y;
       this.imageTransform = this.constrainPan(newX, newY);

@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { AppVersionConfig, VersionCheckResult } from '@zitro/models';
-import { 
-  FIREBASE_COLLECTIONS, 
-  FIREBASE_DOCUMENTS, 
-  FIREBASE_SUBCOLLECTIONS 
+import {
+  FIREBASE_COLLECTIONS,
+  FIREBASE_DOCUMENTS,
+  FIREBASE_SUBCOLLECTIONS,
 } from '@zitro/utils';
 
 /**
@@ -14,16 +14,18 @@ import {
  * Only active on Android native app, skipped for web/browser
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AppVersionService {
-  constructor(private firestore: Firestore) {}
+  private firestore = inject(Firestore);
 
   /**
    * Check if running as native Android app
    */
   isAndroidApp(): boolean {
-    return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+    return (
+      Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+    );
   }
 
   /**
@@ -57,15 +59,15 @@ export class AppVersionService {
         FIREBASE_COLLECTIONS.APP_SETTINGS,
         FIREBASE_DOCUMENTS.APP_SETTINGS,
         FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS
+        FIREBASE_COLLECTIONS.APP_SETTINGS,
       );
-      
+
       const appSettingsSnap = await getDoc(appSettingsDocRef);
-      
+
       if (appSettingsSnap.exists()) {
         const data = appSettingsSnap.data();
         const versionConfig = data['appVersion'];
-        
+
         if (versionConfig) {
           console.log('✅ Version config loaded from Firebase:', versionConfig);
           return versionConfig as AppVersionConfig;
@@ -75,7 +77,7 @@ export class AppVersionService {
       } else {
         console.warn('⚠️ App settings document not found in Firebase');
       }
-      
+
       return null;
     } catch (error) {
       console.error('❌ Error fetching version config from Firebase:', error);
@@ -92,15 +94,15 @@ export class AppVersionService {
   compareVersions(v1: string, v2: string): number {
     const parts1 = v1.split('.').map(Number);
     const parts2 = v2.split('.').map(Number);
-    
+
     for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
       const part1 = parts1[i] || 0;
       const part2 = parts2[i] || 0;
-      
+
       if (part1 > part2) return 1;
       if (part1 < part2) return -1;
     }
-    
+
     return 0;
   }
 
@@ -117,10 +119,10 @@ export class AppVersionService {
 
     try {
       console.log('🔍 Version Check: Starting...');
-      
+
       const [currentVersion, config] = await Promise.all([
         this.getCurrentAppVersion(),
-        this.getVersionConfig()
+        this.getVersionConfig(),
       ]);
 
       if (!currentVersion || !config) {
@@ -134,33 +136,42 @@ export class AppVersionService {
         return null;
       }
 
-      console.log(`🔍 Comparing current version ${currentVersion} with config:`, {
-        minimumVersion: config.minimumVersion,
-        currentVersion: config.currentVersion,
-        forceUpdateBelow: config.forceUpdateBelow
-      });
+      console.log(
+        `🔍 Comparing current version ${currentVersion} with config:`,
+        {
+          minimumVersion: config.minimumVersion,
+          currentVersion: config.currentVersion,
+          forceUpdateBelow: config.forceUpdateBelow,
+        },
+      );
 
       // Check force update below specific version (highest priority)
       if (config.forceUpdateBelow) {
         if (this.compareVersions(currentVersion, config.forceUpdateBelow) < 0) {
-          console.log('🚫 Version Check: Force update required (below threshold)');
+          console.log(
+            '🚫 Version Check: Force update required (below threshold)',
+          );
           return {
             needsUpdate: true,
             isMandatory: true,
             message: config.mandatoryUpdateMessage,
-            storeUrl: config.playStoreUrl
+            storeUrl: config.playStoreUrl,
           };
         }
       }
 
       // Check against minimum version
       if (this.compareVersions(currentVersion, config.minimumVersion) < 0) {
-        console.log('🚫 Version Check: Update required (below minimum version)');
+        console.log(
+          '🚫 Version Check: Update required (below minimum version)',
+        );
         return {
           needsUpdate: true,
           isMandatory: config.isUpdateMandatory,
-          message: config.isUpdateMandatory ? config.mandatoryUpdateMessage : config.updateMessage,
-          storeUrl: config.playStoreUrl
+          message: config.isUpdateMandatory
+            ? config.mandatoryUpdateMessage
+            : config.updateMessage,
+          storeUrl: config.playStoreUrl,
         };
       }
 
@@ -171,7 +182,7 @@ export class AppVersionService {
           needsUpdate: true,
           isMandatory: false,
           message: config.updateMessage,
-          storeUrl: config.playStoreUrl
+          storeUrl: config.playStoreUrl,
         };
       }
 
@@ -196,16 +207,16 @@ export class AppVersionService {
 
     try {
       console.log('🔗 Opening Play Store:', url);
-      
+
       // Try to use Capacitor Browser plugin
       const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ 
+      await Browser.open({
         url,
-        presentationStyle: 'popover'
+        presentationStyle: 'popover',
       });
     } catch (error) {
       console.error('❌ Error opening Play Store with Browser plugin:', error);
-      
+
       // Fallback to window.open
       try {
         window.open(url, '_system');

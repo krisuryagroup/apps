@@ -1,8 +1,18 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnInit,
+  OnDestroy,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Game2048Service, GameState, Tile } from '@zitro/services';
-import { GameRewardService, EligibilityStatus, CouponReward } from '@zitro/services';
+import {
+  GameRewardService,
+  EligibilityStatus,
+  CouponReward,
+} from '@zitro/services';
 import { UserManagementService } from '@zitro/services';
 import { AppSettingsService } from '@zitro/services';
 
@@ -11,17 +21,23 @@ import { AppSettingsService } from '@zitro/services';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './game-2048.component.html',
-  styleUrls: ['./game-2048.component.scss']
+  styleUrls: ['./game-2048.component.scss'],
 })
 export class Game2048Component implements OnInit, OnDestroy {
+  private gameService = inject(Game2048Service);
+  private rewardService = inject(GameRewardService);
+  private userManagementService = inject(UserManagementService);
+  private appSettingsService = inject(AppSettingsService);
+  private router = inject(Router);
+
   // Authentication state
   isAuthenticated = false;
   isTestUser = false;
   currentUserUid: string | null = null;
   currentUserPhone: string | null = null;
-  displayName: string = 'User';
-  email: string = '';
-  phoneNumber: string = '';
+  displayName = 'User';
+  email = '';
+  phoneNumber = '';
 
   // Game state
   gameState: GameState | null = null;
@@ -51,14 +67,6 @@ export class Game2048Component implements OnInit, OnDestroy {
   // LocalStorage key for game state
   private readonly GAME_STATE_KEY = 'game2048_state';
 
-  constructor(
-    private gameService: Game2048Service,
-    private rewardService: GameRewardService,
-    private userManagementService: UserManagementService,
-    private appSettingsService: AppSettingsService,
-    private router: Router
-  ) {}
-
   async ngOnInit() {
     await this.checkAuthentication();
 
@@ -85,11 +93,14 @@ export class Game2048Component implements OnInit, OnDestroy {
 
       if (this.isAuthenticated) {
         // Get user phone number
-        this.currentUserPhone = await this.userManagementService.getCurrentUserPhone();
+        this.currentUserPhone =
+          await this.userManagementService.getCurrentUserPhone();
 
         if (this.currentUserPhone) {
           // Get user profile data
-          const userData = await this.userManagementService.getUserData(this.currentUserPhone);
+          const userData = await this.userManagementService.getUserData(
+            this.currentUserPhone,
+          );
 
           if (userData) {
             this.currentUserUid = userData.uid;
@@ -99,14 +110,15 @@ export class Game2048Component implements OnInit, OnDestroy {
           }
 
           // Check if user is a test user
-          const testPhoneNumbers = await this.appSettingsService.getTestPhoneNumbers();
+          const testPhoneNumbers =
+            await this.appSettingsService.getTestPhoneNumbers();
           const phoneWithoutPrefix = this.currentUserPhone.replace('+91', '');
           this.isTestUser = testPhoneNumbers.includes(phoneWithoutPrefix);
 
           console.log('🎮 Test User Check:', {
             phone: phoneWithoutPrefix,
             isTestUser: this.isTestUser,
-            testNumbers: testPhoneNumbers
+            testNumbers: testPhoneNumbers,
           });
         }
       }
@@ -115,7 +127,7 @@ export class Game2048Component implements OnInit, OnDestroy {
         isAuthenticated: this.isAuthenticated,
         isTestUser: this.isTestUser,
         phone: this.currentUserPhone,
-        uid: this.currentUserUid
+        uid: this.currentUserUid,
       });
     } catch (error) {
       console.error('Error checking authentication:', error);
@@ -130,9 +142,8 @@ export class Game2048Component implements OnInit, OnDestroy {
     if (!this.currentUserUid) return;
 
     try {
-      const status: EligibilityStatus = await this.rewardService.checkEligibility(
-        this.currentUserUid
-      );
+      const status: EligibilityStatus =
+        await this.rewardService.checkEligibility(this.currentUserUid);
 
       // Always allow gameplay for fun
       this.isEligible = true;
@@ -146,7 +157,6 @@ export class Game2048Component implements OnInit, OnDestroy {
       } else {
         this.eligibilityMessage = '';
       }
-
     } catch (error) {
       console.error('Error checking eligibility:', error);
       this.isEligible = true; // Allow play on error
@@ -163,7 +173,7 @@ export class Game2048Component implements OnInit, OnDestroy {
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
@@ -220,11 +230,14 @@ export class Game2048Component implements OnInit, OnDestroy {
   private saveGameState(): void {
     if (this.gameState && this.isPlaying) {
       try {
-        localStorage.setItem(this.GAME_STATE_KEY, JSON.stringify({
-          gameState: this.gameState,
-          isPlaying: this.isPlaying,
-          timestamp: Date.now()
-        }));
+        localStorage.setItem(
+          this.GAME_STATE_KEY,
+          JSON.stringify({
+            gameState: this.gameState,
+            isPlaying: this.isPlaying,
+            timestamp: Date.now(),
+          }),
+        );
       } catch (error) {
         console.error('Failed to save game state:', error);
       }
@@ -240,7 +253,7 @@ export class Game2048Component implements OnInit, OnDestroy {
       if (saved) {
         const data = JSON.parse(saved);
         // Only restore if saved within last 24 hours
-        const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
         if (data.timestamp && data.timestamp > oneDayAgo) {
           this.gameState = data.gameState;
           this.isPlaying = data.isPlaying;
@@ -342,7 +355,9 @@ export class Game2048Component implements OnInit, OnDestroy {
   /**
    * Make a move in the specified direction
    */
-  private async makeMove(direction: 'up' | 'down' | 'left' | 'right'): Promise<void> {
+  private async makeMove(
+    direction: 'up' | 'down' | 'left' | 'right',
+  ): Promise<void> {
     if (!this.gameState || this.gameState.isGameOver) return;
 
     const moved = this.gameService.move(this.gameState, direction);
@@ -385,7 +400,7 @@ export class Game2048Component implements OnInit, OnDestroy {
    */
   private async awardReward(
     couponType: 'couponTypeBurger' | 'couponTypePizza',
-    tileValue: number
+    tileValue: number,
   ): Promise<void> {
     if (!this.currentUserUid || !this.gameState) return;
 
@@ -396,7 +411,9 @@ export class Game2048Component implements OnInit, OnDestroy {
 
     // Check if user can earn rewards (both rewards not given in last week)
     if (!this.canEarnRewards) {
-      console.log('🎮 Cannot earn rewards - both rewards already given in last week');
+      console.log(
+        '🎮 Cannot earn rewards - both rewards already given in last week',
+      );
       return;
     }
 
@@ -408,7 +425,7 @@ export class Game2048Component implements OnInit, OnDestroy {
         this.phoneNumber,
         this.gameState.highestTile,
         this.gameState.score,
-        couponType
+        couponType,
       );
 
       // Mark this reward tier as awarded in current session
@@ -435,7 +452,6 @@ export class Game2048Component implements OnInit, OnDestroy {
       setTimeout(() => {
         this.showConfetti = false;
       }, 3000);
-
     } catch (error) {
       console.error('Error awarding reward:', error);
     }
@@ -460,11 +476,14 @@ export class Game2048Component implements OnInit, OnDestroy {
    */
   copyCouponCode(): void {
     if (navigator.clipboard && this.rewardCouponCode) {
-      navigator.clipboard.writeText(this.rewardCouponCode).then(() => {
-        alert('Coupon code copied to clipboard!');
-      }).catch(err => {
-        console.error('Failed to copy:', err);
-      });
+      navigator.clipboard
+        .writeText(this.rewardCouponCode)
+        .then(() => {
+          alert('Coupon code copied to clipboard!');
+        })
+        .catch((err) => {
+          console.error('Failed to copy:', err);
+        });
     } else {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -513,7 +532,7 @@ export class Game2048Component implements OnInit, OnDestroy {
 
     return {
       top: `${tile.row * step}px`,
-      left: `${tile.col * step}px`
+      left: `${tile.col * step}px`,
     };
   }
 

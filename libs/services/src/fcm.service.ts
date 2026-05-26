@@ -1,8 +1,19 @@
-import { Injectable } from '@angular/core';
-import { getMessaging, getToken, onMessage, Messaging, MessagePayload } from 'firebase/messaging';
+import { Injectable, inject } from '@angular/core';
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  Messaging,
+  MessagePayload,
+} from 'firebase/messaging';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { UserManagementService } from './user-management.service';
-import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import {
+  Firestore,
+  doc,
+  setDoc,
+  serverTimestamp,
+} from '@angular/fire/firestore';
 import { FIREBASE_COLLECTIONS } from '@zitro/utils';
 
 export interface NotificationPayload {
@@ -14,21 +25,24 @@ export interface NotificationPayload {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FcmService {
+  private firestore = inject(Firestore);
+  private userManagementService = inject(UserManagementService);
+
   private messaging: Messaging | null = null;
   private currentToken: string | null = null;
-  private notificationSubject = new BehaviorSubject<NotificationPayload | null>(null);
-  public notification$: Observable<NotificationPayload | null> = this.notificationSubject.asObservable();
-  
+  private notificationSubject = new BehaviorSubject<NotificationPayload | null>(
+    null,
+  );
+  public notification$: Observable<NotificationPayload | null> =
+    this.notificationSubject.asObservable();
+
   // Firebase Cloud Messaging VAPID Key (get from Firebase Console -> Project Settings -> Cloud Messaging)
   private readonly VAPID_KEY = 'YOUR_VAPID_KEY_HERE'; // Replace with your actual VAPID key
 
-  constructor(
-    private firestore: Firestore,
-    private userManagementService: UserManagementService
-  ) {
+  constructor() {
     this.initializeMessaging();
   }
 
@@ -71,7 +85,7 @@ export class FcmService {
 
       // Request notification permission
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== 'granted') {
         console.warn('FCM: Notification permission denied');
         return null;
@@ -81,16 +95,16 @@ export class FcmService {
 
       // Get FCM token
       const token = await getToken(this.messaging, {
-        vapidKey: this.VAPID_KEY
+        vapidKey: this.VAPID_KEY,
       });
 
       if (token) {
         console.log('✅ FCM: Token received');
         this.currentToken = token;
-        
+
         // Save token to Firestore for the current user
         await this.saveFcmTokenToFirestore(token);
-        
+
         return token;
       } else {
         console.warn('FCM: No registration token available');
@@ -107,8 +121,9 @@ export class FcmService {
    */
   private async saveFcmTokenToFirestore(token: string): Promise<void> {
     try {
-      const currentUserPhone = await this.userManagementService.getCurrentUserPhone();
-      
+      const currentUserPhone =
+        await this.userManagementService.getCurrentUserPhone();
+
       if (!currentUserPhone) {
         console.warn('FCM: No user phone found, cannot save token');
         return;
@@ -117,14 +132,18 @@ export class FcmService {
       const userDocRef = doc(
         this.firestore,
         FIREBASE_COLLECTIONS.ONLINE_USERS,
-        currentUserPhone
+        currentUserPhone,
       );
 
-      await setDoc(userDocRef, {
-        fcmToken: token,
-        fcmTokenUpdatedAt: serverTimestamp(),
-        platform: this.getPlatform()
-      }, { merge: true });
+      await setDoc(
+        userDocRef,
+        {
+          fcmToken: token,
+          fcmTokenUpdatedAt: serverTimestamp(),
+          platform: this.getPlatform(),
+        },
+        { merge: true },
+      );
 
       console.log('✅ FCM: Token saved to Firestore');
     } catch (error) {
@@ -149,7 +168,7 @@ export class FcmService {
         body: payload.notification?.body || '',
         icon: payload.notification?.icon,
         data: payload.data,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Emit notification to subscribers
@@ -171,17 +190,20 @@ export class FcmService {
         badge: '/assets/icon/icon-72x72.png',
         data: notification.data,
         tag: 'food-delivery-notification',
-        requireInteraction: false
+        requireInteraction: false,
       };
 
-      const browserNotification = new Notification(notification.title, notificationOptions);
+      const browserNotification = new Notification(
+        notification.title,
+        notificationOptions,
+      );
 
       // Handle notification click
       browserNotification.onclick = (event) => {
         event.preventDefault();
         window.focus();
         browserNotification.close();
-        
+
         // Handle navigation based on notification data
         if (notification.data?.url) {
           window.location.href = notification.data.url;
@@ -209,7 +231,7 @@ export class FcmService {
    */
   private getPlatform(): string {
     const userAgent = navigator.userAgent.toLowerCase();
-    
+
     if (/android/i.test(userAgent)) {
       return 'android';
     } else if (/iphone|ipad|ipod/i.test(userAgent)) {

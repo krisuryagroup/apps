@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { App } from '@capacitor/app';
@@ -15,24 +15,26 @@ import { getAppVersion } from '@zitro/utils';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SplashScreenComponent, NoInternetComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    SplashScreenComponent,
+    NoInternetComponent,
+  ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrl: './app.component.scss',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
+  private router = inject(Router);
+  private authService = inject(FirebaseAuthService);
+  private analyticsService = inject(AnalyticsService);
+  private appSettingsService = inject(AppSettingsService);
+
   title = 'client';
   showSplash = true;
   showNoInternet = false;
   isOnline = true;
   private backHandler = this.handleAndroidBack.bind(this);
-
-  constructor(
-    private router: Router,
-    // private fcmService: FcmService,
-    private authService: FirebaseAuthService,
-    private analyticsService: AnalyticsService,
-    private appSettingsService: AppSettingsService
-  ) {}
 
   ngOnInit() {
     // Check initial connectivity
@@ -117,7 +119,7 @@ export class AppComponent implements OnInit {
   onRetryConnection(): void {
     console.log('🔄 Retrying connection...');
     this.checkConnectivity();
-    
+
     if (this.isOnline) {
       this.showNoInternet = false;
       console.log('✅ Connection successful');
@@ -145,22 +147,29 @@ export class AppComponent implements OnInit {
     try {
       await this.analyticsService.initialize();
       await this.analyticsService.logAppOpen();
-      
+
       // Read analyticConfigs from AppSettingsService
-      const analyticConfigs = await this.appSettingsService.getAnalyticConfigs();
-      
+      const analyticConfigs =
+        await this.appSettingsService.getAnalyticConfigs();
+
       // Log app version only if enableLogAppVersionHistory is true
       if (analyticConfigs?.enableLogAppVersionHistory) {
         const appVersion = await getAppVersion();
-        await this.analyticsService.logAppVersion(appVersion, analyticConfigs?.enableLogAppVersionAnalytics, analyticConfigs?.enableLogAppVersionFirebase);
+        await this.analyticsService.logAppVersion(
+          appVersion,
+          analyticConfigs?.enableLogAppVersionAnalytics,
+          analyticConfigs?.enableLogAppVersionFirebase,
+        );
         console.log(`📱 App version logged: ${appVersion}`);
       } else {
-        console.log('ℹ️ logAppVersionHistory is disabled, skipping app version logging');
+        console.log(
+          'ℹ️ logAppVersionHistory is disabled, skipping app version logging',
+        );
       }
-      
+
       // Check if this is first time app install
       this.checkFirstTimeInstall();
-      
+
       console.log('✅ Firebase Analytics initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing Firebase Analytics:', error);
@@ -173,12 +182,12 @@ export class AppComponent implements OnInit {
   private checkFirstTimeInstall(): void {
     try {
       const hasBeenInstalledBefore = localStorage.getItem('app_installed');
-      
+
       if (!hasBeenInstalledBefore) {
         // First time install
-        this.analyticsService.logAppInstalled().catch(err => 
-          console.warn('Failed to log app install:', err)
-        );
+        this.analyticsService
+          .logAppInstalled()
+          .catch((err) => console.warn('Failed to log app install:', err));
         localStorage.setItem('app_installed', 'true');
         localStorage.setItem('app_install_date', new Date().toISOString());
         console.log('📱 First time app install detected');
@@ -198,12 +207,12 @@ export class AppComponent implements OnInit {
       App.addListener('appStateChange', ({ isActive }) => {
         try {
           console.log('App state changed. Is active?', isActive);
-          
+
           if (isActive) {
             // App came to foreground (resume)
-            this.analyticsService.logAppResume().catch(err => 
-              console.warn('Failed to log app resume:', err)
-            );
+            this.analyticsService
+              .logAppResume()
+              .catch((err) => console.warn('Failed to log app resume:', err));
             console.log('📱 App resumed');
           } else {
             // App went to background
@@ -240,7 +249,7 @@ export class AppComponent implements OnInit {
       // App continues to work even if lifecycle tracking fails
     }
   }
-  
+
   // /**
   //  * Initialize Firebase Cloud Messaging
   //  */
@@ -265,7 +274,7 @@ export class AppComponent implements OnInit {
   //     // this.dialogService?.showInfo?.('Push notifications are unavailable. You can still use the app.', 'Notification Error');
   //   }
   // }
-  
+
   // /**
   //  * Subscribe to incoming notifications
   //  */
@@ -273,39 +282,42 @@ export class AppComponent implements OnInit {
   //   this.fcmService.notification$.subscribe(notification => {
   //     if (notification) {
   //       console.log('📬 App: New notification received:', notification);
-        
+
   //       // Handle notification based on type
   //       this.handleNotification(notification);
   //     }
   //   });
   // }
-  
+
   /**
    * Handle incoming notifications
    */
   private handleNotification(notification: any): void {
     // You can customize notification handling based on notification type
     const notificationType = notification.data?.type;
-    
+
     switch (notificationType) {
       case 'order_status':
         // Navigate to order details
         if (notification.data?.orderId) {
-          console.log('📦 Order status notification:', notification.data.orderId);
+          console.log(
+            '📦 Order status notification:',
+            notification.data.orderId,
+          );
           // Optionally navigate: this.router.navigate(['/orders', notification.data.orderId]);
         }
         break;
-      
+
       case 'promotion':
         // Handle promotional notification
         console.log('🎉 Promotion notification:', notification.body);
         break;
-      
+
       case 'new_offer':
         // Handle new offer notification
         console.log('💰 New offer notification:', notification.body);
         break;
-      
+
       default:
         console.log('📬 General notification:', notification.body);
     }

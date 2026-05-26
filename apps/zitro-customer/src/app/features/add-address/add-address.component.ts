@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChild, NgZone } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ElementRef,
+  ViewChild,
+  NgZone,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -11,7 +20,10 @@ import { SearchSuggestion } from '@zitro/services';
 import { RestaurantSwitchingService } from '@zitro/services';
 import { DialogService } from '@zitro/services';
 import { AddressFormData } from '@zitro/models';
-import { DELIVERY_PINCODE_CONFIG, ERROR_MESSAGES } from '../../core/constants/app.constants';
+import {
+  DELIVERY_PINCODE_CONFIG,
+  ERROR_MESSAGES,
+} from '../../core/constants/app.constants';
 import { environment } from '../../../environments/environment';
 declare const google: any;
 
@@ -33,9 +45,18 @@ declare const google: any;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-address.component.html',
-  styleUrls: ['./add-address.component.scss']
+  styleUrls: ['./add-address.component.scss'],
 })
 export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
+  private userManagementService = inject(UserManagementService);
+  private locationService = inject(LocationService);
+  private geocodingService = inject(GoogleGeocodingService);
+  private restaurantSwitchingService = inject(RestaurantSwitchingService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private dialogService = inject(DialogService);
+  private ngZone = inject(NgZone);
+
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
   form: Partial<AddressFormData> = {};
@@ -66,17 +87,6 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly pincodeConfig = DELIVERY_PINCODE_CONFIG;
 
-  constructor(
-    private userManagementService: UserManagementService,
-    private locationService: LocationService,
-    private geocodingService: GoogleGeocodingService,
-    private restaurantSwitchingService: RestaurantSwitchingService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private dialogService: DialogService,
-    private ngZone: NgZone
-  ) {}
-
   async ngOnInit() {
     const snap = this.route.snapshot.queryParamMap;
     const modeParam = snap.get('mode');
@@ -94,11 +104,9 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Debounced place search
-    this.search$.pipe(
-      debounceTime(350),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(query => this.runSearch(query));
+    this.search$
+      .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((query) => this.runSearch(query));
 
     await this.initForm();
   }
@@ -110,20 +118,24 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
   // ─── Map ──────────────────────────────────────────────────────────────────
 
   private loadMapsApi(): Promise<void> {
-    if (typeof google !== 'undefined' && (google as any).maps) return Promise.resolve();
-    if (AddAddressComponent.mapsApiPromise) return AddAddressComponent.mapsApiPromise;
-    AddAddressComponent.mapsApiPromise = new Promise<void>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.google.mapsApiKey}`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve();
-      script.onerror = () => {
-        AddAddressComponent.mapsApiPromise = null;
-        reject(new Error('Failed to load Google Maps'));
-      };
-      document.head.appendChild(script);
-    });
+    if (typeof google !== 'undefined' && (google as any).maps)
+      return Promise.resolve();
+    if (AddAddressComponent.mapsApiPromise)
+      return AddAddressComponent.mapsApiPromise;
+    AddAddressComponent.mapsApiPromise = new Promise<void>(
+      (resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.google.mapsApiKey}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+        script.onerror = () => {
+          AddAddressComponent.mapsApiPromise = null;
+          reject(new Error('Failed to load Google Maps'));
+        };
+        document.head.appendChild(script);
+      },
+    );
     return AddAddressComponent.mapsApiPromise;
   }
 
@@ -132,7 +144,9 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
       const r = this.restaurantSwitchingService.getCurrentRestaurant();
       const c = (r as any)['coordinates'];
       if (c?.lat && c?.lng) return { lat: Number(c.lat), lng: Number(c.lng) };
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return { lat: 26.8467, lng: 80.9462 }; // Lucknow, UP fallback
   }
 
@@ -176,11 +190,16 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       const result = await this.locationService.checkLocationPermission();
       if (result.hasLocation && result.coordinates) {
-        const pos = { lat: result.coordinates.lat, lng: result.coordinates.lng };
+        const pos = {
+          lat: result.coordinates.lat,
+          lng: result.coordinates.lng,
+        };
         this.map?.panTo(pos);
         this.marker?.setPosition(pos);
       }
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }
 
   ngOnDestroy(): void {
@@ -209,7 +228,8 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async runSearch(query: string): Promise<void> {
     try {
-      this.searchSuggestions = await this.geocodingService.searchAddresses(query);
+      this.searchSuggestions =
+        await this.geocodingService.searchAddresses(query);
     } catch {
       this.searchSuggestions = [];
     } finally {
@@ -235,29 +255,33 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapAddress = '';
     this.locationFromMap = false;
     try {
-      const addr = await this.geocodingService.getFullAddressComponents(lat, lng);
-      this.mapAddress      = addr.formattedAddress;
-      this.form.pincode    = addr.pincode;
-      this.form.town       = addr.town;
-      this.form.state      = addr.state;
+      const addr = await this.geocodingService.getFullAddressComponents(
+        lat,
+        lng,
+      );
+      this.mapAddress = addr.formattedAddress;
+      this.form.pincode = addr.pincode;
+      this.form.town = addr.town;
+      this.form.state = addr.state;
       this.locationFromMap = true;
       this.checkPincodeRestriction(addr.pincode);
       delete this.fieldErrors['pincode'];
       delete this.fieldErrors['town'];
     } catch {
-      this.errorMessage = 'Could not resolve address for this location. Please enter manually.';
+      this.errorMessage =
+        'Could not resolve address for this location. Please enter manually.';
     } finally {
       this.isGettingLocation = false;
     }
   }
 
   clearMapSelection() {
-    this.locationFromMap   = false;
-    this.mapAddress        = '';
+    this.locationFromMap = false;
+    this.mapAddress = '';
     this.pincodeRestricted = false;
-    this.form.pincode      = '';
-    this.form.town         = '';
-    this.form.state        = 'Uttar Pradesh';
+    this.form.pincode = '';
+    this.form.town = '';
+    this.form.state = 'Uttar Pradesh';
   }
 
   // ─── Internal helpers ────────────────────────────────────────────────────
@@ -265,11 +289,21 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
   private getRestaurantAddressConfig() {
     try {
       const restaurant = this.restaurantSwitchingService.getCurrentRestaurant();
-      return (restaurant as any)['addressConfig'] ?? {
-        pincode: '', town: '', state: 'Uttar Pradesh', defaultType: 'Home'
-      };
+      return (
+        (restaurant as any)['addressConfig'] ?? {
+          pincode: '',
+          town: '',
+          state: 'Uttar Pradesh',
+          defaultType: 'Home',
+        }
+      );
     } catch {
-      return { pincode: '', town: '', state: 'Uttar Pradesh', defaultType: 'Home' };
+      return {
+        pincode: '',
+        town: '',
+        state: 'Uttar Pradesh',
+        defaultType: 'Home',
+      };
     }
   }
 
@@ -279,10 +313,13 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (phoneNumber) {
       try {
-        const userData = await this.userManagementService.getUserData(phoneNumber);
+        const userData =
+          await this.userManagementService.getUserData(phoneNumber);
         userName = userData?.name ?? '';
         this.existingAddresses = userData?.addresses ?? [];
-      } catch { /* ignore, use defaults */ }
+      } catch {
+        /* ignore, use defaults */
+      }
     }
 
     const cfg = this.getRestaurantAddressConfig();
@@ -295,7 +332,7 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
       town: cfg.town ?? '',
       state: cfg.state ?? 'Uttar Pradesh',
       type: (cfg.defaultType as 'Home' | 'Office' | 'Other') ?? 'Home',
-      isDefault: this.existingAddresses.length === 0
+      isDefault: this.existingAddresses.length === 0,
     };
 
     // Validate initial pincode if pre-filled from restaurant config
@@ -340,7 +377,9 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         await this.onMarkerDrop(lat, lng);
       } else {
-        this.errorMessage = result.error ?? 'Unable to get your location. Please enable location access.';
+        this.errorMessage =
+          result.error ??
+          'Unable to get your location. Please enable location access.';
         this.isGettingLocation = false;
       }
     } catch {
@@ -374,7 +413,8 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
       this.fieldErrors['phone'] = 'Please enter your phone number';
       valid = false;
     } else if (!/^[+]?[\d\s\-()\u202a\u202c]{10,15}$/.test(this.form.phone)) {
-      this.fieldErrors['phone'] = 'Please enter a valid phone number (10-15 digits)';
+      this.fieldErrors['phone'] =
+        'Please enter a valid phone number (10-15 digits)';
       valid = false;
     }
 
@@ -412,7 +452,8 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isSaving = true;
       this.errorMessage = '';
 
-      const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+      const phoneNumber =
+        await this.userManagementService.getCurrentUserPhone();
       if (!phoneNumber) {
         this.errorMessage = ERROR_MESSAGES.UNABLE_TO_GET_PHONE;
         return;
@@ -422,8 +463,14 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Unset existing defaults before marking this one as default
       if (formData.isDefault && this.existingAddresses.length > 0) {
-        const reset = this.existingAddresses.map(a => ({ ...a, isDefault: false }));
-        await this.userManagementService.updateUserAddresses(phoneNumber, reset);
+        const reset = this.existingAddresses.map((a) => ({
+          ...a,
+          isDefault: false,
+        }));
+        await this.userManagementService.updateUserAddresses(
+          phoneNumber,
+          reset,
+        );
       }
 
       const newAddress: Omit<UserAddress, 'created_at' | 'updated_at'> = {
@@ -435,10 +482,13 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
         town: formData.town,
         state: formData.state ?? 'Uttar Pradesh',
         type: formData.type,
-        isDefault: formData.isDefault
+        isDefault: formData.isDefault,
       };
 
-      const success = await this.userManagementService.addUserAddress(phoneNumber, newAddress);
+      const success = await this.userManagementService.addUserAddress(
+        phoneNumber,
+        newAddress,
+      );
       if (success) {
         await this.handlePostSave();
       } else {
@@ -458,7 +508,7 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Address Added Successfully',
         message: 'Where would you like to go?',
         confirmText: 'Go to Cart',
-        cancelText: 'Add more items'
+        cancelText: 'Add more items',
       });
       this.router.navigate(goToCart ? ['/cart'] : ['/home']);
     } else {
@@ -467,6 +517,8 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get isSaveDisabled(): boolean {
-    return this.isSaving || (this.pincodeRestricted && this.pincodeConfig.enabled);
+    return (
+      this.isSaving || (this.pincodeRestricted && this.pincodeConfig.enabled)
+    );
   }
 }

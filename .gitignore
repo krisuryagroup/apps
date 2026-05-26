@@ -9,3 +9,7 @@ apps/node_modules/
 
 # Build outputs
 /dist/
+
+# macOS
+.DS_Store
+**/.DS_Store

@@ -11,14 +11,14 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './update-dialog.component.html',
-  styleUrls: ['./update-dialog.component.scss']
+  styleUrls: ['./update-dialog.component.scss'],
 })
 export class UpdateDialogComponent {
-  @Input() message: string = '';
-  @Input() isMandatory: boolean = false;
-  @Input() updateButtonText: string = 'Update Now';
-  @Input() laterButtonText: string = 'Later';
-  
+  @Input() message = '';
+  @Input() isMandatory = false;
+  @Input() updateButtonText = 'Update Now';
+  @Input() laterButtonText = 'Later';
+
   @Output() update = new EventEmitter<void>();
   @Output() later = new EventEmitter<void>();
 

@@ -12,7 +12,7 @@ export default [
         'error',
         {
           type: 'attribute',
-          prefix: 'lib',
+          prefix: ['lib', 'app', 'cached'],
           style: 'camelCase',
         },
       ],
@@ -20,15 +20,25 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'lib',
+          prefix: ['lib', 'app'],
           style: 'kebab-case',
         },
       ],
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      '@angular-eslint/template/click-events-have-key-events': 'warn',
+      '@angular-eslint/template/interactive-supports-focus': 'warn',
+      '@angular-eslint/template/elements-content': 'warn',
+      '@angular-eslint/template/label-has-associated-control': 'warn',
+    },
   },
 ];

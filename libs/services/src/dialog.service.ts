@@ -1,4 +1,12 @@
-import { Injectable, ComponentRef, ViewContainerRef, ApplicationRef, createComponent, EnvironmentInjector } from '@angular/core';
+import {
+  Injectable,
+  ComponentRef,
+  ViewContainerRef,
+  ApplicationRef,
+  createComponent,
+  EnvironmentInjector,
+  inject,
+} from '@angular/core';
 
 export interface DialogData {
   title: string;
@@ -8,20 +16,19 @@ export interface DialogData {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DialogService {
+  private appRef = inject(ApplicationRef);
+  private injector = inject(EnvironmentInjector);
+
   private dialogRef: ComponentRef<any> | null = null;
 
-  constructor(
-    private appRef: ApplicationRef,
-    private injector: EnvironmentInjector
-  ) {}
-  
   /**
    * Show a confirmation dialog
    */
   async showConfirmation(data: DialogData): Promise<boolean> {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve) => {
       try {
         // For now, use browser confirm but with better styling
@@ -29,9 +36,14 @@ export class DialogService {
         const message = data.message;
         const confirmText = data.confirmText || 'OK';
         const cancelText = data.cancelText || 'Cancel';
-        
+
         // Create a more styled confirmation using a custom approach
-        const userChoice = await this.showNativeStyleConfirm(title, message, confirmText, cancelText);
+        const userChoice = await this.showNativeStyleConfirm(
+          title,
+          message,
+          confirmText,
+          cancelText,
+        );
         resolve(userChoice);
       } catch (error) {
         console.error('Error showing confirmation dialog:', error);
@@ -42,7 +54,12 @@ export class DialogService {
     });
   }
 
-  private async showNativeStyleConfirm(title: string, message: string, confirmText: string, cancelText: string): Promise<boolean> {
+  private async showNativeStyleConfirm(
+    title: string,
+    message: string,
+    confirmText: string,
+    cancelText: string,
+  ): Promise<boolean> {
     return new Promise((resolve) => {
       // Create a temporary overlay for the confirmation
       const overlay = document.createElement('div');
@@ -102,8 +119,12 @@ export class DialogService {
         </div>
       `;
 
-      const cancelBtn = dialog.querySelector('.cancel-btn') as HTMLButtonElement;
-      const confirmBtn = dialog.querySelector('.confirm-btn') as HTMLButtonElement;
+      const cancelBtn = dialog.querySelector(
+        '.cancel-btn',
+      ) as HTMLButtonElement;
+      const confirmBtn = dialog.querySelector(
+        '.confirm-btn',
+      ) as HTMLButtonElement;
 
       const cleanup = () => {
         if (overlay.parentNode) {
@@ -140,7 +161,7 @@ export class DialogService {
   /**
    * Show an info dialog
    */
-  async showInfo(message: string, title: string = 'Information'): Promise<void> {
+  async showInfo(message: string, title = 'Information'): Promise<void> {
     return new Promise((resolve) => {
       const dialogMessage = `${title}\n\n${message}`;
       alert(dialogMessage);

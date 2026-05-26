@@ -1,12 +1,14 @@
-
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { FirebaseAuthService } from '@zitro/services';
 import { Router } from '@angular/router';
 import { ValidatorsUtil } from '@zitro/utils';
-import { PHONE_CONSTANTS, VALIDATION_MESSAGES } from '../../core/constants/app.constants';
+import {
+  PHONE_CONSTANTS,
+  VALIDATION_MESSAGES,
+} from '../../core/constants/app.constants';
 import { AnalyticsService } from '@zitro/services';
 
 @Component({
@@ -14,9 +16,13 @@ import { AnalyticsService } from '@zitro/services';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './signup.component.html',
-  styleUrls: ['./signup.component.scss']
+  styleUrls: ['./signup.component.scss'],
 })
 export class SignupComponent {
+  private authService = inject(FirebaseAuthService);
+  private router = inject(Router);
+  private analyticsService = inject(AnalyticsService);
+
   name = '';
   email = '';
   password = '';
@@ -34,12 +40,6 @@ export class SignupComponent {
   nameError = '';
   passwordError = '';
   confirmPasswordError = '';
-
-  constructor(
-    private authService: FirebaseAuthService,
-    private router: Router,
-    private analyticsService: AnalyticsService
-  ) {}
 
   validatePhone() {
     this.phoneError = ValidatorsUtil.getPhoneValidationError(this.phone);
@@ -69,7 +69,10 @@ export class SignupComponent {
   }
 
   validatePassword() {
-    this.passwordError = ValidatorsUtil.getPasswordValidationError(this.password, 6);
+    this.passwordError = ValidatorsUtil.getPasswordValidationError(
+      this.password,
+      6,
+    );
     return this.passwordError === '';
   }
 
@@ -91,8 +94,10 @@ export class SignupComponent {
     const isNameValid = this.validateName();
     const isPasswordValid = this.validatePassword();
     const isConfirmPasswordValid = this.validateConfirmPassword();
-    
-    return isEmailValid && isNameValid && isPasswordValid && isConfirmPasswordValid;
+
+    return (
+      isEmailValid && isNameValid && isPasswordValid && isConfirmPasswordValid
+    );
   }
 
   // Helper methods for UI state
@@ -121,11 +126,17 @@ export class SignupComponent {
   }
 
   isConfirmPasswordValid(): boolean {
-    return ValidatorsUtil.isFieldValid(this.confirmPassword, this.confirmPasswordError);
+    return ValidatorsUtil.isFieldValid(
+      this.confirmPassword,
+      this.confirmPasswordError,
+    );
   }
 
   isConfirmPasswordInvalid(): boolean {
-    return ValidatorsUtil.isFieldInvalid(this.confirmPassword, this.confirmPasswordError);
+    return ValidatorsUtil.isFieldInvalid(
+      this.confirmPassword,
+      this.confirmPasswordError,
+    );
   }
 
   isPhoneValid(): boolean {
@@ -165,22 +176,25 @@ export class SignupComponent {
 
     try {
       this.errorMsg = 'Verifying OTP...';
-      
+
       // Verify OTP first
-      const isValid = this.authService.verifyOtp(PHONE_CONSTANTS.INDIA_CODE + this.phone, this.otp);
-      
+      const isValid = this.authService.verifyOtp(
+        PHONE_CONSTANTS.INDIA_CODE + this.phone,
+        this.otp,
+      );
+
       if (!isValid) {
         this.errorMsg = 'Invalid or expired OTP. Please try again.';
         return;
       }
-      
+
       // Sign in with phone after OTP verification
       await this.authService.signInWithPhone(this.phone, this.otp);
       this.errorMsg = '';
-      
+
       // Track signup event
       await this.analyticsService.logSignUp('phone');
-      
+
       this.router.navigate(['/home']);
     } catch (err: any) {
       this.errorMsg = err?.message || 'Invalid OTP';

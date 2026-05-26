@@ -1,9 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CouponService } from '@zitro/services';
-import { OnlineOrderCoupon, CouponValidationResult, AppliedCoupon } from '@zitro/models';
+import {
+  OnlineOrderCoupon,
+  CouponValidationResult,
+  AppliedCoupon,
+} from '@zitro/models';
 import { AnalyticsService } from '@zitro/services';
 
 @Component({
@@ -11,36 +15,37 @@ import { AnalyticsService } from '@zitro/services';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './coupon-selection.component.html',
-  styleUrl: './coupon-selection.component.scss'
+  styleUrl: './coupon-selection.component.scss',
 })
 export class CouponSelectionComponent implements OnInit {
+  private couponService = inject(CouponService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private analyticsService = inject(AnalyticsService);
+
   availableCoupons: OnlineOrderCoupon[] = [];
-  couponCode: string = '';
-  isLoading: boolean = false;
-  validationMessage: string = '';
-  isValidationError: boolean = false;
-  
+  couponCode = '';
+  isLoading = false;
+  validationMessage = '';
+  isValidationError = false;
+
   // Cart data passed via route
-  orderAmount: number = 0;
+  orderAmount = 0;
   cartItems: any[] = [];
   currentAppliedCoupon: AppliedCoupon | null = null;
 
   // Eligibility calculations
-  eligibleAmount: number = 0;
-  ineligibleAmount: number = 0;
-  totalAmount: number = 0;
-
-  constructor(
-    private couponService: CouponService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private analyticsService: AnalyticsService
-  ) {}
+  eligibleAmount = 0;
+  ineligibleAmount = 0;
+  totalAmount = 0;
 
   ngOnInit(): void {
     // Track screen view
-    this.analyticsService.logScreenView('Coupon Selection', 'CouponSelectionComponent');
-    
+    this.analyticsService.logScreenView(
+      'Coupon Selection',
+      'CouponSelectionComponent',
+    );
+
     // Modern approach: Use history.state directly (Angular 20+)
     const state = history.state;
     if (state && Object.keys(state).length > 0) {
@@ -49,7 +54,7 @@ export class CouponSelectionComponent implements OnInit {
       this.currentAppliedCoupon = state['appliedCoupon'] || null;
     } else {
       // Fallback: get from route query params
-      this.route.queryParams.subscribe(params => {
+      this.route.queryParams.subscribe((params) => {
         this.orderAmount = parseFloat(params['amount']) || 0;
         // Note: cartItems would need to be passed differently in a real app
       });
@@ -57,7 +62,7 @@ export class CouponSelectionComponent implements OnInit {
 
     this.loadActiveCoupons();
     this.calculateEligibilityAmounts();
-    
+
     if (this.currentAppliedCoupon) {
       this.couponCode = this.currentAppliedCoupon.coupon.code;
     }
@@ -67,21 +72,24 @@ export class CouponSelectionComponent implements OnInit {
     this.couponService.getActiveCoupons().subscribe({
       next: (coupons: OnlineOrderCoupon[]) => {
         this.availableCoupons = coupons;
-        
+
         // Track coupon views
-        coupons.forEach(coupon => {
-          this.analyticsService.logViewPromotion(coupon.id || coupon.code, coupon.title);
+        coupons.forEach((coupon) => {
+          this.analyticsService.logViewPromotion(
+            coupon.id || coupon.code,
+            coupon.title,
+          );
         });
       },
       error: (error: any) => {
         console.error('Error loading coupons:', error);
-      }
+      },
     });
   }
 
   applyCoupon(couponCode?: string): void {
     const codeToApply = couponCode || this.couponCode.trim();
-    
+
     if (!codeToApply) {
       this.showValidationMessage('Please enter a coupon code', true);
       return;
@@ -90,38 +98,46 @@ export class CouponSelectionComponent implements OnInit {
     this.isLoading = true;
     this.validationMessage = '';
 
-    this.couponService.validateCoupon(codeToApply, this.orderAmount, this.cartItems).subscribe({
-      next: (result: CouponValidationResult) => {
-        this.isLoading = false;
-        
-        if (result.isValid) {
-          this.couponService.getCouponByCode(codeToApply).subscribe({
-            next: (coupon: OnlineOrderCoupon | null) => {
-              if (coupon) {
-                // Track coupon selection
-                this.analyticsService.logSelectPromotion(coupon.id || coupon.code, coupon.title);
-                
-                const appliedCoupon: AppliedCoupon = {
-                  coupon: coupon,
-                  discountAmount: result.discountAmount
-                };
-                this.returnToCart(appliedCoupon);
-              }
-            }
-          });
-        } else {
-          // Track coupon failure
-          this.analyticsService.logCouponFailed(codeToApply, result.message);
-          
-          this.showValidationMessage(result.message, true);
-        }
-      },
-      error: (error: any) => {
-        this.isLoading = false;
-        this.showValidationMessage('Error validating coupon. Please try again.', true);
-        console.error('Coupon validation error:', error);
-      }
-    });
+    this.couponService
+      .validateCoupon(codeToApply, this.orderAmount, this.cartItems)
+      .subscribe({
+        next: (result: CouponValidationResult) => {
+          this.isLoading = false;
+
+          if (result.isValid) {
+            this.couponService.getCouponByCode(codeToApply).subscribe({
+              next: (coupon: OnlineOrderCoupon | null) => {
+                if (coupon) {
+                  // Track coupon selection
+                  this.analyticsService.logSelectPromotion(
+                    coupon.id || coupon.code,
+                    coupon.title,
+                  );
+
+                  const appliedCoupon: AppliedCoupon = {
+                    coupon: coupon,
+                    discountAmount: result.discountAmount,
+                  };
+                  this.returnToCart(appliedCoupon);
+                }
+              },
+            });
+          } else {
+            // Track coupon failure
+            this.analyticsService.logCouponFailed(codeToApply, result.message);
+
+            this.showValidationMessage(result.message, true);
+          }
+        },
+        error: (error: any) => {
+          this.isLoading = false;
+          this.showValidationMessage(
+            'Error validating coupon. Please try again.',
+            true,
+          );
+          console.error('Coupon validation error:', error);
+        },
+      });
   }
 
   selectCoupon(coupon: OnlineOrderCoupon): void {
@@ -140,8 +156,8 @@ export class CouponSelectionComponent implements OnInit {
       state: {
         appliedCoupon: appliedCoupon,
         orderAmount: this.orderAmount,
-        cartItems: this.cartItems
-      }
+        cartItems: this.cartItems,
+      },
     });
   }
 
@@ -151,7 +167,10 @@ export class CouponSelectionComponent implements OnInit {
 
   isCouponApplicable(coupon: OnlineOrderCoupon): boolean {
     // Check minimum order amount against eligible items only
-    if (coupon.minOrderAmount && this.getEligibleAmount() < coupon.minOrderAmount) {
+    if (
+      coupon.minOrderAmount &&
+      this.getEligibleAmount() < coupon.minOrderAmount
+    ) {
       return false;
     }
     return true;
@@ -184,7 +203,7 @@ export class CouponSelectionComponent implements OnInit {
     if (this.eligibleAmount > 0 || this.cartItems?.length > 0) {
       return this.eligibleAmount;
     }
-    
+
     // Fallback calculation
     let eligibleAmount = this.orderAmount;
     if (this.cartItems && this.cartItems.length > 0) {
@@ -192,8 +211,11 @@ export class CouponSelectionComponent implements OnInit {
         if (item.isOfferDisabled === true) {
           return sum;
         }
-        const price = typeof item.price === 'number' ? item.price : parseFloat(item.price.replace(/[^\d.]/g, ''));
-        return sum + (price * (item.qty || 1));
+        const price =
+          typeof item.price === 'number'
+            ? item.price
+            : parseFloat(item.price.replace(/[^\d.]/g, ''));
+        return sum + price * (item.qty || 1);
       }, 0);
     }
     return eligibleAmount;
@@ -211,7 +233,7 @@ export class CouponSelectionComponent implements OnInit {
   private showValidationMessage(message: string, isError: boolean): void {
     this.validationMessage = message;
     this.isValidationError = isError;
-    
+
     // Auto-hide success messages after 3 seconds
     if (!isError) {
       setTimeout(() => {
@@ -227,12 +249,15 @@ export class CouponSelectionComponent implements OnInit {
     this.totalAmount = 0;
 
     if (this.cartItems && this.cartItems.length > 0) {
-      this.cartItems.forEach(item => {
-        const price = typeof item.price === 'number' ? item.price : parseFloat(item.price.replace(/[^\d.]/g, ''));
+      this.cartItems.forEach((item) => {
+        const price =
+          typeof item.price === 'number'
+            ? item.price
+            : parseFloat(item.price.replace(/[^\d.]/g, ''));
         const itemTotal = price * (item.qty || 1);
-        
+
         this.totalAmount += itemTotal; // Calculate actual total from cart items
-        
+
         if (item.isOfferDisabled === true) {
           this.ineligibleAmount += itemTotal;
         } else {
@@ -254,7 +279,7 @@ export class CouponSelectionComponent implements OnInit {
     if (!this.hasIneligibleItems()) {
       return '';
     }
-    
+
     return `Offers apply to eligible items only (₹${this.eligibleAmount.toFixed(2)} of ₹${this.totalAmount.toFixed(2)})`;
   }
 }

@@ -6,11 +6,11 @@ import { Restaurant } from '@zitro/utils';
 
 /**
  * Call Restaurant Button Component
- * 
+ *
  * A reusable component that displays a prominent button to call the restaurant.
  * Uses Capacitor's Browser plugin to open phone dialer with tel: protocol.
  * Automatically retrieves phone number from current restaurant settings.
- * 
+ *
  * Usage:
  * <app-call-restaurant-button></app-call-restaurant-button>
  */
@@ -19,11 +19,11 @@ import { Restaurant } from '@zitro/utils';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './call-restaurant-button.component.html',
-  styleUrls: ['./call-restaurant-button.component.scss']
+  styleUrls: ['./call-restaurant-button.component.scss'],
 })
 export class CallRestaurantButtonComponent implements OnInit {
-  restaurantPhone: string = '';
-  restaurantName: string = '';
+  restaurantPhone = '';
+  restaurantName = '';
   private restaurantSwitchingService = inject(RestaurantSwitchingService);
 
   ngOnInit(): void {
@@ -35,10 +35,13 @@ export class CallRestaurantButtonComponent implements OnInit {
    */
   private loadRestaurantInfo(): void {
     try {
-      const currentRestaurant: Restaurant = this.restaurantSwitchingService.getCurrentRestaurant();
+      const currentRestaurant: Restaurant =
+        this.restaurantSwitchingService.getCurrentRestaurant();
       this.restaurantPhone = currentRestaurant['phone'] || '+91 9193116659';
       this.restaurantName = currentRestaurant.name || 'Restaurant';
-      console.log(`📞 Call Restaurant Button: ${this.restaurantName} - ${this.restaurantPhone}`);
+      console.log(
+        `📞 Call Restaurant Button: ${this.restaurantName} - ${this.restaurantPhone}`,
+      );
     } catch (error) {
       console.error('❌ Error loading restaurant info:', error);
       // Fallback phone number
@@ -61,16 +64,16 @@ export class CallRestaurantButtonComponent implements OnInit {
       // Remove spaces and format for tel: protocol
       const phoneNumber = this.restaurantPhone.replace(/\s+/g, '');
       const telUrl = `tel:${phoneNumber}`;
-      
+
       console.log(`📞 Initiating call to: ${telUrl}`);
-      
+
       // Use Capacitor Browser to open tel: URL (triggers phone dialer)
       await Browser.open({ url: telUrl });
-      
+
       console.log('✅ Phone dialer opened successfully');
     } catch (error) {
       console.error('❌ Error opening phone dialer:', error);
-      
+
       // Fallback: try window.location as last resort
       try {
         const phoneNumber = this.restaurantPhone.replace(/\s+/g, '');

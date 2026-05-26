@@ -11,7 +11,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
-import { AnalyticsService, CartApiService, CouponApiService } from '@zitro/services';
+import {
+  AnalyticsService,
+  CartApiService,
+  CouponApiService,
+} from '@zitro/services';
 import type { OnlineOrderCoupon } from '@zitro/models';
 
 @Component({
@@ -36,16 +40,17 @@ export class CouponSelectionPage implements OnInit {
   readonly isValidationError = signal(false);
   readonly businessSlug = signal('');
 
-  readonly appliedCouponCode = computed(() =>
-    this.cartApi.carts().get(this.businessSlug())?.couponCode ?? null
+  readonly appliedCouponCode = computed(
+    () => this.cartApi.carts().get(this.businessSlug())?.couponCode ?? null,
   );
 
-  readonly appliedDiscount = computed(() =>
-    this.cartApi.carts().get(this.businessSlug())?.couponDiscountPreview ?? 0
+  readonly appliedDiscount = computed(
+    () =>
+      this.cartApi.carts().get(this.businessSlug())?.couponDiscountPreview ?? 0,
   );
 
-  private readonly cartSubtotal = computed(() =>
-    this.cartApi.carts().get(this.businessSlug())?.estimatedTotal ?? 0
+  private readonly cartSubtotal = computed(
+    () => this.cartApi.carts().get(this.businessSlug())?.estimatedTotal ?? 0,
   );
 
   async ngOnInit(): Promise<void> {
@@ -67,7 +72,9 @@ export class CouponSelectionPage implements OnInit {
     try {
       const coupons = await firstValueFrom(this.couponApi.getCoupons(slug));
       this.availableCoupons.set(coupons);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async applyCoupon(code?: string): Promise<void> {
@@ -80,9 +87,16 @@ export class CouponSelectionPage implements OnInit {
     this.isLoading.set(true);
     this.validationMessage.set('');
     try {
-      const result = await this.cartApi.applyCoupon(this.businessSlug(), codeToApply);
+      const result = await this.cartApi.applyCoupon(
+        this.businessSlug(),
+        codeToApply,
+      );
       if (result.success) {
-        this.analytics.logSelectPromotion(codeToApply, codeToApply).catch(() => {});
+        this.analytics
+          .logSelectPromotion(codeToApply, codeToApply)
+          .catch(() => {
+            /* no-op */
+          });
         this.navigateToCart();
       } else {
         this.showMessage(result.error ?? 'Coupon could not be applied', true);
@@ -118,9 +132,15 @@ export class CouponSelectionPage implements OnInit {
     const now = new Date();
     if (!coupon.isActive) return false;
     if (coupon.validTo && new Date(coupon.validTo) < now) return false;
-    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) return false;
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit)
+      return false;
     const subtotal = this.cartSubtotal();
-    if (coupon.minOrderAmount && subtotal > 0 && subtotal < coupon.minOrderAmount) return false;
+    if (
+      coupon.minOrderAmount &&
+      subtotal > 0 &&
+      subtotal < coupon.minOrderAmount
+    )
+      return false;
     return true;
   }
 
@@ -134,11 +154,15 @@ export class CouponSelectionPage implements OnInit {
   }
 
   isCouponApplied(coupon: OnlineOrderCoupon): boolean {
-    return this.appliedCouponCode()?.toUpperCase() === coupon.code.toUpperCase();
+    return (
+      this.appliedCouponCode()?.toUpperCase() === coupon.code.toUpperCase()
+    );
   }
 
   private navigateToCart(): void {
-    this.router.navigate(['/cart'], { queryParams: { business: this.businessSlug() } });
+    this.router.navigate(['/cart'], {
+      queryParams: { business: this.businessSlug() },
+    });
   }
 
   private showMessage(message: string, isError: boolean): void {

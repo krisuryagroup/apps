@@ -1,20 +1,25 @@
-import { Capacitor } from "@capacitor/core";
-import { environment } from "./environment";
-import { App } from "@capacitor/app";
+import { Capacitor } from '@capacitor/core';
+import { environment } from './environment';
+import { App } from '@capacitor/app';
 
-export function formatOpenCloseTime(openTime: string, closeTime: string): string {
+export function formatOpenCloseTime(
+  openTime: string,
+  closeTime: string,
+): string {
   function to12Hour(time: string): string {
     const [hourStr, minuteStr] = time.split(':');
     let hour = parseInt(hourStr, 10);
     const minute = parseInt(minuteStr, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     hour = hour % 12 || 12;
-    return minute === 0 ? `${hour}${ampm}` : `${hour}:${minute.toString().padStart(2, '0')}${ampm}`;
+    return minute === 0
+      ? `${hour}${ampm}`
+      : `${hour}:${minute.toString().padStart(2, '0')}${ampm}`;
   }
   return `${to12Hour(openTime)} - ${to12Hour(closeTime)}`;
 }
 
-export function isRestaurantOpen(openTime: string = '', closeTime: string = ''): boolean {
+export function isRestaurantOpen(openTime = '', closeTime = ''): boolean {
   if (!openTime || !closeTime) return false;
   const now = new Date();
   const [openHour, openMinute] = openTime.split(':').map(Number);
@@ -33,23 +38,23 @@ export function isRestaurantOpen(openTime: string = '', closeTime: string = ''):
  * Convert Firebase timestamp or string to Date object
  */
 export function convertFirebaseDate(firebaseDate: any): Date {
-    if (!firebaseDate) {
-      return new Date();
-    }
-
-    // If it's a Firestore Timestamp, convert to Date
-    if (firebaseDate.toDate && typeof firebaseDate.toDate === 'function') {
-      return firebaseDate.toDate();
-    }
-
-    // If it's already a Date object
-    if (firebaseDate instanceof Date) {
-      return firebaseDate;
-    }
-
-    // If it's a string or number, create Date from it
-    return new Date(firebaseDate);
+  if (!firebaseDate) {
+    return new Date();
   }
+
+  // If it's a Firestore Timestamp, convert to Date
+  if (firebaseDate.toDate && typeof firebaseDate.toDate === 'function') {
+    return firebaseDate.toDate();
+  }
+
+  // If it's already a Date object
+  if (firebaseDate instanceof Date) {
+    return firebaseDate;
+  }
+
+  // If it's a string or number, create Date from it
+  return new Date(firebaseDate);
+}
 
 /**
  * Simple token-based matcher.
@@ -65,12 +70,12 @@ export function matchesSearch(itemName: string, search: string): boolean {
     // 4) collapse multiple spaces and split into tokens
     const normalized = s
       .toLowerCase()
-      .replace(/([a-z])([A-Z])/g, "$1 $2") // split camelCase (safe even if already lowercased)
-      .replace(/[^a-z0-9]+/g, " ")         // non-alnum -> space
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // split camelCase (safe even if already lowercased)
+      .replace(/[^a-z0-9]+/g, ' ') // non-alnum -> space
       .trim()
-      .replace(/\s+/g, " ");               // collapse spaces
+      .replace(/\s+/g, ' '); // collapse spaces
 
-    return normalized.length ? normalized.split(" ") : [];
+    return normalized.length ? normalized.split(' ') : [];
   };
 
   const itemTokens = normalizeAndSplit(itemName);
@@ -79,39 +84,52 @@ export function matchesSearch(itemName: string, search: string): boolean {
   if (searchTokens.length === 0) return false;
 
   // every search token must appear as a full token or substring inside any item token
-  return searchTokens.every(st =>
-    itemTokens.some(it => it === st || it.includes(st) || st.includes(it))
+  return searchTokens.every((st) =>
+    itemTokens.some((it) => it === st || it.includes(st) || st.includes(it)),
   );
 }
 
-export async function  getAppVersion(): Promise<string> {
-    let appVersion = environment.appVersion; // Fallback from environment
+export async function getAppVersion(): Promise<string> {
+  let appVersion = environment.appVersion; // Fallback from environment
 
-    // Only get app info on native platforms (Android/iOS)
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const appInfo = await App.getInfo();
-        console.log('📱 Native App Info (full object):', appInfo);
+  // Only get app info on native platforms (Android/iOS)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const appInfo = await App.getInfo();
+      console.log('📱 Native App Info (full object):', appInfo);
 
-        // Try to get version, then build, then fallback
-        if (appInfo.version && appInfo.version !== '' && appInfo.version !== 'undefined') {
-          appVersion = appInfo.version;
-          console.log('✅ Using App.getInfo().version:', appVersion);
-        } else if (appInfo.build && appInfo.build !== '' && appInfo.build !== 'undefined') {
-          appVersion = appInfo.build;
-          console.log('✅ Using App.getInfo().build:', appVersion);
-        } else {
-          console.warn('⚠️ App.getInfo() returned no valid version or build, using environment fallback');
-        }
-      } catch (versionError) {
-        console.error('❌ Error calling App.getInfo():', versionError);
-        console.warn('⚠️ Using environment fallback version:', appVersion);
+      // Try to get version, then build, then fallback
+      if (
+        appInfo.version &&
+        appInfo.version !== '' &&
+        appInfo.version !== 'undefined'
+      ) {
+        appVersion = appInfo.version;
+        console.log('✅ Using App.getInfo().version:', appVersion);
+      } else if (
+        appInfo.build &&
+        appInfo.build !== '' &&
+        appInfo.build !== 'undefined'
+      ) {
+        appVersion = appInfo.build;
+        console.log('✅ Using App.getInfo().build:', appVersion);
+      } else {
+        console.warn(
+          '⚠️ App.getInfo() returned no valid version or build, using environment fallback',
+        );
       }
-    } else {
-      console.log('🌐 Running in browser, using environment version:', appVersion);
+    } catch (versionError) {
+      console.error('❌ Error calling App.getInfo():', versionError);
+      console.warn('⚠️ Using environment fallback version:', appVersion);
     }
+  } else {
+    console.log(
+      '🌐 Running in browser, using environment version:',
+      appVersion,
+    );
+  }
 
-    return appVersion;
+  return appVersion;
 }
 
 export function compareApplicationVersions(v1: string, v2: string): number {

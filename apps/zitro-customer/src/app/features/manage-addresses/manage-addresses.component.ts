@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,16 +7,25 @@ import { FirebaseAuthService } from '@zitro/services';
 import { Address, AddressFormData } from '@zitro/models';
 import { RestaurantSwitchingService } from '@zitro/services';
 import { DialogService } from '@zitro/services';
-import { APP_SETTINGS_CACHE, ERROR_MESSAGES } from '../../core/constants/app.constants';
+import {
+  APP_SETTINGS_CACHE,
+  ERROR_MESSAGES,
+} from '../../core/constants/app.constants';
 
 @Component({
   selector: 'app-manage-addresses',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './manage-addresses.component.html',
-  styleUrls: ['./manage-addresses.component.scss']
+  styleUrls: ['./manage-addresses.component.scss'],
 })
 export class ManageAddressesComponent implements OnInit {
+  private userManagementService = inject(UserManagementService);
+  private authService = inject(FirebaseAuthService);
+  private restaurantSwitchingService = inject(RestaurantSwitchingService);
+  private router = inject(Router);
+  private dialogService = inject(DialogService);
+
   addresses: UserAddress[] = [];
   showForm = false;
   editIndex: number | null = null;
@@ -25,14 +34,6 @@ export class ManageAddressesComponent implements OnInit {
   isSaving = false;
   errorMessage = '';
   fieldErrors: { [key: string]: string } = {};
-
-  constructor(
-    private userManagementService: UserManagementService,
-    private authService: FirebaseAuthService,
-    private restaurantSwitchingService: RestaurantSwitchingService,
-    private router: Router,
-    private dialogService: DialogService
-  ) {}
 
   async ngOnInit() {
     await this.loadAddresses();
@@ -43,13 +44,16 @@ export class ManageAddressesComponent implements OnInit {
    */
   private getAddressConfig() {
     try {
-      const currentRestaurant = this.restaurantSwitchingService.getCurrentRestaurant();
-      return currentRestaurant['addressConfig'] || {
-        pincode: '206244',
-        town: 'Dibiyapur, AURAIYA',
-        state: 'Uttar Pradesh',
-        defaultType: 'Home'
-      };
+      const currentRestaurant =
+        this.restaurantSwitchingService.getCurrentRestaurant();
+      return (
+        currentRestaurant['addressConfig'] || {
+          pincode: '206244',
+          town: 'Dibiyapur, AURAIYA',
+          state: 'Uttar Pradesh',
+          defaultType: 'Home',
+        }
+      );
     } catch (error) {
       console.error('Error getting restaurant address config:', error);
       // Fallback to default values
@@ -57,7 +61,7 @@ export class ManageAddressesComponent implements OnInit {
         pincode: '206244',
         town: 'Dibiyapur, AURAIYA',
         state: 'Uttar Pradesh',
-        defaultType: 'Home'
+        defaultType: 'Home',
       };
     }
   }
@@ -74,14 +78,17 @@ export class ManageAddressesComponent implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
 
-
-      const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+      const phoneNumber =
+        await this.userManagementService.getCurrentUserPhone();
       if (!phoneNumber) {
         this.errorMessage = ERROR_MESSAGES.UNABLE_TO_GET_PHONE;
         return;
       }
 
-      const userData = await this.userManagementService.getUserData(phoneNumber, true); // Hard refresh to always get latest addresses
+      const userData = await this.userManagementService.getUserData(
+        phoneNumber,
+        true,
+      ); // Hard refresh to always get latest addresses
       this.addresses = userData?.addresses || [];
     } catch (error) {
       console.error('Error loading addresses:', error);
@@ -112,7 +119,7 @@ export class ManageAddressesComponent implements OnInit {
       town: address.town,
       state: address.state,
       type: address.type as 'Home' | 'Office' | 'Other',
-      isDefault: address.isDefault
+      isDefault: address.isDefault,
     };
     this.errorMessage = '';
     this.fieldErrors = {};
@@ -135,7 +142,8 @@ export class ManageAddressesComponent implements OnInit {
       this.isSaving = true;
       this.errorMessage = '';
 
-      const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+      const phoneNumber =
+        await this.userManagementService.getCurrentUserPhone();
       if (!phoneNumber) {
         this.errorMessage = ERROR_MESSAGES.UNABLE_TO_GET_PHONE;
         return;
@@ -168,10 +176,13 @@ export class ManageAddressesComponent implements OnInit {
           state: formData.state,
           type: formData.type,
           isDefault: formData.isDefault,
-          updated_at: now
+          updated_at: now,
         };
 
-        const success = await this.userManagementService.updateUserAddresses(phoneNumber, updatedAddresses);
+        const success = await this.userManagementService.updateUserAddresses(
+          phoneNumber,
+          updatedAddresses,
+        );
         if (success) {
           this.addresses = updatedAddresses;
           this.showForm = false;
@@ -186,11 +197,14 @@ export class ManageAddressesComponent implements OnInit {
         // If setting this address as default, unset all other defaults
         if (formData.isDefault) {
           const updatedAddresses = [...this.addresses];
-          updatedAddresses.forEach(addr => {
+          updatedAddresses.forEach((addr) => {
             addr.isDefault = false;
           });
           // Update existing addresses to remove default flag
-          await this.userManagementService.updateUserAddresses(phoneNumber, updatedAddresses);
+          await this.userManagementService.updateUserAddresses(
+            phoneNumber,
+            updatedAddresses,
+          );
         }
 
         const newAddress: Omit<UserAddress, 'created_at' | 'updated_at'> = {
@@ -202,10 +216,13 @@ export class ManageAddressesComponent implements OnInit {
           town: formData.town,
           state: formData.state,
           type: formData.type,
-          isDefault: formData.isDefault
+          isDefault: formData.isDefault,
         };
 
-        const success = await this.userManagementService.addUserAddress(phoneNumber, newAddress);
+        const success = await this.userManagementService.addUserAddress(
+          phoneNumber,
+          newAddress,
+        );
         if (success) {
           await this.loadAddresses(); // Reload to get the updated list
           this.showForm = false;
@@ -240,7 +257,7 @@ export class ManageAddressesComponent implements OnInit {
         title: 'Address Added Successfully',
         message: 'Where would you like to go?',
         confirmText: 'Go to Cart',
-        cancelText: 'Add more items'
+        cancelText: 'Add more items',
       });
 
       if (result) {
@@ -260,14 +277,17 @@ export class ManageAddressesComponent implements OnInit {
 
     try {
       this.errorMessage = '';
-      const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+      const phoneNumber =
+        await this.userManagementService.getCurrentUserPhone();
       if (!phoneNumber) {
         this.errorMessage = ERROR_MESSAGES.UNABLE_TO_GET_PHONE;
         return;
       }
 
       const addressToDelete = this.addresses[idx];
-      const updatedAddresses = this.addresses.filter((_, index) => index !== idx);
+      const updatedAddresses = this.addresses.filter(
+        (_, index) => index !== idx,
+      );
 
       // If we deleted the default address and there are still addresses left,
       // make the first remaining address the default
@@ -275,7 +295,10 @@ export class ManageAddressesComponent implements OnInit {
         updatedAddresses[0].isDefault = true;
       }
 
-      const success = await this.userManagementService.updateUserAddresses(phoneNumber, updatedAddresses);
+      const success = await this.userManagementService.updateUserAddresses(
+        phoneNumber,
+        updatedAddresses,
+      );
 
       if (success) {
         this.addresses = updatedAddresses;
@@ -291,7 +314,8 @@ export class ManageAddressesComponent implements OnInit {
   async setDefaultAddress(idx: number) {
     try {
       this.errorMessage = '';
-      const phoneNumber = await this.userManagementService.getCurrentUserPhone();
+      const phoneNumber =
+        await this.userManagementService.getCurrentUserPhone();
       if (!phoneNumber) {
         this.errorMessage = ERROR_MESSAGES.UNABLE_TO_GET_PHONE;
         return;
@@ -300,14 +324,17 @@ export class ManageAddressesComponent implements OnInit {
       const updatedAddresses = [...this.addresses];
 
       // Set all addresses to non-default
-      updatedAddresses.forEach(addr => {
+      updatedAddresses.forEach((addr) => {
         addr.isDefault = false;
       });
 
       // Set selected address as default
       updatedAddresses[idx].isDefault = true;
 
-      const success = await this.userManagementService.updateUserAddresses(phoneNumber, updatedAddresses);
+      const success = await this.userManagementService.updateUserAddresses(
+        phoneNumber,
+        updatedAddresses,
+      );
 
       if (success) {
         this.addresses = updatedAddresses;
@@ -316,7 +343,8 @@ export class ManageAddressesComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error setting default address:', error);
-      this.errorMessage = 'An error occurred while setting the default address.';
+      this.errorMessage =
+        'An error occurred while setting the default address.';
     }
   }
 
@@ -337,7 +365,8 @@ export class ManageAddressesComponent implements OnInit {
     } else {
       const phoneRegex = /^[+]?[\d\s-()]{10,15}$/;
       if (!phoneRegex.test(this.form.phone)) {
-        this.fieldErrors['phone'] = 'Please enter a valid phone number (10-15 digits)';
+        this.fieldErrors['phone'] =
+          'Please enter a valid phone number (10-15 digits)';
         isValid = false;
       }
     }

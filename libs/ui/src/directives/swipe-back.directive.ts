@@ -1,13 +1,14 @@
-import { Directive, ElementRef, HostListener } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 import { Location } from '@angular/common';
 
 @Directive({
-  selector: '[appSwipeBack]'
+  selector: '[appSwipeBack]',
 })
 export class SwipeBackDirective {
-  private startX = 0;
+  private el = inject(ElementRef);
+  private location = inject(Location);
 
-  constructor(private el: ElementRef, private location: Location) {}
+  private startX = 0;
 
   @HostListener('touchstart', ['$event'])
   onTouchStart(event: TouchEvent) {

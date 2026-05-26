@@ -1,4 +1,15 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  OnDestroy,
+  ChangeDetectorRef,
+  NgZone,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Product } from '@zitro/models';
@@ -27,12 +38,21 @@ interface CategoryCard {
   standalone: true,
   imports: [CommonModule, CachedImageDirective, ViewAllCardComponent],
   templateUrl: './category-cards.component.html',
-  styleUrls: ['./category-cards.component.scss']
+  styleUrls: ['./category-cards.component.scss'],
 })
 export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
+  private cartService = inject(CartService);
+  private favoritesService = inject(FavoritesService);
+  private productsService = inject(ProductsService);
+  private categoriesService = inject(CategoriesService);
+  private appSettingsService = inject(AppSettingsService);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
+
   @Input() products: Product[] = [];
-  @Input() title: string = 'Categories';
-  
+  @Input() title = 'Categories';
+
   @Output() productClick = new EventEmitter<Product>();
   @Output() categoryClick = new EventEmitter<string>();
   @Output() cartUpdated = new EventEmitter<void>();
@@ -43,17 +63,6 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
   categoryConfigs: CategoryConfig | null = null;
   private intersectionObserver?: IntersectionObserver;
   private currentlyVisibleCard?: CategoryCard;
-
-  constructor(
-    private cartService: CartService,
-    private favoritesService: FavoritesService,
-    private productsService: ProductsService,
-    private categoriesService: CategoriesService,
-    private appSettingsService: AppSettingsService,
-    private router: Router,
-    private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
-  ) {}
 
   async ngOnInit() {
     await this.loadCategories();
@@ -67,12 +76,12 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy() {
     // Clean up all auto-slide intervals
-    this.categoryCards.forEach(card => {
+    this.categoryCards.forEach((card) => {
       if (card.autoSlideInterval) {
         clearInterval(card.autoSlideInterval);
       }
     });
-    
+
     // Disconnect intersection observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
@@ -92,7 +101,8 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
   async loadCategoryConfigs() {
     try {
-      this.categoryConfigs = await this.appSettingsService.getCategoryConfigs('categoryConfigs');
+      this.categoryConfigs =
+        await this.appSettingsService.getCategoryConfigs('categoryConfigs');
     } catch (error) {
       console.error('Error loading category configs:', error);
       this.categoryConfigs = null;
@@ -101,15 +111,15 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
   organizeProducts() {
     // Clear existing intervals
-    this.categoryCards.forEach(card => {
+    this.categoryCards.forEach((card) => {
       if (card.autoSlideInterval) {
         clearInterval(card.autoSlideInterval);
       }
     });
 
     const grouped = new Map<string, Product[]>();
-    
-    this.products.forEach(product => {
+
+    this.products.forEach((product) => {
       // Use categoryId from product to group
       const categoryId = product.category || 'Other';
       if (!grouped.has(categoryId)) {
@@ -119,26 +129,27 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     // Convert to array and match with category details using categoryId
-    let cards = Array.from(grouped.entries())
-      .map(([categoryId, products]) => {
-        // Find the category by ID to get the name and other details
-        const category = (this.categories.find(cat => cat.id === categoryId) || {
-          id: categoryId,
-          name: categoryId, // Fallback to ID if category not found
-          imageURL: '',
-          status: true,
-          isEnabledForOnlineOrders: true,
-          created_at: '',
-          updated_at: ''
-        }) as Category;
-        const card = {
-          category,
-          products: [...products], // Create a new array copy to avoid reference issues
-          currentSlideIndex: 0,
-          currentProduct: products[0]
-        };
-        return card;
-      });
+    let cards = Array.from(grouped.entries()).map(([categoryId, products]) => {
+      // Find the category by ID to get the name and other details
+      const category = (this.categories.find(
+        (cat) => cat.id === categoryId,
+      ) || {
+        id: categoryId,
+        name: categoryId, // Fallback to ID if category not found
+        imageURL: '',
+        status: true,
+        isEnabledForOnlineOrders: true,
+        created_at: '',
+        updated_at: '',
+      }) as Category;
+      const card = {
+        category,
+        products: [...products], // Create a new array copy to avoid reference issues
+        currentSlideIndex: 0,
+        currentProduct: products[0],
+      };
+      return card;
+    });
 
     // Apply dynamic sorting from config
     if (this.categoryConfigs) {
@@ -149,7 +160,8 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
         let comparison = 0;
         switch (sortBy) {
           case 'priority':
-            comparison = (b.category.priority ?? 0) - (a.category.priority ?? 0);
+            comparison =
+              (b.category.priority ?? 0) - (a.category.priority ?? 0);
             break;
           case 'name':
             comparison = a.category.name.localeCompare(b.category.name);
@@ -171,7 +183,9 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
       }
     } else {
       // Default sorting by priority (highest first)
-      cards = cards.sort((a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0));
+      cards = cards.sort(
+        (a, b) => (b.category.priority ?? 0) - (a.category.priority ?? 0),
+      );
     }
 
     this.categoryCards = cards;
@@ -200,9 +214,11 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
       (entries) => {
         this.ngZone.run(() => {
           // Update visibility for all observed cards
-          entries.forEach(entry => {
+          entries.forEach((entry) => {
             const cardElement = entry.target as HTMLElement;
-            const card = this.categoryCards.find(c => c.element === cardElement);
+            const card = this.categoryCards.find(
+              (c) => c.element === cardElement,
+            );
             if (card) {
               card.isVisible = entry.intersectionRatio >= 0.8;
               card.visibilityRatio = entry.intersectionRatio;
@@ -211,11 +227,14 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
           // Find the topmost card that meets the 80% visibility threshold
           const visibleCards = this.categoryCards
-            .filter(card => card.isVisible && card.products.length > 1)
+            .filter((card) => card.isVisible && card.products.length > 1)
             .sort((a, b) => {
               // Sort by DOM position (top to bottom)
               if (a.element && b.element) {
-                return a.element.getBoundingClientRect().top - b.element.getBoundingClientRect().top;
+                return (
+                  a.element.getBoundingClientRect().top -
+                  b.element.getBoundingClientRect().top
+                );
               }
               return 0;
             });
@@ -233,11 +252,12 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
             // Start interval for new topmost visible card
             if (topVisibleCard) {
               this.currentlyVisibleCard = topVisibleCard;
-              const slideInterval = this.categoryConfigs?.autoSlideInterval ?? 2000;
-              
+              const slideInterval =
+                this.categoryConfigs?.autoSlideInterval ?? 2000;
+
               // Trigger first slide immediately
               this.nextSlide(topVisibleCard);
-              
+
               // Then continue with regular interval
               topVisibleCard.autoSlideInterval = setInterval(() => {
                 this.nextSlide(topVisibleCard);
@@ -250,12 +270,14 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
       },
       {
         root: null, // viewport
-        threshold: 0.8 // 80% visibility
-      }
+        threshold: 0.8, // 80% visibility
+      },
     );
 
     // Observe all category card elements
-    const cardElements = document.querySelectorAll('.category-card:not(.view-all-card-container)');
+    const cardElements = document.querySelectorAll(
+      '.category-card:not(.view-all-card-container)',
+    );
     cardElements.forEach((element, index) => {
       if (index < this.categoryCards.length) {
         this.categoryCards[index].element = element as HTMLElement;
@@ -275,16 +297,18 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
   // Carousel methods
   nextSlide(card: CategoryCard) {
-    card.currentSlideIndex = (card.currentSlideIndex + 1) % card.products.length;
+    card.currentSlideIndex =
+      (card.currentSlideIndex + 1) % card.products.length;
     card.currentProduct = card.products[card.currentSlideIndex];
     this.cdr.detectChanges();
   }
 
   prevSlide(card: CategoryCard, event: Event) {
     event.stopPropagation();
-    card.currentSlideIndex = card.currentSlideIndex === 0 
-      ? card.products.length - 1 
-      : card.currentSlideIndex - 1;
+    card.currentSlideIndex =
+      card.currentSlideIndex === 0
+        ? card.products.length - 1
+        : card.currentSlideIndex - 1;
     card.currentProduct = card.products[card.currentSlideIndex];
     this.cdr.detectChanges();
   }
@@ -308,9 +332,11 @@ export class CategoryCardsComponent implements OnInit, OnChanges, OnDestroy {
 
   getCategoryDescription(category: Category): string {
     // Generate description from category products
-    const card = this.categoryCards.find(c => c.category.name === category.name);
+    const card = this.categoryCards.find(
+      (c) => c.category.name === category.name,
+    );
     if (!card) return '';
-    
+
     const itemCount = card.products.length;
     return `${itemCount} item${itemCount !== 1 ? 's' : ''} available`;
   }

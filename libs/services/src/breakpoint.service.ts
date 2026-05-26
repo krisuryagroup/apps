@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { BehaviorSubject, fromEvent, Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
@@ -7,24 +7,26 @@ export type Breakpoint = 'mobile' | 'tablet' | 'desktop' | 'large-desktop';
 
 @Injectable({ providedIn: 'root' })
 export class BreakpointService {
+  private platformId = inject<object>(PLATFORM_ID);
+
   private breakpoint$: BehaviorSubject<Breakpoint>;
   private breakpoints = {
     mobile: 480,
     tablet: 768,
     desktop: 1024,
-    largeDesktop: 1440
+    largeDesktop: 1440,
   };
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  constructor() {
     this.breakpoint$ = new BehaviorSubject<Breakpoint>(this.getBreakpoint());
     if (isPlatformBrowser(this.platformId)) {
       fromEvent(window, 'resize')
         .pipe(
           debounceTime(100),
           map(() => this.getBreakpoint()),
-          startWith(this.getBreakpoint())
+          startWith(this.getBreakpoint()),
         )
-        .subscribe(bp => this.breakpoint$.next(bp));
+        .subscribe((bp) => this.breakpoint$.next(bp));
     }
   }
 
@@ -48,6 +50,9 @@ export class BreakpointService {
     return this.getBreakpoint() === 'tablet';
   }
   isDesktop(): boolean {
-    return this.getBreakpoint() === 'desktop' || this.getBreakpoint() === 'large-desktop';
+    return (
+      this.getBreakpoint() === 'desktop' ||
+      this.getBreakpoint() === 'large-desktop'
+    );
   }
 }

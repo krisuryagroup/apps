@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { Restaurant } from '@zitro/utils';
@@ -18,13 +18,13 @@ interface LocationPermissionStatus {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LocationService {
+  private geocodingService = inject(GoogleGeocodingService);
+
   private currentLocation: Coordinates | null = null;
   private currentPincode: string | null = null;
-
-  constructor(private geocodingService: GoogleGeocodingService) {}
 
   /** True when running as a native Android/iOS app via Capacitor */
   private isNative(): boolean {
@@ -49,19 +49,29 @@ export class LocationService {
           switch (err.code) {
             case err.PERMISSION_DENIED:
               this.saveLocationPermissionPreference('denied');
-              reject(new Error('Location permission denied. Please allow access in your browser settings.'));
+              reject(
+                new Error(
+                  'Location permission denied. Please allow access in your browser settings.',
+                ),
+              );
               break;
             case err.POSITION_UNAVAILABLE:
-              reject(new Error('Location unavailable. Check your device or browser settings.'));
+              reject(
+                new Error(
+                  'Location unavailable. Check your device or browser settings.',
+                ),
+              );
               break;
             case err.TIMEOUT:
-              reject(new Error('Location request timed out. Please try again.'));
+              reject(
+                new Error('Location request timed out. Please try again.'),
+              );
               break;
             default:
               reject(new Error('Unable to determine your location.'));
           }
         },
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60_000 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60_000 },
       );
     });
   }
@@ -78,25 +88,48 @@ export class LocationService {
 
         if (permissions.location === 'granted') {
           try {
-            const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-            const coordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
+            const position = await Geolocation.getCurrentPosition({
+              enableHighAccuracy: true,
+              timeout: 15000,
+            });
+            const coordinates = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
             const pincode = await this.getPincodeFromCoordinates(coordinates);
             this.currentLocation = coordinates;
             this.currentPincode = pincode;
-            return { permission: 'granted', hasLocation: true, coordinates, pincode };
+            return {
+              permission: 'granted',
+              hasLocation: true,
+              coordinates,
+              pincode,
+            };
           } catch (err: any) {
-            return { permission: 'granted', hasLocation: false, error: 'Unable to get current location' };
+            return {
+              permission: 'granted',
+              hasLocation: false,
+              error: 'Unable to get current location',
+            };
           }
         }
 
         if (permissions.location === 'denied') {
-          return { permission: 'denied', hasLocation: false, error: 'Location permission denied' };
+          return {
+            permission: 'denied',
+            hasLocation: false,
+            error: 'Location permission denied',
+          };
         }
 
         // 'prompt' — ask the user
         return await this.requestLocationPermission();
       } catch (err: any) {
-        return { permission: 'denied', hasLocation: false, error: err.message || 'Location services unavailable' };
+        return {
+          permission: 'denied',
+          hasLocation: false,
+          error: err.message || 'Location services unavailable',
+        };
       }
     }
 
@@ -105,12 +138,19 @@ export class LocationService {
     try {
       // Use Permissions API if available (Chrome, Firefox, Edge)
       if (navigator.permissions) {
-        const status = await navigator.permissions.query({ name: 'geolocation' });
+        const status = await navigator.permissions.query({
+          name: 'geolocation',
+        });
         console.log('📍 [Web] Permission state:', status.state);
 
         if (status.state === 'denied') {
           this.saveLocationPermissionPreference('denied');
-          return { permission: 'denied', hasLocation: false, error: 'Location permission denied. Please allow it in your browser settings.' };
+          return {
+            permission: 'denied',
+            hasLocation: false,
+            error:
+              'Location permission denied. Please allow it in your browser settings.',
+          };
         }
       }
 
@@ -126,7 +166,7 @@ export class LocationService {
       return {
         permission: isDenied ? 'denied' : 'prompt',
         hasLocation: false,
-        error: err.message || 'Unable to get location'
+        error: err.message || 'Unable to get location',
       };
     }
   }
@@ -143,22 +183,45 @@ export class LocationService {
 
         if (permissions.location === 'granted') {
           try {
-            const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-            const coordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
+            const position = await Geolocation.getCurrentPosition({
+              enableHighAccuracy: true,
+              timeout: 15000,
+            });
+            const coordinates = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
             const pincode = await this.getPincodeFromCoordinates(coordinates);
             this.currentLocation = coordinates;
             this.currentPincode = pincode;
             this.saveLocationPermissionPreference('granted');
-            return { permission: 'granted', hasLocation: true, coordinates, pincode };
+            return {
+              permission: 'granted',
+              hasLocation: true,
+              coordinates,
+              pincode,
+            };
           } catch (err: any) {
-            return { permission: 'granted', hasLocation: false, error: 'Unable to get current location' };
+            return {
+              permission: 'granted',
+              hasLocation: false,
+              error: 'Unable to get current location',
+            };
           }
         }
 
         this.saveLocationPermissionPreference('denied');
-        return { permission: 'denied', hasLocation: false, error: 'Location permission denied by user' };
+        return {
+          permission: 'denied',
+          hasLocation: false,
+          error: 'Location permission denied by user',
+        };
       } catch (err: any) {
-        return { permission: 'denied', hasLocation: false, error: err.message || 'Unable to request location permission' };
+        return {
+          permission: 'denied',
+          hasLocation: false,
+          error: err.message || 'Unable to request location permission',
+        };
       }
     }
 
@@ -179,7 +242,7 @@ export class LocationService {
       return {
         permission: isDenied ? 'denied' : 'prompt',
         hasLocation: false,
-        error: err.message || 'Location permission denied'
+        error: err.message || 'Location permission denied',
       };
     }
   }
@@ -189,23 +252,32 @@ export class LocationService {
    * Falls back to '206244' if no postal code can be resolved.
    */
   async getPincodeFromCoordinates(coordinates: Coordinates): Promise<string> {
-    return this.geocodingService.getPincodeFromCoordinates(coordinates.lat, coordinates.lng);
+    return this.geocodingService.getPincodeFromCoordinates(
+      coordinates.lat,
+      coordinates.lng,
+    );
   }
 
   /**
    * Get businesses filtered by pincode
    */
-  getBusinessesByPincode(businesses: Restaurant[], pincode: string): Restaurant[] {
-    return businesses.filter(business => business.pincode === pincode);
+  getBusinessesByPincode(
+    businesses: Restaurant[],
+    pincode: string,
+  ): Restaurant[] {
+    return businesses.filter((business) => business.pincode === pincode);
   }
 
   /**
    * Get cached location if available
    */
-  getCachedLocation(): { coordinates: Coordinates | null; pincode: string | null } {
+  getCachedLocation(): {
+    coordinates: Coordinates | null;
+    pincode: string | null;
+  } {
     return {
       coordinates: this.currentLocation,
-      pincode: this.currentPincode
+      pincode: this.currentPincode,
     };
   }
 
@@ -228,7 +300,10 @@ export class LocationService {
    * Get saved location permission preference
    */
   getLocationPermissionPreference(): 'granted' | 'denied' | null {
-    return localStorage.getItem('location_permission_preference') as 'granted' | 'denied' | null;
+    return localStorage.getItem('location_permission_preference') as
+      | 'granted'
+      | 'denied'
+      | null;
   }
 
   /**
@@ -262,25 +337,36 @@ export class LocationService {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.degreesToRadians(coord2.lat - coord1.lat);
     const dLng = this.degreesToRadians(coord2.lng - coord1.lng);
-    
-    const a = 
+
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.degreesToRadians(coord1.lat)) * Math.cos(this.degreesToRadians(coord2.lat)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    
+      Math.cos(this.degreesToRadians(coord1.lat)) *
+        Math.cos(this.degreesToRadians(coord2.lat)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
-    
+
     return distance;
   }
 
   /**
    * Sort restaurants by proximity to a given location
    */
-  sortByProximity(restaurants: Restaurant[], userLocation: Coordinates): Restaurant[] {
+  sortByProximity(
+    restaurants: Restaurant[],
+    userLocation: Coordinates,
+  ): Restaurant[] {
     return restaurants.sort((a, b) => {
-      const distanceA = this.calculateDistance(userLocation, a.coordinates || { lat: 0, lng: 0 });
-      const distanceB = this.calculateDistance(userLocation, b.coordinates || { lat: 0, lng: 0 });
+      const distanceA = this.calculateDistance(
+        userLocation,
+        a.coordinates || { lat: 0, lng: 0 },
+      );
+      const distanceB = this.calculateDistance(
+        userLocation,
+        b.coordinates || { lat: 0, lng: 0 },
+      );
       return distanceA - distanceB;
     });
   }
@@ -296,9 +382,12 @@ export class LocationService {
       // ── Native ──────────────────────────────────────────────────────────
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 10000
+        timeout: 10000,
       });
-      const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+      const coords = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      };
       this.currentLocation = coords;
       return coords;
     }
@@ -312,7 +401,10 @@ export class LocationService {
   /**
    * Sort restaurants by pincode proximity (simpler method)
    */
-  sortByPincodeProximity(restaurants: Restaurant[], userPincode: string): Restaurant[] {
+  sortByPincodeProximity(
+    restaurants: Restaurant[],
+    userPincode: string,
+  ): Restaurant[] {
     return restaurants.sort((a, b) => {
       const diffA = Math.abs(parseInt(a.pincode) - parseInt(userPincode));
       const diffB = Math.abs(parseInt(b.pincode) - parseInt(userPincode));

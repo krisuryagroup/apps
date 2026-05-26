@@ -1,20 +1,27 @@
-import { Directive, ElementRef, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  Input,
+  OnInit,
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { ImageCacheService } from '@zitro/services';
 
 @Directive({
   selector: '[cachedSrc]',
-  standalone: true
+  standalone: true,
 })
 export class CachedImageDirective implements OnInit, OnChanges, OnDestroy {
-  @Input() cachedSrc: string = '';
-  @Input() fallbackSrc: string = 'assets/foodCategories/default.png';
-  @Input() loadingClass: string = 'image-loading';
-  
+  @Input() cachedSrc = '';
+  @Input() fallbackSrc = 'assets/foodCategories/default.png';
+  @Input() loadingClass = 'image-loading';
+
   private currentBlobUrl: string | null = null;
   private el = inject(ElementRef<HTMLImageElement>);
   private imageCacheService = inject(ImageCacheService);
-
-  constructor() {}
 
   async ngOnInit() {
     await this.loadImage();
@@ -42,9 +49,9 @@ export class CachedImageDirective implements OnInit, OnChanges, OnDestroy {
     try {
       const blobUrl = await this.imageCacheService.getImage(this.cachedSrc);
       this.currentBlobUrl = blobUrl;
-      
+
       this.el.nativeElement.src = blobUrl;
-      
+
       this.el.nativeElement.onload = () => {
         this.el.nativeElement.classList.remove(this.loadingClass);
       };
@@ -53,7 +60,6 @@ export class CachedImageDirective implements OnInit, OnChanges, OnDestroy {
         console.error('Failed to load cached image:', this.cachedSrc);
         this.setFallbackImage();
       };
-
     } catch (error) {
       console.error('Error loading image:', error);
       this.setFallbackImage();

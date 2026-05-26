@@ -27,6 +27,12 @@ export default [
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
     // Override or add rules here
     rules: {},

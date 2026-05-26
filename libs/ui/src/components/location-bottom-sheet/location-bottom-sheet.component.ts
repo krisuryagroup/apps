@@ -3,7 +3,8 @@ import {
   OnInit,
   OnDestroy,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +14,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import {
   LocationSelectionService,
   NearbyPlace,
-  SearchSuggestion
+  SearchSuggestion,
 } from '@zitro/services';
 import { UserManagementService, UserAddress } from '@zitro/services';
 import { LocationService } from '@zitro/services';
@@ -25,9 +26,15 @@ import { FirebaseAuthService } from '@zitro/services';
   imports: [CommonModule, FormsModule],
   templateUrl: './location-bottom-sheet.component.html',
   styleUrls: ['./location-bottom-sheet.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LocationBottomSheetComponent implements OnInit, OnDestroy {
+  private selectionService = inject(LocationSelectionService);
+  private locationService = inject(LocationService);
+  private userMgmt = inject(UserManagementService);
+  private authService = inject(FirebaseAuthService);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   // ── Sheet visibility ─────────────────────────────────────────────────────
   isOpen = false;
@@ -51,23 +58,16 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
 
   // ── Nearby places ────────────────────────────────────────────────────────
   private allNearbyPlaces: NearbyPlace[] = [];
-  nearbyPlaces: NearbyPlace[] = [];          // visible slice
+  nearbyPlaces: NearbyPlace[] = []; // visible slice
   private nearbyShownCount = 10;
-  get hasMoreNearby(): boolean { return this.nearbyPlaces.length < this.allNearbyPlaces.length; }
+  get hasMoreNearby(): boolean {
+    return this.nearbyPlaces.length < this.allNearbyPlaces.length;
+  }
   isLoadingNearby = false;
   isLoadingMoreNearby = false;
   userCoords: { lat: number; lng: number } | null = null;
 
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private selectionService: LocationSelectionService,
-    private locationService: LocationService,
-    private userMgmt: UserManagementService,
-    private authService: FirebaseAuthService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {}
 
   ngOnInit(): void {
     // Open on every trigger — uses Subject so it always fires even if already open
@@ -78,7 +78,7 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
     // Close only
     this.selectionService.sheetOpen$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(open => {
+      .subscribe((open) => {
         if (!open && this.isOpen) {
           this.isOpen = false;
           this.cdr.markForCheck();
@@ -86,11 +86,9 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
       });
 
     // Debounced search
-    this.search$.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(query => this.runSearch(query));
+    this.search$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((query) => this.runSearch(query));
   }
 
   ngOnDestroy(): void {
@@ -108,13 +106,13 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     // Slight delay then remove enter-animation class
-    setTimeout(() => { this.isAnimatingIn = false; this.cdr.markForCheck(); }, 350);
+    setTimeout(() => {
+      this.isAnimatingIn = false;
+      this.cdr.markForCheck();
+    }, 350);
 
     // Load data in parallel
-    await Promise.all([
-      this.loadSavedAddresses(),
-      this.initGPSAndNearby()
-    ]);
+    await Promise.all([this.loadSavedAddresses(), this.initGPSAndNearby()]);
   }
 
   close(): void {
@@ -147,7 +145,10 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
   }
 
   private async runSearch(query: string): Promise<void> {
-    const results = await this.selectionService.searchAddresses(query, this.userCoords ?? undefined);
+    const results = await this.selectionService.searchAddresses(
+      query,
+      this.userCoords ?? undefined,
+    );
     this.suggestions = results;
     this.isSearching = false;
     this.cdr.markForCheck();
@@ -158,7 +159,7 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
       label: s.name,
       address: s.fullAddress,
       coordinates: s.coordinates,
-      type: 'nearby'
+      type: 'nearby',
     });
     this.close();
   }
@@ -170,14 +171,17 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
     if (cached.coordinates) {
       this.userCoords = cached.coordinates;
       this.cdr.markForCheck();
-      this.loadNearby(this.userCoords);  // fire-and-forget
+      this.loadNearby(this.userCoords); // fire-and-forget
     }
 
     // Silently get fresh GPS + reverse geocode for the "Use current location" row text
     try {
       const coords = await this.locationService.getCurrentLocation();
       this.userCoords = coords;
-      const address = await this.selectionService.reverseGeocode(coords.lat, coords.lng);
+      const address = await this.selectionService.reverseGeocode(
+        coords.lat,
+        coords.lng,
+      );
       this.currentGPSAddress = address;
       this.cdr.markForCheck();
       // Only trigger nearby load if cache wasn't available
@@ -202,7 +206,8 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
       }
       this.close();
     } catch (e: any) {
-      this.locationError = e?.message || 'Unable to get current location. Please try again.';
+      this.locationError =
+        e?.message || 'Unable to get current location. Please try again.';
     } finally {
       this.isLocating = false;
       this.cdr.markForCheck();
@@ -210,11 +215,15 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
   }
 
   // ── Nearby ───────────────────────────────────────────────────────────────
-  private async loadNearby(coords: { lat: number; lng: number }): Promise<void> {
+  private async loadNearby(coords: {
+    lat: number;
+    lng: number;
+  }): Promise<void> {
     this.isLoadingNearby = true;
     this.cdr.markForCheck();
     try {
-      this.allNearbyPlaces = await this.selectionService.getNearbyPlaces(coords);
+      this.allNearbyPlaces =
+        await this.selectionService.getNearbyPlaces(coords);
       this.nearbyShownCount = 10;
       this.nearbyPlaces = this.allNearbyPlaces.slice(0, this.nearbyShownCount);
     } catch {
@@ -244,20 +253,26 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
       label: place.name,
       address: place.address,
       coordinates: place.coordinates,
-      type: 'nearby'
+      type: 'nearby',
     });
     this.close();
   }
 
   distanceLabel(place: NearbyPlace): string {
     if (!this.userCoords) return '';
-    return this.selectionService.getDistanceLabel(this.userCoords, place.coordinates);
+    return this.selectionService.getDistanceLabel(
+      this.userCoords,
+      place.coordinates,
+    );
   }
 
   // ── Saved addresses ───────────────────────────────────────────────────────
   private async loadSavedAddresses(): Promise<void> {
     this.isLoggedIn = await this.userMgmt.isLoggedIn();
-    if (!this.isLoggedIn) { this.cdr.markForCheck(); return; }
+    if (!this.isLoggedIn) {
+      this.cdr.markForCheck();
+      return;
+    }
     this.isLoadingAddresses = true;
     this.cdr.markForCheck();
     try {
@@ -275,12 +290,15 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
   }
 
   async selectSavedAddress(addr: UserAddress): Promise<void> {
-    const fullAddress = [addr.houseAndStreet, addr.town, addr.state].filter(Boolean).join(', ');
-    
+    const fullAddress = [addr.houseAndStreet, addr.town, addr.state]
+      .filter(Boolean)
+      .join(', ');
+
     try {
       // Geocode the address to get coordinates
-      const suggestions = await this.selectionService.searchAddresses(fullAddress);
-      
+      const suggestions =
+        await this.selectionService.searchAddresses(fullAddress);
+
       if (suggestions.length > 0) {
         // Use coordinates from the first matching suggestion
         const coords = suggestions[0].coordinates;
@@ -288,26 +306,29 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
           label: addr.type || 'Home',
           address: fullAddress,
           coordinates: coords,
-          type: 'saved'
+          type: 'saved',
         });
       } else {
         // Fallback: if no geocoding result, send without coordinates
         this.selectionService.setLocation({
           label: addr.type || 'Home',
           address: fullAddress,
-          type: 'saved'
+          type: 'saved',
         });
       }
     } catch (error) {
       // Fallback: if geocoding fails, save address without coordinates
-      console.warn('Geocoding failed for saved address in bottom sheet:', error);
+      console.warn(
+        'Geocoding failed for saved address in bottom sheet:',
+        error,
+      );
       this.selectionService.setLocation({
         label: addr.type || 'Home',
         address: fullAddress,
-        type: 'saved'
+        type: 'saved',
       });
     }
-    
+
     this.selectionService.setSelectedSavedAddress(addr);
     this.close();
   }
@@ -316,7 +337,7 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
     const icons: Record<string, string> = {
       Home: 'home',
       Office: 'business_center',
-      Other: 'person'
+      Other: 'person',
     };
     return icons[type] || 'location_on';
   }

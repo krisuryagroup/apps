@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, inject, OnChanges, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  inject,
+  OnChanges,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CartService } from '@zitro/services';
 import { ProductsService } from '@zitro/services';
@@ -6,7 +15,10 @@ import { Product } from '@zitro/models';
 import { CachedImageDirective } from '../../directives/cached-image.directive';
 import { VALIDATION_MESSAGES } from '@zitro/utils';
 import { FormsModule } from '@angular/forms';
-import { ZoomableImageComponent, ZoomableImageConfig } from '../zoomable-image/zoomable-image.component';
+import {
+  ZoomableImageComponent,
+  ZoomableImageConfig,
+} from '../zoomable-image/zoomable-image.component';
 import { AnalyticsService } from '@zitro/services';
 
 export interface ItemDetailsDialogData {
@@ -27,18 +39,25 @@ export interface ItemDetailsDialogData {
 @Component({
   selector: 'app-item-details-dialog',
   standalone: true,
-  imports: [CommonModule, CachedImageDirective, FormsModule, ZoomableImageComponent],
+  imports: [
+    CommonModule,
+    CachedImageDirective,
+    FormsModule,
+    ZoomableImageComponent,
+  ],
   templateUrl: './item-details-dialog.component.html',
-  styleUrls: ['./item-details-dialog.component.scss']
+  styleUrls: ['./item-details-dialog.component.scss'],
 })
-export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy {
+export class ItemDetailsDialogComponent
+  implements OnChanges, OnInit, OnDestroy
+{
   @Input() isOpen = false;
   @Input() item: ItemDetailsDialogData | null = null;
   @Output() closeEvent = new EventEmitter<void>();
   @Output() cartUpdated = new EventEmitter<void>();
 
   imageLoading = true;
-  validationError: string = '';
+  validationError = '';
   private cartService = inject(CartService);
   private productsService = inject(ProductsService);
   private analyticsService = inject(AnalyticsService);
@@ -54,7 +73,7 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     enablePinchZoom: true,
     enableClickZoom: true,
     borderRadius: '12px',
-    objectFit: 'contain'
+    objectFit: 'contain',
   };
 
   // Related products
@@ -63,17 +82,26 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
 
   ngOnChanges() {
     // Auto-select default variation when dialog opens
-    if (this.item && this.item.hasVariations && this.item.variations && !this.item.selectedVariationId) {
-      const defaultVariation = this.item.variations.find(v => v.isDefault && v.isEnabled !== false);
-      const firstEnabledVariation = this.item.variations.find(v => v.isEnabled !== false);
+    if (
+      this.item &&
+      this.item.hasVariations &&
+      this.item.variations &&
+      !this.item.selectedVariationId
+    ) {
+      const defaultVariation = this.item.variations.find(
+        (v) => v.isDefault && v.isEnabled !== false,
+      );
+      const firstEnabledVariation = this.item.variations.find(
+        (v) => v.isEnabled !== false,
+      );
       const variationToSelect = defaultVariation || firstEnabledVariation;
-      
+
       if (variationToSelect) {
         this.item.selectedVariationId = variationToSelect.id;
       }
     }
     this.validationError = '';
-    
+
     // Load related products if dialog is open and item has category
     if (this.isOpen && this.item && (this.item as any).category) {
       this.loadRelatedProducts();
@@ -111,15 +139,15 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
       this.isLoadingRelated = true;
       const categoryId = (this.item as any).category;
       const currentItemId = this.item.id || '';
-      
+
       // Get all online products
       const allProducts = await this.productsService.getOnlineEnabledProducts();
-      
+
       // Filter by category and exclude current item
       this.relatedProducts = allProducts
-        .filter(p => p.category === categoryId && p.id !== currentItemId)
+        .filter((p) => p.category === categoryId && p.id !== currentItemId)
         .slice(0, 10); // Limit to 10 related items
-        
+
       console.log('Loaded', this.relatedProducts.length, 'related products');
     } catch (error) {
       console.error('Error loading related products:', error);
@@ -147,9 +175,9 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
         selectedVariationId: product.selectedVariationId,
         isEnabledForOnlineOrders: product.isEnabledForOnlineOrders,
         isOfferDisabled: product.isOfferDisabled,
-        status: product.status
+        status: product.status,
       };
-      
+
       // Trigger change detection and reload related products
       this.ngOnChanges();
     }
@@ -158,24 +186,28 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
   // Add related product to cart
   addRelatedProductToCart(product: Product, event: Event) {
     event.stopPropagation(); // Prevent triggering card click
-    
+
     // If product has variations, open it in dialog instead
-    if (product.hasVariations && product.variations && product.variations.length > 0) {
+    if (
+      product.hasVariations &&
+      product.variations &&
+      product.variations.length > 0
+    ) {
       this.onRelatedProductClick(product);
       return;
     }
-    
+
     this.cartService.addToCart(product);
-    
+
     // Track add to cart event
     this.analyticsService.logAddToCart({
       id: product.id || '',
       name: product.name,
       category: product.category,
       price: product.price,
-      quantity: 1
+      quantity: 1,
     });
-    
+
     this.cartUpdated.emit();
   }
 
@@ -183,15 +215,15 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
   decrementRelatedProduct(product: Product, event: Event) {
     event.stopPropagation(); // Prevent triggering card click
     this.cartService.removeFromCart(product);
-    
+
     // Track remove from cart event
     this.analyticsService.logRemoveFromCart({
       id: product.id || '',
       name: product.name,
       price: product.price,
-      quantity: 1
+      quantity: 1,
     });
-    
+
     this.cartUpdated.emit();
   }
 
@@ -199,16 +231,16 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
   incrementRelatedProduct(product: Product, event: Event) {
     event.stopPropagation(); // Prevent triggering card click
     this.cartService.addToCart(product);
-    
+
     // Track add to cart event
     this.analyticsService.logAddToCart({
       id: product.id || '',
       name: product.name,
       category: product.category,
       price: product.price,
-      quantity: 1
+      quantity: 1,
     });
-    
+
     this.cartUpdated.emit();
   }
 
@@ -231,23 +263,24 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     if (this.item) {
       // Validate variation selection
       if (this.item.hasVariations && !this.item.selectedVariationId) {
-        this.validationError = 'Please select a variation before adding to cart';
+        this.validationError =
+          'Please select a variation before adding to cart';
         return;
       }
-      
+
       this.validationError = '';
       const product = this.convertToProduct(this.item);
       this.cartService.addToCart(product);
-      
+
       // Track add to cart event
       this.analyticsService.logAddToCart({
         id: product.id || '',
         name: product.name,
         category: product.category,
         price: product.price,
-        quantity: 1
+        quantity: 1,
       });
-      
+
       this.cartUpdated.emit();
     }
   }
@@ -256,15 +289,15 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     if (this.item) {
       const product = this.convertToProduct(this.item);
       this.cartService.removeFromCart(product);
-      
+
       // Track remove from cart event
       this.analyticsService.logRemoveFromCart({
         id: product.id || '',
         name: product.name,
         price: product.price,
-        quantity: 1
+        quantity: 1,
       });
-      
+
       this.cartUpdated.emit();
     }
   }
@@ -279,7 +312,7 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     const variations = this.item?.variations ?? [];
     const selectedId = this.item?.selectedVariationId ?? '';
     if (this.item?.hasVariations && Array.isArray(variations) && selectedId) {
-      return variations.find(v => v.id === selectedId) ?? null;
+      return variations.find((v) => v.id === selectedId) ?? null;
     }
     return null;
   }
@@ -288,7 +321,9 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
     // Get effective price (variation price if selected, otherwise base price)
     let effectivePrice = item.price;
     if (item.hasVariations && item.selectedVariationId && item.variations) {
-      const selectedVar = item.variations.find(v => v.id === item.selectedVariationId);
+      const selectedVar = item.variations.find(
+        (v) => v.id === item.selectedVariationId,
+      );
       if (selectedVar) {
         effectivePrice = selectedVar.price;
       }
@@ -308,7 +343,7 @@ export class ItemDetailsDialogComponent implements OnChanges, OnInit, OnDestroy 
       // Include variation fields
       hasVariations: item.hasVariations,
       variations: item.variations,
-      selectedVariationId: item.selectedVariationId
+      selectedVariationId: item.selectedVariationId,
     } as Product;
   }
 }

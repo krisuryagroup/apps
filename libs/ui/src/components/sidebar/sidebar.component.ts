@@ -1,6 +1,12 @@
-
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseAuthService } from '@zitro/services';
@@ -12,9 +18,13 @@ import { UI_TEXT, FALLBACK_VALUES } from '@zitro/utils';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+  styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
+  private router = inject(Router);
+  private authService = inject(FirebaseAuthService);
+  private userManagementService = inject(UserManagementService);
+
   @Input() open = false;
   @Output() closeSidebar = new EventEmitter<void>();
 
@@ -26,26 +36,52 @@ export class SidebarComponent {
     isSignout?: boolean;
     icon?: string;
   }> = [
-    { text: 'Profile', route: '/account', isDisabled: false, requiresAuth: true },
-    { text: UI_TEXT.MANAGE_ADDRESSES, route: '/addresses', isDisabled: false, requiresAuth: true },
-    { text: UI_TEXT.ORDERS, route: '/orders', isDisabled: false, requiresAuth: true },
-    { text: UI_TEXT.CONTACT_US, route: '/contact', isDisabled: false, requiresAuth: false },
-    { text: '🎮 Play 2048 Game', route: '/game-2048', isDisabled: false, requiresAuth: true, icon: 'videogame_asset' },
-    { text: UI_TEXT.SIGN_OUT, route: '/auth/signout', isDisabled: false, isSignout: true, requiresAuth: false }
+    {
+      text: 'Profile',
+      route: '/account',
+      isDisabled: false,
+      requiresAuth: true,
+    },
+    {
+      text: UI_TEXT.MANAGE_ADDRESSES,
+      route: '/addresses',
+      isDisabled: false,
+      requiresAuth: true,
+    },
+    {
+      text: UI_TEXT.ORDERS,
+      route: '/orders',
+      isDisabled: false,
+      requiresAuth: true,
+    },
+    {
+      text: UI_TEXT.CONTACT_US,
+      route: '/contact',
+      isDisabled: false,
+      requiresAuth: false,
+    },
+    {
+      text: '🎮 Play 2048 Game',
+      route: '/game-2048',
+      isDisabled: false,
+      requiresAuth: true,
+      icon: 'videogame_asset',
+    },
+    {
+      text: UI_TEXT.SIGN_OUT,
+      route: '/auth/signout',
+      isDisabled: false,
+      isSignout: true,
+      requiresAuth: false,
+    },
   ];
 
-  userName: string = '';
-  userEmail: string = '';
-  userPhone: string = '';
-  userPhotoURL: string = '';
-  isGuest: boolean = false;
-  isTestUser: boolean = false;
-
-  constructor(
-    private router: Router, 
-    private authService: FirebaseAuthService,
-    private userManagementService: UserManagementService
-  ) {}
+  userName = '';
+  userEmail = '';
+  userPhone = '';
+  userPhotoURL = '';
+  isGuest = false;
+  isTestUser = false;
 
   async ngOnInit() {
     // Treat as guest if not logged in and not guest
@@ -53,9 +89,9 @@ export class SidebarComponent {
     // Check if user is a test user
     await this.checkTestUser();
 
-    if(!this.isTestUser){
+    if (!this.isTestUser) {
       // Filter sidebar items based on test user status
-      this.sidebarItems = this.sidebarItems.filter(item => {
+      this.sidebarItems = this.sidebarItems.filter((item) => {
         // Show game menu only for test users
         if (item.route === '/game-2048') {
           return this.isTestUser;
@@ -67,19 +103,19 @@ export class SidebarComponent {
     if (this.isGuest) {
       this.userName = 'Guest User';
       this.userEmail = UI_TEXT.CONTINUE_AS_GUEST;
-      this.sidebarItems = this.sidebarItems.map(item => {
+      this.sidebarItems = this.sidebarItems.map((item) => {
         if (item.isSignout) {
           return {
             text: UI_TEXT.LOG_IN,
             route: '/auth/signin',
             isDisabled: false,
             isSignout: false,
-            requiresAuth: false
+            requiresAuth: false,
           };
         } else if (item.requiresAuth) {
           return {
             ...item,
-            isDisabled: true
+            isDisabled: true,
           };
         }
         return item;
@@ -88,7 +124,7 @@ export class SidebarComponent {
       // Load user profile from UserManagementService
       await this.loadUserProfile();
       // Also subscribe to profile changes
-      this.userManagementService.userProfile$.subscribe(profile => {
+      this.userManagementService.userProfile$.subscribe((profile) => {
         if (profile) {
           this.userName = profile.name || FALLBACK_VALUES.USER_PREFIX;
           this.userEmail = profile.email || '';
@@ -103,7 +139,8 @@ export class SidebarComponent {
     try {
       const currentUserPhone = localStorage.getItem('currentUserPhone');
       if (currentUserPhone) {
-        const profile = await this.userManagementService.getUserData(currentUserPhone);
+        const profile =
+          await this.userManagementService.getUserData(currentUserPhone);
         if (profile) {
           this.userName = profile.name || FALLBACK_VALUES.USER_PREFIX;
           this.userEmail = profile.email || '';
@@ -114,20 +151,22 @@ export class SidebarComponent {
     } catch (error) {
       console.error('Error loading user profile in sidebar:', error);
       // Fallback to phone number if name not available
-      this.userName = localStorage.getItem('currentUserPhone') || FALLBACK_VALUES.USER_PREFIX;
+      this.userName =
+        localStorage.getItem('currentUserPhone') || FALLBACK_VALUES.USER_PREFIX;
     }
   }
 
   async checkTestUser() {
     try {
-      const currentUserPhone = await this.userManagementService.getCurrentUserPhone();
+      const currentUserPhone =
+        await this.userManagementService.getCurrentUserPhone();
       if (currentUserPhone) {
         const testPhoneNumbers = await this.authService.getTestPhoneNumbers();
         const phoneWithoutPrefix = currentUserPhone.replace('+91', '');
         this.isTestUser = testPhoneNumbers.includes(phoneWithoutPrefix);
         console.log('🎮 Sidebar Test User Check:', {
           phone: phoneWithoutPrefix,
-          isTestUser: this.isTestUser
+          isTestUser: this.isTestUser,
         });
       }
     } catch (error) {
@@ -143,7 +182,7 @@ export class SidebarComponent {
       this.router.navigate(['/auth/signin']);
       return;
     }
-    
+
     this.closeSidebar.emit();
     setTimeout(() => {
       if (item.isSignout) {
