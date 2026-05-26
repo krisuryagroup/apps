@@ -1,0 +1,56 @@
+@if (isVisible()) {
+  <div class="fcp" role="region" aria-label="Cart preview">
+
+    <!-- Slide track -->
+    <div class="fcp__track-wrapper">
+      <div
+        class="fcp__track"
+        [style.transform]="'translateX(-' + currentIndex() * 100 + '%)'"
+      >
+        @for (cart of carts(); track cart.businessSlug) {
+          <div class="fcp__slide">
+            <div class="fcp__info">
+              <span class="fcp__name">{{ cart.businessName }}</span>
+              <span class="fcp__meta">
+                {{ itemCount(cart) }} {{ 'cart.items' | i18n }} &middot; &#8377;{{ cart.estimatedTotal | number:'1.0-0' }}
+              </span>
+            </div>
+            <button
+              class="fcp__btn"
+              type="button"
+              (click)="onViewCart(cart.businessSlug)"
+            >
+              {{ 'cart.viewCart' | i18n }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Prev / Next arrows (multi-cart only) -->
+    @if (hasMultiple()) {
+      <button class="fcp__arrow fcp__arrow--prev" type="button" aria-label="Previous cart" (click)="prev()">
+        &#8249;
+      </button>
+      <button class="fcp__arrow fcp__arrow--next" type="button" aria-label="Next cart" (click)="next()">
+        &#8250;
+      </button>
+
+      <!-- Dot indicators -->
+      <div class="fcp__dots" role="tablist">
+        @for (cart of carts(); track cart.businessSlug; let i = $index) {
+          <button
+            class="fcp__dot"
+            [class.fcp__dot--active]="i === currentIndex()"
+            type="button"
+            role="tab"
+            [attr.aria-selected]="i === currentIndex()"
+            [attr.aria-label]="cart.businessName"
+            (click)="goTo(i)"
+          ></button>
+        }
+      </div>
+    }
+
+  </div>
+}

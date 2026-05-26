@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import type { Order, CartItem } from '@zitro/models';
 import { OrderMapper } from '@zitro/mappers';
 import type { OrderDto } from '@zitro/mappers';
 import { CacheService } from '../cache.service';
-import { ZITRO_API_BASE_URL } from '../tokens';
+import { ZITRO_API_BASE_URL, CART_BUSINESS_SLUG } from '../tokens';
 
 const ORDER_HISTORY_KEY = 'order:history';
 
@@ -29,9 +29,13 @@ export class OrderApiService {
   createOrder(
     cart: { items: CartItem[]; businessId: string },
     options: CreateOrderOptions,
+    businessSlug?: string,
   ): Observable<Order> {
     const request = OrderMapper.fromCart(cart, options);
-    return this.http.post<OrderDto>(`${this.baseUrl}/api/orders`, request).pipe(
+    const context = businessSlug
+      ? new HttpContext().set(CART_BUSINESS_SLUG, businessSlug)
+      : undefined;
+    return this.http.post<OrderDto>(`${this.baseUrl}/api/orders`, request, { context }).pipe(
       map(dto => OrderMapper.toOrder(dto)),
       tap(() => this.cache.invalidate(ORDER_HISTORY_KEY)),
     );

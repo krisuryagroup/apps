@@ -1,11 +1,13 @@
-import { Component, Output, EventEmitter, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, Output, EventEmitter, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { SidebarComponent } from '@zitro/ui';
 import { BottomNavComponent } from '@zitro/ui';
 import { WhatsappButtonComponent } from '@zitro/ui';
 import { FooterComponent } from '@zitro/ui';
+import { FloatingCartPreviewComponent } from '@zitro/ui';
 import { CartService } from '@zitro/services';
+import { CartApiService } from '@zitro/services';
 import { UserManagementService } from '@zitro/services';
 import { FirebaseAuthService } from '@zitro/services';
 import { NavigationService } from '@zitro/services';
@@ -27,7 +29,7 @@ import { BannerConfigs } from '@zitro/models';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, BottomNavComponent, FooterComponent, LocationBottomSheetComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, SidebarComponent, BottomNavComponent, FooterComponent, LocationBottomSheetComponent, FloatingCartPreviewComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
@@ -46,6 +48,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   headerTitle: string = '';
   isOnGameRoute = false;
   isOnCartPage = false;
+  isOnListingPage = false;
   headerVisible: boolean = true;
   private lastScrollTop = 0;
 
@@ -104,9 +107,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   // showRestaurantDropdown = false;
   // isSwitchingRestaurant = false;
 
+  readonly cartApi = inject(CartApiService);
+
   constructor(
-    private router: Router, 
-    private cartService: CartService, 
+    private router: Router,
+    private cartService: CartService,
     private userManagementService: UserManagementService, 
     private authService: FirebaseAuthService,
     private navigationService: NavigationService,
@@ -210,7 +215,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.updateBackButtonVisibility();
         this.updateHeaderTitle();
         this.isOnGameRoute = event.urlAfterRedirects.includes('/game-2048');
-        this.isOnCartPage = event.urlAfterRedirects === '/cart';
+        this.isOnCartPage = event.urlAfterRedirects.startsWith('/cart');
+        this.isOnListingPage = event.urlAfterRedirects.startsWith('/listing') || event.urlAfterRedirects.startsWith('/favorites');
         this.isOnHomePage = event.urlAfterRedirects === '/home' || event.urlAfterRedirects === '/';
         this.scrolledPastBanner = false;
         if (this.isOnHomePage) { this.tryGetLocation(); }
@@ -221,7 +227,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.currentRoute = this.router.url;
     this.updateBackButtonVisibility();
     this.isOnGameRoute = this.router.url.includes('/game-2048');
-    this.isOnCartPage = this.router.url === '/cart';
+    this.isOnCartPage = this.router.url.startsWith('/cart');
+    this.isOnListingPage = this.router.url.startsWith('/listing') || this.router.url.startsWith('/favorites');
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
     this.updateHeaderTitle();
   }
@@ -292,7 +299,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   updateCartCount() {
-    this.cartCount = this.cartService.getCount();
+    this.cartCount = this.cartApi.totalCount();
   }
 
   async loadUserData() {
@@ -344,6 +351,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   goToCart() {
     this.router.navigate(['/cart']);
+  }
+
+  onViewCart(businessSlug: string): void {
+    this.router.navigate(['/cart'], { queryParams: { business: businessSlug } });
   }
 
   goToAccount() {

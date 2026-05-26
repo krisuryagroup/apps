@@ -74,6 +74,7 @@ export const EN_DEFAULTS = {
     emptySubtitle: 'Add some delicious items to get started!',
     browseMenu: 'Browse Menu',
     shareCart: 'Share cart',
+    viewCart: 'View Cart',
     deliveryEtaPrefix: '15-20 mins to {location}',
     addMoreItems: 'Add more items',
     addNote: 'Add a note for the restaurant',
@@ -194,6 +195,7 @@ export const EN_DEFAULTS = {
     addDeliveryInstructions: 'Add instructions for delivery partner',
     pickupReady: 'Ready in 15–20 mins',
     addPickupInstructions: 'Add pickup instructions',
+    addDineInInstructions: 'Add instructions for your table',
   },
   payment: {
     title: 'Payment Method',

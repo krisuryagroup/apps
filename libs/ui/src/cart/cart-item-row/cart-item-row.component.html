@@ -4,7 +4,7 @@
       <img
         [cachedSrc]="item().imageUrl || 'assets/foodCategories/default.png'"
         [fallbackSrc]="'assets/foodCategories/default.png'"
-        [alt]="item().name"
+        [alt]="item().productName"
         class="cart-item-row__image"
         data-testid="cart-item-image"
       />
@@ -13,37 +13,18 @@
 
   <div class="cart-item-row__details">
     <span class="cart-item-row__name" data-testid="cart-item-name">
-      {{ item().name }}
-      @if (variationLabel) {
-        <span class="cart-item-row__variation"> &ndash; {{ variationLabel }}</span>
+      {{ item().productName }}
+      @if (item().variationLabel) {
+        <span class="cart-item-row__variation"> &ndash; {{ item().variationLabel }}</span>
       }
     </span>
 
-    @if (item().hasVariations) {
-      <button
-        class="cart-item-row__edit-link"
-        type="button"
-        (click)="onEdit()"
-        data-testid="cart-item-edit-btn"
-      >{{ 'common.edit' | i18n }}<span class="material-icons">chevron_right</span></button>
-    }
-
-    @if (config().showWeight && item().weight) {
-      <span class="cart-item-row__meta" data-testid="cart-item-weight">{{ item().weight }}</span>
-    }
-
     <div class="cart-item-row__price-row">
-      @if (item().originalPrice && item().originalPrice !== item().price) {
-        <span class="cart-item-row__original-price" data-testid="cart-item-original-price">₹{{ item().originalPrice }}</span>
+      @if (item().priceChanged) {
+        <span class="cart-item-row__original-price" data-testid="cart-item-original-price">₹{{ item().unitPrice | number:'1.0-0' }}</span>
       }
-      <span class="cart-item-row__price" data-testid="cart-item-price">₹{{ item().price }}</span>
+      <span class="cart-item-row__price" data-testid="cart-item-price">₹{{ item().currentPrice | number:'1.0-0' }}</span>
     </div>
-
-    @if (item().isOfferDisabled) {
-      <span class="cart-item-row__no-offer" data-testid="cart-item-no-offer">
-        {{ 'cart.noOfferApplicable' | i18n }}
-      </span>
-    }
   </div>
 
   <div class="cart-item-row__qty" data-testid="cart-item-qty-controls">
@@ -53,7 +34,7 @@
       (click)="onDecrement()"
       data-testid="cart-item-decrement-btn"
     >−</button>
-    <span class="cart-item-row__qty-value" data-testid="cart-item-qty">{{ item().qty }}</span>
+    <span class="cart-item-row__qty-value" data-testid="cart-item-qty">{{ item().quantity }}</span>
     <button
       class="cart-item-row__qty-btn cart-item-row__qty-btn--add"
       type="button"

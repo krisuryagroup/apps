@@ -68,6 +68,8 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   readonly locationPatch = signal<AddressLocationPatch | null>(null);
 
   mode: 'checkout' | 'manage' | 'default' = 'default';
+  private editingAddressId: string | null = null;
+  private checkoutBusinessSlug: string | null = null;
 
   private map: unknown = null;
   private marker: unknown = null;
@@ -82,6 +84,8 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     if (modeParam === 'checkout') this.mode = 'checkout';
     else if (modeParam === 'manage') this.mode = 'manage';
 
+    this.checkoutBusinessSlug = snap.get('business');
+
     const lat = snap.get('lat');
     const lng = snap.get('lng');
     if (lat && lng) {
@@ -95,6 +99,17 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.search$
       .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(q => this.runSearch(q));
+
+    const editId = snap.get('addressId');
+    if (editId) {
+      this.editingAddressId = editId;
+      const addresses = await this.addressApi.getAddresses().toPromise().catch(() => []);
+      const existing = (addresses ?? []).find((a: Address) => a.id === editId);
+      if (existing) {
+        this.initialFormData.set(existing);
+        return;
+      }
+    }
 
     const userPhone = await this.userManagement.getCurrentUserPhone().catch(() => null);
 
@@ -314,7 +329,11 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       isDefault: data.isDefault,
     };
 
-    this.addressApi.createAddress(addressData).subscribe({
+    const save$ = this.editingAddressId
+      ? this.addressApi.updateAddress(this.editingAddressId, addressData)
+      : this.addressApi.createAddress(addressData);
+
+    save$.subscribe({
       next: () => {
         this.isSaving.set(false);
         this.handlePostSave();
@@ -332,13 +351,20 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
 
   private async handlePostSave(): Promise<void> {
     if (this.mode === 'checkout') {
+      const cartPath = this.checkoutBusinessSlug
+        ? `/cart?business=${this.checkoutBusinessSlug}`
+        : '/cart';
       const goToCart = await this.dialogService.showConfirmation({
-        title: 'Address Added Successfully',
+        title: 'Address Saved Successfully',
         message: 'Where would you like to go?',
         confirmText: 'Go to Cart',
         cancelText: 'Add more items',
       });
-      this.router.navigate(goToCart ? ['/cart'] : ['/home']);
+      if (goToCart) {
+        this.router.navigateByUrl(cartPath);
+      } else {
+        this.router.navigate(['/home']);
+      }
     } else {
       this.router.navigate(['/addresses']);
     }

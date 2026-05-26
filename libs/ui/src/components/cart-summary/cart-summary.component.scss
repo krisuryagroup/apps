@@ -2,13 +2,12 @@
 
 .cart-summary-container {
   position: fixed;
-  bottom: 70px; // Above bottom navigation
+  bottom: 70px;
   left: 1rem;
   right: 1rem;
   z-index: 1000;
   pointer-events: none;
-  
-  // Center on larger screens
+
   @media (min-width: 480px) {
     max-width: 440px;
     left: 50%;
@@ -20,135 +19,87 @@
 .cart-summary {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  width: 100%;
   background: $primary-color;
-  border-radius: 12px;
+  border: none;
+  border-radius: 14px;
   padding: 0.75rem 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   pointer-events: all;
-  transition: all 0.2s ease;
+  text-align: left;
   animation: slideUp 0.3s ease-out;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.2s, transform 0.15s;
+
+  &:active { transform: scale(0.985); }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex: 1;
+    min-width: 0;
   }
-  
-  &:active {
-    transform: translateY(0);
+
+  &__icon {
+    font-size: 1.4rem;
+    color: #fff;
+    opacity: 0.9;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  &__count {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  &__name {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.18);
+    border-radius: 8px;
+    padding: 0.4rem 0.65rem;
+  }
+
+  &__total {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__view-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  &__chevron {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.9);
   }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-// Cart icon section
-.cart-icon-section {
-  margin-right: 0.75rem;
-  
-  .cart-icon {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    
-    .material-icons {
-      font-size: 18px;
-      color: $secondary-color;
-    }
-    
-    .cart-badge {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: $accent-color;
-      color: $secondary-color;
-      font-size: 0.7rem;
-      font-weight: 700;
-      min-width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid $primary-color;
-    }
-  }
-}
-
-// Cart details section
-.cart-details {
-  flex: 1;
-  color: $secondary-color;
-  
-  .cart-items-text {
-    font-size: 0.85rem;
-    font-weight: 500;
-    opacity: 0.9;
-    margin-bottom: 2px;
-  }
-  
-  .cart-total {
-    font-size: 1rem;
-    font-weight: 700;
-  }
-}
-
-// View cart section
-.view-cart-section {
-  display: flex;
-  align-items: center;
-  color: $secondary-color;
-  margin-left: 0.75rem;
-  
-  .view-cart-text {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-right: 0.25rem;
-  }
-  
-  .material-icons {
-    font-size: 18px;
-    opacity: 0.9;
-  }
-}
-
-// Responsive adjustments
-@media (max-width: 360px) {
-  .cart-summary-container {
-    left: 0.5rem;
-    right: 0.5rem;
-  }
-  
-  .cart-summary {
-    padding: 0.6rem 0.8rem;
-    
-    .cart-details {
-      .cart-items-text {
-        font-size: 0.8rem;
-      }
-      
-      .cart-total {
-        font-size: 0.95rem;
-      }
-    }
-    
-    .view-cart-section {
-      .view-cart-text {
-        font-size: 0.85rem;
-      }
-    }
-  }
+  from { transform: translateY(120%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
