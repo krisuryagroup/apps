@@ -4,7 +4,11 @@ import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import type { Order, CartItem } from '@zitro/models';
 import { OrderMapper } from '@zitro/mappers';
-import type { OrderDto, PlaceOrderResponseDto } from '@zitro/mappers';
+import type {
+  OrderDto,
+  PlaceOrderResponseDto,
+  OrderListResponseDto,
+} from '@zitro/mappers';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL, CART_BUSINESS_SLUG } from '../tokens';
 
@@ -48,7 +52,12 @@ export class OrderApiService {
   getOrder(orderId: string): Observable<Order> {
     const cacheKey = `order:${orderId}`;
     const cached = this.cache.get<Order>(cacheKey);
-    if (cached) return of(cached);
+    if (cached)
+      return of({
+        ...cached,
+        createdAt: new Date(cached.createdAt),
+        updatedAt: new Date(cached.updatedAt as unknown as string),
+      });
     return this.http
       .get<OrderDto>(`${this.baseUrl}/api/orders/${orderId}`)
       .pipe(
@@ -61,7 +70,16 @@ export class OrderApiService {
     const cacheKey = ORDER_HISTORY_KEY;
     if (!status) {
       const cached = this.cache.get<Order[]>(cacheKey);
-      if (cached) return of(cached);
+      if (cached) {
+        // localStorage JSON.parse turns Date objects into strings — revive them
+        return of(
+          cached.map((o) => ({
+            ...o,
+            createdAt: new Date(o.createdAt),
+            updatedAt: new Date(o.updatedAt as unknown as string),
+          })),
+        );
+      }
     }
     const params: Record<string, string> = {
       page: String(page),
@@ -69,9 +87,9 @@ export class OrderApiService {
     };
     if (status) params['status'] = status;
     return this.http
-      .get<OrderDto[]>(`${this.baseUrl}/api/orders`, { params })
+      .get<OrderListResponseDto>(`${this.baseUrl}/api/orders`, { params })
       .pipe(
-        map((dtos) => OrderMapper.toOrderList(dtos)),
+        map((res) => OrderMapper.toOrderListFromSummary(res.orders ?? [])),
         tap((orders) => {
           if (!status) {
             this.cache.set(cacheKey, orders, { ttlHours: 1 / 12 });

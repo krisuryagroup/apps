@@ -10,11 +10,8 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { I18nPipe } from '@zitro/i18n';
-import { CancelOrderDialogComponent, CallRestaurantButtonComponent } from '@zitro/ui';
-import {
-  OrderApiService,
-  AppSettingsService,
-} from '@zitro/services';
+import { CancelOrderDialogComponent } from '@zitro/ui';
+import { OrderApiService, AppSettingsService } from '@zitro/services';
 import type { Order, OrderDisplay } from '@zitro/models';
 import {
   getOrderStatusDisplay,
@@ -27,18 +24,31 @@ import {
 function toDisplay(order: Order): OrderDisplay {
   return {
     ...order,
-    date: order.createdAt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: order.createdAt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    date: order.createdAt.toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
+    time: order.createdAt.toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
     statusDisplay: getOrderStatusDisplay(order.status),
     totalDisplay: `₹${order.total.toFixed(2)}`,
-    orderTypeDisplay: order.orderType === 'dine-in' ? 'Dine In' : order.orderType === 'takeout' ? 'Takeout' : 'Delivery',
+    orderTypeDisplay:
+      order.orderType === 'dine-in'
+        ? 'Dine In'
+        : order.orderType === 'takeout'
+          ? 'Takeout'
+          : 'Delivery',
   };
 }
 
 @Component({
   selector: 'app-order-history-page',
   standalone: true,
-  imports: [I18nPipe, DecimalPipe, DatePipe, CancelOrderDialogComponent, CallRestaurantButtonComponent],
+  imports: [I18nPipe, DecimalPipe, DatePipe, CancelOrderDialogComponent],
   templateUrl: './order-history.page.html',
   styleUrl: './order-history.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,17 +66,20 @@ export class OrderHistoryPage implements OnInit {
   readonly selectedOrderId = signal('');
   readonly isProcessingCancel = signal(false);
   readonly selectedOrderRemainingTime = signal(0);
+  readonly openMenuOrderId = signal<string | null>(null);
 
   readonly currentPage = signal(1);
   readonly pageSize = 5;
 
-  readonly totalPages = computed(() => Math.ceil(this.orders().length / this.pageSize));
+  readonly totalPages = computed(() =>
+    Math.ceil(this.orders().length / this.pageSize),
+  );
   readonly paginatedOrders = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.orders().slice(start, start + this.pageSize);
   });
   readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, i) => i + 1)
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
   );
 
   private cancellationTimeLimit = 90;
@@ -80,9 +93,15 @@ export class OrderHistoryPage implements OnInit {
 
   private async loadCancellationConfig(): Promise<void> {
     await Promise.allSettled([
-      this.appSettings.getOrderCancellationTimeLimit().then(l => (this.cancellationTimeLimit = l)),
-      this.appSettings.isOrderCancellationEnabled().then(e => (this.cancellationEnabled = e)),
-      this.appSettings.getAllowedCancellationStatuses().then(s => (this.allowedCancellationStatuses = s)),
+      this.appSettings
+        .getOrderCancellationTimeLimit()
+        .then((l) => (this.cancellationTimeLimit = l)),
+      this.appSettings
+        .isOrderCancellationEnabled()
+        .then((e) => (this.cancellationEnabled = e)),
+      this.appSettings
+        .getAllowedCancellationStatuses()
+        .then((s) => (this.allowedCancellationStatuses = s)),
     ]);
   }
 
@@ -91,7 +110,9 @@ export class OrderHistoryPage implements OnInit {
     this.errorMessage.set('');
     try {
       const orders = await firstValueFrom(this.orderApi.getOrderHistory());
-      const sorted = [...orders].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const sorted = [...orders].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
       this.orders.set(sorted.map(toDisplay));
     } catch {
       this.errorMessage.set('errors.loadFailed');
@@ -129,11 +150,29 @@ export class OrderHistoryPage implements OnInit {
     this.router.navigate(['/order-tracking'], { queryParams: { orderId } });
   }
 
+  viewMenu(slug?: string): void {
+    if (slug) {
+      this.router.navigate(['/listing'], {
+        queryParams: { businessSlug: slug },
+      });
+    }
+  }
+
+  toggleOrderMenu(orderId: string): void {
+    this.openMenuOrderId.update((current) =>
+      current === orderId ? null : orderId,
+    );
+  }
+
   async openCancelDialog(orderId: string): Promise<void> {
-    const order = this.orders().find(o => o.orderId === orderId);
+    const order = this.orders().find((o) => o.orderId === orderId);
     if (order) {
-      const elapsed = Math.floor((Date.now() - order.createdAt.getTime()) / 1000);
-      this.selectedOrderRemainingTime.set(Math.max(0, this.cancellationTimeLimit - elapsed));
+      const elapsed = Math.floor(
+        (Date.now() - order.createdAt.getTime()) / 1000,
+      );
+      this.selectedOrderRemainingTime.set(
+        Math.max(0, this.cancellationTimeLimit - elapsed),
+      );
     }
     this.selectedOrderId.set(orderId);
     this.showCancelDialog.set(true);
@@ -162,11 +201,12 @@ export class OrderHistoryPage implements OnInit {
   }
 
   previousPage(): void {
-    if (this.currentPage() > 1) this.currentPage.update(p => p - 1);
+    if (this.currentPage() > 1) this.currentPage.update((p) => p - 1);
   }
 
   nextPage(): void {
-    if (this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1);
+    if (this.currentPage() < this.totalPages())
+      this.currentPage.update((p) => p + 1);
   }
 
   goToPage(page: number): void {
@@ -178,6 +218,6 @@ export class OrderHistoryPage implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/account']);
+    this.router.navigate(['/home']);
   }
 }

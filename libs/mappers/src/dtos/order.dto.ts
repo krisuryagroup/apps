@@ -79,3 +79,25 @@ export interface OrderTimelineDto {
   timestamp: string;
   note: string | null;
 }
+
+/** Summary item returned by GET /api/orders (list endpoint). */
+export interface OrderListSummaryDto {
+  id: string;
+  orderId: string;
+  businessId: string;
+  businessSlug: string;
+  businessName: string;
+  businessAddress: string;
+  status: string;
+  orderType: 'delivery' | 'takeout' | 'dine-in';
+  total: number;
+  couponCode: string | null;
+  couponDiscount: number;
+  createdAt: string;
+  itemCount: number;
+}
+
+/** Paginated wrapper returned by GET /api/orders. */
+export interface OrderListResponseDto {
+  orders: OrderListSummaryDto[];
+}

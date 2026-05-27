@@ -1,7 +1,75 @@
 @use 'theme' as *;
-@use "sass:color";
+@use 'sass:color';
 
-// Loading and error states
+// Page Header
+.dh-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 8px;
+  background: white;
+
+  .dh-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #1a1a1a;
+
+    .material-icons {
+      font-size: 24px;
+    }
+  }
+
+  .dh-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+  }
+}
+
+// Search Bar
+.dh-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px 8px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 30px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+
+  .dh-search-icon {
+    font-size: 22px;
+    color: $primary-color;
+    flex-shrink: 0;
+  }
+
+  .dh-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #333;
+    background: transparent;
+    cursor: default;
+
+    &::placeholder {
+      color: #aaa;
+    }
+  }
+
+  .dh-mic-icon {
+    font-size: 22px;
+    color: $primary-color;
+    flex-shrink: 0;
+  }
+}
+
 .dh-loading-state,
 .dh-error-state {
   display: flex;
@@ -22,12 +90,19 @@
     animation: spin 1s linear infinite;
   }
 
-  p { color: rgba($text-color, 0.7); font-size: 16px; }
+  p {
+    color: rgba($text-color, 0.7);
+    font-size: 16px;
+  }
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Cancel button
@@ -42,13 +117,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
 
-  &:hover { background: #dc3545; color: white; }
-}
-
-// Call Restaurant Section
-.dh-call-restaurant-section {
-  margin: 20px;
-  max-width: 400px;
+  &:hover {
+    background: #dc3545;
+    color: white;
+  }
 }
 
 .dh-order-history {
@@ -70,24 +142,131 @@
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 
-    // Header: Restaurant name and price
+    // Header: Business info + kebab menu
     .dh-order-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      gap: 8px;
 
-      .dh-restaurant-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0;
+      .dh-business-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+
+        .dh-business-image-placeholder {
+          width: 52px;
+          height: 52px;
+          border-radius: 10px;
+          background: #f0f0f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          .material-icons {
+            font-size: 26px;
+            color: #aaa;
+          }
+        }
+
+        .dh-business-details {
+          flex: 1;
+          min-width: 0;
+
+          .dh-restaurant-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .dh-business-address {
+            font-size: 13px;
+            color: #888;
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .dh-view-menu-btn {
+            display: inline-flex;
+            align-items: center;
+            background: none;
+            border: none;
+            padding: 0;
+            color: $primary-color;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+
+            .dh-arrow-icon {
+              font-size: 16px;
+            }
+          }
+        }
       }
 
-      .dh-order-total {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1a1a1a;
+      // Kebab 3-dot menu
+      .dh-kebab-wrapper {
+        position: relative;
+        flex-shrink: 0;
+
+        .dh-kebab-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          color: #555;
+          display: flex;
+          align-items: center;
+
+          .material-icons {
+            font-size: 22px;
+          }
+        }
+
+        .dh-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          min-width: 180px;
+          z-index: 100;
+          overflow: hidden;
+
+          .dh-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #1a1a1a;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+
+            .material-icons {
+              font-size: 18px;
+              color: #555;
+            }
+            &:hover {
+              background: #f5f5f5;
+            }
+          }
+        }
       }
     }
 
@@ -121,12 +300,25 @@
           }
         }
 
+        .dh-order-right-meta {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+
+          .dh-order-total {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+          }
+        }
+
         .dh-order-status {
           padding: 4px 12px;
           border-radius: 6px;
           font-size: 13px;
           font-weight: 600;
-          
+
           &.dh-status-completed,
           &.dh-status-delivered {
             background: #d4edda;
@@ -393,7 +585,7 @@
     .dh-empty-illustration {
       margin-bottom: 40px;
       opacity: 0.9;
-      
+
       svg {
         display: block;
         max-width: 280px;
@@ -431,7 +623,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba($primary-color, 0.3);
-        
+
         &:hover {
           background: color.scale($primary-color, $lightness: -10%);
           transform: translateY(-2px);
@@ -507,7 +699,7 @@
 
       .dh-empty-illustration {
         margin-bottom: 30px;
-        
+
         svg {
           max-width: 220px;
         }
@@ -541,7 +733,7 @@
 
     .dh-order-item {
       padding: 12px;
-      
+
       .dh-order-content {
         .dh-order-date-section {
           margin-bottom: 8px;
@@ -599,7 +791,12 @@
     cursor: pointer;
     transition: all 0.3s ease;
     margin-right: 12px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -613,7 +810,7 @@
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      
+
       &:hover {
         background: transparent;
         color: #dc3545;
@@ -647,7 +844,12 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-right: 12px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -661,7 +863,7 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    
+
     &:hover {
       background: transparent;
       color: #dc3545;
@@ -677,10 +879,9 @@
   &.dh-cancelling {
     background: #dc3545;
     color: $secondary-color;
-    
+
     .dh-spinner {
       animation: spin 1s linear infinite;
     }
   }
 }
-

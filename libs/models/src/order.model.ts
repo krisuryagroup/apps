@@ -16,7 +16,15 @@ export interface OrderItem {
 }
 
 export interface OrderStatusTimeline {
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'preparing'
+    | 'ready'
+    | 'shipped'
+    | 'delivered'
+    | 'completed'
+    | 'cancelled';
   timestamp: Date;
   note?: string;
 }
@@ -26,33 +34,36 @@ export interface OrderStatusTimeline {
 // Cloud Functions updated sub-fields separately. The .NET API computes and returns
 // only the final applied value, making the nested structure unnecessary.
 export interface OrderCharges {
-  packagingCharge: number;      // Final packaging charge applied
-  platformFee: number;          // Final platform fee applied
-  gst: number;                  // Final GST applied
-  deliveryCharge?: number;      // Final delivery charge (delivery orders only)
-  couponDiscount?: number;      // Discount amount from applied coupon
+  packagingCharge: number; // Final packaging charge applied
+  platformFee: number; // Final platform fee applied
+  gst: number; // Final GST applied
+  deliveryCharge?: number; // Final delivery charge (delivery orders only)
+  couponDiscount?: number; // Discount amount from applied coupon
 }
 
 export interface Order {
   id?: string;
   // which restaurant/store this order belongs to
   restaurantId?: string;
+  businessSlug?: string;
+  businessName?: string;
+  businessAddress?: string;
   orderId: string;
   userId: string;
   userPhone: string;
   userName?: string | null;
   userPhotoURL?: string | null;
-  
+
   // Order type
   orderType: OrderType;
-  
+
   // Dine-in specific
   tableNumber?: string;
   numberOfGuests?: number;
-  
+
   // Takeout specific
   scheduledPickupTime?: Date;
-  
+
   items: OrderItem[];
   subtotal: number;
   deliveryCharge: number;
@@ -60,7 +71,15 @@ export interface Order {
   couponCode?: string;
   total: number;
   paymentMethod: 'cash' | 'online';
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'preparing'
+    | 'ready'
+    | 'shipped'
+    | 'delivered'
+    | 'completed'
+    | 'cancelled';
   createdAt: Date;
   updatedAt: Date;
   statusTimeline?: OrderStatusTimeline[];
@@ -76,11 +95,10 @@ export interface Order {
   };
   customerNotes?: string;
   estimatedDeliveryTime?: Date;
-  packagingChargesPerItem?: number;
   totalPackagingCharges?: number;
   tax?: number;
   deliveryFee?: number;
-  
+
   // Detailed charges breakdown
   charges?: OrderCharges;
 }

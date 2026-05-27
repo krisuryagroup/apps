@@ -142,7 +142,6 @@ export class OrderService {
       estimatedDeliveryTime: new Date(
         now.getTime() + deliveryTimeMinutes * 60 * 1000,
       ),
-      packagingChargesPerItem: (orderData as any).packagingChargesPerItem,
       totalPackagingCharges,
       charges: orderData.charges, // Include detailed charges breakdown if available
     };

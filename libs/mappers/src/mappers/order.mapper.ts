@@ -8,6 +8,7 @@ import type {
   OrderDto,
   OrderItemDto,
   OrderTimelineDto,
+  OrderListSummaryDto,
 } from '../dtos/order.dto';
 import type {
   CreateOrderRequest,
@@ -113,5 +114,33 @@ export const OrderMapper = {
 
   toOrderList(dtos: OrderDto[]): Order[] {
     return dtos.map(OrderMapper.toOrder);
+  },
+
+  toOrderFromSummary(dto: OrderListSummaryDto): Order {
+    return {
+      id: dto.id,
+      orderId: dto.orderId,
+      restaurantId: dto.businessId,
+      businessSlug: dto.businessSlug,
+      businessName: dto.businessName,
+      businessAddress: dto.businessAddress,
+      userId: '',
+      userPhone: '',
+      orderType: dto.orderType,
+      status: dto.status as Order['status'],
+      items: [],
+      subtotal: 0,
+      deliveryCharge: 0,
+      couponDiscount: dto.couponDiscount || undefined,
+      couponCode: dto.couponCode ?? undefined,
+      total: dto.total,
+      paymentMethod: 'cash',
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.createdAt),
+    };
+  },
+
+  toOrderListFromSummary(dtos: OrderListSummaryDto[]): Order[] {
+    return dtos.map(OrderMapper.toOrderFromSummary);
   },
 };

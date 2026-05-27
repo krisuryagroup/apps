@@ -172,6 +172,10 @@ export const EN_DEFAULTS = {
   },
   orderHistory: {
     title: 'Order History',
+    yourOrders: 'Your Orders',
+    searchPlaceholder: 'Search by restaurant or dish',
+    viewMenu: 'View menu',
+    viewOrderDetails: 'View order details',
     noOrdersTitle: 'No Order History Yet!',
     noOrdersMessage:
       'It looks like your order history is empty.\nPlace your order now to start building your history!',
