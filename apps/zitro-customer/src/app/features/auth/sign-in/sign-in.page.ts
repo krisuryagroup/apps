@@ -7,12 +7,16 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfirmationResult } from 'firebase/auth';
-import {
-  PhoneInputComponent,
-  PHONE_INPUT_DEFAULT_CONFIG,
-} from '@zitro/ui';
+import { PhoneInputComponent, PHONE_INPUT_DEFAULT_CONFIG } from '@zitro/ui';
 import { I18nPipe } from '@zitro/i18n';
-import { FirebaseAuthService, FirebaseOtpService, AppSettingsService, FavoritesService, FcmTokenService, AnalyticsService } from '@zitro/services';
+import {
+  FirebaseAuthService,
+  FirebaseOtpService,
+  AppSettingsService,
+  FavoritesService,
+  FcmTokenService,
+  AnalyticsService,
+} from '@zitro/services';
 import { AuthConfig, DEFAULT_AUTH_CONFIG } from '@zitro/models';
 import { PHONE_CONSTANTS } from '@zitro/utils';
 
@@ -37,6 +41,7 @@ export class SignInPage implements OnDestroy {
 
   readonly isLoading = signal(false);
   readonly statusMessage = signal('');
+  readonly phoneError = signal('');
   readonly authConfig = signal<AuthConfig>(DEFAULT_AUTH_CONFIG);
 
   private phone = '';
@@ -44,17 +49,23 @@ export class SignInPage implements OnDestroy {
   private usingFirebaseOtp = false;
 
   constructor() {
-    this.appSettings.getAuthConfig()
-      .then(cfg => this.authConfig.set(cfg))
+    this.appSettings
+      .getAuthConfig()
+      .then((cfg) => this.authConfig.set(cfg))
       .catch(() => this.authConfig.set(DEFAULT_AUTH_CONFIG));
   }
 
   onPhoneChange(phone: string): void {
     this.phone = phone;
+    if (phone) this.phoneError.set('');
   }
 
   async onSendOtp(): Promise<void> {
-    if (!this.phone) return;
+    if (!this.phone) {
+      this.phoneError.set('errors.invalidIndianPhone');
+      return;
+    }
+    this.phoneError.set('');
     this.isLoading.set(true);
     this.statusMessage.set('auth.sendingOtp');
     const phoneWithCode = PHONE_CONSTANTS.INDIA_CODE + this.phone;
@@ -67,10 +78,10 @@ export class SignInPage implements OnDestroy {
         this.isLoading.set(false);
         this.navigateToOtp(phoneWithCode);
         return;
-      } catch {
+      } catch (err: unknown) {
         this.usingFirebaseOtp = false;
         if (!cfg.sms.isFast2SmsPhoneAuthentication) {
-          this.statusMessage.set('auth.otpSentFailure');
+          this.statusMessage.set(this.mapSendOtpError(err));
           this.isLoading.set(false);
           return;
         }
@@ -82,8 +93,8 @@ export class SignInPage implements OnDestroy {
       await this.authService.sendOtp(phoneWithCode);
       this.isLoading.set(false);
       this.navigateToOtp(phoneWithCode);
-    } catch {
-      this.statusMessage.set('auth.otpSentFailure');
+    } catch (err: unknown) {
+      this.statusMessage.set(this.mapSendOtpError(err));
       this.isLoading.set(false);
     }
   }
@@ -104,6 +115,18 @@ export class SignInPage implements OnDestroy {
         resendAllowed: this.authConfig().sms.resendOTPAllowed,
       },
     });
+  }
+
+  private mapSendOtpError(err: unknown): string {
+    const e = err as { error?: { errorCode?: string }; status?: number };
+    const code =
+      e.error?.errorCode || (e.status === 429 ? 'RATE_LIMIT_EXCEEDED' : '');
+    switch (code) {
+      case 'RATE_LIMIT_EXCEEDED':
+        return 'errors.otpRateLimit';
+      default:
+        return 'auth.otpSentFailure';
+    }
   }
 
   ngOnDestroy(): void {

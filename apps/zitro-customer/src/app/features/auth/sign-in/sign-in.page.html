@@ -13,12 +13,22 @@
         data-testid="phone-input-component"
         (valueChange)="onPhoneChange($event)"
       />
+      @if (phoneError()) {
+      <p class="sign-in__error" data-testid="error-message" role="alert">
+        {{ phoneError() | i18n }}
+      </p>
+      }
     </div>
 
     @if (statusMessage()) {
-      <p class="sign-in__status" data-testid="status-message" role="status">
-        {{ statusMessage() | i18n }}
-      </p>
+    <p
+      class="sign-in__status"
+      [class.sign-in__status--error]="statusMessage().startsWith('errors.')"
+      data-testid="status-message"
+      role="status"
+    >
+      {{ statusMessage() | i18n }}
+    </p>
     }
 
     <button
@@ -29,9 +39,8 @@
       (click)="onSendOtp()"
     >
       @if (isLoading()) {
-        <span class="sign-in__spinner" aria-hidden="true"></span>
-      }
-      {{ 'auth.sendOtpButton' | i18n }}
+      <span class="sign-in__spinner" aria-hidden="true"></span>
+      } {{ 'auth.sendOtpButton' | i18n }}
     </button>
 
     <div class="sign-in__divider" data-testid="divider">

@@ -386,6 +386,11 @@ export const EN_DEFAULTS = {
       'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9',
     otpExpired: 'OTP has expired. Please request a new one.',
     tooManyRequests: 'Too many attempts. Please try again after some time.',
+    otpRateLimit:
+      'Too many OTP requests. Please wait a few minutes before trying again.',
+    otpNotFound: 'OTP session not found or expired. Please request a new OTP.',
+    otpMaxAttempts: 'Too many incorrect attempts. Please request a new OTP.',
+    authTokenFailed: 'Sign in failed. Please try again.',
   },
   theme: {
     label: 'Theme',

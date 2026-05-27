@@ -11,14 +11,14 @@ export const APP_CONSTANTS = {
     ONLINE_USERS: 'onlineUsers',
     APP_SETTINGS: 'appSettings',
     USER_FAVORITES: 'favorites', // Fixed: was 'userFavorites' but code uses 'favorites'
-    APP_VERSION_USES: 'appVersionUses' // Tracks app version usage per device on daily basis
+    APP_VERSION_USES: 'appVersionUses', // Tracks app version usage per device on daily basis
   },
 
   // Firebase Documents
   FIREBASE_DOCUMENTS: {
     APP_SETTINGS: 'restaurantDetails',
     BANNERS: 'banners',
-    COUPONS: 'coupons'
+    COUPONS: 'coupons',
   },
 
   // Firebase Sub-collections
@@ -26,13 +26,13 @@ export const APP_CONSTANTS = {
     ONLINE_ORDERS_SETTINGS: 'onlineorders',
     BANNER_LIST: 'list',
     COUPON_LIST: 'list',
-    USER_FAVORITES: 'favorites'
+    USER_FAVORITES: 'favorites',
   },
 
   // Firebase Collection Paths (for complex nested paths)
   FIREBASE_PATHS: {
     BANNERS: 'appSettings/restaurantDetails/onlineorders/banners/list',
-    COUPONS: 'appSettings/restaurantDetails/onlineorders/coupons/list'
+    COUPONS: 'appSettings/restaurantDetails/onlineorders/coupons/list',
   },
 
   // Cache Keys - Products
@@ -48,7 +48,7 @@ export const APP_CONSTANTS = {
     USER_PROFILE_CACHE: 'user_profile_cache',
     USER_PROFILE_CACHE_TIMESTAMP: 'user_profile_cache_timestamp',
     COUPONS_CACHE: 'coupons_cache',
-    COUPONS_CACHE_TIMESTAMP: 'coupons_cache_timestamp'
+    COUPONS_CACHE_TIMESTAMP: 'coupons_cache_timestamp',
   },
 
   // App Settings Cache  Keys
@@ -56,7 +56,7 @@ export const APP_CONSTANTS = {
     LAST_CACHE_CLEAR: 'last_cache_clear_timestamp',
     LAST_LOGIN_CLEAR: 'last_login_clear_timestamp',
     CACHE_CLEAR_SESSION_FLAG: 'cache_clear_session_flag', // SessionStorage flag to prevent infinite loops
-    SELECTED_RESTAURANT_ID: 'selectedRestaurantId'
+    SELECTED_RESTAURANT_ID: 'selectedRestaurantId',
   },
 
   // Version Check Keys (Android app only)
@@ -77,7 +77,7 @@ export const APP_CONSTANTS = {
     AUTH_TOKEN: 'auth_token',
     LOGGED_IN_DATE_TIME: 'logged_in_date_time',
     USER_DETAILS_CACHE_KEY: 'userDetails',
-    LOGIN_SESSION_IN_DAYS: 30
+    LOGIN_SESSION_IN_DAYS: 30,
   },
 
   // Cache Durations (in milliseconds)
@@ -89,7 +89,7 @@ export const APP_CONSTANTS = {
     USER_PROFILE: 60000, // 1 minute - Session-based cache for user profiles
     COUPONS: 60 * 1000, // 1 minute - Persistent cache for coupons
     ORDER_HISTORY: 60 * 60 * 1000, // 1 hour - Persistent cache for order history
-    DEFAULT: 30 * 24 * 60 * 60 * 1000 // 30 days
+    DEFAULT: 30 * 24 * 60 * 60 * 1000, // 30 days
   },
 
   MINIMUM_IMAGE_LOAD_TIME_MS: 300, // Minimum time to show loading indicator for images
@@ -97,19 +97,20 @@ export const APP_CONSTANTS = {
   FIREBASE_STORAGE: {
     GS_PREFIX: 'gs://',
     HTTPS_BASE_URL: 'https://firebasestorage.googleapis.com/v0/b',
-    ALT_MEDIA_SUFFIX: '?alt=media'
+    ALT_MEDIA_SUFFIX: '?alt=media',
   },
 
   // Firebase Storage Paths
   FIREBASE_STORAGE_PATHS: {
-    USER_PROFILE_PICS: 'onlineusers/profile-pics'
+    USER_PROFILE_PICS: 'onlineusers/profile-pics',
   },
 
   // Phone Number
   PHONE_CONSTANTS: {
     INDIA_CODE: '+91',
     DEV_USER_PREFIX: 'dev_user_',
-    TEST_OTP: '123456'
+    TEST_OTP: '123456',
+    OTP_RESEND_SECONDS: 30,
   },
 
   // UI Constants
@@ -117,16 +118,16 @@ export const APP_CONSTANTS = {
     NOTIFICATION_DURATION: {
       SHORT: 3000,
       MEDIUM: 4000,
-      LONG: 5000
+      LONG: 5000,
     },
     RELOAD_DELAY: 2000,
-    BANNER_SCROLL_INTERVAL: 3500
+    BANNER_SCROLL_INTERVAL: 3500,
   },
 
   // Default Images
   DEFAULT_IMAGES: {
     CATEGORY: 'assets/foodCategories/default.png',
-    PRODUCT: 'assets/foodCategories/default.png'
+    PRODUCT: 'assets/foodCategories/default.png',
   },
 
   // Order Status
@@ -136,26 +137,26 @@ export const APP_CONSTANTS = {
     PREPARING: 'preparing',
     OUT_FOR_DELIVERY: 'out_for_delivery',
     DELIVERED: 'delivered',
-    CANCELLED: 'cancelled'
+    CANCELLED: 'cancelled',
   },
 
   // Start Order Utils Constants
   // Order Time Estimates (in minutes)
   ORDER_BASE_TIME_MINUTES: {
     'dine-in': 20,
-    'takeout': 25,
-    'delivery': 45
+    takeout: 25,
+    delivery: 45,
   },
 
   // Order Status Time Adjustments (multipliers for ETA calculations)
   ORDER_STATUS_TIME_ADJUSTMENTS: {
-    'pending': 1.0,
-    'confirmed': 0.8,
-    'preparing': 0.6,
-    'ready': 0.3,
-    'shipped': 0.4,
-    'delivered': 0,
-    'completed': 0
+    pending: 1.0,
+    confirmed: 0.8,
+    preparing: 0.6,
+    ready: 0.3,
+    shipped: 0.4,
+    delivered: 0,
+    completed: 0,
   },
 
   // Order Timeline Steps Configuration
@@ -165,34 +166,34 @@ export const APP_CONSTANTS = {
       { status: 'confirmed', label: 'Confirmed', icon: 'check_circle' },
       { status: 'preparing', label: 'Preparing', icon: 'restaurant' },
       { status: 'ready', label: 'Ready', icon: 'done_all' },
-      { status: 'completed', label: 'Served', icon: 'celebration' }
+      { status: 'completed', label: 'Served', icon: 'celebration' },
     ],
-    'takeout': [
+    takeout: [
       { status: 'pending', label: 'Order Placed', icon: 'receipt' },
       { status: 'confirmed', label: 'Confirmed', icon: 'check_circle' },
       { status: 'preparing', label: 'Preparing', icon: 'restaurant' },
       { status: 'ready', label: 'Ready for Pickup', icon: 'shopping_bag' },
-      { status: 'completed', label: 'Completed', icon: 'celebration' }
+      { status: 'completed', label: 'Completed', icon: 'celebration' },
     ],
-    'delivery': [
+    delivery: [
       { status: 'pending', label: 'Order Placed', icon: 'receipt' },
       { status: 'confirmed', label: 'Confirmed', icon: 'check_circle' },
       { status: 'preparing', label: 'Preparing', icon: 'restaurant' },
       { status: 'shipped', label: 'Out for Delivery', icon: 'local_shipping' },
-      { status: 'delivered', label: 'Delivered', icon: 'celebration' }
-    ]
+      { status: 'delivered', label: 'Delivered', icon: 'celebration' },
+    ],
   },
 
   // Order Status Display Mappings
   ORDER_STATUS_DISPLAY: {
-    'pending': 'Order Placed',
-    'confirmed': 'Confirmed',
-    'preparing': 'Preparing',
-    'ready': 'Ready for Pickup',
-    'shipped': 'On the Way',
-    'delivered': 'Delivered',
-    'completed': 'Completed',
-    'cancelled': 'Cancelled'
+    pending: 'Order Placed',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready for Pickup',
+    shipped: 'On the Way',
+    delivered: 'Delivered',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
   },
   // End Order Utils Constants
 
@@ -201,7 +202,7 @@ export const APP_CONSTANTS = {
     MIN_PHONE_LENGTH: 10,
     MAX_PHONE_LENGTH: 10,
     MIN_OTP_LENGTH: 6,
-    MAX_OTP_LENGTH: 6
+    MAX_OTP_LENGTH: 6,
   },
 
   // API Endpoints (if any)
@@ -210,9 +211,11 @@ export const APP_CONSTANTS = {
   },
 
   // Common constants like title, description, keywords
-  COMMON_CONSTANTS:{
-    OFFER_APPLICABLE_TEXT: 'Offer is applicable to this item, apply coupon code in cart',
-    VARIATION_ITEM_REMOVAL_CONFIRMATION: 'This item has customization. To remove it from your cart, please navigate to the cart page where you can manage individual variations.',
+  COMMON_CONSTANTS: {
+    OFFER_APPLICABLE_TEXT:
+      'Offer is applicable to this item, apply coupon code in cart',
+    VARIATION_ITEM_REMOVAL_CONFIRMATION:
+      'This item has customization. To remove it from your cart, please navigate to the cart page where you can manage individual variations.',
   },
 
   // Error Messages
@@ -226,7 +229,8 @@ export const APP_CONSTANTS = {
     CATEGORY_NOT_FOUND: 'Category not found.',
     CART_EMPTY: 'Your cart is empty.',
     ORDER_NOT_FOUND: 'Order not found.',
-    UNABLE_TO_GET_PHONE: 'Unable to get user phone number, Please sign out and sign in again',
+    UNABLE_TO_GET_PHONE:
+      'Unable to get user phone number, Please sign out and sign in again',
   },
 
   // Success Messages
@@ -237,13 +241,13 @@ export const APP_CONSTANTS = {
     FAVORITE_ADDED: 'Added to favorites',
     FAVORITE_REMOVED: 'Removed from favorites',
     CACHE_CLEARED: '🔄 App data refreshed for better experience',
-    LOGOUT_SUCCESS: '🔐 Session expired. Please sign in again.'
+    LOGOUT_SUCCESS: '🔐 Session expired. Please sign in again.',
   },
 
   // Currency
   CURRENCY: {
     SYMBOL: '₹',
-    CODE: 'INR'
+    CODE: 'INR',
   },
 
   // App Limits
@@ -253,14 +257,14 @@ export const APP_CONSTANTS = {
     MAX_SEARCH_RESULTS: 100,
     MAX_POPULAR_ITEMS: 8,
     MAX_RECOMMENDED_ITEMS: 3,
-    MAX_CATEGORIES_HOME: 8
+    MAX_CATEGORIES_HOME: 8,
   },
 
   // Firebase Storage URL patterns
   STORAGE_PATTERNS: {
     GS_PROTOCOL: /^gs:\/\//,
     HTTPS_PROTOCOL: /^https:\/\//,
-    FIREBASE_STORAGE: /firebasestorage\.googleapis\.com/
+    FIREBASE_STORAGE: /firebasestorage\.googleapis\.com/,
   },
 
   // Regular Expressions
@@ -268,7 +272,7 @@ export const APP_CONSTANTS = {
     PHONE_NUMBER: /^[6-9]\d{9}$/,
     OTP: /^\d{6}$/,
     EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    PRICE_CLEANUP: /[^\d.]/g
+    PRICE_CLEANUP: /[^\d.]/g,
   },
 
   // UI Text & Labels
@@ -389,8 +393,10 @@ export const APP_CONSTANTS = {
     NAME_MIN_LENGTH: 'Name must be at least 2 characters long',
     NAME_INVALID: 'Name can only contain letters and spaces',
     FIELD_REQUIRED: 'Please fill in the {0}.',
-    ADDRESS_SELECT_REQUIRED: 'Please select a delivery address before placing the order.',
-    VARIATION_SELECT_REQUIRED: 'Please select a variation before adding to cart',
+    ADDRESS_SELECT_REQUIRED:
+      'Please select a delivery address before placing the order.',
+    VARIATION_SELECT_REQUIRED:
+      'Please select a variation before adding to cart',
   },
 
   // Placeholders
@@ -417,7 +423,7 @@ export const APP_CONSTANTS = {
     'maggie',
     'beverages',
     'pasta',
-    'desserts'
+    'desserts',
   ],
 
   // Filter Preferences
@@ -428,7 +434,7 @@ export const APP_CONSTANTS = {
     'Nut-Free',
     'Keto',
     'Low-Fat',
-    'Organic'
+    'Organic',
   ],
 
   // Restaurant Data
@@ -436,7 +442,8 @@ export const APP_CONSTANTS = {
     {
       id: 'hunger_point',
       name: 'The Hunger Point',
-      description: 'Delicious North Indian & Chinese cuisine with fast delivery',
+      description:
+        'Delicious North Indian & Chinese cuisine with fast delivery',
       title: 'Multi-Cuisine Restaurant',
       type: 'restaurant',
       location: 'Dibiyapur',
@@ -451,15 +458,15 @@ export const APP_CONSTANTS = {
       deliveryFee: 40,
       coordinates: {
         lat: 26.1234,
-        lng: 82.5678
+        lng: 82.5678,
       },
       // firebaseConfig removed: app uses centralized FIREBASE_CONFIG
       addressConfig: {
-          pincode: '206244',
-          town: 'Dibiyapur, AURAIYA',
-          state: 'Uttar Pradesh',
-          defaultType: 'Home'
-      }
+        pincode: '206244',
+        town: 'Dibiyapur, AURAIYA',
+        state: 'Uttar Pradesh',
+        defaultType: 'Home',
+      },
     },
     {
       id: 'efc-pizza',
@@ -479,15 +486,15 @@ export const APP_CONSTANTS = {
       deliveryFee: 40,
       coordinates: {
         lat: 27.2345,
-        lng: 79.9876
+        lng: 79.9876,
       },
       // firebaseConfig removed: app uses centralized FIREBASE_CONFIG
       addressConfig: {
-          pincode: '209722',
-          town: 'Gurshaiganj, Kannauj',
-          state: 'Uttar Pradesh',
-          defaultType: 'Home'
-      }
+        pincode: '209722',
+        town: 'Gurshaiganj, Kannauj',
+        state: 'Uttar Pradesh',
+        defaultType: 'Home',
+      },
     },
     {
       id: 'tularam-kirana-store',
@@ -507,11 +514,11 @@ export const APP_CONSTANTS = {
       deliveryFee: 40,
       coordinates: {
         lat: 27.2345,
-        lng: 79.9876
+        lng: 79.9876,
       },
       // firebaseConfig removed: app uses centralized FIREBASE_CONFIG
-    }
-  ]
+    },
+  ],
 } as const;
 
 // Export individual constant groups for easy importing
@@ -523,7 +530,8 @@ export const CACHE_KEYS = APP_CONSTANTS.CACHE_KEYS;
 export const APP_SETTINGS_CACHE = APP_CONSTANTS.APP_SETTINGS_CACHE;
 export const AUTH_KEYS = APP_CONSTANTS.AUTH_KEYS;
 export const CACHE_DURATIONS = APP_CONSTANTS.CACHE_DURATIONS;
-export const MINIMUM_IMAGE_LOAD_TIME_MS = APP_CONSTANTS.MINIMUM_IMAGE_LOAD_TIME_MS;
+export const MINIMUM_IMAGE_LOAD_TIME_MS =
+  APP_CONSTANTS.MINIMUM_IMAGE_LOAD_TIME_MS;
 export const FIREBASE_STORAGE = APP_CONSTANTS.FIREBASE_STORAGE;
 export const FIREBASE_STORAGE_PATHS = APP_CONSTANTS.FIREBASE_STORAGE_PATHS;
 export const PHONE_CONSTANTS = APP_CONSTANTS.PHONE_CONSTANTS;
@@ -531,7 +539,8 @@ export const UI_CONSTANTS = APP_CONSTANTS.UI_CONSTANTS;
 export const DEFAULT_IMAGES = APP_CONSTANTS.DEFAULT_IMAGES;
 export const ORDER_STATUS = APP_CONSTANTS.ORDER_STATUS;
 export const ORDER_BASE_TIME_MINUTES = APP_CONSTANTS.ORDER_BASE_TIME_MINUTES;
-export const ORDER_STATUS_TIME_ADJUSTMENTS = APP_CONSTANTS.ORDER_STATUS_TIME_ADJUSTMENTS;
+export const ORDER_STATUS_TIME_ADJUSTMENTS =
+  APP_CONSTANTS.ORDER_STATUS_TIME_ADJUSTMENTS;
 export const ORDER_TIMELINE_STEPS = APP_CONSTANTS.ORDER_TIMELINE_STEPS;
 export const ORDER_STATUS_DISPLAY = APP_CONSTANTS.ORDER_STATUS_DISPLAY;
 export const VALIDATION = APP_CONSTANTS.VALIDATION;
@@ -556,18 +565,18 @@ export const COMMON_CONSTANTS = APP_CONSTANTS.COMMON_CONSTANTS;
 // When enabled: false, no pincode check is performed and all areas are accepted.
 // ─────────────────────────────────────────────────────────────────────────────
 export const DELIVERY_PINCODE_CONFIG = {
-  enabled: true,                          // Set to false to disable pincode restriction
-  allowedPincodes: ['206244', '206247', '206241', '206246'],  // Pincodes where delivery is available
+  enabled: true, // Set to false to disable pincode restriction
+  allowedPincodes: ['206244', '206247', '206241', '206246'], // Pincodes where delivery is available
 } as const;
 
 // Centralized Firebase config for the whole app (use same project for all restaurants)
 export const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js",
-  authDomain: "the-hunger-point.firebaseapp.com",
-  databaseURL: "https://the-hunger-point-default-rtdb.firebaseio.com",
-  projectId: "the-hunger-point",
-  storageBucket: "the-hunger-point.appspot.com",
-  messagingSenderId: "362195111262",
-  appId: "1:362195111262:web:01d2738992010555af53cf",
-  measurementId: "G-NTWY20NKHB"
+  apiKey: 'AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js',
+  authDomain: 'the-hunger-point.firebaseapp.com',
+  databaseURL: 'https://the-hunger-point-default-rtdb.firebaseio.com',
+  projectId: 'the-hunger-point',
+  storageBucket: 'the-hunger-point.appspot.com',
+  messagingSenderId: '362195111262',
+  appId: '1:362195111262:web:01d2738992010555af53cf',
+  measurementId: 'G-NTWY20NKHB',
 } as const;

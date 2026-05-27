@@ -6,8 +6,33 @@
       type="button"
       (click)="goBack()"
     >
-      ← {{ 'common.back' | i18n }}
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        aria-hidden="true"
+      >
+        <path d="M19 12H5m7-7-7 7 7 7" />
+      </svg>
+      {{ 'common.back' | i18n }}
     </button>
+
+    <div class="otp__icon-wrapper" aria-hidden="true">
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <rect x="5" y="11" width="14" height="11" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+    </div>
 
     <h1 class="otp__title" data-testid="otp-title">
       {{ 'auth.verifyOtpButton' | i18n }}
@@ -17,49 +42,78 @@
       {{ 'auth.otpPlaceholder' | i18n }}
     </p>
 
-    <p class="otp__phone" data-testid="otp-phone">
-      {{ maskedPhone }}
-    </p>
+    <p class="otp__phone" data-testid="otp-phone">{{ maskedPhone }}</p>
 
     <div class="otp__input-section" data-testid="otp-input-section">
       <lib-otp-input
         [config]="otpConfig"
-        data-testid="otp-input-component"
-        (submitted)="onOtpSubmit($event)"
+        data-testid="otp-input"
+        (otpComplete)="onOtpComplete($event)"
       />
     </div>
 
-    @if (isLoading()) {
-      <div class="otp__loading" data-testid="otp-loading" role="status">
-        <span class="otp__spinner" aria-hidden="true"></span>
-      </div>
+    @if (statusMessage() && !statusMessage().startsWith('errors.')) {
+    <p class="otp__status" data-testid="otp-status" role="status">
+      {{ statusMessage() | i18n }}
+    </p>
+    } @if (statusMessage().startsWith('errors.')) {
+    <p class="otp__error" data-testid="error-message" role="alert">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      {{ statusMessage() | i18n }}
+    </p>
     }
 
-    @if (statusMessage()) {
-      <p
-        class="otp__status"
-        [class.otp__status--error]="statusMessage().startsWith('errors.')"
-        data-testid="otp-status"
-        role="alert"
-      >
-        {{ statusMessage() | i18n }}
-      </p>
-    }
+    <button
+      class="otp__verify-btn"
+      data-testid="verify-btn"
+      type="button"
+      [disabled]="isLoading() || otpValue().length < 6"
+      (click)="onVerify()"
+    >
+      @if (isLoading()) {
+      <span class="otp__spinner" aria-hidden="true"></span>
+      } {{ 'auth.verifyOtpButton' | i18n }}
+    </button>
 
     <div class="otp__resend" data-testid="otp-resend-section">
       @if (canResend()) {
-        <button
-          class="otp__resend-btn"
-          data-testid="resend-otp-btn"
-          type="button"
-          (click)="resendOtp()"
+      <button
+        class="otp__resend-btn"
+        data-testid="resend-btn"
+        type="button"
+        (click)="resendOtp()"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
         >
-          {{ 'auth.resendOtp' | i18n }}
-        </button>
+          <polyline points="23,4 23,10 17,10" />
+          <path d="M20.49,9A9,9,0,0,0,5.64,5.64L1,10" />
+        </svg>
+        {{ 'auth.resendOtp' | i18n }}
+      </button>
       } @else {
-        <p class="otp__resend-countdown" data-testid="resend-countdown">
-          {{ 'auth.resendOtp' | i18n }} ({{ resendCountdown() }}s)
-        </p>
+      <div class="otp__timer" data-testid="countdown-timer">
+        <span class="otp__timer-label">{{ 'auth.resendOtp' | i18n }}</span>
+        <span class="otp__timer-badge">{{ resendCountdown() }}s</span>
+      </div>
       }
     </div>
   </div>

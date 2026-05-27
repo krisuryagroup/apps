@@ -32,12 +32,13 @@ export class OtpPage implements OnDestroy {
   private readonly fcmToken = inject(FcmTokenService);
   private readonly analytics = inject(AnalyticsService);
 
-  readonly otpConfig = OTP_INPUT_DEFAULT_CONFIG;
+  readonly otpConfig = { ...OTP_INPUT_DEFAULT_CONFIG, autoSubmit: false };
 
   readonly isLoading = signal(false);
   readonly statusMessage = signal('');
   readonly canResend = signal(false);
   readonly resendCountdown = signal(0);
+  readonly otpValue = signal('');
 
   private phone: string;
   private confirmationResult: ConfirmationResult | null;
@@ -49,11 +50,13 @@ export class OtpPage implements OnDestroy {
   constructor() {
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state ?? {};
-    this.phone = (state['phone'] as string) || sessionStorage.getItem('otp_phone') || '';
-    this.confirmationResult = (state['confirmationResult'] as ConfirmationResult) ?? null;
+    this.phone =
+      (state['phone'] as string) || sessionStorage.getItem('otp_phone') || '';
+    this.confirmationResult =
+      (state['confirmationResult'] as ConfirmationResult) ?? null;
     this.usingFirebaseOtp = (state['usingFirebaseOtp'] as boolean) ?? false;
     this.resendAllowed = (state['resendAllowed'] as boolean) ?? true;
-    this.resendTime = (state['resendTime'] as number) ?? 60;
+    this.resendTime = PHONE_CONSTANTS.OTP_RESEND_SECONDS;
 
     if (!this.phone) {
       this.router.navigate(['/auth/signin']);
@@ -68,6 +71,17 @@ export class OtpPage implements OnDestroy {
   get maskedPhone(): string {
     const digits = this.phone.replace(PHONE_CONSTANTS.INDIA_CODE, '');
     return `${PHONE_CONSTANTS.INDIA_CODE} ****${digits.slice(-4)}`;
+  }
+
+  onOtpComplete(otp: string): void {
+    this.otpValue.set(otp);
+    this.statusMessage.set('');
+  }
+
+  async onVerify(): Promise<void> {
+    const otp = this.otpValue();
+    if (otp.length !== 6 || this.isLoading()) return;
+    await this.onOtpSubmit(otp);
   }
 
   async onOtpSubmit(otp: string): Promise<void> {
@@ -112,8 +126,8 @@ export class OtpPage implements OnDestroy {
       await this.authService.sendOtp(this.phone);
       this.statusMessage.set('auth.otpSentSuccess');
       this.startResendTimer();
-    } catch {
-      this.statusMessage.set('auth.otpSentFailure');
+    } catch (err: unknown) {
+      this.statusMessage.set(this.mapSendOtpError(err));
     }
   }
 
@@ -143,13 +157,50 @@ export class OtpPage implements OnDestroy {
     }
   }
 
+  private mapSendOtpError(err: unknown): string {
+    const e = err as { error?: { errorCode?: string }; status?: number };
+    const code =
+      e.error?.errorCode || (e.status === 429 ? 'RATE_LIMIT_EXCEEDED' : '');
+    switch (code) {
+      case 'RATE_LIMIT_EXCEEDED':
+        return 'errors.otpRateLimit';
+      default:
+        return 'auth.otpSentFailure';
+    }
+  }
+
   private mapFirebaseError(err: unknown): string {
+    // API error codes take priority (HttpErrorResponse from backend)
+    const e = err as { error?: { errorCode?: string }; status?: number };
+    const apiCode =
+      e.error?.errorCode || (e.status === 429 ? 'RATE_LIMIT_EXCEEDED' : '');
+    if (apiCode) {
+      switch (apiCode) {
+        case 'OTP_INVALID':
+          return 'errors.invalidOtp';
+        case 'OTP_NOT_FOUND':
+          return 'errors.otpNotFound';
+        case 'OTP_MAX_ATTEMPTS':
+          return 'errors.otpMaxAttempts';
+        case 'RATE_LIMIT_EXCEEDED':
+          return 'errors.otpRateLimit';
+        case 'FIREBASE_TOKEN_FAILED':
+          return 'errors.authTokenFailed';
+        default:
+          return 'errors.invalidOtp';
+      }
+    }
+    // Firebase SDK error codes (Firebase phone auth path)
     const code = (err as { code?: string })?.code ?? '';
     switch (code) {
-      case 'auth/invalid-verification-code': return 'errors.invalidOtp';
-      case 'auth/code-expired': return 'errors.otpExpired';
-      case 'auth/too-many-requests': return 'errors.tooManyRequests';
-      default: return 'errors.invalidOtp';
+      case 'auth/invalid-verification-code':
+        return 'errors.invalidOtp';
+      case 'auth/code-expired':
+        return 'errors.otpExpired';
+      case 'auth/too-many-requests':
+        return 'errors.tooManyRequests';
+      default:
+        return 'errors.invalidOtp';
     }
   }
 

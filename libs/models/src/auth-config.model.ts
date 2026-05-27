@@ -37,7 +37,7 @@ export const DEFAULT_AUTH_CONFIG: AuthConfig = {
     isFast2SmsPhoneAuthentication: false,
     isFirebasePhoneAuthentication: false,
     resendOTPAllowed: true,
-    resendOTPTime: 60
+    resendOTPTime: 30,
   },
   ui: {
     guestButtonLabel: 'Continue as Guest',
@@ -50,6 +50,6 @@ export const DEFAULT_AUTH_CONFIG: AuthConfig = {
     verifyOTPPlaceholder: 'Enter 6-digit OTP',
     otpSentSuccessMessage: 'OTP sent successfully. Please check your SMS',
     otpSentFailureMessage: 'OTP Send Failed, Try sending in sometime',
-    resendOTPLabel: 'Resend OTP'
-  }
+    resendOTPLabel: 'Resend OTP',
+  },
 };
