@@ -17,7 +17,13 @@
   position: relative;
   overflow: hidden;
   // Fallback gradient when no banner image loads
-  background: linear-gradient(160deg, #2c0a14 0%, #7a1828 30%, #c0312a 65%, #e8503a 100%);
+  background: linear-gradient(
+    160deg,
+    #2c0a14 0%,
+    #7a1828 30%,
+    #c0312a 65%,
+    #e8503a 100%
+  );
 
   lib-banner-carousel {
     display: block;
@@ -43,7 +49,9 @@
   overflow-x: auto;
   background: transparent;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .dh-tab-btn {
@@ -69,10 +77,18 @@
     // Type-specific tinted backgrounds
     background: rgba(255, 240, 238, 0.92);
 
-    &[data-type="restaurant"] { background: rgba(255, 240, 238, 0.92); }
-    &[data-type="grocery"]    { background: rgba(240, 255, 246, 0.92); }
-    &[data-type="gift_center"]{ background: rgba(255, 248, 236, 0.92); }
-    &[data-type="pharmacy"]   { background: rgba(238, 244, 255, 0.92); }
+    &[data-type='restaurant'] {
+      background: rgba(255, 240, 238, 0.92);
+    }
+    &[data-type='grocery'] {
+      background: rgba(240, 255, 246, 0.92);
+    }
+    &[data-type='gift_center'] {
+      background: rgba(255, 248, 236, 0.92);
+    }
+    &[data-type='pharmacy'] {
+      background: rgba(238, 244, 255, 0.92);
+    }
   }
 
   .dh-tab-label {
@@ -84,8 +100,13 @@
 
   // Active: white label + white ring on icon
   &.dh-tab-active {
-    .dh-tab-icon { box-shadow: 0 0 0 2.5px white; }
-    .dh-tab-label { color: white; font-weight: 800; }
+    .dh-tab-icon {
+      box-shadow: 0 0 0 2.5px white;
+    }
+    .dh-tab-label {
+      color: white;
+      font-weight: 800;
+    }
   }
 }
 
@@ -122,7 +143,9 @@
     font-size: 13px;
     color: $text-color;
     background: transparent;
-    &::placeholder { color: #aaa; }
+    &::placeholder {
+      color: #aaa;
+    }
   }
 
   .dh-mic-btn {
@@ -133,7 +156,9 @@
     padding: 0;
     display: flex;
     align-items: center;
-    .material-icons { font-size: 15px; }
+    .material-icons {
+      font-size: 15px;
+    }
 
     &.dh-mic-listening {
       animation: mic-pulse 0.8s ease-in-out infinite;
@@ -168,7 +193,9 @@
     position: relative;
     transition: background 0.2s;
 
-    &.dh-veg-on { background: #1ba672; }
+    &.dh-veg-on {
+      background: #1ba672;
+    }
 
     .dh-veg-knob {
       position: absolute;
@@ -182,7 +209,9 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     }
 
-    &.dh-veg-on .dh-veg-knob { left: 17px; }
+    &.dh-veg-on .dh-veg-knob {
+      left: 17px;
+    }
   }
 }
 
@@ -261,7 +290,13 @@
   overflow: hidden;
   max-height: 600px;
   opacity: 1;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  // Shorter duration = fewer reflow-scroll events during animation.
+  // will-change promotes to its own GPU layer so the collapse doesn't
+  // trigger a full-page layout recalculation.
+  will-change: max-height, opacity;
+  transition:
+    max-height 0.18s ease-out,
+    opacity 0.18s ease-out;
 
   &.dh-hidden {
     max-height: 0;
@@ -281,52 +316,61 @@
 // Cuisine chips horizontal scroll row
 .dh-chips-row {
   background: white;
-  padding: 0 14px 13px;
+  padding: 4px 16px 14px;
   display: flex;
-  gap: 8px;
+  gap: 14px;
   overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-// Chip: 60×60 circle
+// Chip: 68×68 circle
 .dh-chip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  min-width: 60px;
+  gap: 7px;
+  flex-shrink: 0; // ← critical: prevents shrink, enables scroll
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
 
   .dh-chip-ico {
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
-    background: #fff5f5;
+    background: #f4f4f4;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
-    border: 2px solid transparent;
-    transition: border-color 0.2s, background 0.2s;
+    font-size: 28px;
+    border: 2.5px solid transparent;
+    overflow: hidden;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
 
     .dh-chip-img {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+      border-radius: 50%;
     }
   }
 
   .dh-chip-lbl {
-    font-size: 11px;
-    font-weight: 500;
-    color: #555;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #3d3d3d;
     text-align: center;
     white-space: nowrap;
+    letter-spacing: -0.1px;
   }
 
   &.dh-chip-active {
@@ -344,30 +388,39 @@
 // Filter pills bar
 .dh-filter-bar {
   display: flex;
-  gap: 7px;
-  padding: 9px 14px;
+  gap: 8px;
+  padding: 10px 16px 12px;
   overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
   scrollbar-width: none;
   background: white;
   border-top: 1px solid #f2f2f2;
   border-bottom: 6px solid #f0f0f0;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .dh-filter-pill {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 12px;
+  flex-shrink: 0; // ← critical: prevents shrink, enables scroll
+  padding: 6px 14px;
   border-radius: 20px;
-  border: 1px solid #e0e0e0;
+  border: 1.5px solid #e0e0e0;
   background: white;
-  font-size: 11px;
+  font-size: 12px;
   color: #333;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 
   &.dh-filter-pill-active {
     background: $primary-color;
@@ -403,8 +456,14 @@
   padding: 3rem 1rem;
   color: rgba($text-color, 0.45);
 
-  .material-icons { font-size: 3rem; margin-bottom: 0.5rem; }
-  p { font-size: 0.9rem; margin: 0; }
+  .material-icons {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+  p {
+    font-size: 0.9rem;
+    margin: 0;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -412,8 +471,13 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 @keyframes dh-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .dh-pulse {
@@ -479,6 +543,12 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 @keyframes mic-pulse {
-  0%, 100% { color: $primary-color; transform: scale(1); }
-  50%       { transform: scale(1.2); }
+  0%,
+  100% {
+    color: $primary-color;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
 }

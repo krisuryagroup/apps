@@ -1,29 +1,52 @@
-<div class="main-layout" [class.dh-home-active]="isOnHomePage" [class.dh-header-hidden]="!shouldShowHeader">
-  <header class="dh-header"
-          [class.dh-header--transparent]="isOnHomePage && !scrolledPastBanner"
-          [style.--header-text-color]="headerTextColor"
-          *ngIf="shouldShowHeader">
-
+<div
+  class="main-layout"
+  [class.dh-home-active]="isOnHomePage"
+  [class.dh-header-hidden]="!shouldShowHeader"
+>
+  <header
+    class="dh-header"
+    [class.dh-header--transparent]="isOnHomePage && !scrolledPastBanner"
+    [style.--header-text-color]="headerTextColor"
+    *ngIf="shouldShowHeader"
+  >
     <!-- LEFT: Back / Hamburger (non-home only) + Location (home) or title -->
     <div class="dh-header-left">
-      <button *ngIf="showBackButton && !isLargeScreen()"
-              class="dh-back-btn" (click)="goBack()">
+      <button
+        *ngIf="showBackButton && !isLargeScreen()"
+        class="dh-back-btn"
+        (click)="goBack()"
+      >
         <span class="material-icons">arrow_back</span>
       </button>
       <!-- Hamburger LEFT — non-home pages only -->
-      <button *ngIf="!showBackButton && !isLargeScreen() && !isOnGameRoute && !isOnHomePage"
-              class="dh-sidebar-toggle" (click)="openSidebar()">
+      <button
+        *ngIf="
+          !showBackButton && !isLargeScreen() && !isOnGameRoute && !isOnHomePage
+        "
+        class="dh-sidebar-toggle"
+        (click)="openSidebar()"
+      >
         <span class="material-icons">menu</span>
       </button>
 
       <!-- Home page: tappable location row -->
-      <div class="dh-location-display" *ngIf="isOnHomePage" (click)="requestLocation()">
+      <div
+        class="dh-location-display"
+        *ngIf="isOnHomePage"
+        (click)="requestLocation()"
+        data-testid="location-header"
+      >
         <span class="material-icons dh-loc-pin">location_on</span>
         <div class="dh-loc-text">
           <div class="dh-loc-label">
-            {{ locationLabel }}<span class="material-icons dh-loc-chevron">keyboard_arrow_down</span>
+            {{ locationLabel
+            }}<span class="material-icons dh-loc-chevron"
+              >keyboard_arrow_down</span
+            >
           </div>
-          <div class="dh-loc-address" *ngIf="locationAddress">{{ locationAddress }}</div>
+          <div class="dh-loc-address" *ngIf="locationAddress">
+            {{ locationAddress }}
+          </div>
         </div>
       </div>
 
@@ -35,7 +58,9 @@
         <div class="dh-user-info" *ngIf="!isLargeScreen()">
           <span class="dh-user-name">{{ userName }}</span>
         </div>
-        <div class="dh-header-page-name" *ngIf="headerTitle">{{ headerTitle }}</div>
+        <div class="dh-header-page-name" *ngIf="headerTitle">
+          {{ headerTitle }}
+        </div>
       </div>
     </div>
 
@@ -46,17 +71,30 @@
           [routerLink]="item.route"
           class="dh-nav-link"
           [class.active]="isActiveRoute(item.route)"
-          *ngIf="isLoggedIn || (item.label !== 'Profile' && item.label !== 'Manage Addresses' && item.label !== 'My Orders')"
+          *ngIf="
+            isLoggedIn ||
+            (item.label !== 'Profile' &&
+              item.label !== 'Manage Addresses' &&
+              item.label !== 'My Orders')
+          "
         >
           <span class="material-icons">{{ item.icon }}</span>
           <span class="dh-nav-label">{{ item.label }}</span>
         </a>
       </ng-container>
-      <button *ngIf="!isLoggedIn" class="dh-nav-link dh-login-btn" (click)="login()">
+      <button
+        *ngIf="!isLoggedIn"
+        class="dh-nav-link dh-login-btn"
+        (click)="login()"
+      >
         <span class="material-icons">login</span>
         <span class="dh-nav-label">Sign In</span>
       </button>
-      <button *ngIf="isLoggedIn" class="dh-nav-link dh-logout-btn" (click)="logout()">
+      <button
+        *ngIf="isLoggedIn"
+        class="dh-nav-link dh-logout-btn"
+        (click)="logout()"
+      >
         <span class="material-icons">logout</span>
         <span class="dh-nav-label">Sign Out</span>
       </button>
@@ -70,13 +108,20 @@
       </div>
 
       <!-- Restaurant open/closed badge — left of cart -->
-      <div class="dh-restaurant-status" *ngIf="!isOnGameRoute && showRestaurantStatus">
-        <span class="dh-status-badge"
-              [class.dh-status-open]="isRestaurantOpen"
-              [class.dh-status-closed]="!isRestaurantOpen">
+      <div
+        class="dh-restaurant-status"
+        *ngIf="!isOnGameRoute && showRestaurantStatus"
+      >
+        <span
+          class="dh-status-badge"
+          [class.dh-status-open]="isRestaurantOpen"
+          [class.dh-status-closed]="!isRestaurantOpen"
+        >
           {{ isRestaurantOpen ? 'Open' : 'Closed' }}
         </span>
-        <span class="dh-status-time" *ngIf="restaurantTime">{{ restaurantTime }}</span>
+        <span class="dh-status-time" *ngIf="restaurantTime">{{
+          restaurantTime
+        }}</span>
       </div>
 
       <!-- Cart -->
@@ -86,15 +131,25 @@
       </button>
 
       <!-- Profile icon on RIGHT — home page only (replaces hamburger) -->
-      <button *ngIf="isOnHomePage && !isLargeScreen() && !isOnGameRoute"
-              class="dh-profile-btn" (click)="openSidebar()">
+      <button
+        *ngIf="isOnHomePage && !isLargeScreen() && !isOnGameRoute"
+        class="dh-profile-btn"
+        (click)="openSidebar()"
+      >
         <span class="material-icons">account_circle</span>
       </button>
     </div>
   </header>
 
-  <div class="dh-sidebar-overlay" *ngIf="sidebarOpen" (click)="closeSidebar()"></div>
-  <app-sidebar [open]="sidebarOpen" (closeSidebar)="closeSidebar()"></app-sidebar>
+  <div
+    class="dh-sidebar-overlay"
+    *ngIf="sidebarOpen"
+    (click)="closeSidebar()"
+  ></div>
+  <app-sidebar
+    [open]="sidebarOpen"
+    (closeSidebar)="closeSidebar()"
+  ></app-sidebar>
 
   <main class="main-content">
     <router-outlet></router-outlet>

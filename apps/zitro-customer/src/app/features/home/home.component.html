@@ -3,36 +3,44 @@
   <div class="dh-main-content">
     <div class="dh-skeleton-hero dh-pulse"></div>
     <div class="dh-skeleton-section">
-      <div class="dh-skeleton-bar dh-pulse" style="width:45%;margin:13px 16px 8px;height:16px;border-radius:6px;"></div>
+      <div
+        class="dh-skeleton-bar dh-pulse"
+        style="
+          width: 45%;
+          margin: 13px 16px 8px;
+          height: 16px;
+          border-radius: 6px;
+        "
+      ></div>
       <div class="dh-skeleton-chips-row">
-        @for (i of [1,2,3,4,5,6]; track i) {
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="dh-skeleton-chip dh-pulse"></div>
         }
       </div>
     </div>
-    @for (i of [1,2,3]; track i) {
+    @for (i of [1, 2, 3]; track i) {
       <div class="dh-skeleton-card dh-pulse">
         <div class="dh-skeleton-card-img"></div>
         <div class="dh-skeleton-card-body">
-          <div class="dh-skeleton-line" style="width:60%;"></div>
-          <div class="dh-skeleton-line" style="width:45%;"></div>
-          <div class="dh-skeleton-line" style="width:75%;"></div>
+          <div class="dh-skeleton-line" style="width: 60%"></div>
+          <div class="dh-skeleton-line" style="width: 45%"></div>
+          <div class="dh-skeleton-line" style="width: 75%"></div>
         </div>
       </div>
     }
   </div>
 } @else {
   <div class="dh-main-content">
-
     <!-- ═══════════════ HERO BANNER ZONE ═══════════════ -->
     <div class="dh-hero-wrapper">
-
       <!-- Banner image as background (determines height via aspect-ratio) -->
-      <lib-banner-carousel [banners]="banners()" data-testid="banner-carousel" />
+      <lib-banner-carousel
+        [banners]="banners()"
+        data-testid="banner-carousel"
+      />
 
       <!-- Overlay: all hero UI elements float on the banner -->
       <div class="dh-hero-overlay">
-
         <!-- Category Tabs — only shown when API returns more than 2 business types -->
         @if (businessTypeTabs().length > 1) {
           <div class="dh-tabs-row" data-testid="business-tabs">
@@ -42,9 +50,14 @@
                 [class.dh-tab-active]="activeTab() === tab"
                 (click)="onTabChange(tab)"
                 data-testid="business-tab"
-                [attr.aria-label]="BUSINESS_TYPE_LABELS[tab] || tab">
-                <span class="dh-tab-icon" [attr.data-type]="tab">{{ BUSINESS_TYPE_ICONS[tab] }}</span>
-                <span class="dh-tab-label">{{ BUSINESS_TYPE_LABELS[tab] || tab }}</span>
+                [attr.aria-label]="BUSINESS_TYPE_LABELS[tab] || tab"
+              >
+                <span class="dh-tab-icon" [attr.data-type]="tab">{{
+                  BUSINESS_TYPE_ICONS[tab]
+                }}</span>
+                <span class="dh-tab-label">{{
+                  BUSINESS_TYPE_LABELS[tab] || tab
+                }}</span>
               </button>
             }
           </div>
@@ -52,7 +65,11 @@
 
         <!-- Search pill + VEG toggle -->
         <div class="dh-search-veg-row">
-          <div class="dh-search-pill" data-testid="search-bar" (click)="onSearch()">
+          <div
+            class="dh-search-pill"
+            data-testid="search-bar"
+            (click)="onSearch()"
+          >
             <span class="material-icons dh-search-icon">search</span>
             <input
               type="text"
@@ -61,26 +78,38 @@
               [value]="searchQuery()"
               (input)="onSearchInput($event)"
               (keyup.enter)="onSearch()"
-              (click)="$event.stopPropagation()" />
+              (click)="$event.stopPropagation()"
+            />
             <button
               class="dh-mic-btn"
               [class.dh-mic-listening]="isListening()"
               (click)="startVoiceSearch(); $event.stopPropagation()"
-              type="button">
+              type="button"
+            >
               <span class="material-icons">mic</span>
             </button>
           </div>
 
-          <div class="dh-veg-pill" (click)="togglePureVeg()" data-testid="veg-toggle">
+          <div
+            class="dh-veg-pill"
+            (click)="togglePureVeg()"
+            data-testid="veg-toggle"
+          >
             <span class="dh-veg-label">VEG</span>
-            <div class="dh-veg-track" [class.dh-veg-on]="isPureVeg()"
-                 role="switch" [attr.aria-checked]="isPureVeg()">
+            <div
+              class="dh-veg-track"
+              [class.dh-veg-on]="isPureVeg()"
+              role="switch"
+              [attr.aria-checked]="isPureVeg()"
+            >
               <div class="dh-veg-knob"></div>
             </div>
           </div>
         </div>
-      </div><!-- /dh-hero-overlay -->
-    </div><!-- /dh-hero-wrapper -->
+      </div>
+      <!-- /dh-hero-overlay -->
+    </div>
+    <!-- /dh-hero-wrapper -->
 
     <!-- White gap between hero and below-hero sections -->
     <div class="dh-hero-end"></div>
@@ -88,8 +117,10 @@
     <!-- ═══════════════ BELOW HERO ═══════════════ -->
 
     <!-- Cuisine chips + Filter pills — scroll-hides when scrolling down -->
-    <div class="dh-hideable-section">
-
+    <div
+      class="dh-hideable-section"
+      [class.dh-hidden]="isHideableSectionHidden()"
+    >
       <!-- "What's on your mind?" section -->
       @if (displayTags().length) {
         <div class="dh-chips-header">{{ 'home.whatsOnYourMind' | i18n }}</div>
@@ -99,10 +130,17 @@
               class="dh-chip"
               [class.dh-chip-active]="activeTagFilter() === tag.slug"
               (click)="onTagFilterClick(tag.slug)"
-              data-testid="cuisine-chip">
+              data-testid="cuisine-chip"
+            >
               <div class="dh-chip-ico">
                 @if (tag.iconUrl) {
-                  <img [src]="tag.iconUrl" [alt]="tag.name" class="dh-chip-img" />
+                  <img
+                    [src]="tag.iconUrl"
+                    [alt]="tag.name"
+                    class="dh-chip-img"
+                    (error)="onChipImgError($event)"
+                  />
+                  <span class="dh-chip-fallback" style="display: none">🍽️</span>
                 } @else {
                   <span>🍽️</span>
                 }
@@ -120,13 +158,14 @@
             class="dh-filter-pill"
             [class.dh-filter-pill-active]="activeFilter() === pill.key"
             (click)="onFilterChange(pill.key)"
-            data-testid="filter-pill">
+            data-testid="filter-pill"
+          >
             {{ pill.label }}
           </button>
         }
       </div>
-
-    </div><!-- /dh-hideable-section -->
+    </div>
+    <!-- /dh-hideable-section -->
 
     <!-- Section title -->
     <div class="dh-section-title">{{ 'home.topRatedNearYou' | i18n }}</div>
@@ -139,18 +178,26 @@
           <p>{{ 'home.noBusinessesFound' | i18n }}</p>
         </div>
       }
-      @for (business of displayBusinesses(); track business.id; let i = $index) {
+      @for (
+        business of displayBusinesses();
+        track business.id;
+        let i = $index
+      ) {
         <lib-business-card
           [business]="business"
           [tags]="allTags()"
           [index]="i"
           (businessClick)="onBusinessClick($event)"
           data-testid="business-card"
-          [attr.data-business-slug]="business.slug" />
+          [attr.data-last-card]="
+            i === displayBusinesses().length - 1 ? 'true' : null
+          "
+          [attr.data-business-slug]="business.slug"
+        />
       }
     </div>
-
-  </div><!-- /dh-main-content -->
+  </div>
+  <!-- /dh-main-content -->
 }
 
 <!-- Cart Summary -->

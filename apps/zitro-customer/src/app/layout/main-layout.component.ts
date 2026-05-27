@@ -461,15 +461,29 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
     try {
       const scrollTop =
         window.pageYOffset || document.documentElement.scrollTop;
-      if (scrollTop > this.lastScrollTop && scrollTop > 500) {
+      const delta = scrollTop - this.lastScrollTop;
+      this.lastScrollTop = scrollTop; // update FIRST to avoid stale direction reads
+
+      if (Math.abs(delta) < 2) return; // skip layout-shift micro-corrections
+
+      if (delta > 0 && scrollTop > 500) {
         // Scrolling down, hide header
         this.headerVisible = false;
-      } else {
+      } else if (delta < 0) {
         // Scrolling up or at top, show header
         this.headerVisible = true;
       }
-      this.scrolledPastBanner = scrollTop > window.innerWidth * (700 / 1080);
-      this.lastScrollTop = scrollTop;
+
+      if (this.isOnHomePage) {
+        const heroElement = document.querySelector(
+          '.dh-hero-wrapper',
+        ) as HTMLElement | null;
+        const bannerHeight =
+          heroElement?.offsetHeight ?? window.innerWidth * (700 / 1080);
+        this.scrolledPastBanner = scrollTop > bannerHeight;
+      } else {
+        this.scrolledPastBanner = false;
+      }
     } catch (error) {
       console.error('Error handling scroll event:', error);
       this.headerVisible = true;
