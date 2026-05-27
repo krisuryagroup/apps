@@ -1,63 +1,23 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   inject,
   OnInit,
   signal,
   computed,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { Database } from '@angular/fire/database';
-import { ref, onValue } from 'firebase/database';
 import { I18nPipe } from '@zitro/i18n';
-import { CallRestaurantButtonComponent } from '@zitro/ui';
 import { OrderApiService, NavigationService } from '@zitro/services';
-import type { Order, OrderDisplay } from '@zitro/models';
-import {
-  getOrderStatusDisplay,
-  getOrderStatusClass,
-  getOrderItemName,
-} from '@zitro/utils';
-import { UI_TEXT } from '../../core/constants/app.constants';
-
-function toDisplay(order: Order): OrderDisplay {
-  return {
-    ...order,
-    date: order.createdAt.toLocaleDateString('en-IN', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    time: order.createdAt.toLocaleTimeString('en-IN', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    }),
-    statusDisplay: getOrderStatusDisplay(order.status),
-    totalDisplay: `₹${order.total.toFixed(2)}`,
-    orderTypeDisplay:
-      order.orderType === 'dine-in'
-        ? 'Dine In'
-        : order.orderType === 'takeout'
-          ? 'Takeout'
-          : 'Delivery',
-  };
-}
+import type { Order } from '@zitro/models';
+import { getOrderStatusClass, getOrderItemName } from '@zitro/utils';
 
 @Component({
   selector: 'app-order-tracking-page',
   standalone: true,
-  imports: [
-    I18nPipe,
-    DecimalPipe,
-    DatePipe,
-    FormsModule,
-    CallRestaurantButtonComponent,
-  ],
+  imports: [I18nPipe, DecimalPipe, DatePipe],
   templateUrl: './order-tracking.page.html',
   styleUrl: './order-tracking.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,66 +27,94 @@ export class OrderTrackingPage implements OnInit {
   private readonly router = inject(Router);
   private readonly orderApi = inject(OrderApiService);
   private readonly navService = inject(NavigationService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly db = inject(Database);
 
-  readonly order = signal<OrderDisplay | null>(null);
+  readonly order = signal<Order | null>(null);
   readonly isLoading = signal(false);
   readonly error = signal('');
-  readonly autoRefreshEnabled = signal(true);
-  readonly deliveryLocation = signal<{ lat: number; lng: number } | null>(null);
 
   private orderId = '';
-  private _locationUnsubFn?: () => void;
 
-  readonly statusProgress = computed(() => {
-    switch (this.order()?.status) {
-      case 'pending':
-        return 20;
-      case 'confirmed':
-        return 40;
-      case 'preparing':
-        return 60;
-      case 'shipped':
-        return 80;
-      case 'delivered':
-        return 100;
-      default:
-        return 0;
-    }
-  });
-
-  readonly latestStatusDisplay = computed(() => {
-    const o = this.order();
-    if (!o?.statusTimeline?.length) return 'Unknown';
-    const latest = o.statusTimeline[o.statusTimeline.length - 1];
+  readonly statusBannerText = computed(() => {
+    const status = this.order()?.status;
     const map: Record<string, string> = {
-      pending: 'Order Placed',
-      confirmed: 'Order Confirmed',
-      preparing: 'Preparing',
-      shipped: 'Out for Delivery',
-      delivered: 'Delivered',
-      cancelled: 'Cancelled',
+      pending: 'Order received',
+      confirmed: 'Order confirmed',
+      preparing: 'Food is being prepared',
+      ready: 'Order is ready for pickup',
+      shipped: 'Order is on the way',
+      delivered: 'Order was delivered',
+      completed: 'Order completed',
+      cancelled: 'Order was cancelled',
     };
-    return map[latest.status] ?? latest.status;
+    return map[status ?? ''] ?? 'Order placed';
   });
 
-  readonly estimatedTimeRemaining = computed(() => {
-    const o = this.order();
-    if (!o) return '';
-    if (o.status === 'cancelled') return UI_TEXT.ORDER_WAS_CANCELLED;
-    if (!o.estimatedDeliveryTime) return UI_TEXT.NOT_AVAILABLE;
-    const diff = Math.max(
-      0,
-      Math.floor(
-        (new Date(o.estimatedDeliveryTime).getTime() - Date.now()) / 60000,
-      ),
+  readonly statusBannerIcon = computed(() => {
+    const status = this.order()?.status;
+    const map: Record<string, string> = {
+      pending: 'receipt_long',
+      confirmed: 'check_circle',
+      preparing: 'restaurant',
+      ready: 'check_circle',
+      shipped: 'delivery_dining',
+      delivered: 'inventory_2',
+      completed: 'check_circle',
+      cancelled: 'cancel',
+    };
+    return map[status ?? ''] ?? 'receipt_long';
+  });
+
+  readonly statusBannerIconClass = computed(() => {
+    const status = this.order()?.status ?? 'pending';
+    return `od-status-icon od-status-icon--${status}`;
+  });
+
+  readonly gstAndPackagingAmount = computed(() => {
+    const c = this.order()?.charges;
+    return (c?.gst ?? this.order()?.tax ?? 0) + (c?.packagingCharge ?? 0);
+  });
+
+  readonly isDeliveryFree = computed(() => {
+    const c = this.order()?.charges;
+    if (!c) return false;
+    return (
+      (c.deliveryChargeCalculated ?? 0) > 0 && (c.deliveryCharge ?? 0) === 0
     );
-    if (diff === 0) return 'Should arrive soon';
-    if (diff < 60) return `${diff} minutes`;
-    const h = Math.floor(diff / 60);
-    const m = diff % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  });
+
+  readonly deliveryCalculatedAmount = computed(() => {
+    return (
+      this.order()?.charges?.deliveryChargeCalculated ??
+      this.order()?.deliveryCharge ??
+      0
+    );
+  });
+
+  readonly paymentMethodDisplay = computed(() => {
+    const method = this.order()?.paymentMethod;
+    if (method === 'cash') return 'Cash on Delivery';
+    if (method === 'online') return 'UPI';
+    return method ?? '';
+  });
+
+  readonly deliveryAddressDisplay = computed(() => {
+    const addr = this.order()?.deliveryAddress;
+    if (!addr) return '';
+    return [addr.name, addr.street, addr.city, addr.state, addr.pincode]
+      .filter(Boolean)
+      .join(', ');
+  });
+
+  readonly customerName = computed(() => {
+    return (
+      this.order()?.deliveryAddress?.name ?? this.order()?.userName ?? null
+    );
+  });
+
+  readonly customerPhoneMasked = computed(() => {
+    const phone =
+      this.order()?.deliveryAddress?.phone ?? this.order()?.userPhone ?? '';
+    return this.maskPhone(phone);
   });
 
   async ngOnInit(): Promise<void> {
@@ -135,7 +123,6 @@ export class OrderTrackingPage implements OnInit {
     this.orderId = routeId ?? queryId ?? '';
     if (this.orderId) {
       await this.loadOrder();
-      this.subscribeToRealtimeUpdates();
     } else {
       this.error.set('Order ID is required');
     }
@@ -152,7 +139,7 @@ export class OrderTrackingPage implements OnInit {
       const order = await firstValueFrom(
         this.orderApi.getOrder(this.orderId.trim()),
       );
-      this.order.set(toDisplay(order));
+      this.order.set(order);
     } catch {
       this.error.set('Failed to load order details. Please try again.');
     } finally {
@@ -160,79 +147,12 @@ export class OrderTrackingPage implements OnInit {
     }
   }
 
-  private subscribeToRealtimeUpdates(): void {
-    const statusRef = ref(this.db, `orders/${this.orderId}/status`);
-    const unsubStatus = onValue(statusRef, (snapshot) => {
-      const status = snapshot.val() as string | null;
-      const o = this.order();
-      if (status && o && status !== o.status && this.autoRefreshEnabled()) {
-        this.loadOrder();
-      }
-      if (status === 'shipped' || status === 'delivered') {
-        this.subscribeToDeliveryLocation();
-      }
-    });
-    this.destroyRef.onDestroy(unsubStatus);
-  }
-
-  private subscribeToDeliveryLocation(): void {
-    if (this._locationUnsubFn) return;
-    const locRef = ref(this.db, `deliveries/${this.orderId}/location`);
-    this._locationUnsubFn = onValue(locRef, (snapshot) => {
-      const loc = snapshot.val() as { lat?: number; lng?: number } | null;
-      if (loc?.lat != null && loc?.lng != null) {
-        this.deliveryLocation.set({ lat: loc.lat, lng: loc.lng });
-      }
-    });
-    this.destroyRef.onDestroy(this._locationUnsubFn);
-  }
-
-  toggleAutoRefresh(): void {
-    this.autoRefreshEnabled.update((v) => !v);
-  }
-
   getStatusClass(status: string): string {
     return getOrderStatusClass(status as Order['status']);
   }
 
-  getStatusTimestamp(status: string): Date | null {
-    const timeline = this.order()?.statusTimeline;
-    if (!timeline) return null;
-    return timeline.find((t) => t.status === status)?.timestamp ?? null;
-  }
-
-  getStatusNote(status: string): string | null {
-    const timeline = this.order()?.statusTimeline;
-    if (!timeline) return null;
-    return timeline.find((t) => t.status === status)?.note ?? null;
-  }
-
-  isStatusCompleted(status: string): boolean {
-    return this.getStatusTimestamp(status) !== null;
-  }
-
   getItemName(item: { name: string; selectedVariationLabel?: string }): string {
     return getOrderItemName(item);
-  }
-
-  getPackagingCharges(): number {
-    return (
-      this.order()?.charges?.packagingCharge ??
-      this.order()?.totalPackagingCharges ??
-      0
-    );
-  }
-
-  getPlatformFee(): number {
-    return this.order()?.charges?.platformFee ?? 0;
-  }
-
-  getGSTAmount(): number {
-    return this.order()?.charges?.gst ?? this.order()?.tax ?? 0;
-  }
-
-  getGSTPercentage(): number {
-    return 5;
   }
 
   getDeliveryCharge(): number {
@@ -241,8 +161,8 @@ export class OrderTrackingPage implements OnInit {
     );
   }
 
-  getCouponCode(): string {
-    return this.order()?.couponCode ?? '';
+  getPlatformFee(): number {
+    return this.order()?.charges?.platformFee ?? 0;
   }
 
   getCouponDiscount(): number {
@@ -256,7 +176,22 @@ export class OrderTrackingPage implements OnInit {
   }
 
   getTotalSavings(): number {
-    return this.getCouponDiscount();
+    return this.order()?.charges?.totalSavings ?? this.getCouponDiscount();
+  }
+
+  copyOrderId(): void {
+    const orderId = this.order()?.orderId ?? '';
+    navigator.clipboard.writeText(orderId).catch(() => {
+      /* clipboard not available */
+    });
+  }
+
+  callRestaurant(): void {
+    const phone =
+      this.order()?.businessPhone ?? this.order()?.businessAlternatePhone;
+    if (phone) {
+      window.location.href = `tel:${phone}`;
+    }
   }
 
   goBack(): void {
@@ -265,5 +200,17 @@ export class OrderTrackingPage implements OnInit {
 
   goHome(): void {
     this.navService.navigateToHome();
+  }
+
+  goToSupport(): void {
+    this.router.navigate(['/contact']);
+  }
+
+  private maskPhone(phone: string): string {
+    if (!phone) return '';
+    const digits = phone.replace(/\D/g, '');
+    const local = digits.length > 10 ? digits.slice(-10) : digits;
+    if (local.length < 6) return local;
+    return local.slice(0, 6) + 'XXXX';
   }
 }

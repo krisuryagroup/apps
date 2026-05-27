@@ -37,8 +37,10 @@ export interface OrderCharges {
   packagingCharge: number; // Final packaging charge applied
   platformFee: number; // Final platform fee applied
   gst: number; // Final GST applied
-  deliveryCharge?: number; // Final delivery charge (delivery orders only)
+  deliveryCharge?: number; // Final delivery charge applied (0 if free)
+  deliveryChargeCalculated?: number; // Calculated delivery charge before waiving
   couponDiscount?: number; // Discount amount from applied coupon
+  totalSavings?: number; // Sum of all waivers + coupon discount
 }
 
 export interface Order {
@@ -48,6 +50,9 @@ export interface Order {
   businessSlug?: string;
   businessName?: string;
   businessAddress?: string;
+  businessPhone?: string;
+  businessAlternatePhone?: string;
+  businessFssaiLicenseNumber?: string;
   orderId: string;
   userId: string;
   userPhone: string;

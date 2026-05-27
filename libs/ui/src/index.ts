@@ -5,8 +5,14 @@ export { LOADER_DEFAULT_CONFIG } from './common/loader/loader.component';
 export * from './common/empty-state/empty-state.component';
 export * from './common/error-state/error-state.component';
 export { NoInternetComponent as EvolvedNoInternetComponent } from './common/no-internet/no-internet.component';
-export { SplashScreenComponent as EvolvedSplashScreenComponent, SPLASH_SCREEN_DEFAULT_CONFIG } from './common/splash-screen/splash-screen.component';
+export {
+  SplashScreenComponent as EvolvedSplashScreenComponent,
+  SPLASH_SCREEN_DEFAULT_CONFIG,
+} from './common/splash-screen/splash-screen.component';
 export type { SplashScreenConfig } from './common/splash-screen/splash-screen.component';
+
+// Directives
+export { CachedImageDirective } from './directives/cached-image.directive';
 
 // Common (T013)
 export * from './common/truncated-text/truncated-text.component';

@@ -2,6 +2,7 @@ import type {
   Order,
   OrderItem,
   OrderStatusTimeline,
+  OrderCharges,
   CartItem,
 } from '@zitro/models';
 import type {
@@ -15,6 +16,39 @@ import type {
   CreateOrderItemRequest,
 } from '../requests/order.request';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseCharges(chargesJson: string | null): OrderCharges | undefined {
+  if (!chargesJson) return undefined;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any = JSON.parse(chargesJson);
+    const packagingCharge: number = raw.packagingCharges?.applied ?? 0;
+    const platformFee: number = raw.platformFee?.applied ?? 0;
+    const gst: number = raw.gst?.applied ?? 0;
+    const deliveryCharge: number = raw.deliveryCharge?.applied ?? 0;
+    const deliveryChargeCalculated: number =
+      raw.deliveryCharge?.calculated ?? deliveryCharge;
+    const couponDiscount: number = raw.couponDiscount?.amount ?? 0;
+    const packagingWaived: number = raw.packagingCharges?.waived ?? 0;
+    const platformWaived: number = raw.platformFee?.waived ?? 0;
+    const deliveryWaived: number = raw.deliveryCharge?.waived ?? 0;
+    const totalSavings =
+      packagingWaived + platformWaived + deliveryWaived + couponDiscount;
+    return {
+      packagingCharge,
+      platformFee,
+      gst,
+      deliveryCharge: deliveryCharge > 0 ? deliveryCharge : undefined,
+      deliveryChargeCalculated:
+        deliveryChargeCalculated > 0 ? deliveryChargeCalculated : undefined,
+      couponDiscount: couponDiscount > 0 ? couponDiscount : undefined,
+      totalSavings: totalSavings > 0 ? totalSavings : undefined,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export const OrderMapper = {
   toOrder(dto: OrderDto): Order {
     const hasDeliveryAddress = !!dto.deliveryAddressHouseAndStreet;
@@ -24,6 +58,12 @@ export const OrderMapper = {
       userId: dto.userId,
       userPhone: '',
       restaurantId: dto.businessId,
+      businessSlug: dto.businessSlug ?? undefined,
+      businessName: dto.businessName ?? undefined,
+      businessAddress: dto.businessAddress ?? undefined,
+      businessPhone: dto.businessPhone ?? undefined,
+      businessAlternatePhone: dto.businessAlternatePhone ?? undefined,
+      businessFssaiLicenseNumber: dto.businessFssaiLicenseNumber ?? undefined,
       orderType: dto.orderType,
       status: dto.status as Order['status'],
       items: dto.items.map(OrderMapper.toOrderItem),
@@ -49,6 +89,7 @@ export const OrderMapper = {
             type: 'Home',
           }
         : undefined,
+      charges: parseCharges(dto.charges),
       statusTimeline:
         dto.statusTimeline?.map(OrderMapper.toStatusTimeline) ?? [],
       createdAt: new Date(dto.createdAt),

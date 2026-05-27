@@ -79,19 +79,43 @@ export const routes: Routes = [
       { path: 'order-confirmation', component: OrderConfirmationPage },
       { path: 'order-confirmation/:orderId', component: OrderConfirmationPage },
       // T026: evolved address pages (replaces legacy manage-addresses + add-address)
-      { path: 'addresses', component: AddressListPage, canActivate: [AuthGuard] },
-      { path: 'add-address', component: AddAddressPage, canActivate: [AuthGuard] },
+      {
+        path: 'addresses',
+        component: AddressListPage,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'add-address',
+        component: AddAddressPage,
+        canActivate: [AuthGuard],
+      },
       // T028: evolved order-history + order-tracking pages
       { path: 'orders', component: OrderHistoryPage, canActivate: [AuthGuard] },
-      { path: 'order-tracking', component: OrderTrackingPage, canActivate: [AuthGuard] },
-      { path: 'order-tracking/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
-      { path: 'track-order', component: OrderTrackingPage, canActivate: [AuthGuard] },
-      { path: 'track-order/:orderId', component: OrderTrackingPage, canActivate: [AuthGuard] },
+      {
+        path: 'order-tracking',
+        component: OrderTrackingPage,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'order-tracking/:orderId',
+        component: OrderTrackingPage,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'track-order',
+        component: OrderTrackingPage,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'track-order/:orderId',
+        component: OrderTrackingPage,
+        canActivate: [AuthGuard],
+      },
       // T029: evolved account + game pages
       { path: 'account', component: AccountPage, canActivate: [AuthGuard] },
       { path: 'cache-management', component: CacheManagementComponent }, // Development only
       { path: 'game-2048', component: Game2048Page }, // 2048 Game with rewards
-    ]
+    ],
   },
 
   {
@@ -103,10 +127,12 @@ export const routes: Routes = [
       { path: 'otp', component: OtpPage },
       // MT011: legacy auth pages (kept for reference)
       // { path: 'signin', component: SigninComponent },
-      { path: 'signup', component: SignupComponent },
       { path: 'forgot-password', component: ForgotPasswordComponent },
-    ]
+    ],
   },
 
-  { path: '**', redirectTo: 'home' }
+  // UI-003: post-OTP profile setup — needs auth, not LoginGuard (new users are already signed in)
+  { path: 'auth/signup', component: SignupComponent, canActivate: [AuthGuard] },
+
+  { path: '**', redirectTo: 'home' },
 ];

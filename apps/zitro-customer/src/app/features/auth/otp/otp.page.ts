@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfirmationResult } from 'firebase/auth';
+import { firstValueFrom } from 'rxjs';
 import { OtpInputComponent, OTP_INPUT_DEFAULT_CONFIG } from '@zitro/ui';
 import { I18nPipe } from '@zitro/i18n';
 import {
@@ -14,6 +15,7 @@ import {
   FavoritesService,
   FcmTokenService,
   AnalyticsService,
+  UserApiService,
 } from '@zitro/services';
 import { PHONE_CONSTANTS } from '@zitro/utils';
 
@@ -31,6 +33,7 @@ export class OtpPage implements OnDestroy {
   private readonly favorites = inject(FavoritesService);
   private readonly fcmToken = inject(FcmTokenService);
   private readonly analytics = inject(AnalyticsService);
+  private readonly userApi = inject(UserApiService);
 
   readonly otpConfig = { ...OTP_INPUT_DEFAULT_CONFIG, autoSubmit: false };
 
@@ -110,7 +113,18 @@ export class OtpPage implements OnDestroy {
       setTimeout(() => this.favorites.checkAndOfferFavoritesMigration(), 500);
 
       sessionStorage.removeItem('otp_phone');
-      this.router.navigate(['/home']);
+
+      // UI-003: send new users (no profile name) to profile setup
+      // Always invalidate the cache so we don't read a previous user's profile
+      // (CacheService is localStorage-based and survives sign-out).
+      this.userApi.invalidateProfileCache();
+      try {
+        const profile = await firstValueFrom(this.userApi.getProfile());
+        this.router.navigate(profile?.name ? ['/home'] : ['/auth/signup']);
+      } catch {
+        // 404 = new user with no profile yet
+        this.router.navigate(['/auth/signup']);
+      }
     } catch (err: unknown) {
       this.statusMessage.set(this.mapFirebaseError(err));
       this.isLoading.set(false);

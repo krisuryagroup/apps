@@ -19,6 +19,14 @@ export interface OrderDto {
   orderId: string; // display ID, e.g. "GRD751410483558"
   userId: string;
   businessId: string;
+  businessSlug: string | null;
+  businessName: string | null;
+  businessAddress: string | null;
+  businessPhone: string | null;
+  businessAlternatePhone: string | null;
+  businessFssaiLicenseNumber: string | null;
+  businessGstNumber: string | null;
+  businessEmail: string | null;
   status: string;
   orderType: 'delivery' | 'takeout' | 'dine-in';
   paymentMethod: 'cash' | 'online';

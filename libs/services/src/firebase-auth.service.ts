@@ -17,6 +17,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { inject } from '@angular/core';
 import { ZITRO_API_BASE_URL } from './tokens';
+import { CacheService } from './cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
@@ -25,6 +26,7 @@ export class FirebaseAuthService {
   private http = inject(HttpClient);
   private errorHandler = inject(FirebaseErrorHandlerService);
   private appSettingsService = inject(AppSettingsService);
+  private cache = inject(CacheService);
 
   private auth: Auth;
 
@@ -420,6 +422,8 @@ export class FirebaseAuthService {
     localStorage.removeItem(AUTH_KEYS.CURRENT_USER_PHONE);
     localStorage.removeItem(AUTH_KEYS.LOGGED_IN_DATE_TIME);
     localStorage.removeItem(AUTH_KEYS.USER_DETAILS_CACHE_KEY);
+    // Clear all API caches so a new user never sees a previous user's data.
+    this.cache.clear();
   }
 
   /**
