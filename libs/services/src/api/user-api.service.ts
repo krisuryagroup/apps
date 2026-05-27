@@ -13,6 +13,7 @@ const PROFILE_KEY = 'user:profile';
 export interface UpdateProfileData {
   name?: string;
   email?: string;
+  photoUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,15 +26,15 @@ export class UserApiService {
     const cached = this.cache.get<User>(PROFILE_KEY);
     if (cached) return of(cached);
     return this.http.get<UserDto>(`${this.baseUrl}/api/users/me`).pipe(
-      map(dto => UserMapper.toUser(dto)),
-      tap(user => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
+      map((dto) => UserMapper.toUser(dto)),
+      tap((user) => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
     );
   }
 
   updateProfile(data: UpdateProfileData): Observable<User> {
     return this.http.put<UserDto>(`${this.baseUrl}/api/users/me`, data).pipe(
-      map(dto => UserMapper.toUser(dto)),
-      tap(user => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
+      map((dto) => UserMapper.toUser(dto)),
+      tap((user) => this.cache.set(PROFILE_KEY, user, { ttlHours: 1 / 12 })),
     );
   }
 

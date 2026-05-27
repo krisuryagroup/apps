@@ -1,12 +1,18 @@
 <div class="dh-sidebar" [class.open]="open">
-  <div class="dh-sidebar-header" [class.guest]="isGuest" (click)="navigateToAccount()" [style.cursor]="isGuest ? 'default' : 'pointer'">
+  <div
+    class="dh-sidebar-header"
+    [class.guest]="isGuest"
+    (click)="navigateToAccount()"
+    [style.cursor]="isGuest ? 'default' : 'pointer'"
+  >
     <div class="dh-sidebar-avatar-container">
       <div *ngIf="!isGuest">
-        <img 
-          [src]="userPhotoURL || 'assets/banners/banner1.png'" 
-          alt="User" 
+        <img
+          [src]="userPhotoURL || 'assets/icons/default-avatar.png'"
+          alt="User"
           class="dh-sidebar-avatar"
-          (error)="$event.target.src='assets/banners/banner1.png'" />
+          (error)="$event.target.src = 'assets/icons/default-avatar.png'"
+        />
       </div>
       <div *ngIf="isGuest">
         <span class="material-icons dh-guest-icon">person_outline</span>
@@ -14,27 +20,45 @@
     </div>
     <div class="dh-sidebar-user">
       <div class="dh-sidebar-name">{{ userName }}</div>
-      <div class="dh-sidebar-email" [class.guest-email]="isGuest">{{ userEmail }}</div>
+      <div class="dh-sidebar-email" [class.guest-email]="isGuest">
+        {{ userEmail }}
+      </div>
     </div>
   </div>
   <div class="dh-sidebar-list">
-    <div *ngFor="let item of sidebarItems; let i = index"
-         class="dh-sidebar-item"
-         [class.dh-sidebar-signout]="item.isSignout"
-         [class.disabled]="item.isDisabled"
-         (click)="navigate(item)">
+    <div
+      *ngFor="let item of sidebarItems; let i = index"
+      class="dh-sidebar-item"
+      [class.dh-sidebar-signout]="item.isSignout"
+      [class.disabled]="item.isDisabled"
+      (click)="navigate(item)"
+    >
       <span [class.disabled-text]="item.isDisabled">{{ item.text }}</span>
-      
+
       <!-- Show "Log In" text for disabled items -->
       <span *ngIf="item.isDisabled" class="login-prompt">Log In</span>
-      
+
       <!-- Show add icon for Manage Addresses when not disabled -->
-      <ng-container *ngIf="item.text === 'Manage Addresses' && !item.isDisabled">
-        <span class="material-icons" style="margin-left:8px;font-size:18px;vertical-align:middle;">add_circle_outline</span>
+      <ng-container
+        *ngIf="item.text === 'Manage Addresses' && !item.isDisabled"
+      >
+        <span
+          class="material-icons"
+          style="margin-left: 8px; font-size: 18px; vertical-align: middle"
+          >add_circle_outline</span
+        >
       </ng-container>
-      
+
       <!-- Show chevron for enabled non-signout items -->
-      <span *ngIf="!item.isSignout && !item.isDisabled && item.text !== 'Manage Addresses'" class="material-icons">chevron_right</span>
+      <span
+        *ngIf="
+          !item.isSignout &&
+          !item.isDisabled &&
+          item.text !== 'Manage Addresses'
+        "
+        class="material-icons"
+        >chevron_right</span
+      >
     </div>
     <!-- Example switches, keep as static for now -->
     <!-- <div class="dh-sidebar-item dh-sidebar-switch">

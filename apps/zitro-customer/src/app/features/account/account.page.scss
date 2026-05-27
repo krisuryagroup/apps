@@ -5,6 +5,8 @@
   background: $background-color;
   min-height: 100vh;
 
+  // ── Header ────────────────────────────────────────────────────────────────
+
   .dh-header {
     display: flex;
     align-items: center;
@@ -23,13 +25,15 @@
       cursor: pointer;
       color: $text-color;
       border-radius: 50%;
-      transition: all 0.2s ease;
+      transition: background 0.2s ease;
+      line-height: 0;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.05);
       }
-
-      svg { display: block; }
+      svg {
+        display: block;
+      }
     }
 
     .dh-page-title {
@@ -40,149 +44,319 @@
     }
   }
 
+  // ── Profile content wrapper ────────────────────────────────────────────────
+
   .dh-profile-content {
     padding: 0;
+  }
 
-    .dh-profile-image-section {
-      background: $secondary-color;
-      padding: 24px 16px 32px;
-      text-align: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  // ── Avatar section ────────────────────────────────────────────────────────
 
-      .dh-profile-image-container {
-        position: relative;
-        display: inline-block;
-        cursor: pointer;
+  .dh-profile-image-section {
+    background: $secondary-color;
+    padding: 28px 16px 32px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
-        .dh-profile-image {
-          width: 120px;
-          height: 120px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 4px solid $secondary-color;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+    .dh-profile-image-container {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      min-height: 120px;
 
-        .dh-camera-overlay {
-          position: absolute;
-          bottom: 8px;
-          right: 8px;
-          width: 36px;
-          height: 36px;
-          background: $primary-color;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-          transition: all 0.2s ease;
+      .dh-profile-image {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid $secondary-color;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: block;
+      }
 
-          &:hover { transform: scale(1.1); }
-          svg { width: 20px; height: 20px; }
+      .dh-camera-overlay {
+        position: absolute;
+        bottom: 6px;
+        right: 6px;
+        width: 34px;
+        height: 34px;
+        background: $primary-color;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: scale(1.1);
         }
       }
     }
 
-    .dh-profile-form {
-      padding: 24px 16px;
-      background: $background-color;
+    .dh-upload-status {
+      margin: 14px auto 0;
+      max-width: 320px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 8px 12px;
 
-      .dh-form-field {
-        position: relative;
-        margin-bottom: 20px;
-
-        .dh-field-icon {
-          position: absolute;
-          left: 16px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: $primary-color;
-          z-index: 2;
-          svg { display: block; }
-        }
-
-        .dh-input-field {
-          width: 100%;
-          padding: 16px 16px 16px 52px;
-          background: $secondary-color;
-          border: none;
-          border-radius: 12px;
-          font-size: 16px;
-          color: $text-color;
-          outline: none;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          transition: all 0.2s ease;
-          box-sizing: border-box;
-
-          &::placeholder { color: rgba($text-color, 0.5); }
-          &:focus {
-            box-shadow: 0 4px 12px rgba($primary-color, 0.15);
-            transform: translateY(-1px);
-          }
-          &[readonly] {
-            background: rgba($text-color, 0.05);
-            color: rgba($text-color, 0.6);
-            cursor: not-allowed;
-            &:focus {
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-              transform: none;
-            }
-          }
-        }
-
-        &.readonly-field .dh-field-icon { color: rgba($text-color, 0.4); }
+      &--success {
+        color: #1b7f3a;
+        background: rgba(#1b7f3a, 0.1);
       }
 
-      .dh-save-error {
+      &--error {
         color: #e53935;
-        font-size: 14px;
-        margin-bottom: 12px;
-        padding: 8px 12px;
-        background: rgba(#e53935, 0.08);
-        border-radius: 8px;
+        background: rgba(#e53935, 0.1);
       }
 
-      .dh-save-button {
-        width: 100%;
-        padding: 16px;
-        background: $primary-color;
-        color: $secondary-color;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 24px;
-        transition: all 0.2s ease;
-
-        &:hover:not(:disabled) {
-          background: rgba($primary-color, 0.9);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba($primary-color, 0.3);
-        }
-        &:disabled {
-          background: rgba($text-color, 0.3);
-          cursor: not-allowed;
-        }
+      &--info {
+        color: #0064c8;
+        background: rgba(#0064c8, 0.1);
       }
     }
   }
+
+  // ── Profile fields ────────────────────────────────────────────────────────
+
+  .dh-profile-fields {
+    padding: 8px 16px 4px;
+    background: $secondary-color;
+    margin-bottom: 12px;
+  }
+
+  .dh-field-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--readonly {
+      .dh-field-icon {
+        color: rgba($text-color, 0.4);
+      }
+      .dh-field-label,
+      .dh-field-value {
+        color: rgba($text-color, 0.5);
+      }
+    }
+
+    .dh-field-icon {
+      flex-shrink: 0;
+      color: $primary-color;
+      line-height: 0;
+    }
+
+    .dh-field-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dh-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: rgba($text-color, 0.5);
+    }
+
+    .dh-field-value {
+      font-size: 16px;
+      color: $text-color;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dh-inline-input {
+      font-size: 16px;
+      color: $text-color;
+      border: none;
+      border-bottom: 2px solid $primary-color;
+      background: transparent;
+      outline: none;
+      padding: 2px 0;
+      width: 100%;
+
+      &::placeholder {
+        color: rgba($text-color, 0.4);
+      }
+    }
+
+    .dh-field-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .dh-action-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      line-height: 0;
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      &.dh-action-save {
+        background: rgba($primary-color, 0.12);
+        color: $primary-color;
+        &:hover:not(:disabled) {
+          background: rgba($primary-color, 0.2);
+        }
+      }
+
+      &.dh-action-cancel {
+        background: rgba($text-color, 0.08);
+        color: rgba($text-color, 0.6);
+        &:hover {
+          background: rgba($text-color, 0.14);
+        }
+      }
+    }
+
+    .dh-edit-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: rgba($primary-color, 0.08);
+      color: $primary-color;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s ease;
+      line-height: 0;
+
+      &:hover {
+        background: rgba($primary-color, 0.16);
+      }
+    }
+
+    .dh-lock-icon {
+      flex-shrink: 0;
+      color: rgba($text-color, 0.3);
+      line-height: 0;
+    }
+  }
+
+  // ── Save error ────────────────────────────────────────────────────────────
+
+  .dh-save-error {
+    color: #e53935;
+    font-size: 13px;
+    padding: 8px 12px;
+    background: rgba(#e53935, 0.08);
+    border-radius: 8px;
+    margin: 4px 0 8px;
+  }
+
+  // ── Navigation links ──────────────────────────────────────────────────────
+
+  .dh-nav-links {
+    background: $secondary-color;
+    overflow: hidden;
+  }
+
+  .dh-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    text-decoration: none;
+    color: $text-color;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.15s ease;
+    font-size: 15px;
+    font-weight: 500;
+
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover,
+    &:active {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .dh-nav-icon {
+      flex-shrink: 0;
+      color: $primary-color;
+      line-height: 0;
+      width: 22px;
+    }
+
+    .dh-nav-label {
+      flex: 1;
+    }
+
+    .dh-nav-chevron {
+      flex-shrink: 0;
+      color: rgba($text-color, 0.35);
+    }
+
+    &--danger {
+      color: #e53935;
+      .dh-nav-icon {
+        color: #e53935;
+      }
+    }
+  }
+
+  // ── Spinner animation ─────────────────────────────────────────────────────
+
+  .dh-spin {
+    animation: dh-spin 0.8s linear infinite;
+  }
+
+  @keyframes dh-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
+
+// ── Responsive ────────────────────────────────────────────────────────────────
 
 @media (max-width: 768px) {
   .dh-edit-profile {
     .dh-header {
       padding: 16px 12px 12px;
-      .dh-page-title { font-size: 18px; }
-    }
-    .dh-profile-content {
-      .dh-profile-image-section {
-        padding: 20px 12px 28px;
-        .dh-profile-image-container .dh-profile-image {
-          width: 100px;
-          height: 100px;
-        }
+      .dh-page-title {
+        font-size: 18px;
       }
+    }
+
+    .dh-profile-image-section .dh-profile-image-container .dh-profile-image {
+      width: 100px;
+      height: 100px;
     }
   }
 }
