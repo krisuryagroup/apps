@@ -2,5 +2,5 @@
   "moderate": true,
   "allowlist": [],
   "report-type": "important",
-  "skip-dev": false
+  "skip-dev": true
 }
