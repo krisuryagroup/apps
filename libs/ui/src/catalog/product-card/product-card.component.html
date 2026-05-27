@@ -21,13 +21,34 @@
       </span>
     } @else if (config().showAddButton) {
       @if (quantity() > 0) {
-        <div class="pc__qty" data-testid="product-card-qty-controls">
-          <button class="pc__qty-btn" (click)="onDecrement($event)" data-testid="product-card-decrement-btn" type="button">−</button>
-          <span class="pc__qty-value" data-testid="product-card-qty">{{ quantity() }}</span>
-          <button class="pc__qty-btn" (click)="onIncrement($event)" data-testid="product-card-increment-btn" type="button">+</button>
+        <div class="pc__qty" data-testid="quantity-stepper">
+          <button
+            class="pc__qty-btn"
+            (click)="onDecrement($event)"
+            data-testid="product-card-decrement-btn"
+            type="button"
+          >
+            −
+          </button>
+          <span class="pc__qty-value" data-testid="product-card-qty">{{
+            quantity()
+          }}</span>
+          <button
+            class="pc__qty-btn"
+            (click)="onIncrement($event)"
+            data-testid="product-card-increment-btn"
+            type="button"
+          >
+            +
+          </button>
         </div>
       } @else {
-        <button class="pc__add-btn" (click)="onAddClick($event)" data-testid="product-card-add-btn" type="button">
+        <button
+          class="pc__add-btn"
+          (click)="onAddClick($event)"
+          data-testid="add-to-cart-btn"
+          type="button"
+        >
           ADD <span class="pc__add-plus">+</span>
         </button>
       }
@@ -59,11 +80,17 @@
     <span class="pc__name">{{ product().name }}</span>
 
     <div class="pc__price-block">
-      @if (product().originalPrice && product().originalPrice !== effectivePrice()) {
+      @if (
+        product().originalPrice && product().originalPrice !== effectivePrice()
+      ) {
         <span class="pc__price-original">₹{{ product().originalPrice }}</span>
-        <span class="pc__price-discounted" data-testid="product-card-price">Get for ₹{{ effectivePrice() }}</span>
+        <span class="pc__price-discounted" data-testid="product-card-price"
+          >Get for ₹{{ effectivePrice() }}</span
+        >
       } @else {
-        <span class="pc__price" data-testid="product-card-price">₹{{ effectivePrice() }}</span>
+        <span class="pc__price" data-testid="product-card-price"
+          >₹{{ effectivePrice() }}</span
+        >
       }
     </div>
 

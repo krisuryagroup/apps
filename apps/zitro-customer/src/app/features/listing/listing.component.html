@@ -1,7 +1,19 @@
 <div class="listing-page" data-testid="listing-page">
-
   <!-- Sticky header with back + search -->
   <div class="listing-header">
+    <button
+      class="listing-header__back"
+      type="button"
+      (click)="goBack()"
+      data-testid="listing-back-btn"
+      aria-label="Go back"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+        />
+      </svg>
+    </button>
     <lib-search-bar
       class="listing-header__search"
       data-testid="listing-search"
@@ -9,6 +21,61 @@
       [value]="searchQuery()"
       (searchChange)="onSearchChange($event)"
     />
+    <button
+      class="listing-header__cart"
+      type="button"
+      [routerLink]="['/cart']"
+      data-testid="listing-cart-btn"
+      aria-label="View cart"
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.16 4H2V2H0v2h2l3.6 7.59L4.25 14c-.16.28-.25.61-.25.96C4 16.1 4.9 17 6 17h14v-2H6.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 23.44 4H5.16z"
+        />
+      </svg>
+      @if (cartApi.totalCount() > 0) {
+        <span class="listing-header__cart-badge" data-testid="cart-badge">{{
+          cartApi.totalCount()
+        }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- Veg filter bar -->
+  <div class="listing-filter-bar">
+    <button
+      class="listing-filter-bar__veg-toggle"
+      [class.listing-filter-bar__veg-toggle--active]="vegOnly()"
+      type="button"
+      (click)="toggleVegFilter()"
+      data-testid="veg-filter"
+    >
+      <svg
+        class="listing-filter-bar__veg-icon"
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        aria-hidden="true"
+      >
+        <rect
+          x="1"
+          y="1"
+          width="12"
+          height="12"
+          rx="1.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+        <circle cx="7" cy="7" r="3.5" fill="currentColor" />
+      </svg>
+      <span class="listing-filter-bar__veg-label">{{
+        'listing.vegOnly' | i18n
+      }}</span>
+      <span class="listing-filter-bar__veg-switch" aria-hidden="true">
+        <span class="listing-filter-bar__veg-knob"></span>
+      </span>
+    </button>
   </div>
 
   @if (isLoading()) {
@@ -16,22 +83,22 @@
   }
 
   @if (hasError()) {
-    <lib-error-state
-      data-testid="listing-error"
-      (retryClicked)="retry()"
-    />
+    <lib-error-state data-testid="listing-error" (retryClicked)="retry()" />
   }
 
   @if (!isLoading() && !hasError()) {
     @if (showNoSearchResults()) {
       <div class="listing-no-results" data-testid="listing-no-results">
-        <span class="listing-no-results__title">{{ 'listing.noResults' | i18n }}</span>
-        <p class="listing-no-results__copy">{{ 'listing.searchPlaceholder' | i18n }}</p>
+        <span class="listing-no-results__title">{{
+          'listing.noResults' | i18n
+        }}</span>
+        <p class="listing-no-results__copy">
+          {{ 'listing.searchPlaceholder' | i18n }}
+        </p>
       </div>
     } @else if (categorySections().length === 0) {
       <lib-empty-state data-testid="listing-empty" />
     } @else {
-
       <!-- Scrollable product list grouped by category section -->
       <div class="listing-scroll" #scrollContainer data-testid="listing-scroll">
         @for (section of categorySections(); track section.categoryId) {
@@ -46,14 +113,23 @@
               (click)="toggleSection(section.categoryId)"
               data-testid="category-section-header"
             >
-              <span class="category-section__name">{{ section.categoryName }}</span>
-              <span class="category-section__count">{{ section.products.length }}</span>
+              <span class="category-section__name">{{
+                section.categoryName
+              }}</span>
+              <span class="category-section__count">{{
+                section.products.length
+              }}</span>
               <svg
                 class="category-section__chevron"
-                [class.category-section__chevron--up]="!collapsedSections().has(section.categoryId)"
-                width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+                [class.category-section__chevron--up]="
+                  !collapsedSections().has(section.categoryId)
+                "
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
               >
-                <path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                <path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
               </svg>
             </button>
 
@@ -83,12 +159,14 @@
       >
         @if (isCategorySheetOpen()) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            <path
+              d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            />
           </svg>
           <span>{{ 'common.close' | i18n }}</span>
         } @else {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
           </svg>
           <span>{{ 'listing.title' | i18n }}</span>
         }
@@ -103,19 +181,27 @@
       (click)="isCategorySheetOpen.set(false)"
       data-testid="category-sheet-backdrop"
     ></div>
-    <div class="category-sheet" data-testid="category-sheet" role="dialog" aria-modal="true">
-
+    <div
+      class="category-sheet"
+      data-testid="category-sheet"
+      role="dialog"
+      aria-modal="true"
+    >
       <div class="category-sheet__list">
         @for (section of categorySections(); track section.categoryId) {
           <button
             class="category-sheet__row"
-            [class.category-sheet__row--active]="section.categoryId === activeCategoryId()"
+            [class.category-sheet__row--active]="
+              section.categoryId === activeCategoryId()
+            "
             type="button"
             (click)="jumpToCategory(section.categoryId)"
             data-testid="category-item"
           >
             <span class="category-sheet__name">{{ section.categoryName }}</span>
-            <span class="category-sheet__count">{{ section.products.length }}</span>
+            <span class="category-sheet__count">{{
+              section.products.length
+            }}</span>
           </button>
         }
       </div>

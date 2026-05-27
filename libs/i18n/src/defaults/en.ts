@@ -108,7 +108,8 @@ export const EN_DEFAULTS = {
     noOfferApplicable: 'No offer will be applicable for this item',
     addNewAddress: 'Add New Address',
     loadingAddresses: 'Loading addresses...',
-    selectDeliveryLocation: 'Please select a delivery location from the home page or add a new address',
+    selectDeliveryLocation:
+      'Please select a delivery location from the home page or add a new address',
     noLocationSelected: 'No location selected',
     billDetails: 'Bill Details',
     item: 'item',
@@ -150,8 +151,10 @@ export const EN_DEFAULTS = {
     cashOnDelivery: 'Cash on Delivery',
     payOnlineDelivery: 'Pay Online At The Time Of Delivery',
     cancelOrder: 'Cancel Order',
-    cancelledMessage: 'This order has been cancelled and will not be delivered.',
-    noChargesCancel: 'No charges will be applied for cancellation within this time frame',
+    cancelledMessage:
+      'This order has been cancelled and will not be delivered.',
+    noChargesCancel:
+      'No charges will be applied for cancellation within this time frame',
     autoRefresh: 'Auto Refresh',
     loadingOrderDetails: 'Loading order details...',
     refreshing: 'Refreshing...',
@@ -166,7 +169,8 @@ export const EN_DEFAULTS = {
   orderHistory: {
     title: 'Order History',
     noOrdersTitle: 'No Order History Yet!',
-    noOrdersMessage: "It looks like your order history is empty.\nPlace your order now to start building your history!",
+    noOrdersMessage:
+      'It looks like your order history is empty.\nPlace your order now to start building your history!',
     exploreMenu: 'Explore Our Menu',
     viewDetails: 'View Details',
     reorder: 'Reorder',
@@ -284,6 +288,7 @@ export const EN_DEFAULTS = {
     noResults: 'No items found',
     addToCart: 'Add',
     outOfStock: 'Out of stock',
+    vegOnly: 'Veg',
   },
   search: {
     placeholder: 'Search',
@@ -342,7 +347,8 @@ export const EN_DEFAULTS = {
     detectingLocation: 'Detecting your location...',
     savedAddresses: 'Saved Addresses',
     searchLocation: 'Search your Location',
-    locationDenied: 'Location permission denied. Please enable it in your device settings.',
+    locationDenied:
+      'Location permission denied. Please enable it in your device settings.',
     locationError: 'Unable to get your location. Please try again.',
     noSavedAddresses: 'No saved addresses yet',
   },
@@ -357,7 +363,7 @@ export const EN_DEFAULTS = {
   },
   emptyState: {
     title: 'Nothing here yet',
-    message: 'There\'s nothing to show right now.',
+    message: "There's nothing to show right now.",
     action: 'Go Back',
   },
   errorState: {
@@ -372,7 +378,8 @@ export const EN_DEFAULTS = {
     invalidEmail: 'Please enter a valid email address',
     required: 'This field is required',
     goToHome: 'Go to Home',
-    invalidIndianPhone: 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9',
+    invalidIndianPhone:
+      'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9',
     otpExpired: 'OTP has expired. Please request a new one.',
     tooManyRequests: 'Too many attempts. Please try again after some time.',
   },

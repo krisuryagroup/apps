@@ -12,7 +12,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { I18nPipe } from '@zitro/i18n';
 import { CatalogApiService, CartApiService } from '@zitro/services';
 import { Category, Product, ProductVariation } from '@zitro/models';
@@ -55,6 +55,7 @@ const LIST_GRID_CONFIG: CatalogProductGridConfig = {
   selector: 'app-listing',
   standalone: true,
   imports: [
+    RouterLink,
     I18nPipe,
     CatalogProductGridComponent,
     ItemDetailSheetComponent,
@@ -75,7 +76,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
-  private cartApi = inject(CartApiService);
+  readonly cartApi = inject(CartApiService);
   private destroyRef = inject(DestroyRef);
   private _scrollCleanup?: () => void;
 
@@ -89,6 +90,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly collapsedSections = signal(new Set<string>());
   readonly selectedProduct = signal<Product | null>(null);
   readonly isDetailOpen = signal(false);
+  readonly vegOnly = signal(false);
 
   readonly _businessSlug = signal('');
   readonly listGridConfig = LIST_GRID_CONFIG;
@@ -97,15 +99,19 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly categorySections = computed((): CategorySection[] => {
     const cats = this.categories();
     const q = this.searchQuery().toLowerCase();
+    const vegFilter = this.vegOnly();
     const prods = this.allProducts().filter(
       (p) => p.isEnabledForOnlineOrders !== false,
     );
+    const afterVeg = vegFilter
+      ? prods.filter((p) => p.foodType === 'Veg')
+      : prods;
     const filtered = q
-      ? prods.filter(
+      ? afterVeg.filter(
           (p) =>
             matchesSearch(p.name, q) || matchesSearch(p.description ?? '', q),
         )
-      : prods;
+      : afterVeg;
 
     if (cats.length === 0) {
       return filtered.length > 0
@@ -308,6 +314,10 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
       .catch(() => {
         /* no-op */
       });
+  }
+
+  toggleVegFilter(): void {
+    this.vegOnly.update((v) => !v);
   }
 
   goBack(): void {

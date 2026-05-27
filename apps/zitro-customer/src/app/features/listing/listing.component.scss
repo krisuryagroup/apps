@@ -27,6 +27,149 @@
     flex: 1;
     min-width: 0;
   }
+
+  &__back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--zitro-on-surface, #212121);
+    flex-shrink: 0;
+    &:active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &__cart {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--zitro-on-surface, #212121);
+    flex-shrink: 0;
+    text-decoration: none;
+    &:active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &__cart-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #e23744;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+}
+
+// ── Veg filter bar ───────────────────────────────────────────────────────────
+.listing-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--zitro-surface, #fff);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+
+  &__veg-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px 6px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 0; // reset — children set their own size
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    transition:
+      border-color 0.18s,
+      background 0.18s,
+      box-shadow 0.18s;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &--active {
+      border-color: #1ba672;
+      background: #f0faf6;
+      box-shadow: 0 1px 4px rgba(27, 166, 114, 0.18);
+
+      .listing-filter-bar__veg-icon {
+        color: #1ba672;
+      }
+      .listing-filter-bar__veg-label {
+        color: #1ba672;
+      }
+
+      .listing-filter-bar__veg-switch {
+        background: #1ba672;
+      }
+      .listing-filter-bar__veg-knob {
+        transform: translateX(14px);
+      }
+    }
+  }
+
+  &__veg-icon {
+    color: #999;
+    flex-shrink: 0;
+    transition: color 0.18s;
+    display: block;
+  }
+
+  &__veg-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.1px;
+    transition: color 0.18s;
+  }
+
+  &__veg-switch {
+    width: 30px;
+    height: 16px;
+    border-radius: 8px;
+    background: #d5d5d5;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+
+  &__veg-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 // ── Scrollable product list ──────────────────────────────────────────────────
@@ -70,7 +213,11 @@
     gap: 10px;
     width: 100%;
     padding: 14px 16px 14px 20px;
-    background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 5%, var(--zitro-surface, #fff));
+    background: color-mix(
+      in srgb,
+      var(--zitro-primary, #c73e3a) 5%,
+      var(--zitro-surface, #fff)
+    );
     border: none;
     cursor: pointer;
     position: sticky;
@@ -79,11 +226,15 @@
     text-align: left;
     border-radius: 0 14px 14px 0;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    border-left: 4px solid var(--zitro-primary, #C73E3A);
+    border-left: 4px solid var(--zitro-primary, #c73e3a);
     transition: background 0.15s;
 
     &:active {
-      background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 10%, var(--zitro-surface, #fff));
+      background: color-mix(
+        in srgb,
+        var(--zitro-primary, #c73e3a) 10%,
+        var(--zitro-surface, #fff)
+      );
     }
   }
 
@@ -103,8 +254,12 @@
     min-width: 26px;
     padding: 2px 8px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--zitro-primary, #C73E3A) 12%, transparent);
-    color: var(--zitro-primary, #C73E3A);
+    background: color-mix(
+      in srgb,
+      var(--zitro-primary, #c73e3a) 12%,
+      transparent
+    );
+    color: var(--zitro-primary, #c73e3a);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.5;
@@ -113,12 +268,14 @@
   &__chevron {
     color: var(--zitro-on-surface-variant, #757575);
     flex-shrink: 0;
-    transition: transform 0.25s ease, color 0.2s;
+    transition:
+      transform 0.25s ease,
+      color 0.2s;
 
     // When expanded (--up modifier absent = collapsed, --up = expanded)
     &--up {
       transform: rotate(0deg);
-      color: var(--zitro-primary, #C73E3A);
+      color: var(--zitro-primary, #c73e3a);
     }
     // Default (collapsed) state: arrow points down
     &:not(&--up) {
@@ -148,11 +305,13 @@
   color: #fff;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.1px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
   white-space: nowrap;
 
   &:active {
@@ -204,7 +363,9 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     transition: background 0.1s;
 
-    &:active { background: rgba(0, 0, 0, 0.04); }
+    &:active {
+      background: rgba(0, 0, 0, 0.04);
+    }
 
     &--active {
       .category-sheet__name {
@@ -238,7 +399,7 @@
 
 // ── Sheet close button — fixed at same position as FAB ───────────────────────
 // ── Product card image-right override (Swiggy-style) ────────────────────────
-:host ::ng-deep lib-product-card .product-card[data-layout="list"] {
+:host ::ng-deep lib-product-card .product-card[data-layout='list'] {
   flex-direction: row-reverse;
 
   .product-card__body {
@@ -249,11 +410,19 @@
 
 // ── Animations ───────────────────────────────────────────────────────────────
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
