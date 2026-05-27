@@ -166,6 +166,9 @@ export const EN_DEFAULTS = {
     trackOrder: 'Track Order',
     viewOrders: 'View Orders',
     estimatedTimeRemaining: 'Estimated time remaining',
+    liveTracking: 'Live Tracking',
+    viewOnMaps: 'View delivery partner on Google Maps',
+    locatingDelivery: 'Locating delivery partner...',
   },
   orderHistory: {
     title: 'Order History',

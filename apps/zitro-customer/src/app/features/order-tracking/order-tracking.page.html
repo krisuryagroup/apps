@@ -1,246 +1,376 @@
 <div class="order-tracking-container" data-testid="order-tracking-page">
-
   @if (order() && !isLoading()) {
-    <div class="dh-call-restaurant-section">
-      <app-call-restaurant-button data-testid="call-restaurant-btn" />
-    </div>
-  }
-
-  @if (isLoading()) {
-    <div class="loading-spinner" data-testid="order-loading">
-      <div class="spinner"></div>
-      <p>{{ 'order.loadingOrderDetails' | i18n }}</p>
-    </div>
+  <div class="dh-call-restaurant-section">
+    <app-call-restaurant-button data-testid="contact-restaurant-btn" />
+  </div>
+  } @if (isLoading()) {
+  <div class="loading-spinner" data-testid="order-loading">
+    <div class="spinner"></div>
+    <p>{{ 'order.loadingOrderDetails' | i18n }}</p>
+  </div>
   } @else if (error()) {
-    <div class="error-message" data-testid="order-error">
-      <p>{{ error() }}</p>
-    </div>
+  <div class="error-message" data-testid="order-error">
+    <p>{{ error() }}</p>
+  </div>
   } @else if (order()) {
-    <div class="order-details">
-      <!-- Order Header -->
-      <div class="order-header" data-testid="order-header">
-        <div class="order-info">
-          <h2 data-testid="order-id">{{ 'order.id' | i18n }} #{{ order()!.orderId }}</h2>
-          <div class="order-meta">
-            <span class="order-date" data-testid="order-date">{{ order()!.createdAt | date:'medium' }}</span>
-            <span class="order-total" data-testid="order-total">₹{{ order()!.total | number:'1.2-2' }}</span>
-          </div>
-          <div class="order-type-info">
-            <span class="order-type-badge" data-testid="order-type">{{ order()!.orderTypeDisplay }}</span>
-            @if (order()!.orderType === 'dine-in' && order()!.tableNumber) {
-              <span class="table-info" data-testid="table-number">{{ 'order.tableNumber' | i18n }}: {{ order()!.tableNumber }}</span>
-            }
-            @if (order()!.orderType === 'dine-in' && order()!.numberOfGuests) {
-              <span class="guests-info" data-testid="guests">Guests: {{ order()!.numberOfGuests }}</span>
-            }
-            @if (order()!.orderType === 'takeout' && order()!.scheduledPickupTime) {
-              <span class="pickup-info" data-testid="pickup-time">{{ 'order.scheduledPickup' | i18n }}: {{ order()!.scheduledPickupTime | date:'short' }}</span>
-            }
-          </div>
-        </div>
-        @if (order()!.status !== 'delivered' && order()!.status !== 'cancelled') {
-          <div class="auto-refresh-toggle" data-testid="auto-refresh-toggle">
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                [checked]="autoRefreshEnabled()"
-                (change)="toggleAutoRefresh()"
-                data-testid="auto-refresh-checkbox"
-              >
-              <span class="slider"></span>
-            </label>
-            <span class="toggle-label">{{ 'order.autoRefresh' | i18n }}</span>
-          </div>
-        }
-      </div>
-
-      <!-- Status Section -->
-      <div class="status-section" data-testid="status-section">
-        <div class="status-header">
-          <div class="status-badge" [class]="getStatusClass(order()!.status)" data-testid="status-badge">
-            {{ latestStatusDisplay() }}
-          </div>
-          <button
-            class="refresh-btn"
-            (click)="loadOrder()"
-            [disabled]="isLoading() || order()!.status === 'cancelled' || order()!.status === 'delivered'"
-            data-testid="refresh-btn"
+  <div class="order-details">
+    <!-- Order Header -->
+    <div class="order-header" data-testid="order-header">
+      <div class="order-info">
+        <h2 data-testid="order-id">
+          {{ 'order.id' | i18n }} #{{ order()!.orderId }}
+        </h2>
+        <div class="order-meta">
+          <span class="order-date" data-testid="order-date"
+            >{{ order()!.createdAt | date:'medium' }}</span
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="isLoading()">
-              <polyline points="23,4 23,10 17,10"/>
-              <polyline points="1,20 1,14 7,14"/>
-              <path d="M20.49,9A9,9,0,0,0,5.64,5.64L1,10m22,4a9,9,0,0,1-14.85,4.36L23,14"/>
-            </svg>
-          </button>
+          <span class="order-total" data-testid="order-total"
+            >₹{{ order()!.total | number:'1.2-2' }}</span
+          >
         </div>
+        <div class="order-type-info">
+          <span class="order-type-badge" data-testid="order-type"
+            >{{ order()!.orderTypeDisplay }}</span
+          >
+          @if (order()!.orderType === 'dine-in' && order()!.tableNumber) {
+          <span class="table-info" data-testid="table-number"
+            >{{ 'order.tableNumber' | i18n }}: {{ order()!.tableNumber }}</span
+          >
+          } @if (order()!.orderType === 'dine-in' && order()!.numberOfGuests) {
+          <span class="guests-info" data-testid="guests"
+            >Guests: {{ order()!.numberOfGuests }}</span
+          >
+          } @if (order()!.orderType === 'takeout' &&
+          order()!.scheduledPickupTime) {
+          <span class="pickup-info" data-testid="pickup-time"
+            >{{ 'order.scheduledPickup' | i18n }}: {{
+            order()!.scheduledPickupTime | date:'short' }}</span
+          >
+          }
+        </div>
+      </div>
+      @if (order()!.status !== 'delivered' && order()!.status !== 'cancelled') {
+      <div class="auto-refresh-toggle" data-testid="auto-refresh-toggle">
+        <label class="toggle-switch">
+          <input
+            type="checkbox"
+            [checked]="autoRefreshEnabled()"
+            (change)="toggleAutoRefresh()"
+            data-testid="auto-refresh-checkbox"
+          />
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">{{ 'order.autoRefresh' | i18n }}</span>
+      </div>
+      }
+    </div>
 
-        @if (order()!.status !== 'cancelled') {
-          <div class="status-progress" data-testid="status-progress">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                [style.width.%]="statusProgress()"
-                [class]="getStatusClass(order()!.status)"
-              ></div>
-            </div>
-            <div class="progress-text">{{ statusProgress() }}% {{ 'order.completePercent' | i18n }}</div>
-          </div>
-        }
+    <!-- Status Section -->
+    <div class="status-section" data-testid="status-section">
+      <div class="status-header">
+        <div
+          class="status-badge"
+          [class]="getStatusClass(order()!.status)"
+          data-testid="status-badge"
+        >
+          {{ latestStatusDisplay() }}
+        </div>
+        <button
+          class="refresh-btn"
+          (click)="loadOrder()"
+          [disabled]="isLoading() || order()!.status === 'cancelled' || order()!.status === 'delivered'"
+          data-testid="refresh-btn"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            [class.spinning]="isLoading()"
+          >
+            <polyline points="23,4 23,10 17,10" />
+            <polyline points="1,20 1,14 7,14" />
+            <path
+              d="M20.49,9A9,9,0,0,0,5.64,5.64L1,10m22,4a9,9,0,0,1-14.85,4.36L23,14"
+            />
+          </svg>
+        </button>
+      </div>
 
-        @if (order()!.status === 'cancelled') {
-          <div class="cancellation-info" data-testid="cancellation-info">
-            <div class="cancellation-message">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-              </svg>
-              <p>{{ 'order.cancelledMessage' | i18n }}</p>
-            </div>
-          </div>
-        } @else {
-          <div class="status-timeline" data-testid="status-timeline">
-            @for (step of [
-              { status: 'pending', title: 'Order Placed', default: 'Your order has been received' },
-              { status: 'confirmed', title: 'Order Confirmed', default: 'Restaurant has confirmed your order' },
-              { status: 'preparing', title: 'Preparing', default: 'Your food is being prepared' },
-              { status: 'shipped', title: 'Out for Delivery', default: 'Your order is on the way' },
-              { status: 'delivered', title: 'Delivered', default: 'Order has been delivered' }
-            ]; track step.status) {
-              <div class="timeline-item" [class.active]="isStatusCompleted(step.status)" [attr.data-testid]="'timeline-' + step.status">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                  <h4>{{ step.title }}</h4>
-                  <p>{{ getStatusNote(step.status) ?? step.default }}</p>
-                  @if (getStatusTimestamp(step.status)) {
-                    <span class="timeline-timestamp" data-testid="timeline-timestamp">
-                      {{ getStatusTimestamp(step.status) | date:'MMM dd, yyyy - hh:mm a' }}
-                    </span>
-                  }
-                </div>
-              </div>
+      @if (order()!.status !== 'cancelled') {
+      <div class="status-progress" data-testid="status-progress">
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="statusProgress()"
+            [class]="getStatusClass(order()!.status)"
+          ></div>
+        </div>
+        <div class="progress-text">
+          {{ statusProgress() }}% {{ 'order.completePercent' | i18n }}
+        </div>
+      </div>
+      } @if (order()!.status === 'cancelled') {
+      <div class="cancellation-info" data-testid="cancellation-info">
+        <div class="cancellation-message">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          <p>{{ 'order.cancelledMessage' | i18n }}</p>
+        </div>
+      </div>
+      } @else {
+      <div class="status-timeline" data-testid="status-timeline">
+        @for (step of [ { status: 'pending', title: 'Order Placed', default:
+        'Your order has been received' }, { status: 'confirmed', title: 'Order
+        Confirmed', default: 'Restaurant has confirmed your order' }, { status:
+        'preparing', title: 'Preparing', default: 'Your food is being prepared'
+        }, { status: 'shipped', title: 'Out for Delivery', default: 'Your order
+        is on the way' }, { status: 'delivered', title: 'Delivered', default:
+        'Order has been delivered' } ]; track step.status) {
+        <div
+          class="timeline-item"
+          [class.active]="isStatusCompleted(step.status)"
+          data-testid="status-step"
+          [attr.data-status]="step.status"
+        >
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <h4>{{ step.title }}</h4>
+            <p>{{ getStatusNote(step.status) ?? step.default }}</p>
+            @if (getStatusTimestamp(step.status)) {
+            <span class="timeline-timestamp" data-testid="timeline-timestamp">
+              {{ getStatusTimestamp(step.status) | date:'MMM dd, yyyy - hh:mm a'
+              }}
+            </span>
             }
           </div>
+        </div>
         }
       </div>
-
-      <!-- ETA Card -->
-      @if (order()!.estimatedDeliveryTime && order()!.status !== 'delivered' && order()!.status !== 'cancelled') {
-        <div class="delivery-info" data-testid="delivery-eta">
-          <div class="delivery-card">
-            <div class="delivery-time">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12,6 12,12 16,14"/>
-              </svg>
-              <div>
-                <h4>{{ 'order.estimatedDelivery' | i18n }}</h4>
-                <p class="time" data-testid="eta-time">{{ estimatedTimeRemaining() }}</p>
-                <p class="exact-time" data-testid="eta-exact">by {{ order()!.estimatedDeliveryTime | date:'short' }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
       }
+    </div>
 
-      <!-- Order Items + Summary -->
-      <div class="order-items" data-testid="order-items">
-        <h3>{{ 'order.items' | i18n }}</h3>
-        <div class="items-bill">
-          @for (item of order()!.items; track item.id) {
-            <div class="bill-item" data-testid="order-item">
-              <span class="item-name">{{ getItemName(item) }}</span>
-              <span class="item-qty">{{ item.qty }}</span>
-              <span class="item-price">₹{{ (item.price * item.qty) | number:'1.0-0' }}</span>
-            </div>
-          }
-        </div>
-        <div class="order-summary" data-testid="order-summary">
-          <div class="summary-row">
-            <span>{{ 'cart.subtotal' | i18n }}</span>
-            <span>₹{{ order()!.subtotal | number:'1.2-2' }}</span>
-          </div>
-          @if (hasCoupon()) {
-            <div class="summary-row" data-testid="coupon-discount-row">
-              <span>{{ 'cart.couponDiscount' | i18n }} ({{ getCouponCode() }})</span>
-              <span class="coupon-discount">-₹{{ getCouponDiscount() | number:'1.2-2' }}</span>
-            </div>
-          }
-          @if (getPackagingCharges() > 0) {
-            <div class="summary-row" data-testid="packaging-row">
-              <span>{{ 'cart.packagingCharges' | i18n }}</span>
-              <span>₹{{ getPackagingCharges() | number:'1.2-2' }}</span>
-            </div>
-          }
-          @if (getPlatformFee() > 0) {
-            <div class="summary-row" data-testid="platform-fee-row">
-              <span>{{ 'cart.platformFeeLabel' | i18n }}</span>
-              <span>₹{{ getPlatformFee() | number:'1.2-2' }}</span>
-            </div>
-          }
-          @if (getGSTAmount() > 0) {
-            <div class="summary-row" data-testid="gst-row">
-              <span>{{ 'cart.gst' | i18n }} ({{ getGSTPercentage() }}%)</span>
-              <span>₹{{ getGSTAmount() | number:'1.2-2' }}</span>
-            </div>
-          }
-          @if (getDeliveryCharge() > 0) {
-            <div class="summary-row" data-testid="delivery-charge-row">
-              <span>{{ 'cart.deliveryCharge' | i18n }}</span>
-              <span>₹{{ getDeliveryCharge() | number:'1.2-2' }}</span>
-            </div>
-          }
-          <div class="summary-row total" data-testid="total-row">
-            <span>{{ 'order.grandTotal' | i18n }}</span>
-            <span>₹{{ order()!.total | number:'1.2-2' }}</span>
-          </div>
-          @if (getTotalSavings() > 0) {
-            <div class="dh-savings-banner" data-testid="savings-banner">
-              🎉 You're saving ₹{{ getTotalSavings() | number:'1.2-2' }} on this order!
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Delivery Address -->
-      @if (order()!.deliveryAddress) {
-        <div class="delivery-address" data-testid="delivery-address">
-          <h3>{{ 'order.deliveryAddress' | i18n }}</h3>
-          <div class="address-card">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            <div>
-              <p>{{ order()!.deliveryAddress!.street }}</p>
-              <p>{{ order()!.deliveryAddress!.city }}, {{ order()!.deliveryAddress!.state }}</p>
-              <p>{{ order()!.deliveryAddress!.pincode }}</p>
-              @if (order()!.deliveryAddress!.landmark) {
-                <p>{{ order()!.deliveryAddress!.landmark }}</p>
-              }
-              @if (order()!.userPhone) {
-                <p><strong>{{ 'order.phoneNumber' | i18n }}:</strong> {{ order()!.userPhone }}</p>
-              }
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- Navigation Buttons -->
-      <div class="nav-actions" data-testid="nav-actions">
-        <button class="nav-btn" (click)="goBack()" data-testid="back-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5m7-7l-7 7 7 7"/>
+    <!-- ETA Card -->
+    @if (order()!.estimatedDeliveryTime && order()!.status !== 'delivered' &&
+    order()!.status !== 'cancelled') {
+    <div class="delivery-info" data-testid="delivery-eta">
+      <div class="delivery-card">
+        <div class="delivery-time">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12,6 12,12 16,14" />
           </svg>
-          {{ 'common.back' | i18n }}
-        </button>
-        <button class="nav-btn nav-btn-home" (click)="goHome()" data-testid="home-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"/>
-          </svg>
-          {{ 'order.goToHome' | i18n }}
-        </button>
+          <div>
+            <h4>{{ 'order.estimatedDelivery' | i18n }}</h4>
+            <p class="time" data-testid="estimated-time">
+              {{ estimatedTimeRemaining() }}
+            </p>
+            <p class="exact-time" data-testid="eta-exact">
+              by {{ order()!.estimatedDeliveryTime | date:'short' }}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
+    }
+
+    <!-- Delivery Map -->
+    @if (order()!.status === 'shipped' || order()!.status === 'delivered') {
+    <div class="delivery-map-section" data-testid="delivery-map">
+      <h3>{{ 'order.liveTracking' | i18n }}</h3>
+      @if (deliveryLocation()) {
+      <a
+        class="delivery-map-link"
+        [href]="'https://maps.google.com/?q=' + deliveryLocation()!.lat + ',' + deliveryLocation()!.lng"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <div class="delivery-map-visual delivery-map-visual--located">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          <span>{{ 'order.viewOnMaps' | i18n }}</span>
+        </div>
+      </a>
+      } @else {
+      <div class="delivery-map-visual delivery-map-visual--locating">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <span>{{ 'order.locatingDelivery' | i18n }}</span>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Order Items + Summary -->
+    <div class="order-items" data-testid="order-items">
+      <h3>{{ 'order.items' | i18n }}</h3>
+      <div class="items-bill">
+        @for (item of order()!.items; track item.id) {
+        <div class="bill-item" data-testid="order-item">
+          <span class="item-name">{{ getItemName(item) }}</span>
+          <span class="item-qty">{{ item.qty }}</span>
+          <span class="item-price"
+            >₹{{ (item.price * item.qty) | number:'1.0-0' }}</span
+          >
+        </div>
+        }
+      </div>
+      <div class="order-summary" data-testid="order-summary">
+        <div class="summary-row">
+          <span>{{ 'cart.subtotal' | i18n }}</span>
+          <span>₹{{ order()!.subtotal | number:'1.2-2' }}</span>
+        </div>
+        @if (hasCoupon()) {
+        <div class="summary-row" data-testid="coupon-discount-row">
+          <span
+            >{{ 'cart.couponDiscount' | i18n }} ({{ getCouponCode() }})</span
+          >
+          <span class="coupon-discount"
+            >-₹{{ getCouponDiscount() | number:'1.2-2' }}</span
+          >
+        </div>
+        } @if (getPackagingCharges() > 0) {
+        <div class="summary-row" data-testid="packaging-row">
+          <span>{{ 'cart.packagingCharges' | i18n }}</span>
+          <span>₹{{ getPackagingCharges() | number:'1.2-2' }}</span>
+        </div>
+        } @if (getPlatformFee() > 0) {
+        <div class="summary-row" data-testid="platform-fee-row">
+          <span>{{ 'cart.platformFeeLabel' | i18n }}</span>
+          <span>₹{{ getPlatformFee() | number:'1.2-2' }}</span>
+        </div>
+        } @if (getGSTAmount() > 0) {
+        <div class="summary-row" data-testid="gst-row">
+          <span>{{ 'cart.gst' | i18n }} ({{ getGSTPercentage() }}%)</span>
+          <span>₹{{ getGSTAmount() | number:'1.2-2' }}</span>
+        </div>
+        } @if (getDeliveryCharge() > 0) {
+        <div class="summary-row" data-testid="delivery-charge-row">
+          <span>{{ 'cart.deliveryCharge' | i18n }}</span>
+          <span>₹{{ getDeliveryCharge() | number:'1.2-2' }}</span>
+        </div>
+        }
+        <div class="summary-row total" data-testid="total-row">
+          <span>{{ 'order.grandTotal' | i18n }}</span>
+          <span>₹{{ order()!.total | number:'1.2-2' }}</span>
+        </div>
+        @if (getTotalSavings() > 0) {
+        <div class="dh-savings-banner" data-testid="savings-banner">
+          🎉 You're saving ₹{{ getTotalSavings() | number:'1.2-2' }} on this
+          order!
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Delivery Address -->
+    @if (order()!.deliveryAddress) {
+    <div class="delivery-address" data-testid="delivery-address">
+      <h3>{{ 'order.deliveryAddress' | i18n }}</h3>
+      <div class="address-card">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <div>
+          <p>{{ order()!.deliveryAddress!.street }}</p>
+          <p>
+            {{ order()!.deliveryAddress!.city }}, {{
+            order()!.deliveryAddress!.state }}
+          </p>
+          <p>{{ order()!.deliveryAddress!.pincode }}</p>
+          @if (order()!.deliveryAddress!.landmark) {
+          <p>{{ order()!.deliveryAddress!.landmark }}</p>
+          } @if (order()!.userPhone) {
+          <p>
+            <strong>{{ 'order.phoneNumber' | i18n }}:</strong> {{
+            order()!.userPhone }}
+          </p>
+          }
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Navigation Buttons -->
+    <div class="nav-actions" data-testid="nav-actions">
+      <button class="nav-btn" (click)="goBack()" data-testid="back-btn">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M19 12H5m7-7l-7 7 7 7" />
+        </svg>
+        {{ 'common.back' | i18n }}
+      </button>
+      <button
+        class="nav-btn nav-btn-home"
+        (click)="goHome()"
+        data-testid="home-btn"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
+          />
+        </svg>
+        {{ 'order.goToHome' | i18n }}
+      </button>
+    </div>
+  </div>
   }
 </div>

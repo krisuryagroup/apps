@@ -17,47 +17,47 @@
 
 ## Status Legend
 
-| Symbol | Meaning |
-|--------|---------|
-| `[ ]` | Not started |
-| `[~]` | In progress |
-| `[x]` | Done — approved by you after screenshot sign-off |
-| `[!]` | Blocked — missing API or design |
+| Symbol | Meaning                                          |
+| ------ | ------------------------------------------------ |
+| `[ ]`  | Not started                                      |
+| `[~]`  | In progress                                      |
+| `[x]`  | Done — approved by you after screenshot sign-off |
+| `[!]`  | Blocked — missing API or design                  |
 
 ---
 
 ## UI Tasks — Page by Page
 
-| ID | Page | Size | Status | Design? | Notes |
-|----|------|------|--------|---------|-------|
-| **Core Commerce** | | | | | |
-| UI-005 | Home Page | L | `[~]` | ✅ Done | Mockup approved → `UI-mockups/UI-005-home-page.html`. T1–T8 sub-tasks in UI-TASKS.md |
-| UI-006 | Category / Menu Listing | L | `[ ]` | Needed | Product grid, veg filter, add-to-cart |
-| UI-008 | Cart Page | L | `[ ]` | Needed | Pricing breakdown, coupon badge, COD |
-| UI-012 | Order Confirmation | M | `[ ]` | Needed | Success state, order summary, track CTA |
-| UI-014 | Order Tracking | L | `[ ]` | Needed | Status timeline, delivery location |
-| **Auth + Account** | | | | | |
-| UI-002 | Auth — Sign In + OTP | M | `[ ]` | Needed | OTP timer, error states, resend |
-| UI-003 | Auth — Sign Up | S | `[ ]` | Needed | Post-OTP profile creation |
-| UI-015 | Account / Profile | M | `[ ]` | Needed | Edit name, phone read-only, avatar |
-| UI-010 | Addresses — List | M | `[ ]` | Needed | Default badge, select for delivery, delete |
-| UI-011 | Addresses — Add/Edit | M | `[ ]` | Needed | Form, `houseAndStreet` field |
-| **Supporting Pages** | | | | | |
-| UI-004 | Location Selection | S | `[ ]` | Needed | GPS flow, saved addresses, edge cases |
-| UI-007 | Product Search | M | `[ ]` | Needed | Debounced input, results, empty state |
-| UI-009 | Coupon Selection | M | `[ ]` | Needed | List, apply, validation messages |
-| UI-013 | Order History | M | `[ ]` | Needed | Status chips, pagination, reorder CTA |
-| UI-016 | Contact Us | S | `[ ]` | Needed | Phone, WhatsApp, hours |
-| UI-001 | Splash Screen | S | `[ ]` | Needed | Logo, animation, routing timing |
+| ID                   | Page                    | Size | Status | Design? | Notes                                                                                |
+| -------------------- | ----------------------- | ---- | ------ | ------- | ------------------------------------------------------------------------------------ |
+| **Core Commerce**    |                         |      |        |         |                                                                                      |
+| UI-005               | Home Page               | L    | `[x]`  | ✅ Done | Mockup approved → `UI-mockups/UI-005-home-page.html`. T1–T8 sub-tasks in UI-TASKS.md |
+| UI-006               | Category / Menu Listing | L    | `[x]`  | ✅ Done | Product grid, veg filter, add-to-cart                                                |
+| UI-008               | Cart Page               | L    | `[x]`  | ✅ Done | Pricing breakdown, coupon badge, COD                                                 |
+| UI-012               | Order Confirmation      | M    | `[x]`  | ✅ Done | Success state, order summary, track CTA                                              |
+| UI-014               | Order Tracking          | L    | `[x]`  | ✅ Done | Status timeline, delivery location                                                   |
+| **Auth + Account**   |                         |      |        |         |                                                                                      |
+| UI-002               | Auth — Sign In + OTP    | M    | `[ ]`  | Needed  | OTP timer, error states, resend                                                      |
+| UI-003               | Auth — Sign Up          | S    | `[ ]`  | Needed  | Post-OTP profile creation                                                            |
+| UI-015               | Account / Profile       | M    | `[ ]`  | Needed  | Edit name, phone read-only, avatar                                                   |
+| UI-010               | Addresses — List        | M    | `[ ]`  | Needed  | Default badge, select for delivery, delete                                           |
+| UI-011               | Addresses — Add/Edit    | M    | `[ ]`  | Needed  | Form, `houseAndStreet` field                                                         |
+| **Supporting Pages** |                         |      |        |         |                                                                                      |
+| UI-004               | Location Selection      | S    | `[ ]`  | Needed  | GPS flow, saved addresses, edge cases                                                |
+| UI-007               | Product Search          | M    | `[ ]`  | Needed  | Debounced input, results, empty state                                                |
+| UI-009               | Coupon Selection        | M    | `[ ]`  | Needed  | List, apply, validation messages                                                     |
+| UI-013               | Order History           | M    | `[ ]`  | Needed  | Status chips, pagination, reorder CTA                                                |
+| UI-016               | Contact Us              | S    | `[ ]`  | Needed  | Phone, WhatsApp, hours                                                               |
+| UI-001               | Splash Screen           | S    | `[ ]`  | Needed  | Logo, animation, routing timing                                                      |
 
 ---
 
 ## Testing Phase (after you manually verify all pages above)
 
-| ID | Title | Status | Trigger |
-|----|-------|--------|---------|
-| TEST-001 | Unit + Integration Tests | `[ ]` | After all UI tasks pass manual testing |
-| TEST-002 | Acceptance / E2E Tests (12 critical journeys) | `[ ]` | After TEST-001 passes |
+| ID       | Title                                         | Status | Trigger                                |
+| -------- | --------------------------------------------- | ------ | -------------------------------------- |
+| TEST-001 | Unit + Integration Tests                      | `[ ]`  | After all UI tasks pass manual testing |
+| TEST-002 | Acceptance / E2E Tests (12 critical journeys) | `[ ]`  | After TEST-001 passes                  |
 
 ---
 

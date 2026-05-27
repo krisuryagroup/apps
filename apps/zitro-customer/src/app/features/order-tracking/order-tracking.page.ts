@@ -7,11 +7,12 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
-import { firstValueFrom, interval } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { Database } from '@angular/fire/database';
+import { ref, onValue } from 'firebase/database';
 import { I18nPipe } from '@zitro/i18n';
 import { CallRestaurantButtonComponent } from '@zitro/ui';
 import { OrderApiService, NavigationService } from '@zitro/services';
@@ -26,18 +27,37 @@ import { UI_TEXT } from '../../core/constants/app.constants';
 function toDisplay(order: Order): OrderDisplay {
   return {
     ...order,
-    date: order.createdAt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: order.createdAt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    date: order.createdAt.toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
+    time: order.createdAt.toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
     statusDisplay: getOrderStatusDisplay(order.status),
     totalDisplay: `₹${order.total.toFixed(2)}`,
-    orderTypeDisplay: order.orderType === 'dine-in' ? 'Dine In' : order.orderType === 'takeout' ? 'Takeout' : 'Delivery',
+    orderTypeDisplay:
+      order.orderType === 'dine-in'
+        ? 'Dine In'
+        : order.orderType === 'takeout'
+          ? 'Takeout'
+          : 'Delivery',
   };
 }
 
 @Component({
   selector: 'app-order-tracking-page',
   standalone: true,
-  imports: [I18nPipe, DecimalPipe, DatePipe, FormsModule, CallRestaurantButtonComponent],
+  imports: [
+    I18nPipe,
+    DecimalPipe,
+    DatePipe,
+    FormsModule,
+    CallRestaurantButtonComponent,
+  ],
   templateUrl: './order-tracking.page.html',
   styleUrl: './order-tracking.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,22 +68,31 @@ export class OrderTrackingPage implements OnInit {
   private readonly orderApi = inject(OrderApiService);
   private readonly navService = inject(NavigationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly db = inject(Database);
 
   readonly order = signal<OrderDisplay | null>(null);
   readonly isLoading = signal(false);
   readonly error = signal('');
   readonly autoRefreshEnabled = signal(true);
+  readonly deliveryLocation = signal<{ lat: number; lng: number } | null>(null);
 
   private orderId = '';
+  private _locationUnsubFn?: () => void;
 
   readonly statusProgress = computed(() => {
     switch (this.order()?.status) {
-      case 'pending': return 20;
-      case 'confirmed': return 40;
-      case 'preparing': return 60;
-      case 'shipped': return 80;
-      case 'delivered': return 100;
-      default: return 0;
+      case 'pending':
+        return 20;
+      case 'confirmed':
+        return 40;
+      case 'preparing':
+        return 60;
+      case 'shipped':
+        return 80;
+      case 'delivered':
+        return 100;
+      default:
+        return 0;
     }
   });
 
@@ -87,7 +116,12 @@ export class OrderTrackingPage implements OnInit {
     if (!o) return '';
     if (o.status === 'cancelled') return UI_TEXT.ORDER_WAS_CANCELLED;
     if (!o.estimatedDeliveryTime) return UI_TEXT.NOT_AVAILABLE;
-    const diff = Math.max(0, Math.floor((new Date(o.estimatedDeliveryTime).getTime() - Date.now()) / 60000));
+    const diff = Math.max(
+      0,
+      Math.floor(
+        (new Date(o.estimatedDeliveryTime).getTime() - Date.now()) / 60000,
+      ),
+    );
     if (diff === 0) return 'Should arrive soon';
     if (diff < 60) return `${diff} minutes`;
     const h = Math.floor(diff / 60);
@@ -101,7 +135,7 @@ export class OrderTrackingPage implements OnInit {
     this.orderId = routeId ?? queryId ?? '';
     if (this.orderId) {
       await this.loadOrder();
-      this.startAutoRefresh();
+      this.subscribeToRealtimeUpdates();
     } else {
       this.error.set('Order ID is required');
     }
@@ -115,7 +149,9 @@ export class OrderTrackingPage implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
     try {
-      const order = await firstValueFrom(this.orderApi.getOrder(this.orderId.trim()));
+      const order = await firstValueFrom(
+        this.orderApi.getOrder(this.orderId.trim()),
+      );
       this.order.set(toDisplay(order));
     } catch {
       this.error.set('Failed to load order details. Please try again.');
@@ -124,19 +160,35 @@ export class OrderTrackingPage implements OnInit {
     }
   }
 
-  private startAutoRefresh(): void {
-    interval(30000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        const o = this.order();
-        if (this.autoRefreshEnabled() && o?.status !== 'delivered' && o?.status !== 'cancelled') {
-          this.loadOrder();
-        }
-      });
+  private subscribeToRealtimeUpdates(): void {
+    const statusRef = ref(this.db, `orders/${this.orderId}/status`);
+    const unsubStatus = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val() as string | null;
+      const o = this.order();
+      if (status && o && status !== o.status && this.autoRefreshEnabled()) {
+        this.loadOrder();
+      }
+      if (status === 'shipped' || status === 'delivered') {
+        this.subscribeToDeliveryLocation();
+      }
+    });
+    this.destroyRef.onDestroy(unsubStatus);
+  }
+
+  private subscribeToDeliveryLocation(): void {
+    if (this._locationUnsubFn) return;
+    const locRef = ref(this.db, `deliveries/${this.orderId}/location`);
+    this._locationUnsubFn = onValue(locRef, (snapshot) => {
+      const loc = snapshot.val() as { lat?: number; lng?: number } | null;
+      if (loc?.lat != null && loc?.lng != null) {
+        this.deliveryLocation.set({ lat: loc.lat, lng: loc.lng });
+      }
+    });
+    this.destroyRef.onDestroy(this._locationUnsubFn);
   }
 
   toggleAutoRefresh(): void {
-    this.autoRefreshEnabled.update(v => !v);
+    this.autoRefreshEnabled.update((v) => !v);
   }
 
   getStatusClass(status: string): string {
@@ -146,13 +198,13 @@ export class OrderTrackingPage implements OnInit {
   getStatusTimestamp(status: string): Date | null {
     const timeline = this.order()?.statusTimeline;
     if (!timeline) return null;
-    return timeline.find(t => t.status === status)?.timestamp ?? null;
+    return timeline.find((t) => t.status === status)?.timestamp ?? null;
   }
 
   getStatusNote(status: string): string | null {
     const timeline = this.order()?.statusTimeline;
     if (!timeline) return null;
-    return timeline.find(t => t.status === status)?.note ?? null;
+    return timeline.find((t) => t.status === status)?.note ?? null;
   }
 
   isStatusCompleted(status: string): boolean {
@@ -164,7 +216,11 @@ export class OrderTrackingPage implements OnInit {
   }
 
   getPackagingCharges(): number {
-    return this.order()?.charges?.packagingCharge ?? this.order()?.totalPackagingCharges ?? 0;
+    return (
+      this.order()?.charges?.packagingCharge ??
+      this.order()?.totalPackagingCharges ??
+      0
+    );
   }
 
   getPlatformFee(): number {
@@ -180,7 +236,9 @@ export class OrderTrackingPage implements OnInit {
   }
 
   getDeliveryCharge(): number {
-    return this.order()?.charges?.deliveryCharge ?? this.order()?.deliveryCharge ?? 0;
+    return (
+      this.order()?.charges?.deliveryCharge ?? this.order()?.deliveryCharge ?? 0
+    );
   }
 
   getCouponCode(): string {
@@ -188,7 +246,9 @@ export class OrderTrackingPage implements OnInit {
   }
 
   getCouponDiscount(): number {
-    return this.order()?.charges?.couponDiscount ?? this.order()?.couponDiscount ?? 0;
+    return (
+      this.order()?.charges?.couponDiscount ?? this.order()?.couponDiscount ?? 0
+    );
   }
 
   hasCoupon(): boolean {
