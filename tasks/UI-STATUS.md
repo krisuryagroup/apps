@@ -37,18 +37,18 @@
 | UI-012               | Order Confirmation      | M    | `[x]`  | ✅ Done | Success state, order summary, track CTA                                              |
 | UI-014               | Order Tracking          | L    | `[x]`  | ✅ Done | Status timeline, delivery location                                                   |
 | **Auth + Account**   |                         |      |        |         |                                                                                      |
-| UI-002               | Auth — Sign In + OTP    | M    | `[ ]`  | Needed  | OTP timer, error states, resend                                                      |
-| UI-003               | Auth — Sign Up          | S    | `[ ]`  | Needed  | Post-OTP profile creation                                                            |
-| UI-015               | Account / Profile       | M    | `[ ]`  | Needed  | Edit name, phone read-only, avatar                                                   |
-| UI-010               | Addresses — List        | M    | `[ ]`  | Needed  | Default badge, select for delivery, delete                                           |
-| UI-011               | Addresses — Add/Edit    | M    | `[ ]`  | Needed  | Form, `houseAndStreet` field                                                         |
+| UI-002               | Auth — Sign In + OTP    | M    | ` [x]` | ✅ Done | OTP timer, error states, resend                                                      |
+| UI-003               | Auth — Sign Up          | S    | `[x]`  | ✅ Done | Post-OTP profile creation                                                            |
+| UI-015               | Account / Profile       | M    | `[x]`  | ✅ Done | Edit name, phone read-only, avatar                                                   |
+| UI-010               | Addresses — List        | M    | `[x]`  | ✅ Done | Default badge, select for delivery, delete                                           |
+| UI-011               | Addresses — Add/Edit    | M    | `[x]`  | ✅ Done | Form, `houseAndStreet` field                                                         |
 | **Supporting Pages** |                         |      |        |         |                                                                                      |
-| UI-004               | Location Selection      | S    | `[ ]`  | Needed  | GPS flow, saved addresses, edge cases                                                |
-| UI-007               | Product Search          | M    | `[ ]`  | Needed  | Debounced input, results, empty state                                                |
-| UI-009               | Coupon Selection        | M    | `[ ]`  | Needed  | List, apply, validation messages                                                     |
-| UI-013               | Order History           | M    | `[ ]`  | Needed  | Status chips, pagination, reorder CTA                                                |
-| UI-016               | Contact Us              | S    | `[ ]`  | Needed  | Phone, WhatsApp, hours                                                               |
-| UI-001               | Splash Screen           | S    | `[ ]`  | Needed  | Logo, animation, routing timing                                                      |
+| UI-004               | Location Selection      | S    | `[x]`  | ✅ Done | GPS flow, saved addresses, edge cases                                                |
+| UI-007               | Product Search          | M    | `[x]`  | ✅ Done | Debounced input, results, empty state                                                |
+| UI-009               | Coupon Selection        | M    | `[x]`  | ✅ Done | List, apply, validation messages                                                     |
+| UI-013               | Order History           | M    | `[x]`  | ✅ Done | Status chips, pagination, reorder CTA                                                |
+| UI-016               | Contact Us              | S    | `[x]`  | ✅ Done | Phone, WhatsApp, hours                                                               |
+| UI-001               | Splash Screen           | S    | `[x]`  | ✅ Done | Logo, animation, routing timing                                                      |
 
 ---
 
