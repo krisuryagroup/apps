@@ -1,4 +1,4 @@
-<div class="cart-item-row" data-testid="cart-item-row">
+<div class="cart-item-row" data-testid="cart-item">
   @if (config().showImage) {
     <div class="cart-item-row__image-wrap">
       <img
@@ -15,31 +15,45 @@
     <span class="cart-item-row__name" data-testid="cart-item-name">
       {{ item().productName }}
       @if (item().variationLabel) {
-        <span class="cart-item-row__variation"> &ndash; {{ item().variationLabel }}</span>
+        <span class="cart-item-row__variation">
+          &ndash; {{ item().variationLabel }}</span
+        >
       }
     </span>
 
     <div class="cart-item-row__price-row">
       @if (item().priceChanged) {
-        <span class="cart-item-row__original-price" data-testid="cart-item-original-price">₹{{ item().unitPrice | number:'1.0-0' }}</span>
+        <span
+          class="cart-item-row__original-price"
+          data-testid="cart-item-original-price"
+          >₹{{ item().unitPrice | number: '1.0-0' }}</span
+        >
       }
-      <span class="cart-item-row__price" data-testid="cart-item-price">₹{{ item().currentPrice | number:'1.0-0' }}</span>
+      <span class="cart-item-row__price" data-testid="cart-item-price"
+        >₹{{ item().currentPrice | number: '1.0-0' }}</span
+      >
     </div>
   </div>
 
-  <div class="cart-item-row__qty" data-testid="cart-item-qty-controls">
+  <div class="cart-item-row__qty" data-testid="item-qty-stepper">
     <button
       class="cart-item-row__qty-btn"
       type="button"
       (click)="onDecrement()"
       data-testid="cart-item-decrement-btn"
-    >−</button>
-    <span class="cart-item-row__qty-value" data-testid="cart-item-qty">{{ item().quantity }}</span>
+    >
+      −
+    </button>
+    <span class="cart-item-row__qty-value" data-testid="cart-item-qty">{{
+      item().quantity
+    }}</span>
     <button
       class="cart-item-row__qty-btn cart-item-row__qty-btn--add"
       type="button"
       (click)="onIncrement()"
       data-testid="cart-item-increment-btn"
-    >+</button>
+    >
+      +
+    </button>
   </div>
 </div>
