@@ -1,10 +1,38 @@
 <div class="address-card" data-testid="address-card">
   @if (address().isDefault) {
     <span
-      class="address-card__default-badge"
-      data-testid="address-card-default-badge"
+      class="address-card__default-badge-minimal"
+      data-testid="default-badge"
+      aria-label="Default address"
     >
-      {{ 'address.defaultBadge' | i18n }}
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 20 20"
+        fill="none"
+        style="vertical-align: middle; margin-right: 4px"
+      >
+        <circle
+          cx="10"
+          cy="10"
+          r="10"
+          fill="var(--zitro-primary, #C73E3A)"
+          opacity="0.13"
+        />
+        <path
+          d="M8.5 12.5L6 10L7.08 8.92L8.5 10.34L12.92 5.92L14 7L8.5 12.5Z"
+          fill="var(--zitro-primary, #C73E3A)"
+        />
+      </svg>
+      <span
+        style="
+          color: var(--zitro-primary, #c73e3a);
+          font-weight: 700;
+          font-size: 13px;
+          vertical-align: middle;
+        "
+        >{{ 'address.defaultBadge' | i18n }}</span
+      >
     </span>
   }
 
@@ -27,7 +55,7 @@
       <button
         class="address-card__btn address-card__btn--primary"
         (click)="addressSelect.emit(address())"
-        data-testid="address-card-select-btn"
+        data-testid="select-address-btn"
         type="button"
       >
         {{ 'address.selectBtn' | i18n }}
@@ -47,7 +75,7 @@
       <button
         class="address-card__btn address-card__btn--danger"
         (click)="delete.emit(address().id)"
-        data-testid="address-card-delete-btn"
+        data-testid="delete-address-btn"
         type="button"
       >
         {{ 'common.delete' | i18n }}

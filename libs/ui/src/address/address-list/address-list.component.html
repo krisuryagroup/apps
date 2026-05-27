@@ -5,13 +5,15 @@
     </p>
   } @else {
     @for (addr of addresses(); track addr.id) {
-      <lib-address-card
-        [config]="config().cardConfig"
-        [address]="addr"
-        (addressSelect)="addressSelect.emit($event)"
-        (edit)="edit.emit($event)"
-        (delete)="delete.emit($event)"
-      />
+      <div data-testid="address-item">
+        <lib-address-card
+          [config]="config().cardConfig"
+          [address]="addr"
+          (addressSelect)="addressSelect.emit($event)"
+          (edit)="edit.emit($event)"
+          (delete)="delete.emit($event)"
+        />
+      </div>
     }
   }
 </div>

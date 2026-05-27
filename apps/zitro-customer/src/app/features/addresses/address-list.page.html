@@ -1,6 +1,35 @@
 <div class="address-list-page" data-testid="address-list-page">
-  <header class="page-header" data-testid="page-header">
-    <h1 class="page-title">{{ 'address.title' | i18n }}</h1>
+  <header
+    class="page-header"
+    data-testid="page-header"
+    style="display: flex; align-items: center; gap: 8px"
+  >
+    <button
+      class="back-btn"
+      type="button"
+      aria-label="Back"
+      (click)="goBack()"
+      style="
+        background: none;
+        border: none;
+        padding: 0;
+        margin-right: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+      "
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M19 12H5M5 12L12 19M5 12L12 5"
+          stroke="#222"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+    <h1 class="page-title" style="margin: 0">{{ 'address.title' | i18n }}</h1>
   </header>
 
   @if (isLoading()) {
@@ -39,7 +68,7 @@
   <button
     class="add-new-btn"
     (click)="onAddNew()"
-    data-testid="add-new-address-btn"
+    data-testid="add-address-btn"
   >
     + {{ 'address.addNew' | i18n }}
   </button>

@@ -47,8 +47,12 @@ export class AddressListPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.addressApi.getAddresses().subscribe({
-      next: addrs => {
-        this.addresses.set(addrs);
+      next: (addrs) => {
+        // Sort so default address appears first
+        const sorted = [...addrs].sort(
+          (a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0),
+        );
+        this.addresses.set(sorted);
         this.isLoading.set(false);
       },
       error: () => {
@@ -76,6 +80,8 @@ export class AddressListPage implements OnInit {
   }
 
   onSelect(address: Address): void {
+    // Save selected address for delivery (simulate with localStorage)
+    localStorage.setItem('zitro_selected_address', JSON.stringify(address));
     this.router.navigate(['/cart']);
   }
 
@@ -84,24 +90,26 @@ export class AddressListPage implements OnInit {
     if (!editing) return;
 
     this.isSaving.set(true);
-    this.addressApi
-      .updateAddress(editing.id, data)
-      .subscribe({
-        next: () => {
-          this.showForm.set(false);
-          this.editingAddress.set(null);
-          this.isSaving.set(false);
-          this.loadAddresses();
-        },
-        error: () => {
-          this.errorMessage.set('common.error');
-          this.isSaving.set(false);
-        },
-      });
+    this.addressApi.updateAddress(editing.id, data).subscribe({
+      next: () => {
+        this.showForm.set(false);
+        this.editingAddress.set(null);
+        this.isSaving.set(false);
+        this.loadAddresses();
+      },
+      error: () => {
+        this.errorMessage.set('common.error');
+        this.isSaving.set(false);
+      },
+    });
   }
 
   onFormCancelled(): void {
     this.showForm.set(false);
     this.editingAddress.set(null);
+  }
+
+  goBack(): void {
+    this.router.navigate(['/account']);
   }
 }

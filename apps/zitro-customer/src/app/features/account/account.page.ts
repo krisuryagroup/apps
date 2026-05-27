@@ -208,8 +208,9 @@ export class AccountPage implements OnInit {
     this.isImageLoading.set(false);
   }
 
-  signOut(): void {
-    this.authService.signOut();
+  async signOut(): Promise<void> {
+    await this.authService.signOut();
+    this.router.navigate(['/auth/signin']);
   }
 
   goBack(): void {
