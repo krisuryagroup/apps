@@ -163,6 +163,7 @@ export const EN_DEFAULTS = {
     needHelp: 'Need Help?',
     needHelpShort: 'Need Help',
     goToHome: 'Go To Home',
+    trackOrder: 'Track Order',
     viewOrders: 'View Orders',
     estimatedTimeRemaining: 'Estimated time remaining',
   },

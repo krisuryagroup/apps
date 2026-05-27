@@ -12,7 +12,10 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { firstValueFrom, interval, startWith, map } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
-import { CancelOrderDialogComponent, CallRestaurantButtonComponent } from '@zitro/ui';
+import {
+  CancelOrderDialogComponent,
+  CallRestaurantButtonComponent,
+} from '@zitro/ui';
 import {
   OrderApiService,
   AppSettingsService,
@@ -41,18 +44,37 @@ import {
 function toDisplay(order: Order): OrderDisplay {
   return {
     ...order,
-    date: order.createdAt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: order.createdAt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    date: order.createdAt.toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
+    time: order.createdAt.toLocaleTimeString('en-IN', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
     statusDisplay: getOrderStatusDisplay(order.status),
     totalDisplay: `₹${order.total.toFixed(2)}`,
-    orderTypeDisplay: order.orderType === 'dine-in' ? 'Dine In' : order.orderType === 'takeout' ? 'Takeout' : 'Delivery',
+    orderTypeDisplay:
+      order.orderType === 'dine-in'
+        ? 'Dine In'
+        : order.orderType === 'takeout'
+          ? 'Takeout'
+          : 'Delivery',
   };
 }
 
 @Component({
   selector: 'app-order-confirmation-page',
   standalone: true,
-  imports: [I18nPipe, DecimalPipe, DatePipe, CancelOrderDialogComponent, CallRestaurantButtonComponent],
+  imports: [
+    I18nPipe,
+    DecimalPipe,
+    DatePipe,
+    CancelOrderDialogComponent,
+    CallRestaurantButtonComponent,
+  ],
   templateUrl: './order-confirmation.page.html',
   styleUrl: './order-confirmation.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,15 +111,28 @@ export class OrderConfirmationPage implements OnInit {
     const o = this.order();
     if (!o) return 'order.status';
     switch (o.status) {
-      case 'pending': return '✅ Order Placed!';
-      case 'confirmed': return '✅ Order Confirmed!';
-      case 'preparing': return '👨‍🍳 Preparing Your Order';
-      case 'ready': return o.orderType === 'dine-in' ? '✅ Order Ready!' : '🎉 Order Ready for Pickup!';
-      case 'shipped': return '🚚 Order On the Way!';
-      case 'delivered': return '✅ Order Delivered!';
-      case 'completed': return o.orderType === 'dine-in' ? '✅ Enjoy Your Meal!' : '✅ Order Completed!';
-      case 'cancelled': return '❌ Order Cancelled';
-      default: return '📦 Order Status';
+      case 'pending':
+        return '✅ Order Placed!';
+      case 'confirmed':
+        return '✅ Order Confirmed!';
+      case 'preparing':
+        return '👨‍🍳 Preparing Your Order';
+      case 'ready':
+        return o.orderType === 'dine-in'
+          ? '✅ Order Ready!'
+          : '🎉 Order Ready for Pickup!';
+      case 'shipped':
+        return '🚚 Order On the Way!';
+      case 'delivered':
+        return '✅ Order Delivered!';
+      case 'completed':
+        return o.orderType === 'dine-in'
+          ? '✅ Enjoy Your Meal!'
+          : '✅ Order Completed!';
+      case 'cancelled':
+        return '❌ Order Cancelled';
+      default:
+        return '📦 Order Status';
     }
   });
 
@@ -105,46 +140,79 @@ export class OrderConfirmationPage implements OnInit {
     const o = this.order();
     if (!o) return '';
     switch (o.status) {
-      case 'pending': return 'Your order has been placed successfully';
-      case 'confirmed': return 'Your order has been confirmed and will be prepared soon';
-      case 'preparing': return 'Your order is being prepared with care';
-      case 'ready': return o.orderType === 'dine-in' ? 'Your order is ready to be served' : 'Your order is ready. Please come and collect it';
-      case 'shipped': return 'Your order is on the way to your location';
-      case 'delivered': return 'Your order has been successfully delivered';
-      case 'completed': return o.orderType === 'dine-in' ? 'Thank you for dining with us!' : 'Thank you for your order!';
-      case 'cancelled': return 'This order has been cancelled';
-      default: return 'Track your order status below';
+      case 'pending':
+        return 'Your order has been placed successfully';
+      case 'confirmed':
+        return 'Your order has been confirmed and will be prepared soon';
+      case 'preparing':
+        return 'Your order is being prepared with care';
+      case 'ready':
+        return o.orderType === 'dine-in'
+          ? 'Your order is ready to be served'
+          : 'Your order is ready. Please come and collect it';
+      case 'shipped':
+        return 'Your order is on the way to your location';
+      case 'delivered':
+        return 'Your order has been successfully delivered';
+      case 'completed':
+        return o.orderType === 'dine-in'
+          ? 'Thank you for dining with us!'
+          : 'Thank you for your order!';
+      case 'cancelled':
+        return 'This order has been cancelled';
+      default:
+        return 'Track your order status below';
     }
   });
 
   readonly statusIcon = computed(() => {
     switch (this.order()?.status) {
-      case 'pending': case 'confirmed': return 'check_circle';
-      case 'preparing': return 'restaurant';
-      case 'ready': return 'done_all';
-      case 'shipped': return 'local_shipping';
-      case 'delivered': case 'completed': return 'task_alt';
-      case 'cancelled': return 'cancel';
-      default: return 'info';
+      case 'pending':
+      case 'confirmed':
+        return 'check_circle';
+      case 'preparing':
+        return 'restaurant';
+      case 'ready':
+        return 'done_all';
+      case 'shipped':
+        return 'local_shipping';
+      case 'delivered':
+      case 'completed':
+        return 'task_alt';
+      case 'cancelled':
+        return 'cancel';
+      default:
+        return 'info';
     }
   });
 
   readonly statusIconColor = computed(() => {
     switch (this.order()?.status) {
-      case 'pending': case 'confirmed': return '#4CAF50';
-      case 'preparing': return '#FF9800';
-      case 'ready': return '#2196F3';
-      case 'shipped': return '#9C27B0';
-      case 'delivered': case 'completed': return '#4CAF50';
-      case 'cancelled': return '#F44336';
-      default: return '#607D8B';
+      case 'pending':
+      case 'confirmed':
+        return '#4CAF50';
+      case 'preparing':
+        return '#FF9800';
+      case 'ready':
+        return '#2196F3';
+      case 'shipped':
+        return '#9C27B0';
+      case 'delivered':
+      case 'completed':
+        return '#4CAF50';
+      case 'cancelled':
+        return '#F44336';
+      default:
+        return '#607D8B';
     }
   });
 
   readonly statusClass = computed(() => {
     switch (this.order()?.status) {
-      case 'cancelled': return 'status-cancelled';
-      default: return 'status-success';
+      case 'cancelled':
+        return 'status-cancelled';
+      default:
+        return 'status-success';
     }
   });
 
@@ -200,7 +268,7 @@ export class OrderConfirmationPage implements OnInit {
 
   readonly hasNotes = computed(() => {
     const o = this.order();
-    return !!(o?.customerNotes?.trim());
+    return !!o?.customerNotes?.trim();
   });
 
   readonly showEta = computed(() => {
@@ -224,14 +292,17 @@ export class OrderConfirmationPage implements OnInit {
   }
 
   private loadCancellationConfig(): void {
-    this.appSettings.getOrderCancellationTimeLimit()
-      .then(l => (this.cancellationTimeLimit = l))
+    this.appSettings
+      .getOrderCancellationTimeLimit()
+      .then((l) => (this.cancellationTimeLimit = l))
       .catch(console.error);
-    this.appSettings.isOrderCancellationEnabled()
-      .then(e => (this.cancellationEnabled = e))
+    this.appSettings
+      .isOrderCancellationEnabled()
+      .then((e) => (this.cancellationEnabled = e))
       .catch(console.error);
-    this.appSettings.getAllowedCancellationStatuses()
-      .then(s => (this.allowedCancellationStatuses = s))
+    this.appSettings
+      .getAllowedCancellationStatuses()
+      .then((s) => (this.allowedCancellationStatuses = s))
       .catch(console.error);
   }
 
@@ -258,7 +329,7 @@ export class OrderConfirmationPage implements OnInit {
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(secs => this.remainingCancelSeconds.set(secs));
+      .subscribe((secs) => this.remainingCancelSeconds.set(secs));
   }
 
   getItemName(item: { name: string; selectedVariationLabel?: string }): string {
@@ -309,6 +380,13 @@ export class OrderConfirmationPage implements OnInit {
 
   goToHome(): void {
     this.router.navigate(['/home']);
+  }
+
+  trackOrder(): void {
+    const orderId = this.order()?.orderId;
+    if (orderId) {
+      this.router.navigate(['/order-tracking'], { queryParams: { orderId } });
+    }
   }
 
   viewOrders(): void {

@@ -8,7 +8,7 @@
   justify-content: center;
   min-height: 400px;
   padding: 40px 20px;
-  
+
   .spinner {
     width: 48px;
     height: 48px;
@@ -18,7 +18,7 @@
     animation: spin 1s linear infinite;
     margin-bottom: 16px;
   }
-  
+
   p {
     color: $text-color;
     opacity: 0.7;
@@ -35,12 +35,12 @@
   min-height: 400px;
   padding: 40px 20px;
   text-align: center;
-  
+
   .error-icon {
     font-size: 64px;
     margin-bottom: 16px;
   }
-  
+
   h2 {
     color: $text-color;
     margin-bottom: 24px;
@@ -90,7 +90,7 @@
       .dh-savings-badge {
         display: inline-block;
         margin-left: 6px;
-        color: #4CAF50;
+        color: #4caf50;
         font-size: 12px;
         font-weight: 600;
         font-style: italic;
@@ -116,13 +116,13 @@
       }
 
       .dh-free-delivery {
-        color: #4CAF50;
+        color: #4caf50;
         font-weight: 700;
         font-size: 13px;
       }
 
       .dh-discounted {
-        color: #4CAF50;
+        color: #4caf50;
         font-weight: 700;
         font-size: 13px;
       }
@@ -158,11 +158,11 @@
     }
 
     .dh-discount-label {
-      color: #4CAF50;
+      color: #4caf50;
     }
 
     .dh-discount-value {
-      color: #4CAF50;
+      color: #4caf50;
       font-weight: 700;
     }
   }
@@ -226,7 +226,7 @@
 
     .dh-success-icon {
       margin-bottom: 24px;
-      
+
       .dh-icon-wrapper {
         width: 80px;
         height: 80px;
@@ -236,585 +236,621 @@
         justify-content: center;
         margin: 0 auto;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
-        
+        animation: successIconPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          forwards;
+
         .dh-status-icon {
           font-size: 48px;
           color: white;
         }
       }
-      
+
       svg {
         display: block;
         margin: 0 auto;
         filter: drop-shadow(0 4px 12px rgba(76, 175, 80, 0.3));
       }
     }
-    
+
     // Status-specific styling
     &.status-cancelled {
       background: #ffebee;
-      
+
       .dh-success-title {
         color: #d32f2f;
       }
-      
+
       .dh-success-subtitle {
         color: rgba(211, 47, 47, 0.7);
       }
     }
-    
   }
 
-    .dh-success-title {
-      font-size: 28px;
+  .dh-success-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: $text-color;
+    margin: 0 0 8px;
+  }
+
+  .dh-success-subtitle {
+    font-size: 16px;
+    color: rgba($text-color, 0.6);
+    margin: 0 0 16px;
+  }
+
+  .dh-eta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba($primary-color, 0.1);
+    border: 2px solid $primary-color;
+    color: $primary-color;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 15px;
+    margin-top: 12px;
+
+    .material-icons {
+      font-size: 20px;
+    }
+
+    strong {
       font-weight: 700;
-      color: $text-color;
-      margin: 0 0 8px;
-    }
-
-    .dh-success-subtitle {
-      font-size: 16px;
-      color: rgba($text-color, 0.6);
-      margin: 0 0 16px;
-    }
-
-    .dh-eta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba($primary-color, 0.1);
-      border: 2px solid $primary-color;
-      color: $primary-color;
-      padding: 10px 20px;
-      border-radius: 24px;
-      font-size: 15px;
-      margin-top: 12px;
-
-      .material-icons {
-        font-size: 20px;
-      }
-
-      strong {
-        font-weight: 700;
-      }
     }
   }
+}
 
-  // Status Timeline Section
-  .dh-timeline-section {
-    background: $secondary-color;
-    margin: 16px;
-    padding: 24px 20px;
-    border-radius: $border-radius;
-    box-shadow: $card-shadow;
+// Status Timeline Section
+.dh-timeline-section {
+  background: $secondary-color;
+  margin: 16px;
+  padding: 24px 20px;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
 
-    .dh-timeline-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: $text-color;
-      margin: 0 0 24px;
-      text-align: center;
-    }
+  .dh-timeline-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0 0 24px;
+    text-align: center;
+  }
 
-    .dh-timeline {
+  .dh-timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 10px;
+
+    .dh-timeline-step {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
       position: relative;
-      padding: 0 10px;
 
-      .dh-timeline-step {
+      .dh-step-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        color: #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        z-index: 2;
+        position: relative;
+
+        .material-icons {
+          font-size: 24px;
+        }
+      }
+
+      .dh-step-content {
         display: flex;
         flex-direction: column;
         align-items: center;
-        flex: 1;
-        position: relative;
+        gap: 4px;
 
-        .dh-step-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: #e0e0e0;
-          color: #999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 8px;
+        .dh-step-label {
+          font-size: 12px;
+          color: rgba($text-color, 0.6);
+          text-align: center;
+          max-width: 80px;
+          line-height: 1.3;
           transition: all 0.3s ease;
-          z-index: 2;
-          position: relative;
+        }
 
-          .material-icons {
-            font-size: 24px;
-          }
+        .dh-step-timestamp {
+          font-size: 10px;
+          color: rgba($text-color, 0.5);
+          text-align: center;
+          font-weight: 500;
+          transition: all 0.3s ease;
+        }
+      }
+
+      .dh-step-line {
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        width: 100%;
+        height: 3px;
+        background: #e0e0e0;
+        z-index: 1;
+        transition: all 0.3s ease;
+      }
+
+      &.completed {
+        .dh-step-icon {
+          background: $primary-color;
+          color: white;
+          box-shadow: 0 2px 8px rgba($primary-color, 0.3);
         }
 
         .dh-step-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-
           .dh-step-label {
-            font-size: 12px;
-            color: rgba($text-color, 0.6);
-            text-align: center;
-            max-width: 80px;
-            line-height: 1.3;
-            transition: all 0.3s ease;
+            color: $primary-color;
+            font-weight: 600;
           }
 
           .dh-step-timestamp {
-            font-size: 10px;
-            color: rgba($text-color, 0.5);
-            text-align: center;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            color: $primary-color;
+            font-weight: 600;
           }
         }
 
         .dh-step-line {
-          position: absolute;
-          top: 24px;
-          left: 50%;
-          width: 100%;
-          height: 3px;
-          background: #e0e0e0;
-          z-index: 1;
-          transition: all 0.3s ease;
+          background: $primary-color;
+        }
+      }
+
+      &.current {
+        .dh-step-icon {
+          background: $primary-color;
+          color: white;
+          box-shadow: 0 0 0 4px rgba($primary-color, 0.2);
+          animation: pulse 2s infinite;
         }
 
-        &.completed {
-          .dh-step-icon {
-            background: $primary-color;
-            color: white;
-            box-shadow: 0 2px 8px rgba($primary-color, 0.3);
+        .dh-step-content {
+          .dh-step-label {
+            color: $primary-color;
+            font-weight: 700;
           }
 
-          .dh-step-content {
-            .dh-step-label {
-              color: $primary-color;
-              font-weight: 600;
-            }
-
-            .dh-step-timestamp {
-              color: $primary-color;
-              font-weight: 600;
-            }
-          }
-
-          .dh-step-line {
-            background: $primary-color;
-          }
-        }
-
-        &.current {
-          .dh-step-icon {
-            background: $primary-color;
-            color: white;
-            box-shadow: 0 0 0 4px rgba($primary-color, 0.2);
-            animation: pulse 2s infinite;
-          }
-
-          .dh-step-content {
-            .dh-step-label {
-              color: $primary-color;
-              font-weight: 700;
-            }
-
-            .dh-step-timestamp {
-              color: $primary-color;
-              font-weight: 600;
-            }
+          .dh-step-timestamp {
+            color: $primary-color;
+            font-weight: 600;
           }
         }
       }
     }
   }
+}
 
-  @keyframes pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 4px rgba($primary-color, 0.2);
-    }
-    50% {
-      box-shadow: 0 0 0 8px rgba($primary-color, 0.1);
-    }
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba($primary-color, 0.2);
   }
+  50% {
+    box-shadow: 0 0 0 8px rgba($primary-color, 0.1);
+  }
+}
 
-  // Dine-in Section
-  .dh-dine-in-section {
-    margin: 16px;
+// Dine-in Section
+.dh-dine-in-section {
+  margin: 16px;
 
-    .dh-section-card {
-      background: linear-gradient(135deg, rgba($primary-color, 0.05) 0%, rgba($primary-color, 0.02) 100%);
-      border: 2px solid rgba($primary-color, 0.2);
-      border-radius: $border-radius;
-      padding: 20px;
+  .dh-section-card {
+    background: linear-gradient(
+      135deg,
+      rgba($primary-color, 0.05) 0%,
+      rgba($primary-color, 0.02) 100%
+    );
+    border: 2px solid rgba($primary-color, 0.2);
+    border-radius: $border-radius;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .dh-dine-in-header {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 16px;
 
-      .dh-dine-in-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-
-        .material-icons {
-          font-size: 40px;
-          color: $primary-color;
-        }
-
-        .dh-table-info {
-          font-size: 18px;
-          font-weight: 700;
-          color: $text-color;
-          margin-bottom: 4px;
-        }
-
-        .dh-server-message {
-          font-size: 14px;
-          color: rgba($text-color, 0.7);
-          font-style: italic;
-        }
+      .material-icons {
+        font-size: 40px;
+        color: $primary-color;
       }
 
-      .dh-call-waiter-btn {
-        background: $primary-color;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 14px 24px;
-        font-size: 16px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.3);
+      .dh-table-info {
+        font-size: 18px;
+        font-weight: 700;
+        color: $text-color;
+        margin-bottom: 4px;
+      }
 
-        &:hover {
-          background: #007d70;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba($primary-color, 0.4);
-        }
-
-        &:active {
-          transform: translateY(0);
-        }
-
-        .material-icons {
-          font-size: 22px;
-          animation: ring 2s ease-in-out infinite;
-        }
+      .dh-server-message {
+        font-size: 14px;
+        color: rgba($text-color, 0.7);
+        font-style: italic;
       }
     }
-  }
 
-  @keyframes ring {
-    0%, 100% {
-      transform: rotate(0deg);
-    }
-    10%, 30% {
-      transform: rotate(-10deg);
-    }
-    20%, 40% {
-      transform: rotate(10deg);
-    }
-    50% {
-      transform: rotate(0deg);
-    }
-  }
-
-  // Help Section
-  .dh-help-section {
-    margin: 16px;
-    display: flex;
-    gap: 12px;
-    align-items: stretch;
-
-    app-call-restaurant-button {
-      flex: 1;
-    }
-
-    .dh-need-help-btn {
-      flex: 1;
-      background: rgba($primary-color, 0.1);
-      color: $primary-color;
-      border: 2px solid $primary-color;
+    .dh-call-waiter-btn {
+      background: $primary-color;
+      color: white;
+      border: none;
       border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 15px;
+      padding: 14px 24px;
+      font-size: 16px;
       font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
-
-      .material-icons {
-        font-size: 20px;
-      }
+      box-shadow: 0 2px 8px rgba($primary-color, 0.3);
 
       &:hover {
-        background: $primary-color;
-        color: white;
+        background: #007d70;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      .material-icons {
+        font-size: 22px;
+        animation: ring 2s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+@keyframes ring {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(-10deg);
+  }
+  20%,
+  40% {
+    transform: rotate(10deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes successIconPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Help Section
+.dh-help-section {
+  margin: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+
+  app-call-restaurant-button {
+    flex: 1;
+  }
+
+  .dh-need-help-btn {
+    flex: 1;
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+    border: 2px solid $primary-color;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    .material-icons {
+      font-size: 20px;
+    }
+
+    &:hover {
+      background: $primary-color;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+    }
+  }
+}
+
+.dh-order-details-card {
+  background: $secondary-color;
+  margin: 16px;
+  border-radius: $border-radius;
+  box-shadow: $card-shadow;
+  overflow: hidden;
+
+  .dh-order-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: $text-color;
+      margin: 0;
+    }
+  }
+
+  .dh-order-info {
+    padding: 16px 20px;
+
+    .dh-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .dh-info-label {
+        font-size: 14px;
+        color: rgba($text-color, 0.7);
+      }
+
+      .dh-info-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: $text-color;
+
+        &.dh-total {
+          font-size: 16px;
+          color: $primary-color;
+        }
+
+        &.coupon-discount {
+          color: #4caf50;
+          font-weight: 700;
+        }
+
+        .dh-free-delivery {
+          color: #4caf50;
+          font-weight: 600;
+          font-size: 13px;
+        }
+
+        .dh-payment-method {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          .payment-icon {
+            font-size: 16px;
+            color: $primary-color;
+          }
+        }
+
+        .dh-phone-icon {
+          font-size: 18px;
+          color: $primary-color;
+          vertical-align: middle;
+          margin-right: 6px;
+        }
+
+        .dh-phone-link {
+          display: inline-flex;
+          align-items: center;
+          color: #1976d2;
+          text-decoration: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            color: #1565c0;
+          }
+
+          .dh-phone-icon {
+            color: $primary-color;
+          }
+        }
+      }
+
+      .dh-status-badge {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .dh-order-items {
+    padding: 16px 20px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-color;
+      margin: 0 0 16px;
+    }
+
+    .dh-items-bill {
+      .dh-bill-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px dotted #ddd;
+        font-size: 0.9rem;
+
+        &:last-child {
+          border-bottom: 1px solid #ddd;
+          margin-bottom: 0.5rem;
+        }
+
+        .dh-item-name {
+          color: $text-color;
+          font-weight: 500;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: 14px;
+        }
+
+        .dh-item-qty {
+          color: rgba($text-color, 0.7);
+          font-size: 13px;
+          text-align: center;
+          min-width: 30px;
+        }
+
+        .dh-item-price {
+          color: $text-color;
+          font-weight: 600;
+          text-align: right;
+          min-width: 60px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+.dh-action-buttons {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .dh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    &.dh-btn-primary {
+      background: $primary-color;
+      color: $secondary-color;
+
+      &:hover {
+        background: #007d70;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba($primary-color, 0.3);
       }
     }
+
+    &.dh-btn-secondary {
+      background: $secondary-color;
+      color: $primary-color;
+      border-color: $primary-color;
+
+      &:hover {
+        background: rgba($primary-color, 0.05);
+        transform: translateY(-1px);
+      }
     }
-  
 
-  .dh-order-details-card {
-    background: $secondary-color;
-    margin: 16px;
-    border-radius: $border-radius;
-    box-shadow: $card-shadow;
-    overflow: hidden;
+    &.dh-btn-outline {
+      background: transparent;
+      color: rgba($text-color, 0.7);
+      border-color: rgba($text-color, 0.3);
 
-    .dh-order-header {
-      padding: 20px 20px 16px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-
-      h2 {
-        font-size: 18px;
-        font-weight: 600;
+      &:hover {
+        background: rgba($text-color, 0.05);
+        border-color: rgba($text-color, 0.5);
         color: $text-color;
-        margin: 0;
       }
     }
 
-    .dh-order-info {
-      padding: 16px 20px;
+    &.dh-btn-track {
+      background: #e23744;
+      color: #fff;
+      border-color: #e23744;
 
-      .dh-info-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        .dh-info-label {
-          font-size: 14px;
-          color: rgba($text-color, 0.7);
-        }
-
-        .dh-info-value {
-          font-size: 14px;
-          font-weight: 600;
-          color: $text-color;
-
-          &.dh-total {
-            font-size: 16px;
-            color: $primary-color;
-          }
-          
-          &.coupon-discount {
-            color: #4CAF50;
-            font-weight: 700;
-          }
-          
-          .dh-free-delivery {
-            color: #4CAF50;
-            font-weight: 600;
-            font-size: 13px;
-          }
-          
-          .dh-payment-method {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            
-            .payment-icon {
-              font-size: 16px;
-              color: $primary-color;
-            }
-          }
-
-          .dh-phone-icon {
-            font-size: 18px;
-            color: $primary-color;
-            vertical-align: middle;
-            margin-right: 6px;
-          }
-
-          .dh-phone-link {
-            display: inline-flex;
-            align-items: center;
-            color: #1976d2;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:hover {
-              color: #1565c0;
-            }
-
-            .dh-phone-icon {
-              color: $primary-color;
-            }
-          }
-        }
-
-        .dh-status-badge {
-          background: rgba($primary-color, 0.1);
-          color: $primary-color;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-      }
-    }
-
-    .dh-order-items {
-      padding: 16px 20px 20px;
-      border-top: 1px solid rgba(0, 0, 0, 0.05);
-
-      h3 {
-        font-size: 16px;
-        font-weight: 600;
-        color: $text-color;
-        margin: 0 0 16px;
-      }
-
-      .dh-items-bill {
-        .dh-bill-item {
-          display: grid;
-          grid-template-columns: 1fr auto auto;
-          gap: 0.5rem;
-          align-items: center;
-          padding: 0.5rem 0;
-          border-bottom: 1px dotted #ddd;
-          font-size: 0.9rem;
-
-          &:last-child {
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 0.5rem;
-          }
-
-          .dh-item-name {
-            color: $text-color;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 14px;
-          }
-
-          .dh-item-qty {
-            color: rgba($text-color, 0.7);
-            font-size: 13px;
-            text-align: center;
-            min-width: 30px;
-          }
-
-          .dh-item-price {
-            color: $text-color;
-            font-weight: 600;
-            text-align: right;
-            min-width: 60px;
-            font-size: 14px;
-          }
-        }
+      &:hover {
+        background: #c62f3b;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(226, 55, 68, 0.3);
       }
     }
   }
+}
+.dh-delivery-info {
+  display: flex;
+  align-items: center;
+  background: rgba($primary-color, 0.05);
+  margin: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 4px solid $primary-color;
 
-  .dh-action-buttons {
-    padding: 24px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  .dh-delivery-icon {
+    color: $primary-color;
+    margin-right: 12px;
+  }
 
-    .dh-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 24px;
-      border-radius: 12px;
+  .dh-delivery-text {
+    .dh-delivery-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: $text-color;
+      margin-bottom: 2px;
+    }
+
+    .dh-delivery-time {
       font-size: 16px;
       font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 2px solid transparent;
-
-      svg {
-        flex-shrink: 0;
-      }
-
-      &.dh-btn-primary {
-        background: $primary-color;
-        color: $secondary-color;
-
-        &:hover {
-          background: #007d70;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba($primary-color, 0.3);
-        }
-      }
-
-      &.dh-btn-secondary {
-        background: $secondary-color;
-        color: $primary-color;
-        border-color: $primary-color;
-
-        &:hover {
-          background: rgba($primary-color, 0.05);
-          transform: translateY(-1px);
-        }
-      }
-
-      &.dh-btn-outline {
-        background: transparent;
-        color: rgba($text-color, 0.7);
-        border-color: rgba($text-color, 0.3);
-
-        &:hover {
-          background: rgba($text-color, 0.05);
-          border-color: rgba($text-color, 0.5);
-          color: $text-color;
-        }
-      }
-    }
-  }
-   .dh-delivery-info {
-    display: flex;
-    align-items: center;
-    background: rgba($primary-color, 0.05);
-    margin: 16px;
-    padding: 16px 20px;
-    border-radius: 12px;
-    border-left: 4px solid $primary-color;
-
-    .dh-delivery-icon {
       color: $primary-color;
-      margin-right: 12px;
-    }
-
-    .dh-delivery-text {
-      .dh-delivery-title {
-        font-size: 14px;
-        font-weight: 500;
-        color: $text-color;
-        margin-bottom: 2px;
-      }
-
-      .dh-delivery-time {
-        font-size: 16px;
-        font-weight: 600;
-        color: $primary-color;
-      }
     }
   }
+}
 
 // Mobile responsiveness
 @media (max-width: 768px) {
@@ -1089,7 +1125,12 @@
     align-items: center;
     gap: 8px;
     white-space: nowrap;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
 
     &:hover {
       background: #dc3545;
@@ -1100,7 +1141,7 @@
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      
+
       &:hover {
         background: transparent;
         color: #dc3545;
