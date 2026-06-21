@@ -218,6 +218,12 @@ export class OrderHistoryPage implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/home']);
+    // Use browser history if available, else fallback to home
+    if (window.history.length > 1) {
+      this.router.navigateByUrl('/'); // fallback if popstate fails
+      window.history.back();
+    } else {
+      this.router.navigate(['/']);
+    }
   }
 }

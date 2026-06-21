@@ -132,7 +132,7 @@ export const EN_DEFAULTS = {
     status: 'Order Status',
     details: 'Order Details',
     items: 'Order Items',
-    itemsOrdered: 'Items Ordered ({count})',
+    itemsOrdered: 'Items Ordered',
     id: 'Order ID',
     dateTime: 'Date & Time',
     orderType: 'Order Type',

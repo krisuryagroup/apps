@@ -1,12 +1,27 @@
 <div class="dh-main-content dh-contact-us" data-testid="contact-us-page">
+  <div class="dh-page-header">
+    <button
+      class="dh-back-btn"
+      (click)="goBack()"
+      data-testid="back-btn"
+      aria-label="Go back"
+    >
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1 class="dh-page-title">{{ 'contactUs.title' | i18n }}</h1>
+  </div>
   <div class="dh-contact-card">
-    <div class="dh-contact-title">{{ 'contactUs.title' | i18n }}</div>
     <div class="dh-contact-info">
       <div class="dh-contact-row">
         <span class="material-icons dh-contact-icon">email</span>
         <span class="dh-contact-label">{{ 'contactUs.email' | i18n }}:</span>
         <div class="dh-contact-value-container">
-          <a [href]="emailHref()" class="dh-contact-value dh-email-link" data-testid="contact-email-link">{{ email() }}</a>
+          <a
+            [href]="emailHref()"
+            class="dh-contact-value dh-email-link"
+            data-testid="contact-email-link"
+            >{{ email() }}</a
+          >
           <button
             class="dh-copy-btn"
             (click)="copyEmail()"
@@ -14,7 +29,9 @@
             type="button"
             data-testid="contact-copy-email-btn"
           >
-            <span class="material-icons">{{ emailCopied() ? 'check' : 'content_copy' }}</span>
+            <span class="material-icons"
+              >{{ emailCopied() ? 'check' : 'content_copy' }}</span
+            >
           </button>
         </div>
       </div>
@@ -22,7 +39,12 @@
         <span class="material-icons dh-contact-icon">call</span>
         <span class="dh-contact-label">{{ 'contactUs.phone' | i18n }}:</span>
         <div class="dh-contact-value-container">
-          <a [href]="phoneHref()" class="dh-contact-value dh-phone-link" data-testid="contact-phone-link">{{ phone() }}</a>
+          <a
+            [href]="phoneHref()"
+            class="dh-contact-value dh-phone-link"
+            data-testid="contact-phone-link"
+            >{{ phone() }}</a
+          >
           <button
             class="dh-copy-btn"
             (click)="copyPhone()"
@@ -30,7 +52,9 @@
             type="button"
             data-testid="contact-copy-phone-btn"
           >
-            <span class="material-icons">{{ phoneCopied() ? 'check' : 'content_copy' }}</span>
+            <span class="material-icons"
+              >{{ phoneCopied() ? 'check' : 'content_copy' }}</span
+            >
           </button>
         </div>
       </div>

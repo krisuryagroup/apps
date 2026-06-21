@@ -9,6 +9,7 @@ import {
 import { I18nPipe } from '@zitro/i18n';
 import { AppSettingsService } from '@zitro/services';
 import { PHONE_CONSTANTS } from '../core/constants/app.constants';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-contact-us-page',
@@ -19,6 +20,7 @@ import { PHONE_CONSTANTS } from '../core/constants/app.constants';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactUsPage implements OnInit {
+  private readonly router = inject(Router);
   private readonly appSettings = inject(AppSettingsService);
 
   readonly email = signal('Loading...');
@@ -80,6 +82,16 @@ export class ContactUsPage implements OnInit {
       }
     } finally {
       document.body.removeChild(ta);
+    }
+  }
+
+  goBack(): void {
+    // Use browser history if available, else fallback to home
+    if (window.history.length > 1) {
+      this.router.navigateByUrl('/'); // fallback if popstate fails
+      window.history.back();
+    } else {
+      this.router.navigate(['/']);
     }
   }
 }

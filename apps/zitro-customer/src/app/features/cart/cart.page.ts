@@ -643,6 +643,7 @@ export class CartPage implements OnDestroy {
     const proceed = await firstValueFrom(dialogRef.afterClosed());
     if (!proceed) return;
 
+    let hadError = false;
     try {
       this.isProcessingOrder.set(true);
       this.orderProcessing.startProcessing();
@@ -713,19 +714,45 @@ export class CartPage implements OnDestroy {
         queryParams: { orderId: order.orderId },
       });
     } catch (err) {
+      hadError = true;
+      let userMessage = this.i18n.translate('order.error.generic'); // fallback i18n key
+      let details = 'Unknown error';
+      hadError = true;
+
+      // Angular HttpErrorResponse
+      if (err && typeof err === 'object' && 'error' in err) {
+        const apiError = (err as any).error;
+        if (apiError && typeof apiError === 'object') {
+          // Prefer i18n key if available, else fallback to backend message
+          if (apiError.errorCode) {
+            // Optionally map errorCode to i18n key here
+            userMessage = this.i18n.translate(
+              `order.error.${apiError.errorCode.toLowerCase()}`,
+              { fallback: apiError.error || apiError.message },
+            );
+          } else if (apiError.error) {
+            userMessage = apiError.error;
+          }
+          details = apiError.error || apiError.message || details;
+        }
+      } else if (err instanceof Error) {
+        details = err.message;
+      }
+
       this.analytics.logEvent('order_failed', {
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: details,
         cartValue: this.subtotal(),
       });
-      this.orderProcessing.updateStage(
-        'error',
-        'Failed to place order. Please try again.',
-        err instanceof Error ? err.message : 'Unknown error',
-      );
+      this.orderProcessing.updateStage('error', userMessage, details);
       await new Promise((r) => setTimeout(r, 3000));
+      // Do not reset orderProcessing here, keep error stage visible
+      hadError = true;
     } finally {
       this.isProcessingOrder.set(false);
-      this.orderProcessing.reset();
+      // Only reset if no error occurred
+      if (!hadError) {
+        this.orderProcessing.reset();
+      }
     }
   }
 
