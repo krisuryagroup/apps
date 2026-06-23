@@ -571,12 +571,11 @@ export const DELIVERY_PINCODE_CONFIG = {
 
 // Centralized Firebase config for the whole app (use same project for all restaurants)
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js',
-  authDomain: 'the-hunger-point.firebaseapp.com',
-  databaseURL: 'https://the-hunger-point-default-rtdb.firebaseio.com',
-  projectId: 'the-hunger-point',
-  storageBucket: 'the-hunger-point.appspot.com',
-  messagingSenderId: '362195111262',
-  appId: '1:362195111262:web:01d2738992010555af53cf',
-  measurementId: 'G-NTWY20NKHB',
+  apiKey: 'AIzaSyCdhvXtodLYlKsaqvaj-83rLRze0K277c4',
+  authDomain: 'zitro-18f5c.firebaseapp.com',
+  projectId: 'zitro-18f5c',
+  storageBucket: 'zitro-18f5c.firebasestorage.app',
+  messagingSenderId: '732131169680',
+  appId: '1:732131169680:web:40a153176195281cbf8f15',
+  measurementId: 'G-46PV73YKKT',
 } as const;

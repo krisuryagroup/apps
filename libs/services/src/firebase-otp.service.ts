@@ -39,12 +39,13 @@ export class FirebaseOtpService {
       } else {
         // Initialize new Firebase app if none exists
         const firebaseConfig = {
-          apiKey: 'AIzaSyAOM49bTRY7y8kgFtxYiA772RwnvGvB0Js',
-          authDomain: 'the-hunger-point.firebaseapp.com',
-          projectId: 'the-hunger-point',
-          storageBucket: 'the-hunger-point.appspot.com',
-          messagingSenderId: '362195111262',
-          appId: '1:362195111262:web:17c04c5b42309ad0af53cf',
+          apiKey: 'AIzaSyCdhvXtodLYlKsaqvaj-83rLRze0K277c4',
+          authDomain: 'zitro-18f5c.firebaseapp.com',
+          projectId: 'zitro-18f5c',
+          storageBucket: 'zitro-18f5c.firebasestorage.app',
+          messagingSenderId: '732131169680',
+          appId: '1:732131169680:web:40a153176195281cbf8f15',
+          measurementId: 'G-46PV73YKKT',
         };
         const app = initializeApp(firebaseConfig);
         this.auth = getAuth(app);
