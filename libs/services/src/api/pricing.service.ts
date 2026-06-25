@@ -10,6 +10,7 @@ import type {
   ChargesVisibility,
   PricingCalculationInput,
   OrderType,
+  OrderCharges,
 } from '@zitro/models';
 import { ConfigApiService } from './config-api.service';
 import { BusinessContextService } from '../business-context.service';
@@ -67,10 +68,8 @@ export class PricingApiService {
       const config = await firstValueFrom(
         this.configApi.getBusinessConfig(slug),
       );
-      this.pricingConfig = this.mapApiConfigToPricingConfig(
-        config,
-        DEFAULT_CONFIG,
-      );
+      this.pricingConfig =
+        (config.pricingConfig as PricingConfig) ?? DEFAULT_CONFIG;
     } catch {
       this.pricingConfig = DEFAULT_CONFIG;
     }
@@ -281,32 +280,27 @@ export class PricingApiService {
     };
   }
 
-  // Maps flat BusinessConfig → PricingConfig structure, filling gaps with defaults
-  private mapApiConfigToPricingConfig(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiConfig: any,
-    defaults: PricingConfig,
-  ): PricingConfig {
+  isEligibleForFreeDelivery(subtotal: number, config: PricingConfig): boolean {
+    return subtotal >= config.delivery.free_delivery_above;
+  }
+
+  getFreeDeliveryMessage(subtotal: number, config: PricingConfig): string {
+    if (this.isEligibleForFreeDelivery(subtotal, config)) return '';
+    const needed = config.delivery.free_delivery_above - subtotal;
+    return `Add ₹${needed.toFixed(0)} more for free delivery`;
+  }
+
+  formatChargesForOrder(pricing: PricingBreakdown): OrderCharges {
     return {
-      ...defaults,
-      delivery: {
-        ...defaults.delivery,
-        base_fee: apiConfig.deliveryFee ?? defaults.delivery.base_fee,
-        free_delivery_above:
-          apiConfig.freeDeliveryAbove ?? defaults.delivery.free_delivery_above,
-      },
-      platform_fee: {
-        ...defaults.platform_fee,
-        flat_fee: apiConfig.platformFee ?? defaults.platform_fee.flat_fee,
-      },
-      packaging: {
-        ...defaults.packaging,
-        default_fee: apiConfig.packagingFee ?? defaults.packaging.default_fee,
-      },
-      gst: {
-        ...defaults.gst,
-        food_percent: apiConfig.gstPercent ?? defaults.gst.food_percent,
-      },
+      packagingCharge: pricing.charges.packaging.applied,
+      platformFee: pricing.charges.platformFee.applied,
+      gst: pricing.charges.gst.applied,
+      ...(pricing.visibility.showDelivery
+        ? { deliveryCharge: pricing.charges.delivery.applied }
+        : {}),
+      ...(pricing.discounts.couponCode && pricing.discounts.discountAmount > 0
+        ? { couponDiscount: pricing.discounts.discountAmount }
+        : {}),
     };
   }
 }

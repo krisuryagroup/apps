@@ -10,7 +10,7 @@ import { AppSettingsService } from '@zitro/services';
 import { CancelOrderDialogComponent } from '@zitro/ui';
 import { CallRestaurantButtonComponent } from '@zitro/ui';
 import { AnalyticsService } from '@zitro/services';
-import { PricingService } from '@zitro/services';
+import { PricingApiService } from '@zitro/services';
 import { PricingBreakdown } from '@zitro/models';
 
 @Component({
@@ -30,7 +30,7 @@ export class OrderConfirmationComponent implements OnInit {
   private orderService = inject(OrderService);
   private analyticsService = inject(AnalyticsService);
   private appSettingsService = inject(AppSettingsService);
-  private pricingService = inject(PricingService);
+  private pricingService = inject(PricingApiService);
 
   orderDetails: OrderDisplay | null = null;
   isLoading = true;
@@ -121,7 +121,7 @@ export class OrderConfirmationComponent implements OnInit {
     if (!this.orderDetails) return;
 
     try {
-      const config = await this.pricingService.getPricingConfig();
+      const config = await this.pricingService.loadConfig();
 
       // Extract coupon info if available
       const appliedCoupon = this.hasCoupon()

@@ -1,321 +1,219 @@
-import { Injectable } from '@angular/core';
-import { getFirestore, doc, getDoc, setDoc, Firestore } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
+import { Injectable, inject } from '@angular/core';
 import { OrderConfiguration, OrderTypeMessages } from '@zitro/models';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { ConfigApiService, OrderConfigShape } from './api/config-api.service';
+import { BusinessContextService } from './business-context.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OrderConfigService {
-  // Firebase path: /appSettings/restaurantDetails/onlineorders/orderType
-  private readonly FIREBASE_PATH = 'appSettings/restaurantDetails/onlineorders/orderType';
-  private db: Firestore;
-  
+  private readonly configApi = inject(ConfigApiService);
+  private readonly businessContext = inject(BusinessContextService);
+
   private configSubject = new BehaviorSubject<OrderConfiguration | null>(null);
-  public config$: Observable<OrderConfiguration | null> = this.configSubject.asObservable();
+  public config$: Observable<OrderConfiguration | null> =
+    this.configSubject.asObservable();
 
-  constructor() {
-    this.db = getFirestore(getApp());
-    this.loadConfiguration();
-  }
-
-  /**
-   * Get default configuration
-   */
-  private getDefaultConfiguration(): OrderConfiguration {
+  private get defaultConfig(): OrderConfiguration {
     return {
-      restaurantId: '1001',
+      restaurantId: this.businessContext.businessId() || '',
       orderTypes: {
-        dineIn: {
-          enabled: true,
-          displayName: 'Dine-in',
-          icon: 'restaurant',
-          description: 'Enjoy your meal at our restaurant'
-        },
+        dineIn: { enabled: true, displayName: 'Dine In', icon: 'restaurant' },
         takeout: {
           enabled: true,
           displayName: 'Takeout',
           icon: 'shopping_bag',
-          description: 'Pick up your order at the counter'
         },
         delivery: {
           enabled: true,
           displayName: 'Home Delivery',
           icon: 'delivery_dining',
-          description: 'Get your food delivered to your doorstep'
-        }
+        },
       },
       dineInConfig: {
         enabled: true,
         showDetails: true,
-        tables: [
-          { id: 'T1', number: '1', displayName: 'Table 1', capacity: 2, isAvailable: true },
-          { id: 'T2', number: '2', displayName: 'Table 2', capacity: 4, isAvailable: true },
-          { id: 'T3', number: '3', displayName: 'Table 3', capacity: 4, isAvailable: true },
-          { id: 'T4', number: '4', displayName: 'Table 4', capacity: 6, isAvailable: true },
-          { id: 'T5', number: '5', displayName: 'Table 5', capacity: 8, isAvailable: true },
-          { id: 'T6', number: '6', displayName: 'Table 6', capacity: 2, isAvailable: true },
-          { id: 'T7', number: '7', displayName: 'Table 7', capacity: 4, isAvailable: true },
-          { id: 'T8', number: '8', displayName: 'Table 8', capacity: 6, isAvailable: true },
-          { id: 'T9', number: '9', displayName: 'Table 9', capacity: 4, isAvailable: true },
-          { id: 'T10', number: '10', displayName: 'Table 10', capacity: 2, isAvailable: true }
-        ],
+        tables: [],
         defaultGuests: 2,
         minGuests: 1,
-        maxGuests: 20
+        maxGuests: 20,
       },
       takeoutConfig: {
         enabled: true,
-        showScheduledPickup: false, // Disabled for now
+        showScheduledPickup: false,
         defaultPickupTime: 30,
-        pickupMessage: 'Your order will be ready for pickup in approximately 30 minutes.'
+        pickupMessage:
+          'Your order will be ready for pickup in approximately 30 minutes.',
       },
-      deliveryConfig: {
-        enabled: true,
-        showAddressSelection: true
-      },
-      messages: this.getDefaultMessages(),
+      deliveryConfig: { enabled: true, showAddressSelection: true },
+      messages: this.defaultMessages(),
       defaultOrderType: 'delivery',
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
 
-  /**
-   * Get default messages
-   */
-  private getDefaultMessages(): OrderTypeMessages {
+  private defaultMessages(): OrderTypeMessages {
     return {
       dineIn: {
-        success: 'Your dine-in order has been placed successfully! Please proceed to your table.',
-        error: 'Failed to place dine-in order. Please try again.',
-        tableRequired: 'Please select a table number',
-        guestsRequired: 'Please specify the number of guests',
-        tableUnavailable: 'Selected table is currently unavailable. Please choose another table.'
+        success: 'Dine-in order placed!',
+        error: 'Failed. Please try again.',
+        tableRequired: 'Please select a table',
+        guestsRequired: 'Please enter guest count',
+        tableUnavailable: 'Table unavailable',
       },
       takeout: {
-        success: 'Your takeout order has been placed! We\'ll notify you when it\'s ready for pickup.',
-        error: 'Failed to place takeout order. Please try again.',
-        pickupTimeRequired: 'Please select a pickup time',
-        pickupMessage: 'Your order will be ready for pickup in approximately 30 minutes.'
+        success: 'Takeout order placed!',
+        error: 'Failed. Please try again.',
+        pickupTimeRequired: 'Select pickup time',
+        pickupMessage: 'Ready in ~30 minutes.',
       },
       delivery: {
-        success: 'Your delivery order has been placed successfully! We\'ll deliver it to your address.',
-        error: 'Failed to place delivery order. Please try again.',
-        addressRequired: 'Please select a delivery address',
-        outOfRange: 'Sorry, we don\'t deliver to this address at the moment.'
+        success: 'Delivery order placed!',
+        error: 'Failed. Please try again.',
+        addressRequired: 'Please select an address',
+        outOfRange: 'Outside delivery range.',
       },
       general: {
-        orderTypeRequired: 'Please select an order type (Dine-in, Takeout, or Delivery)',
-        orderPlaced: 'Order placed successfully!',
-        orderFailed: 'Failed to place order. Please try again.',
-        orderCancelled: 'Order has been cancelled successfully',
-        orderConfirmed: 'Your order has been confirmed!'
-      }
+        orderTypeRequired: 'Please select order type',
+        orderPlaced: 'Order placed!',
+        orderFailed: 'Order failed.',
+        orderCancelled: 'Order cancelled.',
+        orderConfirmed: 'Order confirmed!',
+      },
     };
   }
 
-
-
-  /**
-   * Load configuration from Firestore
-   * Path: /appSettings/restaurantDetails/onlineorders/orderType
-   */
   async loadConfiguration(): Promise<OrderConfiguration> {
-    try {
-      const pathParts = this.FIREBASE_PATH.split('/');
-      const docPath = `${pathParts[0]}/${pathParts[1]}/${pathParts[2]}/${pathParts[3]}`;
-      const docRef = doc(this.db, docPath);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const config: OrderConfiguration = {
-          restaurantId: data['restaurantId'] || '1001',
-          orderTypes: data['orderTypes'] || this.getDefaultConfiguration().orderTypes,
-          dineInConfig: data['dineInConfig'] || this.getDefaultConfiguration().dineInConfig,
-          takeoutConfig: data['takeoutConfig'] || this.getDefaultConfiguration().takeoutConfig,
-          deliveryConfig: data['deliveryConfig'] || this.getDefaultConfiguration().deliveryConfig,
-          messages: data['messages'] || this.getDefaultMessages(),
-          defaultOrderType: data['defaultOrderType'] || 'delivery',
-          updatedAt: data['updatedAt']?.toDate() || new Date()
-        };
-        
-        this.configSubject.next(config);
-        console.log('✅ Order configuration loaded from:', this.FIREBASE_PATH);
-        return config;
-      } else {
-        console.warn('⚠️ No order configuration found. Using default configuration.');
-        console.log('💡 Run setupDefaultConfiguration() to create the configuration in Firebase.');
-        const defaultConfig = this.getDefaultConfiguration();
-        this.configSubject.next(defaultConfig);
-        return defaultConfig;
-      }
-    } catch (error) {
-      console.error('❌ Error loading order configuration:', error);
-      const defaultConfig = this.getDefaultConfiguration();
-      this.configSubject.next(defaultConfig);
-      return defaultConfig;
-    }
-  }
-
-  /**
-   * Save configuration to Firestore
-   */
-  async saveConfiguration(config: OrderConfiguration): Promise<void> {
-    try {
-      const pathParts = this.FIREBASE_PATH.split('/');
-      const docPath = `${pathParts[0]}/${pathParts[1]}/${pathParts[2]}/${pathParts[3]}`;
-      const docRef = doc(this.db, docPath);
-      
-      await setDoc(docRef, {
-        ...config,
-        updatedAt: new Date()
-      });
-      
+    const slug = this.businessContext.businessId();
+    if (!slug) {
+      const config = this.defaultConfig;
       this.configSubject.next(config);
-      console.log('✅ Order configuration saved to:', this.FIREBASE_PATH);
-    } catch (error) {
-      console.error('❌ Error saving order configuration:', error);
-      throw error;
+      return config;
+    }
+    try {
+      const apiConfig = await firstValueFrom(
+        this.configApi.getBusinessConfig(slug),
+      );
+      const config = this.mapToOrderConfiguration(apiConfig.orderConfig);
+      this.configSubject.next(config);
+      return config;
+    } catch {
+      const config = this.defaultConfig;
+      this.configSubject.next(config);
+      return config;
     }
   }
 
-  /**
-   * Get current configuration synchronously
-   */
-  getConfiguration(): OrderConfiguration {
-    return this.configSubject.value || this.getDefaultConfiguration();
+  private mapToOrderConfiguration(
+    shape: OrderConfigShape | null,
+  ): OrderConfiguration {
+    if (!shape) return this.defaultConfig;
+    return {
+      restaurantId: this.businessContext.businessId() || '',
+      orderTypes: {
+        dineIn: {
+          enabled: shape.orderTypes.dineIn.enabled,
+          displayName: shape.orderTypes.dineIn.displayName,
+          icon: shape.orderTypes.dineIn.icon,
+        },
+        takeout: {
+          enabled: shape.orderTypes.takeout.enabled,
+          displayName: shape.orderTypes.takeout.displayName,
+          icon: shape.orderTypes.takeout.icon,
+        },
+        delivery: {
+          enabled: shape.orderTypes.delivery.enabled,
+          displayName: shape.orderTypes.delivery.displayName,
+          icon: shape.orderTypes.delivery.icon,
+        },
+      },
+      dineInConfig: {
+        enabled: shape.dineInConfig.enabled,
+        showDetails: shape.dineInConfig.showDetails,
+        tables: [],
+        defaultGuests: shape.dineInConfig.defaultGuests,
+        minGuests: shape.dineInConfig.minGuests,
+        maxGuests: shape.dineInConfig.maxGuests,
+      },
+      takeoutConfig: {
+        enabled: shape.takeoutConfig.enabled,
+        showScheduledPickup: shape.takeoutConfig.showScheduledPickup,
+        defaultPickupTime: shape.takeoutConfig.defaultPickupTime,
+        pickupMessage: shape.takeoutConfig.pickupMessage,
+      },
+      deliveryConfig: {
+        enabled: shape.deliveryConfig.enabled,
+        showAddressSelection: shape.deliveryConfig.showAddressSelection,
+      },
+      messages: this.defaultMessages(),
+      defaultOrderType:
+        (shape.defaultOrderType as 'delivery' | 'dine-in' | 'takeout') ||
+        'delivery',
+      updatedAt: new Date(),
+    };
   }
 
-  /**
-   * Check if an order type is enabled
-   */
+  getConfiguration(): OrderConfiguration {
+    return this.configSubject.value ?? this.defaultConfig;
+  }
+
   isOrderTypeEnabled(orderType: 'dine-in' | 'takeout' | 'delivery'): boolean {
     const config = this.getConfiguration();
-    
-    switch (orderType) {
-      case 'dine-in':
-        return config.orderTypes.dineIn.enabled;
-      case 'takeout':
-        return config.orderTypes.takeout.enabled;
-      case 'delivery':
-        return config.orderTypes.delivery.enabled;
-      default:
-        return false;
-    }
+    if (orderType === 'dine-in') return config.orderTypes.dineIn.enabled;
+    if (orderType === 'takeout') return config.orderTypes.takeout.enabled;
+    if (orderType === 'delivery') return config.orderTypes.delivery.enabled;
+    return false;
   }
 
-  /**
-   * Get available order types
-   */
   getAvailableOrderTypes(): Array<'dine-in' | 'takeout' | 'delivery'> {
     const config = this.getConfiguration();
-    const availableTypes: Array<'dine-in' | 'takeout' | 'delivery'> = [];
-
-    if (config.orderTypes.dineIn.enabled) availableTypes.push('dine-in');
-    if (config.orderTypes.takeout.enabled) availableTypes.push('takeout');
-    if (config.orderTypes.delivery.enabled) availableTypes.push('delivery');
-
-    // If no types are enabled, enable delivery by default
-    if (availableTypes.length === 0) {
-      console.warn('⚠️ No order types enabled. Defaulting to delivery.');
-      availableTypes.push('delivery');
-    }
-
-    return availableTypes;
+    const types: Array<'dine-in' | 'takeout' | 'delivery'> = [];
+    if (config.orderTypes.dineIn.enabled) types.push('dine-in');
+    if (config.orderTypes.takeout.enabled) types.push('takeout');
+    if (config.orderTypes.delivery.enabled) types.push('delivery');
+    return types.length ? types : ['delivery'];
   }
 
-  /**
-   * Get available tables
-   */
   getAvailableTables() {
-    const config = this.getConfiguration();
-    return config.dineInConfig.tables.filter(table => table.isAvailable);
+    return this.getConfiguration().dineInConfig.tables.filter(
+      (t) => t.isAvailable,
+    );
   }
-
-  /**
-   * Get all tables (including unavailable)
-   */
   getAllTables() {
-    const config = this.getConfiguration();
-    return config.dineInConfig.tables;
+    return this.getConfiguration().dineInConfig.tables;
   }
 
-  /**
-   * Get message for specific scenario
-   */
   getMessage(category: keyof OrderTypeMessages, key: string): string {
-    const config = this.getConfiguration();
-    const messages = config.messages[category] as any;
-    return messages?.[key] || '';
+    const messages = this.getConfiguration().messages[category] as Record<
+      string,
+      string
+    >;
+    return messages?.[key] ?? '';
   }
 
-  /**
-   * Update table availability
-   */
-  async updateTableAvailability(tableId: string, isAvailable: boolean): Promise<void> {
+  getOrderTypeDisplayName(
+    orderType: 'dine-in' | 'takeout' | 'delivery',
+  ): string {
     const config = this.getConfiguration();
-    const tableIndex = config.dineInConfig.tables.findIndex(t => t.id === tableId);
-    
-    if (tableIndex !== -1) {
-      config.dineInConfig.tables[tableIndex].isAvailable = isAvailable;
-      await this.saveConfiguration(config);
-      console.log(`✅ Table ${tableId} availability updated to: ${isAvailable}`);
-    } else {
-      console.warn(`⚠️ Table ${tableId} not found`);
-    }
+    if (orderType === 'dine-in') return config.orderTypes.dineIn.displayName;
+    if (orderType === 'takeout') return config.orderTypes.takeout.displayName;
+    if (orderType === 'delivery') return config.orderTypes.delivery.displayName;
+    return orderType;
   }
 
-  /**
-   * Get order type display name
-   */
-  getOrderTypeDisplayName(orderType: 'dine-in' | 'takeout' | 'delivery'): string {
-    const config = this.getConfiguration();
-    
-    switch (orderType) {
-      case 'dine-in':
-        return config.orderTypes.dineIn.displayName;
-      case 'takeout':
-        return config.orderTypes.takeout.displayName;
-      case 'delivery':
-        return config.orderTypes.delivery.displayName;
-      default:
-        return orderType;
-    }
-  }
-
-  /**
-   * Get order type icon
-   */
   getOrderTypeIcon(orderType: 'dine-in' | 'takeout' | 'delivery'): string {
     const config = this.getConfiguration();
-    
-    switch (orderType) {
-      case 'dine-in':
-        return config.orderTypes.dineIn.icon;
-      case 'takeout':
-        return config.orderTypes.takeout.icon;
-      case 'delivery':
-        return config.orderTypes.delivery.icon;
-      default:
-        return 'help_outline';
-    }
+    if (orderType === 'dine-in') return config.orderTypes.dineIn.icon;
+    if (orderType === 'takeout') return config.orderTypes.takeout.icon;
+    if (orderType === 'delivery') return config.orderTypes.delivery.icon;
+    return 'help_outline';
   }
 
-  /**
-   * Check if dine-in details should be shown
-   */
   shouldShowDineInDetails(): boolean {
-    const config = this.getConfiguration();
-    return config.dineInConfig.enabled && config.dineInConfig.showDetails;
+    const c = this.getConfiguration();
+    return c.dineInConfig.enabled && c.dineInConfig.showDetails;
   }
-
-  /**
-   * Check if takeout scheduled pickup should be shown
-   */
   shouldShowTakeoutScheduledPickup(): boolean {
-    const config = this.getConfiguration();
-    return config.takeoutConfig.enabled && config.takeoutConfig.showScheduledPickup;
+    const c = this.getConfiguration();
+    return c.takeoutConfig.enabled && c.takeoutConfig.showScheduledPickup;
   }
 }

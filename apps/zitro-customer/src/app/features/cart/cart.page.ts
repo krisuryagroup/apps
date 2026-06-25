@@ -27,7 +27,7 @@ import {
   OrderProcessingService,
   UserManagementService,
   OrderConfigService,
-  PricingService,
+  PricingApiService,
   LocationSelectionService,
   AnalyticsService,
   AddressApiService,
@@ -68,7 +68,7 @@ export class CartPage implements OnDestroy {
   private readonly orderProcessing = inject(OrderProcessingService);
   private readonly userMgmt = inject(UserManagementService);
   private readonly orderConfigService = inject(OrderConfigService);
-  private readonly pricingService = inject(PricingService);
+  private readonly pricingService = inject(PricingApiService);
   private readonly locationService = inject(LocationSelectionService);
   private readonly analytics = inject(AnalyticsService);
   private readonly addressApi = inject(AddressApiService);
@@ -275,7 +275,7 @@ export class CartPage implements OnDestroy {
   }
 
   private async init(): Promise<void> {
-    this.pricingConfig.set(await this.pricingService.loadPricingConfig());
+    this.pricingConfig.set(await this.pricingService.loadConfig());
 
     const config = await this.orderConfigService.loadConfiguration();
     this.orderConfig.set(config);
@@ -348,7 +348,7 @@ export class CartPage implements OnDestroy {
   private async calculatePricing(): Promise<void> {
     let config = this.pricingConfig();
     if (!config) {
-      config = await this.pricingService.getPricingConfig();
+      config = await this.pricingService.loadConfig();
       this.pricingConfig.set(config);
     }
     const breakdown = await this.pricingService.calculatePricing({

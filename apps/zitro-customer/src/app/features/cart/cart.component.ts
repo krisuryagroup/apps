@@ -33,10 +33,8 @@ import { APP_CONSTANTS } from '../../core/constants/app.constants';
 import { AnalyticsService } from '@zitro/services';
 import { OrderConfigService } from '@zitro/services';
 import { OrderConfiguration, TableConfig } from '@zitro/models';
-import { PricingService } from '@zitro/services';
+import { PricingApiService } from '@zitro/services';
 import { PricingBreakdown, PricingConfig } from '@zitro/models';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
 
 /* Deprecated: Moved to pricing.model.ts
 interface PricingConfig {
@@ -102,7 +100,7 @@ export class CartComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog) ?? inject(MatDialog);
   private analyticsService = inject(AnalyticsService);
   orderConfigService = inject(OrderConfigService);
-  private pricingService = inject(PricingService);
+  private pricingService = inject(PricingApiService);
   private locationSelectionService = inject(LocationSelectionService);
 
   isUserLoggedIn = false;
@@ -175,7 +173,7 @@ export class CartComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     // Load pricing configuration from PricingService
-    this.pricingConfig = await this.pricingService.loadPricingConfig();
+    this.pricingConfig = await this.pricingService.loadConfig();
 
     // Load order type configuration
     this.orderConfig = await this.orderConfigService.loadConfiguration();
@@ -608,7 +606,7 @@ export class CartComponent implements OnInit, OnDestroy {
    */
   async calculatePricing() {
     if (!this.pricingConfig) {
-      this.pricingConfig = await this.pricingService.getPricingConfig();
+      this.pricingConfig = await this.pricingService.loadConfig();
     }
 
     this.pricingBreakdown = await this.pricingService.calculatePricing({
@@ -621,86 +619,6 @@ export class CartComponent implements OnInit, OnDestroy {
     });
 
     console.log('Pricing calculated:', this.pricingBreakdown);
-  }
-
-  /**
-   * @deprecated Use PricingService instead
-   * Load pricing configuration from Firebase
-   * Path: app_config/pricing
-   */
-  async loadPricingConfig() {
-    try {
-      const db = getFirestore(getApp());
-      // Path: /appSettings/restaurantDetails/onlineorders/checkout
-      const pricingDocRef = doc(
-        db,
-        'appSettings',
-        'restaurantDetails',
-        'onlineorders',
-        'checkout',
-      );
-      const pricingSnap = await getDoc(pricingDocRef);
-
-      if (pricingSnap.exists()) {
-        this.pricingConfig = pricingSnap.data() as PricingConfig;
-        console.log('✅ Pricing configuration loaded:', this.pricingConfig);
-
-        // Update delivery charge and threshold from config
-        if (this.pricingConfig.delivery.enabled) {
-          this.deliveryCharge = this.pricingConfig.delivery.base_fee;
-          this.freeDeliveryThreshold =
-            this.pricingConfig.delivery.free_delivery_above;
-        }
-      } else {
-        console.warn(
-          '⚠️ Pricing configuration not found in Firebase. Using default values.',
-        );
-        // Set default config
-        this.pricingConfig = this.getDefaultPricingConfig();
-      }
-    } catch (error) {
-      console.error('❌ Error loading pricing configuration:', error);
-      // Set default config on error
-      this.pricingConfig = this.getDefaultPricingConfig();
-    }
-  }
-
-  /**
-   * Get default pricing configuration
-   */
-  private getDefaultPricingConfig(): PricingConfig {
-    return {
-      currency: 'INR',
-      delivery: {
-        enabled: true,
-        apply: true,
-        base_fee: 40,
-        per_km_fee: 0,
-        free_delivery_above: 249,
-        surge_multiplier: 1,
-        max_delivery_cap: 0,
-      },
-      platform_fee: {
-        enabled: true,
-        apply: false,
-        flat_fee: 5,
-      },
-      packaging: {
-        enabled: true,
-        apply: false,
-        default_fee: 10,
-        type: 'flat',
-      },
-      gst: {
-        enabled: true,
-        apply: false,
-        food_percent: 5,
-      },
-      rounding: {
-        enabled: true,
-        type: 'nearest_rupee',
-      },
-    };
   }
 
   get canPlaceOrder() {

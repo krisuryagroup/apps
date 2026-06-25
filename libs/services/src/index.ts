@@ -41,7 +41,6 @@ export * from './navigation.service';
 export * from './order-config.service';
 export * from './order-processing.service';
 export * from './order.service';
-export * from './pricing.service';
 export * from './products.service';
 export * from './request-throttle.service';
 export * from './restaurant-switching.service';
