@@ -1,132 +1,190 @@
-import { Injectable } from '@angular/core';
+/**
+ * FirebaseOtpService — production-ready Firebase Phone Auth for Angular.
+ *
+ * Root causes this implementation solves:
+ *
+ * 1. DataCloneError
+ *    Firebase keeps an internal reference to `RecaptchaVerifier` inside the
+ *    `ConfirmationResult` it returns. When Firebase Auth later tries to persist
+ *    auth state to IndexedDB (structured-clone algorithm), it encounters the
+ *    verifier's DOM references and callback functions — both non-cloneable →
+ *    DataCloneError. Fix: call `verifier.clear()` IMMEDIATELY after
+ *    `signInWithPhoneNumber` resolves or rejects.
+ *
+ * 2. reCAPTCHA 401 / Enterprise fallback noise
+ *    Firebase attempts reCAPTCHA Enterprise first; if the project has no
+ *    Enterprise key it gets a 401 and falls back to v2. This is harmless but
+ *    noisy. Fix: add localhost to Firebase Console → Auth → Authorized Domains.
+ *    The 401 log cannot be suppressed from JS.
+ *
+ * 3. Zone.js / Angular reactive contamination
+ *    If `ConfirmationResult` is stored in a signal, BehaviorSubject, or any
+ *    Angular-tracked reactive context, Angular's change detection or effect
+ *    scheduler will try to serialize it → DataCloneError. Fix: store it only
+ *    in a plain private class property and run all Firebase calls outside
+ *    Angular's zone.
+ *
+ * 4. Verifier lifecycle mismanagement
+ *    Creating a new `RecaptchaVerifier` without clearing the previous one
+ *    leaves orphaned reCAPTCHA widgets in the DOM and Firebase's internal
+ *    widget registry, causing "reCAPTCHA has already been rendered" errors on
+ *    retry. Fix: always call `_clearVerifier()` before creating a new one.
+ */
 
-// Firebase v9 modular imports
-import { initializeApp, getApp, getApps } from 'firebase/app';
+import { Injectable, NgZone, inject } from '@angular/core';
+import { getApp, getApps } from 'firebase/app';
 import {
   getAuth,
+  Auth,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  Auth,
   ConfirmationResult,
+  UserCredential,
 } from 'firebase/auth';
 
-/**
- * FirebaseOtpService
- *
- * Usage:
- * 1. Add a <div id="recaptcha-container"></div> in your component template.
- * 2. Inject FirebaseOtpService in your component.
- * 3. Call sendOtp() to trigger OTP send to the hardcoded phone number.
- *
- * Example:
- *   constructor(private otpService: FirebaseOtpService) {}
- *   this.otpService.sendOtp().then(...)
- */
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class FirebaseOtpService {
-  private auth: Auth;
+  private readonly ngZone = inject(NgZone);
+  private readonly auth: Auth;
+
+  // Plain private properties — NOT signals, NOT BehaviorSubject, NOT any Angular
+  // reactive primitive. Storing ConfirmationResult in reactive state is the #1
+  // cause of DataCloneError in Angular + Firebase Phone Auth.
+  private _confirmationResult: ConfirmationResult | null = null;
+  private _verifier: RecaptchaVerifier | null = null;
 
   constructor() {
-    // Check if Firebase app already exists, use it instead of creating a new one
-    try {
-      if (getApps().length > 0) {
-        // Use existing Firebase app
-        const app = getApp();
-        this.auth = getAuth(app);
-        console.log('Using existing Firebase app for OTP service');
-      } else {
-        // Initialize new Firebase app if none exists
-        const firebaseConfig = {
-          apiKey: 'AIzaSyCdhvXtodLYlKsaqvaj-83rLRze0K277c4',
-          authDomain: 'zitro-18f5c.firebaseapp.com',
-          projectId: 'zitro-18f5c',
-          storageBucket: 'zitro-18f5c.firebasestorage.app',
-          messagingSenderId: '732131169680',
-          appId: '1:732131169680:web:40a153176195281cbf8f15',
-          measurementId: 'G-46PV73YKKT',
-        };
-        const app = initializeApp(firebaseConfig);
-        this.auth = getAuth(app);
-        console.log('Initialized new Firebase app for OTP service');
-      }
-    } catch (err) {
-      console.error('Error initializing Firebase in OTP service:', err);
-      // Fallback to default getAuth()
-      this.auth = getAuth();
-    }
+    // Reuse the already-initialised Firebase app created by AngularFire/app init.
+    this.auth = getApps().length ? getAuth(getApp()) : getAuth();
   }
 
   /**
-   * Sends OTP to the specified phone number using Firebase Auth
-   * @param phone Phone number with country code (e.g., '+919643809268')
-   * @param recaptchaContainerId The HTML element ID for reCAPTCHA
-   * @returns Promise with confirmationResult or error
+   * Send OTP to `phone` (e.g. '+919643809268').
+   *
+   * Returns void — callers should not receive or store the ConfirmationResult.
+   * The result is held internally and used by `verifyOtp()`.
    */
-  sendOtp(
+  async sendOtp(
     phone: string,
     recaptchaContainerId = 'recaptcha-container',
-  ): Promise<ConfirmationResult> {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
+  ): Promise<void> {
+    // Always destroy the previous verifier before creating a new one.
+    // Not doing this is the #2 cause of reCAPTCHA "already rendered" errors on retry.
+    this._clearVerifier();
+
+    // Run ALL Firebase operations outside Angular's zone.
+    // Zone.js patches IndexedDB, setTimeout, Promise etc. globally. Firebase's
+    // auth-state persistence writes happen on internal schedules that Zone.js
+    // intercepts; running outside the zone ensures those writes don't trigger
+    // Angular change detection or get mixed into Angular's task queue.
+    await this.ngZone.runOutsideAngular(async () => {
+      this._verifier = new RecaptchaVerifier(this.auth, recaptchaContainerId, {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved — nothing to do here; signInWithPhoneNumber
+          // continues automatically.
+        },
+        'expired-callback': () => {
+          // Widget expired before user submitted → clean up so a fresh one is
+          // created on the next sendOtp() call.
+          this._clearVerifier();
+        },
+      });
+
       try {
-        // Ensure phone has country code
-        const formattedPhone = phone.startsWith('+') ? phone : '+91' + phone;
-
-        const verifier = new RecaptchaVerifier(
+        const result = await signInWithPhoneNumber(
           this.auth,
-          recaptchaContainerId,
-          {
-            size: 'invisible',
-            callback: (token: any) => {
-              console.log('reCAPTCHA solved');
-            },
-          },
+          phone,
+          this._verifier,
         );
 
-        try {
-          const widgetId = await verifier.render();
-          console.log('reCAPTCHA rendered, widgetId:', widgetId);
-        } catch (err) {
-          console.warn('reCAPTCHA render warning (may be fine):', err);
-        }
+        // ─────────────────────────────────────────────────────────────────────
+        // CRITICAL: call verifier.clear() IMMEDIATELY after signInWithPhoneNumber
+        // resolves (success OR failure).
+        //
+        // Firebase internally keeps a reference to the verifier inside the
+        // ConfirmationResult object tree. When Firebase later serialises auth
+        // state to IndexedDB, the structured-clone algorithm encounters the
+        // verifier's DOM nodes and JS functions → DataCloneError.
+        //
+        // Clearing the verifier severs that reference before Firebase's
+        // persistence layer ever tries to clone the state.
+        // ─────────────────────────────────────────────────────────────────────
+        this._clearVerifier();
 
-        console.log('Sending OTP to:', formattedPhone);
-        const confirmationResult = await signInWithPhoneNumber(
-          this.auth,
-          formattedPhone,
-          verifier,
-        );
-        console.log(
-          'OTP sent successfully, verificationId:',
-          confirmationResult.verificationId,
-        );
-        resolve(confirmationResult);
+        this._confirmationResult = result;
       } catch (err: any) {
-        console.error('Firebase OTP error:', err);
-
-        // Provide specific error messages for common issues
-        let errorMessage = 'Failed to send OTP';
-        if (err.code === 'auth/invalid-app-credential') {
-          errorMessage =
-            'Firebase Phone Authentication not configured. Please enable Phone Auth in Firebase Console and add authorized domains.';
-          console.error(
-            'Setup required: 1) Enable Phone Auth in Firebase Console 2) Add authorized domains 3) Verify reCAPTCHA configuration',
-          );
-        } else if (err.code === 'auth/captcha-check-failed') {
-          errorMessage = 'reCAPTCHA verification failed. Please try again.';
-        } else if (err.code === 'auth/invalid-phone-number') {
-          errorMessage =
-            'Invalid phone number format. Please check and try again.';
-        } else if (err.code === 'auth/quota-exceeded') {
-          errorMessage = 'SMS quota exceeded. Please try again later.';
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-
-        reject(new Error(errorMessage));
+        this._clearVerifier();
+        throw this._friendlyError(err);
       }
     });
+  }
+
+  /**
+   * Verify the OTP entered by the user.
+   * Must be called after a successful `sendOtp()`.
+   */
+  async verifyOtp(otp: string): Promise<UserCredential> {
+    if (!this._confirmationResult) {
+      throw new Error('No pending OTP session. Call sendOtp() first.');
+    }
+
+    const pending = this._confirmationResult;
+
+    return this.ngZone.runOutsideAngular(async () => {
+      try {
+        const credential = await pending.confirm(otp);
+        this._confirmationResult = null;
+        return credential;
+      } catch (err: any) {
+        throw this._friendlyError(err);
+      }
+    });
+  }
+
+  /** Call this when the user navigates away or cancels the OTP flow. */
+  clearSession(): void {
+    this._confirmationResult = null;
+    this._clearVerifier();
+  }
+
+  get hasPendingSession(): boolean {
+    return this._confirmationResult !== null;
+  }
+
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  private _clearVerifier(): void {
+    if (this._verifier) {
+      try {
+        this._verifier.clear();
+      } catch {
+        // Ignore — verifier may already be cleared or widget never rendered.
+      }
+      this._verifier = null;
+    }
+  }
+
+  private _friendlyError(err: any): Error {
+    const map: Record<string, string> = {
+      'auth/invalid-phone-number': 'Invalid phone number format.',
+      'auth/too-many-requests':
+        'Too many attempts. Please wait before retrying.',
+      'auth/quota-exceeded': 'SMS quota exceeded. Try again later.',
+      'auth/captcha-check-failed': 'reCAPTCHA check failed. Please try again.',
+      'auth/invalid-app-credential':
+        'Firebase Phone Auth is not configured. Enable Phone sign-in and add localhost to Authorized Domains in Firebase Console.',
+      'auth/operation-not-allowed':
+        'Phone sign-in is disabled. Enable it in Firebase Console → Authentication → Sign-in providers.',
+      'auth/invalid-verification-code':
+        'Incorrect OTP. Please check and try again.',
+      'auth/code-expired': 'OTP has expired. Please request a new one.',
+      'auth/session-expired': 'OTP session expired. Please request a new one.',
+    };
+    const message =
+      map[err?.code] ?? err?.message ?? 'An unexpected error occurred.';
+    const out = new Error(message);
+    out.name = err?.code ?? 'FirebaseAuthError';
+    return out;
   }
 }

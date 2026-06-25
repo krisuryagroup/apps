@@ -141,20 +141,12 @@ export class FirebaseAuthService {
       new Date().toISOString(),
     );
 
-    // 6. Update Firestore user profile
-    try {
-      await this.userManagementService.createOrUpdateUserEntry(
-        credential.user as any,
-      );
-    } catch {
-      // Non-fatal — profile sync failure should not block sign-in
-    }
-
     return credential;
   }
 
   // Completes session after Firebase Phone Auth (reCAPTCHA path).
   // Fetches the app JWT from the backend and stores all auth keys in localStorage.
+  // User upsert is handled server-side in VerifyFirebaseTokenHandler (PostgreSQL).
   async completeSignIn(
     credential: UserCredential,
     phone: string,
@@ -172,13 +164,6 @@ export class FirebaseAuthService {
       AUTH_KEYS.LOGGED_IN_DATE_TIME,
       new Date().toISOString(),
     );
-    try {
-      await this.userManagementService.createOrUpdateUserEntry(
-        credential.user as any,
-      );
-    } catch {
-      // Non-fatal
-    }
   }
 
   private sendSMSViaFast2SMSQuickSMSApi(): Promise<Fast2SmsResponse> {

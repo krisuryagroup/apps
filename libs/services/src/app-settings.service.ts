@@ -10,6 +10,7 @@ import {
   updateDoc,
   serverTimestamp,
 } from '@angular/fire/firestore';
+import { firstValueFrom } from 'rxjs';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { ProductsService } from './products.service';
 import { CategoriesService } from './categories.service';
@@ -34,6 +35,7 @@ import { Checkout } from '@zitro/models';
 import { AuthConfig, DEFAULT_AUTH_CONFIG } from '@zitro/models';
 import { AnalyticsConfigModel } from '@zitro/models';
 import { FcmTokenService } from './fcm-token.service';
+import { ConfigApiService } from './api/config-api.service';
 
 export interface AppSettings {
   id: string;
@@ -63,6 +65,7 @@ export class AppSettingsService {
   private categoriesService = inject(CategoriesService);
   private router = inject(Router);
   private cacheManager = inject(CacheManagerService);
+  private configApi = inject(ConfigApiService);
 
   private isInitialized = false;
   private isInitializing = false;
@@ -127,31 +130,10 @@ export class AppSettingsService {
     return baseKeys.map((key) => `${key}_${restaurantId}`);
   }
 
-  /**
-   * Get analyticConfigs from Firebase
-   * Path: /appSettings/restaurantDetails/onlineorders/analyticConfigs
-   */
   async getAnalyticConfigs(): Promise<AnalyticsConfigModel | null> {
-    try {
-      const docRef = doc(
-        this.firestore,
-        'appSettings',
-        'restaurantDetails',
-        'onlineorders',
-        'analyticConfigs',
-      );
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        return docSnap.data() as AnalyticsConfigModel;
-      }
-
-      console.warn('⚠️ analyticConfigs document not found');
-      return null;
-    } catch (error) {
-      console.error('❌ Error fetching analyticConfigs:', error);
-      return null;
-    }
+    // Analytics config has been removed from Firestore.
+    // Return null — callers already handle null gracefully.
+    return null;
   }
 
   /**
@@ -232,29 +214,15 @@ export class AppSettingsService {
   }
 
   /**
-   * Fetch delivery time from Firestore (in minutes)
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
+   * Fetch delivery time in minutes from the backend API.
    */
   async getDeliveryTime(): Promise<number> {
     try {
-      const appSettingsDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-      );
-      const appSettingsSnap = await getDoc(appSettingsDocRef);
-      if (appSettingsSnap.exists()) {
-        const data = appSettingsSnap.data();
-        return typeof data['deliveryTime'] === 'number'
-          ? data['deliveryTime']
-          : 45; // Default 45 minutes
-      }
-      return 45; // Fallback
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      return config.orders.deliveryTimeMinutes;
     } catch (error) {
       console.error('Error fetching delivery time:', error);
-      return 45; // Fallback
+      return 45;
     }
   }
 
@@ -289,238 +257,82 @@ export class AppSettingsService {
     }
   }
 
-  /**
-   * Fetch WhatsApp link from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
-   */
   async getWhatsAppLink(): Promise<string> {
     try {
-      const appSettingsDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      return (
+        config.business.whatsAppLink || 'https://wa.me/919193116659?text=Hi'
       );
-      const appSettingsSnap = await getDoc(appSettingsDocRef);
-      if (appSettingsSnap.exists()) {
-        const data = appSettingsSnap.data();
-        return data['whatsAppLink'] || 'https://wa.me/919193116659?text=Hi';
-      }
-      return 'https://wa.me/919193116659?text=Hi'; // Fallback
     } catch (error) {
       console.error('Error fetching WhatsApp link:', error);
-      return 'https://wa.me/919193116659?text=Hi'; // Fallback
+      return 'https://wa.me/919193116659?text=Hi';
     }
   }
 
-  /**
-   * Fetch contact information from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
-   */
   async getContactInfo(): Promise<ContactInfo> {
     try {
-      const contactDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-      );
-      const contactSnap = await getDoc(contactDocRef);
-      if (contactSnap.exists()) {
-        const data = contactSnap.data();
-        return {
-          contactEmail: data['contactEmail'] || '',
-          contactPhone: data['contactPhone'] || '',
-        };
-      } else {
-        console.warn('Contact info document not found, using defaults');
-      }
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      return {
+        contactEmail: config.business.contactEmail,
+        contactPhone: config.business.contactPhone,
+      };
     } catch (error) {
       console.error('Error fetching contact info:', error);
+      return { contactEmail: '', contactPhone: '' };
     }
-
-    return {
-      contactEmail: '',
-      contactPhone: '',
-    };
   }
 
-  /**
-   * Fetch test phone numbers from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
-   * Returns the testPhoneNumbers array from Firebase
-   */
   async getTestPhoneNumbers(): Promise<string[]> {
     try {
-      const appSettingsDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-      );
-      const appSettingsSnap = await getDoc(appSettingsDocRef);
-      if (appSettingsSnap.exists()) {
-        const data = appSettingsSnap.data();
-        const testNumbers = data['testPhoneNumbers'];
-
-        // Validate that it's an array and convert all values to strings
-        if (Array.isArray(testNumbers) && testNumbers.length > 0) {
-          // Convert all numbers to strings (handle both string and number types)
-          const convertedNumbers = testNumbers
-            .map((num) => String(num))
-            .filter((num) => num && num.trim().length > 0);
-
-          if (convertedNumbers.length > 0) {
-            console.log(
-              '✅ Test phone numbers fetched from Firebase:',
-              convertedNumbers,
-            );
-            return convertedNumbers;
-          }
-        }
-        console.warn('⚠️ Test phone numbers field is invalid or empty');
-      } else {
-        console.warn(
-          '⚠️ App settings document not found for test phone numbers',
-        );
-      }
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      return config.testPhoneNumbers ?? [];
     } catch (error) {
-      console.error(
-        '❌ Error fetching test phone numbers from Firebase:',
-        error,
-      );
+      console.error('❌ Error fetching test phone numbers:', error);
+      return [];
     }
-
-    // Return empty array if fetch fails or data is invalid
-    return [];
   }
 
   /**
-   * Fetch auth configuration from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/auh
-   * Returns auth UI labels and SMS config settings
+   * Fetch auth configuration from the backend API (GET /api/app-config).
+   * Falls back to DEFAULT_AUTH_CONFIG if the API is unreachable.
    */
   async getAuthConfig(): Promise<AuthConfig> {
     try {
-      const authDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        'auh',
-      );
-      const authSnap = await getDoc(authDocRef);
-
-      if (authSnap.exists()) {
-        const data = authSnap.data();
-        console.log('✅ Auth config fetched from Firebase:', data);
-
-        // Merge fetched data with defaults to ensure all fields exist
-        return {
-          sms: {
-            isFast2SmsPhoneAuthentication:
-              data['sms']?.['isFast2SmsPhoneAuthentication'] ??
-              DEFAULT_AUTH_CONFIG.sms.isFast2SmsPhoneAuthentication,
-            isFirebasePhoneAuthentication:
-              data['sms']?.['isFirebasePhoneAuthentication'] ??
-              DEFAULT_AUTH_CONFIG.sms.isFirebasePhoneAuthentication,
-            resendOTPAllowed:
-              data['sms']?.['resendOTPAllowed'] ??
-              DEFAULT_AUTH_CONFIG.sms.resendOTPAllowed,
-            resendOTPTime:
-              data['sms']?.['resendOTPTime'] ??
-              DEFAULT_AUTH_CONFIG.sms.resendOTPTime,
-          },
-          ui: {
-            guestButtonLabel:
-              data['ui']?.['guestButtonLabel'] ??
-              DEFAULT_AUTH_CONFIG.ui.guestButtonLabel,
-            guestDescription:
-              data['ui']?.['guestDescription'] ??
-              DEFAULT_AUTH_CONFIG.ui.guestDescription,
-            header: data['ui']?.['header'] ?? DEFAULT_AUTH_CONFIG.ui.header,
-            headerDescription:
-              data['ui']?.['headerDescription'] ??
-              DEFAULT_AUTH_CONFIG.ui.headerDescription,
-            sendOTPButtonLabel:
-              data['ui']?.['sendOTPButtonLabel'] ??
-              DEFAULT_AUTH_CONFIG.ui.sendOTPButtonLabel,
-            sendOTPPlaceholder:
-              data['ui']?.['sendOTPPlaceholder'] ??
-              DEFAULT_AUTH_CONFIG.ui.sendOTPPlaceholder,
-            validateOTPButtonLabel:
-              data['ui']?.['validateOTPButtonLabel'] ??
-              DEFAULT_AUTH_CONFIG.ui.validateOTPButtonLabel,
-            verifyOTPPlaceholder:
-              data['ui']?.['verifyOTPPlaceholder'] ??
-              DEFAULT_AUTH_CONFIG.ui.verifyOTPPlaceholder,
-            otpSentSuccessMessage:
-              data['ui']?.['otpSentSuccessMessage'] ??
-              DEFAULT_AUTH_CONFIG.ui.otpSentSuccessMessage,
-            otpSentFailureMessage:
-              data['ui']?.['otpSentFailureMessage'] ??
-              DEFAULT_AUTH_CONFIG.ui.otpSentFailureMessage,
-            resendOTPLabel:
-              data['ui']?.['resendOTPLabel'] ??
-              DEFAULT_AUTH_CONFIG.ui.resendOTPLabel,
-          },
-        };
-      } else {
-        console.warn('⚠️ Auth config document not found, using defaults');
-      }
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      return {
+        sms: {
+          isFast2SmsPhoneAuthentication:
+            config.auth.sms.isFast2SmsPhoneAuthentication,
+          isFirebasePhoneAuthentication:
+            config.auth.sms.isFirebasePhoneAuthentication,
+          resendOTPAllowed: config.auth.sms.resendOTPAllowed,
+          resendOTPTime: config.auth.sms.resendOTPTime,
+        },
+        ui: {
+          guestButtonLabel: config.auth.ui.guestButtonLabel,
+          guestDescription: config.auth.ui.guestDescription,
+          header: config.auth.ui.header,
+          headerDescription: config.auth.ui.headerDescription,
+          sendOTPButtonLabel: config.auth.ui.sendOTPButtonLabel,
+          sendOTPPlaceholder: config.auth.ui.sendOTPPlaceholder,
+          validateOTPButtonLabel: config.auth.ui.validateOTPButtonLabel,
+          verifyOTPPlaceholder: config.auth.ui.verifyOTPPlaceholder,
+          otpSentSuccessMessage: config.auth.ui.otpSentSuccessMessage,
+          otpSentFailureMessage: config.auth.ui.otpSentFailureMessage,
+          resendOTPLabel: config.auth.ui.resendOTPLabel,
+        },
+      };
     } catch (error) {
-      console.error('❌ Error fetching auth config from Firebase:', error);
+      console.error('❌ Error fetching auth config from API:', error);
+      return DEFAULT_AUTH_CONFIG;
     }
-
-    // Return default config if fetch fails
-    return DEFAULT_AUTH_CONFIG;
   }
 
   /**
-   * Fetch SMS configuration from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
-   * Returns the smsConfigs map with apiUrl and authKey
+   * SMS credentials are secrets — never sent to the frontend.
+   * The backend handles all SMS sending. This method now always returns null.
    */
   async getSmsConfigs(): Promise<SmsConfigs | null> {
-    try {
-      const appSettingsDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-      );
-      const appSettingsSnap = await getDoc(appSettingsDocRef);
-      if (appSettingsSnap.exists()) {
-        const data = appSettingsSnap.data();
-        const smsConfigs = data['smsConfigs'];
-
-        if (smsConfigs && typeof smsConfigs === 'object') {
-          const apiUrl = smsConfigs['apiUrl'];
-          const authKey = smsConfigs['authKey'];
-
-          if (apiUrl && authKey) {
-            console.log('✅ SMS configs fetched from Firebase');
-            return {
-              apiUrl: String(apiUrl),
-              authKey: String(authKey),
-            };
-          } else {
-            console.warn('⚠️ SMS configs missing apiUrl or authKey');
-          }
-        } else {
-          console.warn('⚠️ smsConfigs field is not an object or is missing');
-        }
-      } else {
-        console.warn('⚠️ App settings document not found for SMS configs');
-      }
-    } catch (error) {
-      console.error('❌ Error fetching SMS configs from Firebase:', error);
-    }
-
     return null;
   }
 

@@ -6,7 +6,6 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ConfirmationResult } from 'firebase/auth';
 import { PhoneInputComponent, PHONE_INPUT_DEFAULT_CONFIG } from '@zitro/ui';
 import { I18nPipe } from '@zitro/i18n';
 import {
@@ -45,7 +44,8 @@ export class SignInPage implements OnDestroy {
   readonly authConfig = signal<AuthConfig>(DEFAULT_AUTH_CONFIG);
 
   private phone = '';
-  private confirmationResult: ConfirmationResult | null = null;
+  // confirmationResult is held inside FirebaseOtpService — never stored here
+  // to prevent DataCloneError via Angular router state serialisation.
   private usingFirebaseOtp = false;
 
   constructor() {
@@ -73,7 +73,7 @@ export class SignInPage implements OnDestroy {
 
     if (cfg.sms.isFirebasePhoneAuthentication) {
       try {
-        this.confirmationResult = await this.otpService.sendOtp(phoneWithCode);
+        await this.otpService.sendOtp(phoneWithCode);
         this.usingFirebaseOtp = true;
         this.isLoading.set(false);
         this.navigateToOtp(phoneWithCode);
@@ -106,10 +106,12 @@ export class SignInPage implements OnDestroy {
 
   private navigateToOtp(phoneWithCode: string): void {
     sessionStorage.setItem('otp_phone', phoneWithCode);
+    // Do NOT pass confirmationResult through router state — it contains
+    // non-serializable Firebase internals → DataCloneError. The OtpPage reads
+    // it from FirebaseOtpService directly.
     this.router.navigate(['/auth/otp'], {
       state: {
         phone: phoneWithCode,
-        confirmationResult: this.confirmationResult,
         usingFirebaseOtp: this.usingFirebaseOtp,
         resendTime: this.authConfig().sms.resendOTPTime,
         resendAllowed: this.authConfig().sms.resendOTPAllowed,

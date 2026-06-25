@@ -6,12 +6,12 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ConfirmationResult } from 'firebase/auth';
 import { firstValueFrom } from 'rxjs';
 import { OtpInputComponent, OTP_INPUT_DEFAULT_CONFIG } from '@zitro/ui';
 import { I18nPipe } from '@zitro/i18n';
 import {
   FirebaseAuthService,
+  FirebaseOtpService,
   FavoritesService,
   FcmTokenService,
   AnalyticsService,
@@ -30,6 +30,7 @@ import { PHONE_CONSTANTS } from '@zitro/utils';
 export class OtpPage implements OnDestroy {
   private readonly router = inject(Router);
   private readonly authService = inject(FirebaseAuthService);
+  private readonly otpService = inject(FirebaseOtpService);
   private readonly favorites = inject(FavoritesService);
   private readonly fcmToken = inject(FcmTokenService);
   private readonly analytics = inject(AnalyticsService);
@@ -44,7 +45,6 @@ export class OtpPage implements OnDestroy {
   readonly otpValue = signal('');
 
   private phone: string;
-  private confirmationResult: ConfirmationResult | null;
   private usingFirebaseOtp: boolean;
   private resendAllowed: boolean;
   private resendTime: number;
@@ -55,8 +55,8 @@ export class OtpPage implements OnDestroy {
     const state = nav?.extras?.state ?? {};
     this.phone =
       (state['phone'] as string) || sessionStorage.getItem('otp_phone') || '';
-    this.confirmationResult =
-      (state['confirmationResult'] as ConfirmationResult) ?? null;
+    // ConfirmationResult is held inside FirebaseOtpService — never pass it
+    // through router state (structured-clone → DataCloneError).
     this.usingFirebaseOtp = (state['usingFirebaseOtp'] as boolean) ?? false;
     this.resendAllowed = (state['resendAllowed'] as boolean) ?? true;
     this.resendTime = PHONE_CONSTANTS.OTP_RESEND_SECONDS;
@@ -93,13 +93,13 @@ export class OtpPage implements OnDestroy {
 
     try {
       let credential;
-      if (this.usingFirebaseOtp && this.confirmationResult) {
-        // Firebase Phone Auth path (reCAPTCHA)
-        credential = await this.confirmationResult.confirm(otp);
-        // Store app JWT and auth keys — required for AuthGuard on protected routes
+      if (this.usingFirebaseOtp) {
+        // Firebase Phone Auth path — verifyOtp() calls confirmationResult.confirm()
+        // outside Angular's zone, inside FirebaseOtpService. No DataCloneError.
+        credential = await this.otpService.verifyOtp(otp);
         await this.authService.completeSignIn(credential, this.phone);
       } else {
-        // Backend OTP path — signInWithPhone verifies OTP + exchanges tokens
+        // Backend OTP path — verifies OTP + exchanges tokens
         credential = await this.authService.signInWithPhone(this.phone, otp);
       }
 
@@ -113,16 +113,13 @@ export class OtpPage implements OnDestroy {
       setTimeout(() => this.favorites.checkAndOfferFavoritesMigration(), 500);
 
       sessionStorage.removeItem('otp_phone');
+      this.otpService.clearSession();
 
-      // UI-003: send new users (no profile name) to profile setup
-      // Always invalidate the cache so we don't read a previous user's profile
-      // (CacheService is localStorage-based and survives sign-out).
       this.userApi.invalidateProfileCache();
       try {
         const profile = await firstValueFrom(this.userApi.getProfile());
         this.router.navigate(profile?.name ? ['/home'] : ['/auth/signup']);
       } catch {
-        // 404 = new user with no profile yet
         this.router.navigate(['/auth/signup']);
       }
     } catch (err: unknown) {
@@ -137,7 +134,11 @@ export class OtpPage implements OnDestroy {
     this.statusMessage.set('');
 
     try {
-      await this.authService.sendOtp(this.phone);
+      if (this.usingFirebaseOtp) {
+        await this.otpService.sendOtp(this.phone);
+      } else {
+        await this.authService.sendOtp(this.phone);
+      }
       this.statusMessage.set('auth.otpSentSuccess');
       this.startResendTimer();
     } catch (err: unknown) {
@@ -147,6 +148,7 @@ export class OtpPage implements OnDestroy {
 
   goBack(): void {
     sessionStorage.removeItem('otp_phone');
+    this.otpService.clearSession();
     this.router.navigate(['/auth/signin']);
   }
 
@@ -184,7 +186,6 @@ export class OtpPage implements OnDestroy {
   }
 
   private mapFirebaseError(err: unknown): string {
-    // API error codes take priority (HttpErrorResponse from backend)
     const e = err as { error?: { errorCode?: string }; status?: number };
     const apiCode =
       e.error?.errorCode || (e.status === 429 ? 'RATE_LIMIT_EXCEEDED' : '');
@@ -204,8 +205,10 @@ export class OtpPage implements OnDestroy {
           return 'errors.invalidOtp';
       }
     }
-    // Firebase SDK error codes (Firebase phone auth path)
-    const code = (err as { code?: string })?.code ?? '';
+    const code =
+      (err as { code?: string; name?: string })?.code ??
+      (err as { name?: string })?.name ??
+      '';
     switch (code) {
       case 'auth/invalid-verification-code':
         return 'errors.invalidOtp';
@@ -213,6 +216,8 @@ export class OtpPage implements OnDestroy {
         return 'errors.otpExpired';
       case 'auth/too-many-requests':
         return 'errors.tooManyRequests';
+      case 'FirebaseAuthError':
+        return (err as Error).message ?? 'errors.invalidOtp';
       default:
         return 'errors.invalidOtp';
     }
