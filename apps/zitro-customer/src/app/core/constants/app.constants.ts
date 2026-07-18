@@ -623,11 +623,11 @@ export const DELIVERY_PINCODE_CONFIG = {
 
 // Centralized Firebase config for the whole app (use same project for all restaurants)
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyDfY5lffyzTSPGc4ytB09ufqL46pAdHPSM',
-  authDomain: 'zitro-7044d.firebaseapp.com',
-  projectId: 'zitro-7044d',
-  storageBucket: 'zitro-7044d.firebasestorage.app',
-  messagingSenderId: '614619838539',
-  appId: '1:614619838539:web:bdd7f46e66ab7deb62f5ce',
-  measurementId: 'G-Y019T9DN8D',
+  apiKey: 'AIzaSyCuZKlKyRcbjaj2XlFIPWFxVTMtI2nLP7U',
+  authDomain: 'zitro-customer.firebaseapp.com',
+  projectId: 'zitro-customer',
+  storageBucket: 'zitro-customer.firebasestorage.app',
+  messagingSenderId: '218706844246',
+  appId: '1:218706844246:web:d0059efeeb00569734b9f7',
+  measurementId: 'G-FDX95JNVE3',
 } as const;

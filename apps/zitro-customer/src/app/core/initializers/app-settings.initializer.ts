@@ -5,8 +5,19 @@ import { AppSettingsService } from '@zitro/services';
  * App initializer function that ensures app settings are checked before app starts
  * This is critical for cache management and mandatory logout functionality
  */
-function initializeAppSettings(appSettingsService: AppSettingsService): () => Promise<void> {
-  return () => appSettingsService.initializeAndCheckSettings();
+function initializeAppSettings(
+  appSettingsService: AppSettingsService,
+): () => Promise<void> {
+  return async () => {
+    const t0 = performance.now();
+    console.log('[STARTUP] APP_SETTINGS start');
+    await appSettingsService.initializeAndCheckSettings();
+    console.log(
+      '[STARTUP] APP_SETTINGS done in',
+      (performance.now() - t0).toFixed(0),
+      'ms',
+    );
+  };
 }
 
 /**
@@ -18,5 +29,5 @@ export const APP_SETTINGS_INITIALIZER = {
   provide: APP_INITIALIZER,
   useFactory: initializeAppSettings,
   deps: [AppSettingsService],
-  multi: true
+  multi: true,
 };

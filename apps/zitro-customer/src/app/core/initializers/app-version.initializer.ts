@@ -1,12 +1,17 @@
 import { APP_INITIALIZER } from '@angular/core';
 import { AppVersionService } from '@zitro/services';
-import { ComponentRef, ApplicationRef, createComponent, EnvironmentInjector } from '@angular/core';
+import {
+  ComponentRef,
+  ApplicationRef,
+  createComponent,
+  EnvironmentInjector,
+} from '@angular/core';
 import { UpdateDialogComponent } from '@zitro/ui';
 
 /**
  * App version check initializer - ONLY for Android app
  * Completely skipped for web/browser version
- * 
+ *
  * This runs before the app fully initializes and:
  * 1. Checks if running on Android native app
  * 2. Fetches version config from Firebase
@@ -17,12 +22,18 @@ import { UpdateDialogComponent } from '@zitro/ui';
 function initializeVersionCheck(
   appVersionService: AppVersionService,
   appRef: ApplicationRef,
-  injector: EnvironmentInjector
+  injector: EnvironmentInjector,
 ): () => Promise<void> {
   return async () => {
+    const t0 = performance.now();
+    console.log('[STARTUP] APP_VERSION start');
     // CRITICAL: Skip version check if not Android app
     if (!appVersionService.isAndroidApp()) {
-      console.log('🌐 Version Check Initializer: Skipped (running in browser/web)');
+      console.log(
+        '[STARTUP] APP_VERSION skipped (web) in',
+        (performance.now() - t0).toFixed(0),
+        'ms',
+      );
       return Promise.resolve();
     }
 
@@ -36,12 +47,14 @@ function initializeVersionCheck(
         return Promise.resolve();
       }
 
-      console.log(`⚠️ Version Check Initializer: Update ${updateResult.isMandatory ? 'REQUIRED' : 'available'}`);
+      console.log(
+        `⚠️ Version Check Initializer: Update ${updateResult.isMandatory ? 'REQUIRED' : 'available'}`,
+      );
 
       // Show update dialog and block until user takes action
       return new Promise<void>((resolve) => {
         const componentRef = createComponent(UpdateDialogComponent, {
-          environmentInjector: injector
+          environmentInjector: injector,
         });
 
         // Set component inputs
@@ -52,7 +65,7 @@ function initializeVersionCheck(
         componentRef.instance.update.subscribe(() => {
           console.log('🔗 User clicked update button');
           appVersionService.openPlayStore(updateResult.storeUrl);
-          
+
           // For mandatory updates, don't resolve - keep blocking the app
           if (!updateResult.isMandatory) {
             console.log('ℹ️ Optional update - allowing user to continue');
@@ -75,12 +88,15 @@ function initializeVersionCheck(
 
         // Attach component to the application
         appRef.attachView(componentRef.hostView);
-        const domElem = (componentRef.hostView as any).rootNodes[0] as HTMLElement;
+        const domElem = (componentRef.hostView as any)
+          .rootNodes[0] as HTMLElement;
         document.body.appendChild(domElem);
 
         // If mandatory update, the promise never resolves - app stays blocked
         if (updateResult.isMandatory) {
-          console.log('🚫 Mandatory update required - app initialization blocked');
+          console.log(
+            '🚫 Mandatory update required - app initialization blocked',
+          );
           // Promise intentionally not resolved to block app
         }
       });
@@ -100,5 +116,5 @@ export const APP_VERSION_INITIALIZER = {
   provide: APP_INITIALIZER,
   useFactory: initializeVersionCheck,
   deps: [AppVersionService, ApplicationRef, EnvironmentInjector],
-  multi: true
+  multi: true,
 };

@@ -1,4 +1,8 @@
-import { ApplicationConfig, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideZoneChangeDetection,
+  APP_INITIALIZER,
+} from '@angular/core';
 import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
@@ -29,7 +33,7 @@ export const appConfig: ApplicationConfig = {
         '/api/platform-tags',
         '/api/businesses/nearby',
         '/api/tags',
-        '/api/businesses/',   // banners — read-only, guest-browsable
+        '/api/businesses/', // banners — read-only, guest-browsable
         '/api/auth/otp/request',
         '/api/auth/otp/verify',
       ],
@@ -49,10 +53,42 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: (imageCacheService: ImageCacheService) => {
-        return () => imageCacheService.cleanupExpiredCache();
+        return async () => {
+          const t0 = performance.now();
+          console.log('[STARTUP] IMAGE_CACHE cleanup start');
+          await imageCacheService.cleanupExpiredCache();
+          console.log(
+            '[STARTUP] IMAGE_CACHE cleanup done in',
+            (performance.now() - t0).toFixed(0),
+            'ms',
+          );
+        };
       },
       deps: [ImageCacheService],
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+    // ── TIMING PROBE — remove after root cause found ──────────────────────────
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const t0 = performance.now();
+        console.log(
+          '[STARTUP] APP_INITIALIZER chain started at',
+          t0.toFixed(0),
+          'ms after page load',
+        );
+        return () => {
+          const t1 = performance.now();
+          console.log(
+            '[STARTUP] All APP_INITIALIZERs finished in',
+            (t1 - t0).toFixed(0),
+            'ms (wall clock from this probe start)',
+          );
+          return Promise.resolve();
+        };
+      },
+      deps: [],
+      multi: true,
+    },
+  ],
 };

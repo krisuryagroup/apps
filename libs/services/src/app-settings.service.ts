@@ -398,10 +398,17 @@ export class AppSettingsService {
    */
   private async performSettingsCheck(): Promise<void> {
     try {
+      const t0 = performance.now();
       console.log(
-        '🔍 App Settings Service: Fetching settings from Firebase...',
+        '[STARTUP] AppSettings.performSettingsCheck — Firestore fetch start',
       );
       const settings = await this.getAppSettings();
+      console.log(
+        '[STARTUP] AppSettings.getAppSettings done in',
+        (performance.now() - t0).toFixed(0),
+        'ms — found?',
+        !!settings,
+      );
 
       if (settings) {
         // Update cache manager with new configuration
@@ -409,10 +416,25 @@ export class AppSettingsService {
           this.cacheManager.updateCacheConfig(settings.cacheManagement);
         }
 
+        const t1 = performance.now();
         await this.handleCacheClearRequirement(settings);
+        console.log(
+          '[STARTUP] AppSettings.handleCacheClear done in',
+          (performance.now() - t1).toFixed(0),
+          'ms',
+        );
         await this.handleLoginClearRequirement(settings);
+        console.log(
+          '[STARTUP] AppSettings.performSettingsCheck total',
+          (performance.now() - t0).toFixed(0),
+          'ms',
+        );
       } else {
-        console.warn('⚠️ App Settings Service: No settings found in Firebase');
+        console.warn(
+          '[STARTUP] AppSettings: No settings found in Firebase — took',
+          (performance.now() - t0).toFixed(0),
+          'ms',
+        );
       }
     } catch (error) {
       console.error('Error checking app settings:', error);
@@ -441,7 +463,13 @@ export class AppSettingsService {
 
       // Get the first document from the subcollection (assuming there's only one settings document)
       const q = query(subcollectionRef, limit(1));
+      const _tFs = performance.now();
       const querySnapshot = await getDocs(q);
+      console.log(
+        '[STARTUP] AppSettings Firestore getDocs took',
+        (performance.now() - _tFs).toFixed(0),
+        'ms',
+      );
 
       if (!querySnapshot.empty) {
         const settingsDoc = querySnapshot.docs[0];
