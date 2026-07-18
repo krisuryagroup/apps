@@ -11,12 +11,18 @@ function initializeAppSettings(
   return async () => {
     const t0 = performance.now();
     console.log('[STARTUP] APP_SETTINGS start');
-    await appSettingsService.initializeAndCheckSettings();
+
+    void appSettingsService.initializeAndCheckSettings().catch((error) => {
+      console.warn('[STARTUP] APP_SETTINGS background init failed:', error);
+    });
+
     console.log(
-      '[STARTUP] APP_SETTINGS done in',
+      '[STARTUP] APP_SETTINGS initializer resolved in',
       (performance.now() - t0).toFixed(0),
       'ms',
     );
+
+    return Promise.resolve();
   };
 }
 

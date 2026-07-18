@@ -74,6 +74,7 @@ export class AppSettingsService {
   private lastCacheClearTimestamp = 0;
   private static readonly CHECK_COOLDOWN = 5 * 60 * 1000; // 5 minutes
   private static readonly CACHE_CLEAR_COOLDOWN = 2 * 60 * 1000; // 2 minutes
+  private static readonly REMOTE_TIMEOUT_MS = 5000; // 5 seconds max
   private _authService: FirebaseAuthService | null = null;
   private _fcmTokenService: FcmTokenService | null = null;
 
@@ -96,6 +97,33 @@ export class AppSettingsService {
       this._fcmTokenService = this.injector.get(FcmTokenService);
     }
     return this._fcmTokenService;
+  }
+
+  private async withTimeout<T>(
+    operation: () => Promise<T>,
+    timeoutMs: number,
+    fallbackValue: T,
+    context: string,
+  ): Promise<T> {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      return await Promise.race([
+        operation(),
+        new Promise<T>((resolve) => {
+          timeoutId = setTimeout(() => {
+            console.warn(
+              `[STARTUP] ${context} timed out after ${timeoutMs}ms, using fallback`,
+            );
+            resolve(fallbackValue);
+          }, timeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   /**
@@ -463,38 +491,43 @@ export class AppSettingsService {
 
       // Get the first document from the subcollection (assuming there's only one settings document)
       const q = query(subcollectionRef, limit(1));
-      const _tFs = performance.now();
-      const querySnapshot = await getDocs(q);
-      console.log(
-        '[STARTUP] AppSettings Firestore getDocs took',
-        (performance.now() - _tFs).toFixed(0),
-        'ms',
+
+      return this.withTimeout(
+        async () => {
+          const _tFs = performance.now();
+          const querySnapshot = await getDocs(q);
+          console.log(
+            '[STARTUP] AppSettings Firestore getDocs took',
+            (performance.now() - _tFs).toFixed(0),
+            'ms',
+          );
+
+          if (!querySnapshot.empty) {
+            const settingsDoc = querySnapshot.docs[0];
+            const data = settingsDoc.data();
+
+            return {
+              id: settingsDoc.id,
+              isClearCacheMandatoryForOnlineOrder:
+                data['isClearCacheMandatoryForOnlineOrder'] || false,
+              isLoginClearCacheMandatoryForOnlineOrder:
+                data['isLoginClearCacheMandatoryForOnlineOrder'] || false,
+              lastUpdated: this.convertFirebaseTimestamp(data['lastUpdated']),
+              cacheManagement: data['cacheManagement'] as
+                | CacheManagementConfig
+                | undefined,
+            } as AppSettings;
+          }
+
+          console.warn(
+            '⚠️ App Settings Service: No settings documents found in subcollection',
+          );
+          return null;
+        },
+        AppSettingsService.REMOTE_TIMEOUT_MS,
+        null,
+        'AppSettings Firestore fetch',
       );
-
-      if (!querySnapshot.empty) {
-        const settingsDoc = querySnapshot.docs[0];
-        const data = settingsDoc.data();
-
-        const settings: AppSettings = {
-          id: settingsDoc.id,
-          isClearCacheMandatoryForOnlineOrder:
-            data['isClearCacheMandatoryForOnlineOrder'] || false,
-          isLoginClearCacheMandatoryForOnlineOrder:
-            data['isLoginClearCacheMandatoryForOnlineOrder'] || false,
-          lastUpdated: this.convertFirebaseTimestamp(data['lastUpdated']),
-          cacheManagement: data['cacheManagement'] as
-            | CacheManagementConfig
-            | undefined,
-        };
-
-        return settings;
-      } else {
-        console.warn(
-          '⚠️ App Settings Service: No settings documents found in subcollection',
-        );
-      }
-
-      return null;
     } catch (error) {
       console.error(
         '❌ App Settings Service: Error fetching app settings from subcollection:',
