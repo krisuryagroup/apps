@@ -10,6 +10,7 @@
   max-height: calc(100dvh - 126px);
   overflow: hidden;
   background: var(--zitro-background, #f5f7fa);
+  position: relative; // required for overlay loader positioning
 }
 
 // ── Sticky header ────────────────────────────────────────────────────────────

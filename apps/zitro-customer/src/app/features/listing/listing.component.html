@@ -78,6 +78,13 @@
     </button>
   </div>
 
+  @if (isCartUpdating()) {
+    <lib-loader
+      [config]="cartLoaderConfig"
+      data-testid="cart-updating-loader"
+    />
+  }
+
   @if (isLoading()) {
     <lib-loader data-testid="listing-loader" />
   }

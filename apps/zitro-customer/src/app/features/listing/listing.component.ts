@@ -27,6 +27,7 @@ import {
   EmptyStateComponent,
   ErrorStateComponent,
 } from '@zitro/ui';
+import type { LoaderConfig } from '@zitro/ui';
 import { APP_SETTINGS_CACHE } from '../../core/constants/app.constants';
 
 interface CategorySection {
@@ -82,6 +83,13 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly isLoading = signal(false);
   readonly hasError = signal(false);
+  readonly isCartUpdating = signal(false);
+
+  readonly cartLoaderConfig: LoaderConfig = {
+    size: 'sm',
+    color: 'primary',
+    overlay: true,
+  };
   readonly allProducts = signal<Product[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly searchQuery = signal('');
@@ -281,39 +289,54 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProduct.set(null);
   }
 
-  onAddToCart(event: {
+  async onAddToCart(event: {
     product: Product;
     variation: ProductVariation | null;
-  }): void {
+  }): Promise<void> {
     const slug = this._businessSlug();
     if (!slug) return;
-    this.cartApi
-      .addToCart(slug, event.product.id, event.variation?.id ?? undefined)
-      .catch(() => {
-        /* no-op */
-      });
-  }
-
-  onIncrement(product: Product): void {
-    const slug = this._businessSlug();
-    if (!slug) return;
-    this.cartApi.addToCart(slug, product.id).catch(() => {
+    this.isCartUpdating.set(true);
+    try {
+      await this.cartApi.addToCart(
+        slug,
+        event.product.id,
+        event.variation?.id ?? undefined,
+      );
+    } catch {
       /* no-op */
-    });
+    } finally {
+      this.isCartUpdating.set(false);
+    }
   }
 
-  onDecrement(product: Product): void {
+  async onIncrement(product: Product): Promise<void> {
+    const slug = this._businessSlug();
+    if (!slug) return;
+    this.isCartUpdating.set(true);
+    try {
+      await this.cartApi.addToCart(slug, product.id);
+    } catch {
+      /* no-op */
+    } finally {
+      this.isCartUpdating.set(false);
+    }
+  }
+
+  async onDecrement(product: Product): Promise<void> {
     const slug = this._businessSlug();
     if (!slug) return;
     const cart = this.cartApi.getCartForBusiness(slug);
     if (!cart) return;
     const cartItem = cart.items.find((i) => i.productId === product.id);
     if (!cartItem) return;
-    this.cartApi
-      .updateQty(slug, cartItem.id, cartItem.quantity - 1)
-      .catch(() => {
-        /* no-op */
-      });
+    this.isCartUpdating.set(true);
+    try {
+      await this.cartApi.updateQty(slug, cartItem.id, cartItem.quantity - 1);
+    } catch {
+      /* no-op */
+    } finally {
+      this.isCartUpdating.set(false);
+    }
   }
 
   toggleVegFilter(): void {
