@@ -2,43 +2,67 @@
 @use 'styles/breakpoints' as *;
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+// ── Global image error fallback ──────────────────────────────────────────────
+// Applied by GlobalImageErrorService when any <img> fails to load.
+img.img-load-error {
+  opacity: 0.55;
+  filter: grayscale(20%);
+}
+
+// Skeleton shimmer shown while images are loading (used by CachedImageDirective)
+@keyframes img-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+img.image-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: img-shimmer 1.4s infinite;
+  color: transparent; // hide alt text during load
 }
 
 html {
-    height: 100%;
-    width: 100%;
-    overflow-x: hidden;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 100%;
-    width: 100%;
-    background: #f5f8f7;
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    color: $text-color;
-    // overflow-x: hidden;
-    position: relative;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100%;
+  width: 100%;
+  background: #f5f8f7;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  color: $text-color;
+  // overflow-x: hidden;
+  position: relative;
 }
 
 .main-content {
-    width: 100%;
-    margin: 0 auto;
-    padding: 0 0 80px 0;
-    overflow-x: hidden;
-    max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0 80px 0;
+  overflow-x: hidden;
+  max-width: 100%;
 
-    @include respond-above(tablet) {
-        max-width: 768px;
-    }
-    @include respond-above(desktop) {
-        max-width: 1200px;
-    }
-    @include respond-above(large-desktop) {
-        max-width: 1440px;
-    }
+  @include respond-above(tablet) {
+    max-width: 768px;
+  }
+  @include respond-above(desktop) {
+    max-width: 1200px;
+  }
+  @include respond-above(large-desktop) {
+    max-width: 1440px;
+  }
 }
 
 .text-link {
@@ -48,6 +72,10 @@ body {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

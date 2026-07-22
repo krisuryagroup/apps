@@ -8,6 +8,7 @@ import { environment } from '../environments/environment';
 import { FirebaseAuthService } from '@zitro/services';
 import { AnalyticsService } from '@zitro/services';
 import { AppSettingsService } from '@zitro/services';
+import { GlobalImageErrorService } from '@zitro/services';
 import { SplashScreenComponent } from '@zitro/ui';
 import { NoInternetComponent } from '@zitro/ui';
 import { getAppVersion } from '@zitro/utils';
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private authService = inject(FirebaseAuthService);
   private analyticsService = inject(AnalyticsService);
   private appSettingsService = inject(AppSettingsService);
+  private globalImageError = inject(GlobalImageErrorService);
 
   title = 'client';
   showSplash = true;
@@ -37,6 +39,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private backHandler = this.handleAndroidBack.bind(this);
 
   ngOnInit() {
+    // Activate global image error fallback handler
+    this.globalImageError.init();
+
     // Check initial connectivity
     this.checkConnectivity();
 

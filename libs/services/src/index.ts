@@ -8,6 +8,7 @@ export * from './toast.service';
 export * from './feature-flag.service';
 export * from './interceptors';
 export * from './provide-services';
+export * from './global-image-error.service';
 
 export * from './analytics.service';
 export * from './app-settings.service';

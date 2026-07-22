@@ -19,6 +19,11 @@
           {
             "glob": "**/*",
             "input": "apps/zitro-customer/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/zitro-customer/src/assets",
+            "output": "assets"
           }
         ],
         "styles": ["apps/zitro-customer/src/styles.scss"],
