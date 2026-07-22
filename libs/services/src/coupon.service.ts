@@ -1,109 +1,42 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of, from } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
-import {
-  collection,
-  getDocs,
-  getFirestore,
-  Firestore,
-} from 'firebase/firestore';
 import {
   OnlineOrderCoupon,
   CouponValidationResult,
   OrderType,
 } from '@zitro/models';
-import { convertFirebaseDate } from '@zitro/utils';
-import { FIREBASE_PATHS, CACHE_KEYS } from '@zitro/utils';
-import { CacheService } from './cache.service';
-import { CacheManagerService } from './cache-manager.service';
-import { CacheType } from '@zitro/models';
+import { CouponApiService } from './api/coupon-api.service';
+import { BusinessContextService } from './business-context.service';
 import { UserManagementService } from './user-management.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CouponService {
-  private cacheService = inject(CacheService);
-  private cacheManager = inject(CacheManagerService);
+  private couponApi = inject(CouponApiService);
+  private businessContext = inject(BusinessContextService);
   private userManagementService = inject(UserManagementService);
 
-  private db: Firestore;
-
-  constructor() {
-    this.db = getFirestore();
-  }
-
   /**
-   * Get all active coupons from Firebase
+   * Get all active coupons from the backend API.
+   * manualSearch = true skips the isDisplayedForOnlineOrders filter.
    */
   getActiveCoupons(manualSearch = false): Observable<OnlineOrderCoupon[]> {
-    // // Check cache first
-    // const cachedCoupons = this.getCachedCoupons();
-    // if (cachedCoupons) {
-    //   console.log('📦 Using cached coupons');
-    //   // Filter cached coupons based on manualSearch flag
-    //   const filtered = this.filterActiveCoupons(cachedCoupons, manualSearch);
-    //   return of(filtered);
-    // }
+    const slug = this.businessContext.businessId();
+    if (!slug) return of([]);
 
-    // console.log('⬇️ Fetching coupons from Firestore');
-
-    // Use subcollection path like banner service
-    const listCollectionPath = FIREBASE_PATHS.COUPONS;
-
-    return from(getDocs(collection(this.db, listCollectionPath))).pipe(
-      map((querySnapshot) => {
-        const coupons: OnlineOrderCoupon[] = [];
-
-        if (!querySnapshot.empty) {
-          querySnapshot.forEach((doc) => {
-            const couponData = doc.data();
-            if (couponData && typeof couponData === 'object') {
-              const coupon: OnlineOrderCoupon = {
-                id: couponData['id'] || doc.id,
-                code: couponData['code'],
-                title: couponData['title'],
-                description: couponData['description'],
-                discountType: couponData['discountType'],
-                discountValue: couponData['discountValue'],
-                maxDiscount: couponData['maxDiscount'],
-                minOrderAmount: couponData['minOrderAmount'],
-                isActive: couponData['isActive'],
-                validFrom: convertFirebaseDate(couponData['validFrom']),
-                validTo: convertFirebaseDate(couponData['validTo']),
-                usageLimit: couponData['usageLimit'],
-                usedCount: couponData['usedCount'] || 0,
-                termsAndConditions: couponData['termsAndConditions'],
-                isDisplayedForOnlineOrders:
-                  couponData['isDisplayedForOnlineOrders'] || false,
-                isNewCustomerOnly: couponData['isNewCustomerOnly'] || false,
-                maxUsagePerUser: couponData['maxUsagePerUser'],
-                usagePeriod: couponData['usagePeriod'],
-                cooldownPeriodDays: couponData['cooldownPeriodDays'],
-                applicableOrderTypes: couponData['applicableOrderTypes'],
-                createdAt: convertFirebaseDate(couponData['createdAt']),
-                updatedAt: convertFirebaseDate(couponData['updatedAt']),
-              };
-              coupons.push(coupon);
-            }
-          });
-        }
-
-        // // Cache all coupons (before filtering)
-        // this.setCachedCoupons(coupons);
-
-        // Filter and return active coupons
-        return this.filterActiveCoupons(coupons, manualSearch);
-      }),
+    return this.couponApi.getCoupons(slug).pipe(
+      map((coupons) => this.filterActiveCoupons(coupons, manualSearch)),
       catchError((error) => {
-        console.error('Error fetching coupons from Firebase:', error);
-        return of([]); // Return empty array on error
+        console.error('Error fetching coupons:', error);
+        return of([]);
       }),
     );
   }
 
   /**
-   * Validate coupon code
+   * Validate coupon code against cart total and items.
    */
   validateCoupon(
     couponCode: string,
@@ -122,8 +55,6 @@ export class CouponService {
           };
         }
 
-        // Check if coupon is applicable to the order type
-        // If applicableOrderTypes is not provided/empty, coupon applies to all order types
         if (
           orderType &&
           coupon.applicableOrderTypes &&
@@ -147,7 +78,6 @@ export class CouponService {
         const currentUserPhone =
           await this.userManagementService.getCurrentUserPhone();
 
-        // Check if this is a new customer-only coupon
         if (coupon.isNewCustomerOnly) {
           if (currentUserPhone) {
             const userData =
@@ -163,7 +93,6 @@ export class CouponService {
           }
         }
 
-        // Check per-user usage restrictions
         if (
           currentUserPhone &&
           (coupon.maxUsagePerUser || coupon.cooldownPeriodDays)
@@ -176,7 +105,6 @@ export class CouponService {
               (usage) => usage.couponCode === coupon.code,
             );
 
-            // Check cooldown period
             if (coupon.cooldownPeriodDays && couponUsages.length > 0) {
               const lastUsage = couponUsages[couponUsages.length - 1];
               const lastUsedDate = new Date(lastUsage.usedAt);
@@ -198,18 +126,15 @@ export class CouponService {
               }
             }
 
-            // Check max usage per user with period
             if (coupon.maxUsagePerUser) {
               let relevantUsages = couponUsages;
 
-              // Filter by period if specified
               if (coupon.usagePeriod && coupon.usagePeriod !== 'lifetime') {
                 const now = new Date();
                 const periodStart = this.getPeriodStartDate(
                   now,
                   coupon.usagePeriod,
                 );
-
                 relevantUsages = couponUsages.filter((usage) => {
                   const usageDate = new Date(usage.usedAt);
                   return usageDate >= periodStart;
@@ -229,15 +154,14 @@ export class CouponService {
           }
         }
 
-        // Check if coupon is still valid (date-only comparison)
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to start of day
+        today.setHours(0, 0, 0, 0);
 
         const validFromDate = new Date(coupon.validFrom);
-        validFromDate.setHours(0, 0, 0, 0); // Set to start of day
+        validFromDate.setHours(0, 0, 0, 0);
 
         const validToDate = new Date(coupon.validTo);
-        validToDate.setHours(23, 59, 59, 999); // Set to end of day
+        validToDate.setHours(23, 59, 59, 999);
 
         if (today < validFromDate || today > validToDate) {
           return {
@@ -248,13 +172,10 @@ export class CouponService {
           };
         }
 
-        // Calculate eligible amount (only items where isOfferDisabled is not true)
         let eligibleAmount = orderAmount;
         if (cartItems && cartItems.length > 0) {
-          eligibleAmount = cartItems.reduce((sum, item) => {
-            if (item.isOfferDisabled === true) {
-              return sum;
-            }
+          eligibleAmount = cartItems.reduce((sum: number, item: any) => {
+            if (item.isOfferDisabled === true) return sum;
             const price =
               typeof item.price === 'number'
                 ? item.price
@@ -263,7 +184,6 @@ export class CouponService {
           }, 0);
         }
 
-        // Check minimum order amount against eligible items only
         if (coupon.minOrderAmount && eligibleAmount < coupon.minOrderAmount) {
           return {
             isValid: false,
@@ -273,7 +193,6 @@ export class CouponService {
           };
         }
 
-        // Check usage limit
         if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
           return {
             isValid: false,
@@ -283,7 +202,6 @@ export class CouponService {
           };
         }
 
-        // Calculate discount on eligible amount only
         let discountAmount = 0;
         if (coupon.discountType === 'percentage') {
           discountAmount = (eligibleAmount * coupon.discountValue) / 100;
@@ -299,16 +217,13 @@ export class CouponService {
         return {
           isValid: true,
           message: `Coupon applied! You saved Rs ${discountAmount.toFixed(2)}`,
-          discountAmount: discountAmount,
-          finalAmount: finalAmount,
+          discountAmount,
+          finalAmount,
         };
       }),
     );
   }
 
-  /**
-   * Get coupon by code
-   */
   getCouponByCode(couponCode: string): Observable<OnlineOrderCoupon | null> {
     return this.getActiveCoupons(true).pipe(
       map((coupons) => {
@@ -320,94 +235,31 @@ export class CouponService {
     );
   }
 
-  /**
-   * Filter active coupons based on date and display settings
-   */
+  refreshCoupons(): Observable<OnlineOrderCoupon[]> {
+    return this.getActiveCoupons();
+  }
+
   private filterActiveCoupons(
     coupons: OnlineOrderCoupon[],
     manualSearch: boolean,
   ): OnlineOrderCoupon[] {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day
+    today.setHours(0, 0, 0, 0);
 
     return coupons.filter((coupon) => {
       if (!coupon.isActive) return false;
       if (!coupon.isDisplayedForOnlineOrders && !manualSearch) return false;
 
       const validFromDate = new Date(coupon.validFrom);
-      validFromDate.setHours(0, 0, 0, 0); // Set to start of day
+      validFromDate.setHours(0, 0, 0, 0);
 
       const validToDate = new Date(coupon.validTo);
-      validToDate.setHours(23, 59, 59, 999); // Set to end of day
+      validToDate.setHours(23, 59, 59, 999);
 
       return today >= validFromDate && today <= validToDate;
     });
   }
 
-  /**
-   * Get cached coupons (24-hour persistent cache)
-   */
-  private getCachedCoupons(): OnlineOrderCoupon[] | null {
-    try {
-      // Use CacheManagerService to get cached data with dynamic duration
-      return this.cacheManager.getCachedData<OnlineOrderCoupon[]>(
-        CacheType.COUPONS,
-        CACHE_KEYS.COUPONS_CACHE,
-        CACHE_KEYS.COUPONS_CACHE_TIMESTAMP,
-      );
-    } catch (error) {
-      console.error('Error getting cached coupons:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Set cached coupons (24-hour persistent cache)
-   */
-  private setCachedCoupons(coupons: OnlineOrderCoupon[]): void {
-    try {
-      // Use CacheManagerService to set cached data with dynamic duration
-      this.cacheManager.setCachedData(
-        CacheType.COUPONS,
-        CACHE_KEYS.COUPONS_CACHE,
-        CACHE_KEYS.COUPONS_CACHE_TIMESTAMP,
-        coupons,
-      );
-      const duration = this.cacheManager.getCacheDuration(CacheType.COUPONS);
-      console.log(
-        `💾 Coupons cached successfully (${Math.round(duration / 1000 / 60 / 60)} hours)`,
-      );
-    } catch (error) {
-      console.error('Error caching coupons:', error);
-    }
-  }
-
-  /**
-   * Clear cached coupons
-   */
-  clearCouponsCache(): void {
-    try {
-      this.cacheManager.clearCache(
-        CacheType.COUPONS,
-        CACHE_KEYS.COUPONS_CACHE,
-        CACHE_KEYS.COUPONS_CACHE_TIMESTAMP,
-      );
-    } catch (error) {
-      console.error('Error clearing coupons cache:', error);
-    }
-  }
-
-  /**
-   * Refresh coupons (force reload from Firestore)
-   */
-  refreshCoupons(): Observable<OnlineOrderCoupon[]> {
-    this.clearCouponsCache();
-    return this.getActiveCoupons();
-  }
-
-  /**
-   * Get the start date for a given period relative to current date
-   */
   private getPeriodStartDate(
     currentDate: Date,
     period: 'day' | 'week' | 'month' | 'year' | 'lifetime',
@@ -417,37 +269,24 @@ export class CouponService {
 
     switch (period) {
       case 'day':
-        // Start of today
         return startDate;
-
       case 'week': {
-        // Start of current week (Monday)
         const day = startDate.getDay();
         const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
         startDate.setDate(diff);
         return startDate;
       }
-
       case 'month':
-        // Start of current month
         startDate.setDate(1);
         return startDate;
-
       case 'year':
-        // Start of current year
         startDate.setMonth(0, 1);
         return startDate;
-
-      case 'lifetime':
       default:
-        // Beginning of time
         return new Date(0);
     }
   }
 
-  /**
-   * Get human-readable text for usage period
-   */
   private getPeriodText(
     period?: 'day' | 'week' | 'month' | 'year' | 'lifetime',
   ): string {
@@ -462,7 +301,7 @@ export class CouponService {
         return 'this year';
       case 'lifetime':
       default:
-        return 'in total';
+        return 'before';
     }
   }
 }

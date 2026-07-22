@@ -64,21 +64,7 @@ export class AccountPage implements OnInit {
       this.phone.set(user.phone);
       this.profileImage.set(user.photoUrl ?? '');
     } catch {
-      // Fallback to Firebase UserManagementService
-      try {
-        const phoneNumber = await this.userMgmt.getCurrentUserPhone();
-        if (phoneNumber) {
-          const userData = await this.userMgmt.getUserData(phoneNumber);
-          if (userData) {
-            this.name.set(userData.name ?? '');
-            this.email.set(userData.email ?? '');
-            this.phone.set(userData.phoneNumber ?? phoneNumber);
-            this.profileImage.set(userData.photoURL ?? '');
-          }
-        }
-      } catch {
-        // Profile load failed — user can still navigate
-      }
+      // Profile load failed — user can still navigate
     }
   }
 
@@ -149,7 +135,7 @@ export class AccountPage implements OnInit {
     this.isImageLoading.set(true);
     this.saveError.set('');
     try {
-      const phoneNumber = await this.userMgmt.getCurrentUserPhone();
+      const phoneNumber = this.phone();
       if (!phoneNumber) {
         this.saveError.set('account.notAuthenticated');
         this.avatarStatusType.set('error');
@@ -167,13 +153,6 @@ export class AccountPage implements OnInit {
       await firstValueFrom(
         this.userApi.updateProfile({ name: this.name(), photoUrl }),
       );
-
-      // 3. Also sync to Firestore for legacy compatibility
-      await this.userMgmt.updateUserProfile(phoneNumber, {
-        photoURL: photoUrl,
-        name: this.name(),
-        email: this.email(),
-      });
 
       this.profileImage.set(photoUrl);
       this.selectedFile = null;

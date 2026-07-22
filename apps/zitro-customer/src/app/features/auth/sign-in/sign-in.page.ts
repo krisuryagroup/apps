@@ -12,8 +12,6 @@ import {
   FirebaseAuthService,
   FirebaseOtpService,
   AppSettingsService,
-  FavoritesService,
-  FcmTokenService,
   AnalyticsService,
 } from '@zitro/services';
 import { AuthConfig, DEFAULT_AUTH_CONFIG } from '@zitro/models';
@@ -32,8 +30,6 @@ export class SignInPage implements OnDestroy {
   private readonly authService = inject(FirebaseAuthService);
   private readonly otpService = inject(FirebaseOtpService);
   private readonly appSettings = inject(AppSettingsService);
-  private readonly favorites = inject(FavoritesService);
-  private readonly fcmToken = inject(FcmTokenService);
   private readonly analytics = inject(AnalyticsService);
 
   readonly phoneConfig = PHONE_INPUT_DEFAULT_CONFIG;

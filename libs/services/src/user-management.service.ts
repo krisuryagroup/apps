@@ -17,7 +17,8 @@ import {
   getDownloadURL,
 } from '@angular/fire/storage';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { UserApiService } from './api/user-api.service';
 import {
   FIREBASE_COLLECTIONS,
   FIREBASE_STORAGE_PATHS,
@@ -73,6 +74,7 @@ export class UserManagementService {
   private storage = inject(Storage);
   private cacheService = inject(CacheService);
   private cacheManager = inject(CacheManagerService);
+  private userApi = inject(UserApiService);
 
   // Observable for current user phone
   private currentUserPhoneSubject = new BehaviorSubject<string | null>(null);
@@ -112,17 +114,24 @@ export class UserManagementService {
   }
 
   /**
-   * Load and emit current user profile
+   * Load and emit current user profile from the REST API.
    */
   async loadCurrentUserProfile(): Promise<void> {
     try {
-      const currentUserPhone = await this.getCurrentUserPhone();
-      if (currentUserPhone) {
-        const userData = await this.getUserData(currentUserPhone);
-        if (userData) {
-          this.userProfileSubject.next(userData);
-        }
-      }
+      const user = await firstValueFrom(this.userApi.getProfile());
+      this.userProfileSubject.next({
+        uid: user.id,
+        name: user.name ?? null,
+        email: user.email ?? null,
+        phoneNumber: user.phone,
+        photoURL: user.photoUrl ?? null,
+        emailVerified: false,
+        addresses: [],
+        totalOrders: 0,
+        couponUsageHistory: [],
+        created_at: user.createdAt ?? '',
+        updated_at: user.updatedAt ?? '',
+      });
     } catch (error) {
       console.error('Error loading current user profile:', error);
     }

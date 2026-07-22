@@ -9,12 +9,14 @@ import {
 } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
 import {
   AppSettingsService,
   Game2048Service,
   GameRewardService,
   UserManagementService,
+  UserApiService,
 } from '@zitro/services';
 import type {
   CouponReward,
@@ -36,6 +38,7 @@ export class Game2048Page implements OnInit, OnDestroy {
   private readonly gameService = inject(Game2048Service);
   private readonly rewardService = inject(GameRewardService);
   private readonly userMgmt = inject(UserManagementService);
+  private readonly userApi = inject(UserApiService);
   private readonly appSettings = inject(AppSettingsService);
 
   readonly isAuthenticated = signal(false);
@@ -84,12 +87,14 @@ export class Game2048Page implements OnInit, OnDestroy {
       if (auth) {
         this.currentUserPhone = await this.userMgmt.getCurrentUserPhone();
         if (this.currentUserPhone) {
-          const userData = await this.userMgmt.getUserData(this.currentUserPhone);
-          if (userData) {
-            this.currentUserUid = userData.uid;
-            this.displayName = userData.name || 'User';
-            this.email = userData.email || '';
-            this.phoneNumber = userData.phoneNumber || '';
+          try {
+            const user = await firstValueFrom(this.userApi.getProfile());
+            this.currentUserUid = user.id;
+            this.displayName = user.name || 'User';
+            this.email = user.email || '';
+            this.phoneNumber = user.phone;
+          } catch {
+            /* ignore — game works without profile */
           }
           const testPhoneNumbers = await this.appSettings.getTestPhoneNumbers();
           const phoneWithout = this.currentUserPhone.replace('+91', '');
@@ -104,12 +109,15 @@ export class Game2048Page implements OnInit, OnDestroy {
   private async checkEligibilityStatus(): Promise<void> {
     if (!this.currentUserUid) return;
     try {
-      const status: EligibilityStatus = await this.rewardService.checkEligibility(this.currentUserUid);
+      const status: EligibilityStatus =
+        await this.rewardService.checkEligibility(this.currentUserUid);
       this.isEligible.set(true);
       this.canEarnRewards.set(status.isEligible);
       this.nextEligibleDate.set(status.nextEligibleDate);
       if (!status.isEligible && status.nextEligibleDate) {
-        this.eligibilityMessage.set(`Play for fun! Next reward available on ${this.formatDate(status.nextEligibleDate)}`);
+        this.eligibilityMessage.set(
+          `Play for fun! Next reward available on ${this.formatDate(status.nextEligibleDate)}`,
+        );
       }
     } catch {
       this.isEligible.set(true);
@@ -159,7 +167,10 @@ export class Game2048Page implements OnInit, OnDestroy {
   handleKeyPress(event: KeyboardEvent): void {
     if (!this.isPlaying() || !this.gameState()) return;
     const dirs: Record<string, 'up' | 'down' | 'left' | 'right'> = {
-      ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      ArrowLeft: 'left',
+      ArrowRight: 'right',
     };
     const dir = dirs[event.key];
     if (dir) void this.makeMove(dir);
@@ -180,8 +191,12 @@ export class Game2048Page implements OnInit, OnDestroy {
     if (Math.max(Math.abs(dx), Math.abs(dy)) < this.MIN_SWIPE_DISTANCE) return;
     const dir: 'up' | 'down' | 'left' | 'right' =
       Math.abs(dx) > Math.abs(dy)
-        ? dx > 0 ? 'right' : 'left'
-        : dy > 0 ? 'down' : 'up';
+        ? dx > 0
+          ? 'right'
+          : 'left'
+        : dy > 0
+          ? 'down'
+          : 'up';
     void this.makeMove(dir);
   }
 
@@ -228,14 +243,18 @@ export class Game2048Page implements OnInit, OnDestroy {
       this.awardedRewards.add(tileValue);
       this.canEarnRewards.set(false);
       this.nextEligibleDate.set(reward.nextEligibleAt);
-      this.eligibilityMessage.set(`Play for fun! Next reward available on ${this.formatDate(reward.nextEligibleAt)}`);
+      this.eligibilityMessage.set(
+        `Play for fun! Next reward available on ${this.formatDate(reward.nextEligibleAt)}`,
+      );
       this.rewardCouponCode.set(reward.couponCode);
       this.rewardCouponType.set(couponType);
       this.rewardTileValue.set(tileValue);
       this.showRewardModal.set(true);
       this.showConfetti.set(true);
       setTimeout(() => this.showConfetti.set(false), 3000);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   copyCouponCode(): void {
@@ -262,9 +281,15 @@ export class Game2048Page implements OnInit, OnDestroy {
       try {
         localStorage.setItem(
           this.GAME_STATE_KEY,
-          JSON.stringify({ gameState: gs, isPlaying: true, timestamp: Date.now() }),
+          JSON.stringify({
+            gameState: gs,
+            isPlaying: true,
+            timestamp: Date.now(),
+          }),
         );
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -272,7 +297,11 @@ export class Game2048Page implements OnInit, OnDestroy {
     try {
       const saved = localStorage.getItem(this.GAME_STATE_KEY);
       if (saved) {
-        const data = JSON.parse(saved) as { gameState: GameState; isPlaying: boolean; timestamp: number };
+        const data = JSON.parse(saved) as {
+          gameState: GameState;
+          isPlaying: boolean;
+          timestamp: number;
+        };
         if (data.timestamp && data.timestamp > Date.now() - 86400000) {
           this.gameState.set(data.gameState);
           this.isPlaying.set(data.isPlaying);
@@ -287,7 +316,11 @@ export class Game2048Page implements OnInit, OnDestroy {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
