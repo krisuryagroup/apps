@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, OnDestroy, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  OnDestroy,
+  output,
+  signal,
+} from '@angular/core';
 import { Banner } from '@zitro/models';
 import { CachedImageDirective } from '../../directives/cached-image.directive';
 
@@ -32,8 +40,7 @@ export class BannerCarouselComponent implements OnDestroy {
 
   activeBanners = computed(() => {
     const now = new Date();
-    return this.banners().filter(b => {
-      if (!b.isActive) return false;
+    return this.banners().filter((b) => {
       if (b.startDate && new Date(b.startDate) > now) return false;
       if (b.endDate && new Date(b.endDate) < now) return false;
       return true;
@@ -55,7 +62,7 @@ export class BannerCarouselComponent implements OnDestroy {
     this._stopTimer();
     if (this.activeBanners().length > 1 && this.config().autoPlayMs > 0) {
       this._timer = setInterval(() => {
-        this.activeIndex.update(i => (i + 1) % this.activeBanners().length);
+        this.activeIndex.update((i) => (i + 1) % this.activeBanners().length);
       }, this.config().autoPlayMs);
     }
   }
@@ -65,10 +72,13 @@ export class BannerCarouselComponent implements OnDestroy {
   }
 
   prev(): void {
-    this.activeIndex.update(i => (i - 1 + this.activeBanners().length) % this.activeBanners().length);
+    this.activeIndex.update(
+      (i) =>
+        (i - 1 + this.activeBanners().length) % this.activeBanners().length,
+    );
   }
 
   next(): void {
-    this.activeIndex.update(i => (i + 1) % this.activeBanners().length);
+    this.activeIndex.update((i) => (i + 1) % this.activeBanners().length);
   }
 }

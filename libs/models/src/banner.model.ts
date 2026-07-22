@@ -14,15 +14,19 @@ export interface Banner {
   title: string;
   description: string;
   imageURL: string;
-  isActive: boolean;
   displayOrder: number;
+  bannerType: string;
   targetUrl?: string;
-  versionCondition?: 'lt' | 'gt' | 'eq'; // less than, greater than, equal to
-  versionTarget?: string; // e.g. '1.2.3'
+  /** Version-based display filtering (lt/gt/eq) */
+  versionCondition?: 'lt' | 'gt' | 'eq';
+  versionTarget?: string;
   startDate?: Date;
   endDate?: Date;
-  created_at: Date;
-  updated_at: Date;
-  /** Per-banner header appearance overrides */
+  impressionCount: number;
+  clickCount: number;
+  scratchRewardType?: string;
+  scratchRewardValue?: number;
+  linkedCouponId?: string;
+  /** Per-banner header appearance overrides — not returned by API, set locally if needed */
   configs?: BannerConfigs;
 }
