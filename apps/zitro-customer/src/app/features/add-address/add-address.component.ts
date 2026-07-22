@@ -17,7 +17,6 @@ import { UserManagementService, UserAddress } from '@zitro/services';
 import { LocationService } from '@zitro/services';
 import { GoogleGeocodingService } from '@zitro/services';
 import { SearchSuggestion } from '@zitro/services';
-import { RestaurantSwitchingService } from '@zitro/services';
 import { DialogService } from '@zitro/services';
 import { AddressFormData } from '@zitro/models';
 import {
@@ -51,7 +50,6 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
   private userManagementService = inject(UserManagementService);
   private locationService = inject(LocationService);
   private geocodingService = inject(GoogleGeocodingService);
-  private restaurantSwitchingService = inject(RestaurantSwitchingService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private dialogService = inject(DialogService);
@@ -139,24 +137,16 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
     return AddAddressComponent.mapsApiPromise;
   }
 
-  private getDefaultCenter(): { lat: number; lng: number } {
-    try {
-      const r = this.restaurantSwitchingService.getCurrentRestaurant();
-      const c = (r as any)['coordinates'];
-      if (c?.lat && c?.lng) return { lat: Number(c.lat), lng: Number(c.lng) };
-    } catch {
-      /* fallback */
-    }
-    return { lat: 26.8467, lng: 80.9462 }; // Lucknow, UP fallback
-  }
-
   private async initMap() {
     try {
       await this.loadMapsApi();
-      const center = this.presetCoords ?? this.getDefaultCenter();
+      // Use preset coords if available; otherwise open at India level — device
+      // location will auto-center via tryAutoCenter() immediately after init.
+      const center = this.presetCoords ?? { lat: 20.5937, lng: 78.9629 };
+      const zoom = this.presetCoords ? 16 : 5;
       this.map = new (google as any).maps.Map(this.mapContainer.nativeElement, {
         center,
-        zoom: 16,
+        zoom,
         disableDefaultUI: true,
         zoomControl: true,
         clickableIcons: false,
@@ -190,12 +180,13 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       const result = await this.locationService.checkLocationPermission();
       if (result.hasLocation && result.coordinates) {
-        const pos = {
-          lat: result.coordinates.lat,
-          lng: result.coordinates.lng,
-        };
+        const { lat, lng } = result.coordinates;
+        const pos = { lat, lng };
         this.map?.panTo(pos);
+        this.map?.setZoom(16);
         this.marker?.setPosition(pos);
+        // Geocode so pincode/town/state are prefilled from device location
+        await this.onMarkerDrop(lat, lng);
       }
     } catch {
       /* silent */
@@ -286,27 +277,6 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ─── Internal helpers ────────────────────────────────────────────────────
 
-  private getRestaurantAddressConfig() {
-    try {
-      const restaurant = this.restaurantSwitchingService.getCurrentRestaurant();
-      return (
-        (restaurant as any)['addressConfig'] ?? {
-          pincode: '',
-          town: '',
-          state: 'Uttar Pradesh',
-          defaultType: 'Home',
-        }
-      );
-    } catch {
-      return {
-        pincode: '',
-        town: '',
-        state: 'Uttar Pradesh',
-        defaultType: 'Home',
-      };
-    }
-  }
-
   private async initForm() {
     const phoneNumber = await this.userManagementService.getCurrentUserPhone();
     let userName = '';
@@ -322,23 +292,19 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    const cfg = this.getRestaurantAddressConfig();
+    // pincode/town/state will be filled by geocode once the map auto-centers
+    // to device location (tryAutoCenter) or the user picks a location.
     this.form = {
       name: userName,
       phone: phoneNumber ?? '',
       houseAndStreet: '',
       landmark: '',
-      pincode: cfg.pincode ?? '',
-      town: cfg.town ?? '',
-      state: cfg.state ?? 'Uttar Pradesh',
-      type: (cfg.defaultType as 'Home' | 'Office' | 'Other') ?? 'Home',
+      pincode: '',
+      town: '',
+      state: '',
+      type: 'Home',
       isDefault: this.existingAddresses.length === 0,
     };
-
-    // Validate initial pincode if pre-filled from restaurant config
-    if (this.form.pincode) {
-      this.checkPincodeRestriction(this.form.pincode);
-    }
   }
 
   private checkPincodeRestriction(pincode: string) {
