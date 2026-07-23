@@ -1,6 +1,9 @@
 import type { User, Address } from '@zitro/models';
 import type { UserDto, AddressDto } from '../dtos/user.dto';
-import type { CreateAddressRequest, UpdateAddressRequest } from '../requests/address.request';
+import type {
+  CreateAddressRequest,
+  UpdateAddressRequest,
+} from '../requests/address.request';
 
 export const UserMapper = {
   toUser(dto: UserDto): User {
@@ -28,6 +31,8 @@ export const UserMapper = {
       state: dto.state,
       type: dto.type,
       isDefault: dto.isDefault,
+      lat: dto.coordinatesLat ?? null,
+      lng: dto.coordinatesLng ?? null,
     };
   },
 
@@ -43,6 +48,8 @@ export const UserMapper = {
       state: address.state,
       type: address.type,
       isDefault: address.isDefault,
+      coordinatesLat: address.lat ?? null,
+      coordinatesLng: address.lng ?? null,
     };
   },
 

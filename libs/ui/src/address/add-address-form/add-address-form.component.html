@@ -1,4 +1,8 @@
-<form class="add-address-form" data-testid="add-address-form" (ngSubmit)="onSubmit()">
+<form
+  class="add-address-form"
+  data-testid="add-address-form"
+  (ngSubmit)="onSubmit()"
+>
   <h3 class="add-address-form__title" data-testid="add-address-title">
     @if (config().mode === 'add') {
       {{ 'address.newAddress' | i18n }}
@@ -57,13 +61,17 @@
       <input
         type="text"
         [value]="pincode()"
-        readonly
+        (input)="pincode.set($any($event.target).value)"
         maxlength="6"
         inputmode="numeric"
+        placeholder="6-digit pincode"
         data-testid="address-pincode-input"
       />
       @if (pincodeError()) {
-        <span class="add-address-form__error" data-testid="address-pincode-error">
+        <span
+          class="add-address-form__error"
+          data-testid="address-pincode-error"
+        >
           {{ 'address.pincodeError' | i18n }}
         </span>
       }
@@ -74,7 +82,8 @@
       <input
         type="text"
         [value]="town()"
-        readonly
+        (input)="town.set($any($event.target).value)"
+        placeholder="Enter town / district"
         data-testid="address-town-input"
       />
     </label>
@@ -85,13 +94,19 @@
     <input
       type="text"
       [value]="state()"
-      readonly
+      (input)="state.set($any($event.target).value)"
+      placeholder="Enter state"
       data-testid="address-state-input"
     />
   </label>
 
-  <div class="add-address-form__type-group" data-testid="add-address-type-group">
-    <span class="add-address-form__type-label">{{ 'address.addressType' | i18n }}</span>
+  <div
+    class="add-address-form__type-group"
+    data-testid="add-address-type-group"
+  >
+    <span class="add-address-form__type-label">{{
+      'address.addressType' | i18n
+    }}</span>
     <div class="add-address-form__type-btns">
       @for (t of addressTypes; track t) {
         <button

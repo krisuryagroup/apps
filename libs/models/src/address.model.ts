@@ -9,6 +9,8 @@ export interface Address {
   state: string;
   type: 'Home' | 'Office' | 'Other';
   isDefault: boolean;
+  lat?: number | null;
+  lng?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,4 +25,6 @@ export interface AddressFormData {
   state: string;
   type: 'Home' | 'Office' | 'Other';
   isDefault: boolean;
+  lat?: number | null;
+  lng?: number | null;
 }

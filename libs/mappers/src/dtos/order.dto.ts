@@ -68,6 +68,8 @@ export interface AddressDto {
   state: string;
   type: 'Home' | 'Office' | 'Other';
   isDefault: boolean;
+  coordinatesLat?: number | null;
+  coordinatesLng?: number | null;
 }
 
 export interface OrderItemDto {

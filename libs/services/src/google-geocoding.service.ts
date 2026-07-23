@@ -432,21 +432,38 @@ export class GoogleGeocodingService {
         );
 
         if (res.status === 'OK' && res.results?.length) {
-          const comps = res.results[0].address_components;
-          const pincode = this.getComponent(comps, 'postal_code');
-          const town =
-            this.getComponent(comps, 'locality') ||
-            this.getComponent(comps, 'sublocality_level_1') ||
-            this.getComponent(comps, 'administrative_area_level_3') ||
-            this.getComponent(comps, 'administrative_area_level_2');
-          const state = this.getComponent(comps, 'administrative_area_level_1');
-          const landmark =
-            this.getComponent(comps, 'neighborhood') ||
-            this.getComponent(comps, 'sublocality_level_2') ||
-            this.getComponent(comps, 'sublocality_level_1') ||
-            '';
+          // Scan ALL results — results[0] is often a street/postal_code result
+          // that has the pincode but lacks locality and state.  Those appear in
+          // later (broader) results such as locality or administrative_area.
+          let pincode = '';
+          let town = '';
+          let state = '';
+          let landmark = '';
+
+          for (const result of res.results) {
+            const c = result.address_components as any[];
+            if (!pincode) pincode = this.getComponent(c, 'postal_code');
+            if (!town) {
+              town =
+                this.getComponent(c, 'locality') ||
+                this.getComponent(c, 'sublocality_level_1') ||
+                this.getComponent(c, 'administrative_area_level_3') ||
+                this.getComponent(c, 'administrative_area_level_2');
+            }
+            if (!state)
+              state = this.getComponent(c, 'administrative_area_level_1');
+            if (!landmark) {
+              landmark =
+                this.getComponent(c, 'neighborhood') ||
+                this.getComponent(c, 'sublocality_level_2') ||
+                this.getComponent(c, 'sublocality_level_1');
+            }
+            // Stop scanning once all fields are resolved
+            if (pincode && town && state) break;
+          }
+
           const formattedAddress = this.buildDisplayAddress(
-            comps,
+            res.results[0].address_components,
             res.results[0].formatted_address,
           );
           return {

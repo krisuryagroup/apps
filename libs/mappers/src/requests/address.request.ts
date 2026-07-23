@@ -9,6 +9,8 @@ export interface CreateAddressRequest {
   state: string;
   type: 'Home' | 'Office' | 'Other';
   isDefault: boolean;
+  coordinatesLat?: number | null;
+  coordinatesLng?: number | null;
 }
 
 // Outbound shape for PUT /api/users/addresses/{id}

@@ -98,12 +98,15 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.search$
       .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(q => this.runSearch(q));
+      .subscribe((q) => this.runSearch(q));
 
     const editId = snap.get('addressId');
     if (editId) {
       this.editingAddressId = editId;
-      const addresses = await this.addressApi.getAddresses().toPromise().catch(() => []);
+      const addresses = await this.addressApi
+        .getAddresses()
+        .toPromise()
+        .catch(() => []);
       const existing = (addresses ?? []).find((a: Address) => a.id === editId);
       if (existing) {
         this.initialFormData.set(existing);
@@ -111,7 +114,9 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    const userPhone = await this.userManagement.getCurrentUserPhone().catch(() => null);
+    const userPhone = await this.userManagement
+      .getCurrentUserPhone()
+      .catch(() => null);
 
     this.initialFormData.set({
       type: 'Home',
@@ -192,7 +197,9 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
         (this.marker as any)?.setPosition(pos);
         await this.onMarkerDrop(lat, lng);
       }
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }
 
   private async onMarkerDrop(lat: number, lng: number): Promise<void> {
@@ -200,7 +207,10 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.mapAddress.set('');
     this.locationFromMap.set(false);
     try {
-      const addr = await this.geocodingService.getFullAddressComponents(lat, lng);
+      const addr = await this.geocodingService.getFullAddressComponents(
+        lat,
+        lng,
+      );
       this.mapAddress.set(addr.formattedAddress);
       this.locationFromMap.set(true);
       this.checkPincodeRestriction(addr.pincode);
@@ -209,9 +219,13 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
         town: addr.town,
         state: addr.state,
         landmark: addr.landmark,
+        lat,
+        lng,
       });
     } catch {
-      this.errorMessage.set('Could not resolve address for this location. Please enter manually.');
+      this.errorMessage.set(
+        'Could not resolve address for this location. Please enter manually.',
+      );
     } finally {
       this.isGettingLocation.set(false);
     }
@@ -237,7 +251,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   private async runSearch(query: string): Promise<void> {
     try {
       this.searchSuggestions.set(
-        await this.geocodingService.searchAddresses(query)
+        await this.geocodingService.searchAddresses(query),
       );
     } catch {
       this.searchSuggestions.set([]);
@@ -273,7 +287,8 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
         await this.onMarkerDrop(lat, lng);
       } else {
         this.errorMessage.set(
-          result.error ?? 'Unable to get your location. Please enable location access.'
+          result.error ??
+            'Unable to get your location. Please enable location access.',
         );
         this.isGettingLocation.set(false);
       }
@@ -287,7 +302,12 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.locationFromMap.set(false);
     this.mapAddress.set('');
     this.pincodeRestricted.set(false);
-    this.locationPatch.set({ pincode: '', town: '', state: 'Uttar Pradesh', landmark: '' });
+    this.locationPatch.set({
+      pincode: '',
+      town: '',
+      state: 'Uttar Pradesh',
+      landmark: '',
+    });
   }
 
   private checkPincodeRestriction(pincode: string): void {
@@ -304,14 +324,14 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(
-      this.mode === 'checkout' ? ['/cart'] : ['/addresses']
-    );
+    this.router.navigate(this.mode === 'checkout' ? ['/cart'] : ['/addresses']);
   }
 
   onFormSubmitted(data: AddressFormData): void {
     if (this.pincodeRestricted() && this.pincodeConfig.enabled) {
-      this.errorMessage.set('Delivery is not available at this pincode. Please choose a different location.');
+      this.errorMessage.set(
+        'Delivery is not available at this pincode. Please choose a different location.',
+      );
       return;
     }
     this.isSaving.set(true);
@@ -327,6 +347,8 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       state: data.state ?? 'Uttar Pradesh',
       type: data.type,
       isDefault: data.isDefault,
+      lat: data.lat ?? null,
+      lng: data.lng ?? null,
     };
 
     const save$ = this.editingAddressId
