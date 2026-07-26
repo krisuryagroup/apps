@@ -63,10 +63,8 @@ export class CouponSelectorComponent implements OnInit, OnChanges {
       const currentUserPhone =
         await this.userManagementService.getCurrentUserPhone();
       if (currentUserPhone) {
-        const userData = await this.userManagementService.getUserData(
-          currentUserPhone,
-          true,
-        );
+        const userData =
+          await this.userManagementService.getUserData(currentUserPhone);
         if (userData) {
           this.isNewCustomer = userData.totalOrders === 0;
         }
