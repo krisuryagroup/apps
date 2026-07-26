@@ -33,7 +33,8 @@ export const appConfig: ApplicationConfig = {
         '/api/platform-tags',
         '/api/businesses/nearby',
         '/api/tags',
-        '/api/businesses/', // banners — read-only, guest-browsable
+        '/api/businesses/', // business-scoped banners — guest-browsable
+        '/api/banners', // global platform banners — guest-browsable
         '/api/auth/otp/request',
         '/api/auth/otp/verify',
       ],

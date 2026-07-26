@@ -54,6 +54,25 @@ export class BannerApiService {
   private cache = inject(CacheService);
   private baseUrl = inject(ZITRO_API_BASE_URL);
 
+  /** Platform-level banners — not scoped to any business. */
+  getGlobalBanners(segment?: string): Observable<Banner[]> {
+    const cacheKey = `banners:global${segment ? `:${segment}` : ''}`;
+    const cached = this.cache.get<Banner[]>(cacheKey);
+    if (cached) return of(cached);
+
+    const params: Record<string, string> = {};
+    if (segment) params['segment'] = segment;
+
+    return this.http
+      .get<BannerDto[]>(`${this.baseUrl}/api/banners`, { params })
+      .pipe(
+        map((dtos) => dtos.map(mapDto)),
+        tap((banners) =>
+          this.cache.set(cacheKey, banners, { ttlHours: 5 / 60 }),
+        ),
+      );
+  }
+
   getBanners(businessSlug: string, segment?: string): Observable<Banner[]> {
     const cacheKey = `banners:${businessSlug}${segment ? `:${segment}` : ''}`;
     const cached = this.cache.get<Banner[]>(cacheKey);

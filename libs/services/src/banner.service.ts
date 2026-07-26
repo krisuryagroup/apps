@@ -22,6 +22,16 @@ export class BannerService {
     this._activeBannerConfigs$.next(configs ?? null);
   }
 
+  /** Fetch global (platform-level) banners. Used on the home page. */
+  async getGlobalBanners(): Promise<Banner[]> {
+    try {
+      return await firstValueFrom(this.bannerApi.getGlobalBanners());
+    } catch {
+      return [];
+    }
+  }
+
+  /** Fetch banners for a specific business (listing/restaurant page). */
   async getBanners(): Promise<Banner[]> {
     const slug = this.businessContext.businessId();
     if (!slug) return [];

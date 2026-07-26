@@ -23,6 +23,7 @@ import {
   AnalyticsService,
   LocationSelectionService,
   BannerService,
+  BusinessContextService,
 } from '@zitro/services';
 import { ThemeService } from '@zitro/theme';
 import { NearbyBusiness, PlatformTag, Banner } from '@zitro/models';
@@ -62,6 +63,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private analyticsService = inject(AnalyticsService);
   private locationSelectionService = inject(LocationSelectionService);
   private bannerService = inject(BannerService);
+  private businessContext = inject(BusinessContextService);
   private destroyRef = inject(DestroyRef);
   private document = inject(DOCUMENT);
 
@@ -153,8 +155,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     await this.analyticsService.logScreenView('Home', 'HomeComponent');
 
+    // Home page: clear business context (user is browsing platform, not a specific restaurant)
+    this.businessContext.clearBusinessId();
+
     this.bannerService
-      .getBanners()
+      .getGlobalBanners()
       .then((b) => this.banners.set(b))
       .catch(() => this.banners.set([]));
 
@@ -231,6 +236,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onBusinessClick(business: NearbyBusiness): void {
+    // Set business context before navigating — listing page needs X-Business-Id
+    this.businessContext.setBusinessId(business.slug);
     this.router.navigate(['/listing'], {
       queryParams: { businessSlug: business.slug },
     });
