@@ -5,10 +5,12 @@ import {
   ElementRef,
   inject,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { UserManagementService } from '@zitro/services';
+import { UserApiService } from '@zitro/services';
 import { CachedImageDirective } from '@zitro/ui';
 import { LoaderComponent } from '@zitro/ui';
 import { AnalyticsService } from '@zitro/services';
@@ -23,6 +25,7 @@ import { AnalyticsService } from '@zitro/services';
 export class AccountComponent implements OnInit {
   private router = inject(Router);
   private userManagementService = inject(UserManagementService);
+  private userApiService = inject(UserApiService);
   private analyticsService = inject(AnalyticsService);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -50,16 +53,11 @@ export class AccountComponent implements OnInit {
       await this.userManagementService.getCurrentUserPhone();
     if (this.currentUserPhone) {
       try {
-        // Load user data from Firestore only
-        const userData = await this.userManagementService.getUserData(
-          this.currentUserPhone,
-        );
-        if (userData) {
-          this.name = userData.name || '';
-          this.email = userData.email || '';
-          this.phone = userData.phoneNumber;
-          this.profileImage = userData.photoURL || '';
-        }
+        const user = await firstValueFrom(this.userApiService.getProfile());
+        this.name = user.name ?? '';
+        this.email = user.email ?? '';
+        this.phone = user.phone;
+        this.profileImage = user.photoUrl ?? '';
       } catch (error) {
         console.error('Error loading user profile:', error);
       }
@@ -121,41 +119,35 @@ export class AccountComponent implements OnInit {
       if (hasPhotoUpdate) fieldsUpdated.push('photo');
 
       if (this.selectedFile) {
-        // Update profile with new photo
-        const success = await this.userManagementService.updateProfileWithPhoto(
-          this.currentUserPhone,
+        // Upload photo via Firebase Storage then persist URL via REST API
+        const photoUrl = await this.userManagementService.uploadProfilePhoto(
           this.selectedFile,
-          { name: this.name, email: this.email },
-        );
-
-        if (success) {
-          // Track successful profile update with photo
-          this.analyticsService
-            .logProfileUpdate(true, fieldsUpdated)
-            .catch((err) => console.warn('Failed to log profile update:', err));
-
-          alert('Profile updated successfully with new photo!');
-          this.selectedFile = null;
-        } else {
-          throw new Error('Failed to update profile with photo');
-        }
-      } else {
-        // Update profile without photo
-        const success = await this.userManagementService.updateUserProfile(
           this.currentUserPhone,
-          { name: this.name, email: this.email },
         );
-
-        if (success) {
-          // Track successful profile update without photo
-          this.analyticsService
-            .logProfileUpdate(false, fieldsUpdated)
-            .catch((err) => console.warn('Failed to log profile update:', err));
-
-          alert('Profile updated successfully!');
-        } else {
-          throw new Error('Failed to update profile');
-        }
+        await firstValueFrom(
+          this.userApiService.updateProfile({
+            name: this.name,
+            email: this.email,
+            photoUrl,
+          }),
+        );
+        this.analyticsService
+          .logProfileUpdate(true, fieldsUpdated)
+          .catch((err) => console.warn('Failed to log profile update:', err));
+        alert('Profile updated successfully with new photo!');
+        this.selectedFile = null;
+      } else {
+        // Update profile text fields via REST API
+        await firstValueFrom(
+          this.userApiService.updateProfile({
+            name: this.name,
+            email: this.email,
+          }),
+        );
+        this.analyticsService
+          .logProfileUpdate(false, fieldsUpdated)
+          .catch((err) => console.warn('Failed to log profile update:', err));
+        alert('Profile updated successfully!');
       }
     } catch (error) {
       console.error('Error saving profile:', error);

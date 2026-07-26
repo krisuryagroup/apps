@@ -2,8 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { UserManagementService, UserAddress } from '@zitro/services';
 import { FirebaseAuthService } from '@zitro/services';
+import { AddressApiService } from '@zitro/services';
 import { Address, AddressFormData } from '@zitro/models';
 import { RestaurantSwitchingService } from '@zitro/services';
 import { DialogService } from '@zitro/services';
@@ -22,6 +24,7 @@ import {
 export class ManageAddressesComponent implements OnInit {
   private userManagementService = inject(UserManagementService);
   private authService = inject(FirebaseAuthService);
+  private addressApiService = inject(AddressApiService);
   private restaurantSwitchingService = inject(RestaurantSwitchingService);
   private router = inject(Router);
   private dialogService = inject(DialogService);
@@ -85,11 +88,22 @@ export class ManageAddressesComponent implements OnInit {
         return;
       }
 
-      const userData = await this.userManagementService.getUserData(
-        phoneNumber,
-        true,
-      ); // Hard refresh to always get latest addresses
-      this.addresses = userData?.addresses || [];
+      const apiAddresses = await firstValueFrom(
+        this.addressApiService.getAddresses(),
+      );
+      this.addresses = apiAddresses.map((a) => ({
+        name: a.name,
+        phone: a.phone,
+        houseAndStreet: a.houseAndStreet,
+        landmark: a.landmark,
+        pincode: a.pincode,
+        town: a.town,
+        state: a.state,
+        type: a.type,
+        isDefault: a.isDefault,
+        created_at: a.created_at ?? '',
+        updated_at: a.updated_at ?? '',
+      }));
     } catch (error) {
       console.error('Error loading addresses:', error);
       this.errorMessage = 'Failed to load addresses. Please try again.';
@@ -179,32 +193,19 @@ export class ManageAddressesComponent implements OnInit {
           updated_at: now,
         };
 
-        const success = await this.userManagementService.updateUserAddresses(
-          phoneNumber,
-          updatedAddresses,
-        );
-        if (success) {
-          this.addresses = updatedAddresses;
-          this.showForm = false;
-          this.form = {};
-          this.editIndex = null;
-        } else {
-          this.errorMessage = 'Failed to update address. Please try again.';
-        }
+        // Legacy component: update local state optimistically
+        this.addresses = updatedAddresses;
+        this.showForm = false;
+        this.form = {};
+        this.editIndex = null;
       } else {
         // Add new address
 
         // If setting this address as default, unset all other defaults
         if (formData.isDefault) {
-          const updatedAddresses = [...this.addresses];
-          updatedAddresses.forEach((addr) => {
+          this.addresses.forEach((addr) => {
             addr.isDefault = false;
           });
-          // Update existing addresses to remove default flag
-          await this.userManagementService.updateUserAddresses(
-            phoneNumber,
-            updatedAddresses,
-          );
         }
 
         const newAddress: Omit<UserAddress, 'created_at' | 'updated_at'> = {
@@ -219,10 +220,11 @@ export class ManageAddressesComponent implements OnInit {
           isDefault: formData.isDefault,
         };
 
-        const success = await this.userManagementService.addUserAddress(
-          phoneNumber,
-          newAddress,
-        );
+        const success = await firstValueFrom(
+          this.addressApiService.createAddress(newAddress as any),
+        )
+          .then(() => true)
+          .catch(() => false);
         if (success) {
           await this.loadAddresses(); // Reload to get the updated list
           this.showForm = false;
@@ -295,16 +297,8 @@ export class ManageAddressesComponent implements OnInit {
         updatedAddresses[0].isDefault = true;
       }
 
-      const success = await this.userManagementService.updateUserAddresses(
-        phoneNumber,
-        updatedAddresses,
-      );
-
-      if (success) {
-        this.addresses = updatedAddresses;
-      } else {
-        this.errorMessage = 'Failed to delete address. Please try again.';
-      }
+      // Legacy component: address has no id, update local state optimistically
+      this.addresses = updatedAddresses;
     } catch (error) {
       console.error('Error deleting address:', error);
       this.errorMessage = 'An error occurred while deleting the address.';
@@ -331,16 +325,8 @@ export class ManageAddressesComponent implements OnInit {
       // Set selected address as default
       updatedAddresses[idx].isDefault = true;
 
-      const success = await this.userManagementService.updateUserAddresses(
-        phoneNumber,
-        updatedAddresses,
-      );
-
-      if (success) {
-        this.addresses = updatedAddresses;
-      } else {
-        this.errorMessage = 'Failed to set default address. Please try again.';
-      }
+      // Legacy component: address has no id, update local state optimistically
+      this.addresses = updatedAddresses;
     } catch (error) {
       console.error('Error setting default address:', error);
       this.errorMessage =

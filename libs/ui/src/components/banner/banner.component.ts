@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Banner } from '@zitro/models';
 import { BannerService } from '@zitro/services';
-import { CachedImageDirective } from '../../directives/cached-image.directive';
 import { compareApplicationVersions, getAppVersion } from '@zitro/utils';
 
 @Component({
   selector: 'app-banner',
   standalone: true,
-  imports: [CommonModule, CachedImageDirective],
+  imports: [CommonModule],
   templateUrl: './banner.component.html',
   styleUrls: ['./banner.component.scss'],
 })

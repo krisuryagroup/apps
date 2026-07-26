@@ -23,6 +23,7 @@ import { FloatingCartPreviewComponent } from '@zitro/ui';
 import { CartService } from '@zitro/services';
 import { CartApiService } from '@zitro/services';
 import { UserManagementService } from '@zitro/services';
+import type { UserAddress } from '@zitro/services';
 import { FirebaseAuthService } from '@zitro/services';
 import { NavigationService } from '@zitro/services';
 import {
@@ -548,11 +549,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
     lat: number;
     lng: number;
   }): Promise<{
-    address: Awaited<
-      ReturnType<UserManagementService['getUserDefaultAddress']>
-    > extends infer T
-      ? Exclude<T, null>
-      : never;
+    address: UserAddress;
     location: {
       label: string;
       address: string;

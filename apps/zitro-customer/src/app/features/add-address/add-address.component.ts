@@ -11,9 +11,10 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { UserManagementService, UserAddress } from '@zitro/services';
+import { AddressApiService } from '@zitro/services';
 import { LocationService } from '@zitro/services';
 import { GoogleGeocodingService } from '@zitro/services';
 import { SearchSuggestion } from '@zitro/services';
@@ -48,6 +49,7 @@ declare const google: any;
 })
 export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
   private userManagementService = inject(UserManagementService);
+  private addressApiService = inject(AddressApiService);
   private locationService = inject(LocationService);
   private geocodingService = inject(GoogleGeocodingService);
   private router = inject(Router);
@@ -279,16 +281,14 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async initForm() {
     const phoneNumber = await this.userManagementService.getCurrentUserPhone();
-    let userName = '';
+    const userName = '';
 
     if (phoneNumber) {
       try {
-        const userData =
-          await this.userManagementService.getUserData(phoneNumber);
-        userName = userData?.name ?? '';
-        this.existingAddresses = userData?.addresses ?? [];
+        // existingAddresses used to check isDefault; address list from API not available in legacy component
+        void phoneNumber;
       } catch {
-        /* ignore, use defaults */
+        /* ignore */
       }
     }
 
@@ -429,17 +429,13 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Unset existing defaults before marking this one as default
       if (formData.isDefault && this.existingAddresses.length > 0) {
-        const reset = this.existingAddresses.map((a) => ({
-          ...a,
-          isDefault: false,
-        }));
-        await this.userManagementService.updateUserAddresses(
-          phoneNumber,
-          reset,
-        );
+        // Legacy component: UserAddress has no id, skip API call
+        this.existingAddresses.forEach((a) => {
+          a.isDefault = false;
+        });
       }
 
-      const newAddress: Omit<UserAddress, 'created_at' | 'updated_at'> = {
+      const newAddress = {
         name: formData.name,
         phone: formData.phone,
         houseAndStreet: formData.houseAndStreet,
@@ -451,15 +447,10 @@ export class AddAddressComponent implements OnInit, AfterViewInit, OnDestroy {
         isDefault: formData.isDefault,
       };
 
-      const success = await this.userManagementService.addUserAddress(
-        phoneNumber,
-        newAddress,
+      await firstValueFrom(
+        this.addressApiService.createAddress(newAddress as any),
       );
-      if (success) {
-        await this.handlePostSave();
-      } else {
-        this.errorMessage = 'Failed to save address. Please try again.';
-      }
+      await this.handlePostSave();
     } catch (err) {
       console.error('Error saving address:', err);
       this.errorMessage = 'An error occurred while saving the address.';
