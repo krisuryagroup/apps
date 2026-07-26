@@ -99,7 +99,7 @@
     width: 100%;
     padding: 0.875rem 1rem;
     font-size: 1rem;
-    border: 1.5px solid #e0e0e0;
+    border: 1.5px solid var(--zitro-divider, #e0e0e0);
     border-radius: 12px;
     background: var(--zitro-surface, #fff);
     color: var(--zitro-on-surface, #212121);

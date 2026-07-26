@@ -107,10 +107,7 @@ export class UserManagementService {
    * The phoneNumber param is kept for backward compat but ignored —
    * always returns the currently authenticated user.
    */
-  async getUserData(
-    _phoneNumber?: string,
-    _hardRefresh = false,
-  ): Promise<OnlineUser | null> {
+  async getUserData(_phoneNumber?: string): Promise<OnlineUser | null> {
     try {
       const user = await firstValueFrom(this.userApi.getProfile());
       return {
@@ -172,7 +169,7 @@ export class UserManagementService {
       const sub = this.currentUserPhone$.subscribe((phone) => {
         if (phone) {
           resolve(phone);
-          sub.unsubscribe();
+          queueMicrotask(() => sub.unsubscribe());
         }
       });
       setTimeout(() => {

@@ -1,36 +1,43 @@
 .otp-input {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
 
   &__box {
-    width: 48px;
-    height: 56px;
-    border: 1.5px solid var(--zitro-color-divider, #e0e0e0);
+    width: 42px;
+    height: 48px;
+    border: 1.5px solid var(--zitro-divider, #e0e0e0);
     border-radius: 10px;
     text-align: center;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: var(--zitro-color-text-primary, #212121);
-    background: var(--zitro-color-surface, #fff);
+    color: var(--zitro-on-surface, #212121);
+    background: var(--zitro-surface, #fff);
     outline: none;
-    transition: border-color 0.2s ease;
-    caret-color: var(--zitro-color-primary, #009688);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+    caret-color: var(--zitro-primary, #c73e3a);
 
     &:focus {
-      border-color: var(--zitro-color-primary, #009688);
-      box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.12);
+      border-color: var(--zitro-primary, #c73e3a);
+      box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--zitro-primary, #c73e3a) 12%, transparent);
     }
 
     &:not(:placeholder-shown) {
-      border-color: var(--zitro-color-primary, #009688);
-      background: var(--zitro-color-primary-light, rgba(0, 150, 136, 0.06));
+      border-color: var(--zitro-primary, #c73e3a);
+      background: color-mix(
+        in srgb,
+        var(--zitro-primary, #c73e3a) 6%,
+        transparent
+      );
     }
 
     @media (max-width: 360px) {
-      width: 40px;
-      height: 48px;
-      font-size: 1.2rem;
+      width: 36px;
+      height: 44px;
+      font-size: 1.1rem;
     }
   }
 }

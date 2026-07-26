@@ -6,14 +6,14 @@
   &__field {
     display: flex;
     align-items: center;
-    border: 1.5px solid var(--zitro-color-divider, #e0e0e0);
+    border: 1.5px solid var(--zitro-divider, #e0e0e0);
     border-radius: 10px;
     overflow: hidden;
-    background: var(--zitro-color-surface, #fff);
+    background: var(--zitro-surface, #fff);
     transition: border-color 0.2s ease;
 
     &:focus-within {
-      border-color: var(--zitro-color-primary, #009688);
+      border-color: var(--zitro-primary, #c73e3a);
     }
   }
 
@@ -27,7 +27,7 @@
     padding: 0 6px 0 4px;
     font-size: 0.95rem;
     font-weight: 600;
-    color: var(--zitro-color-text-primary, #212121);
+    color: var(--zitro-on-surface, #212121);
     white-space: nowrap;
   }
 
@@ -38,21 +38,21 @@
     padding: 0.75rem 0.75rem 0.75rem 0;
     font-size: 1rem;
     background: transparent;
-    color: var(--zitro-color-text-primary, #212121);
+    color: var(--zitro-on-surface, #212121);
     min-width: 0;
 
     &::placeholder {
-      color: var(--zitro-color-text-disabled, #bdbdbd);
+      color: var(--zitro-on-surface-variant, #757575);
     }
 
     &--error {
-      color: var(--zitro-color-error, #f44336);
+      color: var(--zitro-error, #b00020);
     }
   }
 
   &__error {
     font-size: 0.8rem;
-    color: var(--zitro-color-error, #f44336);
+    color: var(--zitro-error, #b00020);
     margin: 0;
     padding: 0 4px;
   }

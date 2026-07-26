@@ -1,16 +1,17 @@
 // @zitro/theme — Default (light) theme
 // Applied when no [data-theme] attribute is set, or [data-theme="default"]
 
-[data-theme="default"],
+[data-theme='default'],
 :root {
-  --zitro-primary: #C73E3A;
+  --zitro-primary: #c73e3a;
   --zitro-primary-dark: #a8302d;
   --zitro-accent: #ff5252;
-  --zitro-surface: #FFFFFF;
-  --zitro-surface-variant: #F5F5F5;
+  --zitro-surface: #ffffff;
+  --zitro-surface-variant: #f5f5f5;
   --zitro-on-surface: #212121;
   --zitro-on-surface-variant: #757575;
-  --zitro-error: #B00020;
-  --zitro-success: #4CAF50;
+  --zitro-divider: #e0e0e0;
+  --zitro-error: #b00020;
+  --zitro-success: #4caf50;
   --zitro-background: #f5f7fa;
 }
