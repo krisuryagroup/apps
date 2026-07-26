@@ -1,6 +1,6 @@
 .sign-in {
   min-height: 100vh;
-  background: var(--zitro-color-background, #f8f8f8);
+  background: var(--zitro-background, #f5f7fa);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,7 +8,7 @@
   padding: 1rem;
 
   &__card {
-    background: var(--zitro-color-surface, #fff);
+    background: var(--zitro-surface, #fff);
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     padding: 2.5rem 2rem;
@@ -19,13 +19,13 @@
   &__title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--zitro-color-text-primary, #212121);
+    color: var(--zitro-on-surface, #212121);
     margin: 0 0 0.5rem;
   }
 
   &__subtitle {
     font-size: 0.95rem;
-    color: var(--zitro-color-text-secondary, #666);
+    color: var(--zitro-on-surface-variant, #757575);
     margin: 0 0 1.75rem;
   }
 
@@ -35,7 +35,7 @@
 
   &__error {
     font-size: 0.8rem;
-    color: var(--zitro-color-error, #f44336);
+    color: var(--zitro-error, #b00020);
     margin: 0.35rem 0 0;
     display: flex;
     align-items: center;
@@ -49,22 +49,22 @@
 
   &__status {
     font-size: 0.875rem;
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     margin: 0 0 1rem;
     text-align: center;
     border-radius: 8px;
     padding: 0.4rem 0.75rem;
     background: color-mix(
       in srgb,
-      var(--zitro-color-primary, #009688) 8%,
+      var(--zitro-primary, #c73e3a) 8%,
       transparent
     );
 
     &--error {
-      color: var(--zitro-color-error, #f44336);
+      color: var(--zitro-error, #b00020);
       background: color-mix(
         in srgb,
-        var(--zitro-color-error, #f44336) 8%,
+        var(--zitro-error, #b00020) 8%,
         transparent
       );
     }
@@ -90,15 +90,15 @@
     }
 
     &--primary {
-      background: var(--zitro-color-primary, #009688);
+      background: var(--zitro-primary, #c73e3a);
       color: #fff;
       margin-bottom: 1.5rem;
     }
 
     &--guest {
       background: transparent;
-      color: var(--zitro-color-primary, #009688);
-      border: 2px solid var(--zitro-color-primary, #009688);
+      color: var(--zitro-primary, #c73e3a);
+      border: 2px solid var(--zitro-primary, #c73e3a);
       margin-bottom: 0.75rem;
     }
   }
@@ -117,7 +117,7 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 1.5rem;
-    color: var(--zitro-color-text-secondary, #999);
+    color: var(--zitro-on-surface-variant, #757575);
     font-size: 0.875rem;
 
     &::before,
@@ -125,13 +125,13 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--zitro-color-divider, #e0e0e0);
+      background: #e0e0e0;
     }
   }
 
   &__guest-note {
     font-size: 0.8rem;
-    color: var(--zitro-color-text-secondary, #999);
+    color: var(--zitro-on-surface-variant, #757575);
     text-align: center;
     margin: 0;
   }

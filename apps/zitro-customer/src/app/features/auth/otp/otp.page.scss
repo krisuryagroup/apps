@@ -1,6 +1,6 @@
 .otp {
   min-height: 100vh;
-  background: var(--zitro-color-background, #f8f8f8);
+  background: var(--zitro-background, #f5f7fa);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,7 +8,7 @@
   padding: 1rem;
 
   &__card {
-    background: var(--zitro-color-surface, #fff);
+    background: var(--zitro-surface, #fff);
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     padding: 2rem;
@@ -19,7 +19,7 @@
   &__back {
     background: none;
     border: none;
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -36,10 +36,10 @@
     border-radius: 16px;
     background: color-mix(
       in srgb,
-      var(--zitro-color-primary, #009688) 12%,
+      var(--zitro-primary, #c73e3a) 12%,
       transparent
     );
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,20 +49,20 @@
   &__title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--zitro-color-text-primary, #212121);
+    color: var(--zitro-on-surface, #212121);
     margin: 0 0 0.5rem;
   }
 
   &__subtitle {
     font-size: 0.95rem;
-    color: var(--zitro-color-text-secondary, #666);
+    color: var(--zitro-on-surface-variant, #757575);
     margin: 0 0 0.5rem;
   }
 
   &__phone {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     margin: 0 0 2rem;
   }
 
@@ -73,20 +73,20 @@
   &__spinner {
     width: 24px;
     height: 24px;
-    border: 2px solid var(--zitro-color-divider, #e0e0e0);
-    border-top-color: var(--zitro-color-primary, #009688);
+    border: 2px solid #e0e0e0;
+    border-top-color: var(--zitro-primary, #c73e3a);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
 
   &__status {
     font-size: 0.875rem;
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     text-align: center;
     margin: 0 0 1rem;
     background: color-mix(
       in srgb,
-      var(--zitro-color-primary, #009688) 8%,
+      var(--zitro-primary, #c73e3a) 8%,
       transparent
     );
     border-radius: 8px;
@@ -95,14 +95,10 @@
 
   &__error {
     font-size: 0.875rem;
-    color: var(--zitro-color-error, #f44336);
+    color: var(--zitro-error, #b00020);
     text-align: center;
     margin: 0 0 1rem;
-    background: color-mix(
-      in srgb,
-      var(--zitro-color-error, #f44336) 8%,
-      transparent
-    );
+    background: color-mix(in srgb, var(--zitro-error, #b00020) 8%, transparent);
     border-radius: 8px;
     padding: 0.5rem 0.75rem;
     display: flex;
@@ -124,7 +120,7 @@
     justify-content: center;
     gap: 0.5rem;
     transition: opacity 0.2s;
-    background: var(--zitro-color-primary, #009688);
+    background: var(--zitro-primary, #c73e3a);
     color: #fff;
     margin-bottom: 1.5rem;
 
@@ -142,7 +138,7 @@
   &__resend-btn {
     background: none;
     border: none;
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -157,11 +153,11 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    color: var(--zitro-color-text-secondary, #999);
+    color: var(--zitro-on-surface-variant, #757575);
   }
 
   &__timer-label {
-    color: var(--zitro-color-text-secondary, #999);
+    color: var(--zitro-on-surface-variant, #757575);
   }
 
   &__timer-badge {
@@ -173,10 +169,10 @@
     border-radius: 20px;
     background: color-mix(
       in srgb,
-      var(--zitro-color-primary, #009688) 12%,
+      var(--zitro-primary, #c73e3a) 12%,
       transparent
     );
-    color: var(--zitro-color-primary, #009688);
+    color: var(--zitro-primary, #c73e3a);
     font-size: 0.8rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
