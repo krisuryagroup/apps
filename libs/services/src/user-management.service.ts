@@ -75,8 +75,11 @@ export class UserManagementService {
   /**
    * Load and emit the current user profile from the REST API.
    * Called by AppComponent and OtpPage after sign-in.
+   * Skipped for guest users — they have no profile.
    */
   async loadCurrentUserProfile(): Promise<void> {
+    const isGuest = localStorage.getItem('isGuest') === 'true';
+    if (isGuest) return;
     try {
       const user = await firstValueFrom(this.userApi.getProfile());
       this.userProfileSubject.next({

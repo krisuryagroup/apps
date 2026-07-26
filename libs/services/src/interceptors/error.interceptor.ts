@@ -15,10 +15,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       switch (error.status) {
-        case 401:
-          firebaseAuth.signOut();
-          router.navigate(['/auth/signin']);
+        case 401: {
+          // Never redirect guests — they intentionally have no auth token.
+          const isGuest = localStorage.getItem('isGuest') === 'true';
+          if (!isGuest) {
+            firebaseAuth.signOut();
+            router.navigate(['/auth/signin']);
+          }
           break;
+        }
 
         case 429:
           toast.show({
@@ -34,6 +39,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return throwError(() => error);
-    })
+    }),
   );
 };
