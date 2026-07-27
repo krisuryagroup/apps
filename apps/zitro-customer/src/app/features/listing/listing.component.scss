@@ -84,6 +84,12 @@
   }
 }
 
+// ── Business banners ─────────────────────────────────────────────────────────
+// Scrolls together with the veg filter bar and menu content inside .listing-scroll.
+.listing-banners {
+  display: block;
+}
+
 // ── Veg filter bar ───────────────────────────────────────────────────────────
 .listing-filter-bar {
   display: flex;

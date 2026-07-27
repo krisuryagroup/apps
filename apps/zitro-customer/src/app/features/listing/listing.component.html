@@ -41,43 +41,6 @@
     </button>
   </div>
 
-  <!-- Veg filter bar -->
-  <div class="listing-filter-bar">
-    <button
-      class="listing-filter-bar__veg-toggle"
-      [class.listing-filter-bar__veg-toggle--active]="vegOnly()"
-      type="button"
-      (click)="toggleVegFilter()"
-      data-testid="veg-filter"
-    >
-      <svg
-        class="listing-filter-bar__veg-icon"
-        width="14"
-        height="14"
-        viewBox="0 0 14 14"
-        aria-hidden="true"
-      >
-        <rect
-          x="1"
-          y="1"
-          width="12"
-          height="12"
-          rx="1.5"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        />
-        <circle cx="7" cy="7" r="3.5" fill="currentColor" />
-      </svg>
-      <span class="listing-filter-bar__veg-label">{{
-        'listing.vegOnly' | i18n
-      }}</span>
-      <span class="listing-filter-bar__veg-switch" aria-hidden="true">
-        <span class="listing-filter-bar__veg-knob"></span>
-      </span>
-    </button>
-  </div>
-
   @if (isCartUpdating()) {
     <lib-loader
       [config]="cartLoaderConfig"
@@ -85,29 +48,76 @@
     />
   }
 
-  @if (isLoading()) {
-    <lib-loader data-testid="listing-loader" />
-  }
+  <!-- Single scroll region: banner, filter bar, and menu content all scroll together -->
+  <div class="listing-scroll" #scrollContainer data-testid="listing-scroll">
+    <!-- Business banners -->
+    @if (banners().length > 0) {
+      <lib-banner-carousel
+        class="listing-banners"
+        [banners]="banners()"
+        (bannerClick)="onBannerClick($event)"
+        data-testid="listing-banner-carousel"
+      />
+    }
 
-  @if (hasError()) {
-    <lib-error-state data-testid="listing-error" (retryClicked)="retry()" />
-  }
-
-  @if (!isLoading() && !hasError()) {
-    @if (showNoSearchResults()) {
-      <div class="listing-no-results" data-testid="listing-no-results">
-        <span class="listing-no-results__title">{{
-          'listing.noResults' | i18n
+    <!-- Veg filter bar -->
+    <div class="listing-filter-bar">
+      <button
+        class="listing-filter-bar__veg-toggle"
+        [class.listing-filter-bar__veg-toggle--active]="vegOnly()"
+        type="button"
+        (click)="toggleVegFilter()"
+        data-testid="veg-filter"
+      >
+        <svg
+          class="listing-filter-bar__veg-icon"
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          aria-hidden="true"
+        >
+          <rect
+            x="1"
+            y="1"
+            width="12"
+            height="12"
+            rx="1.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <circle cx="7" cy="7" r="3.5" fill="currentColor" />
+        </svg>
+        <span class="listing-filter-bar__veg-label">{{
+          'listing.vegOnly' | i18n
         }}</span>
-        <p class="listing-no-results__copy">
-          {{ 'listing.searchPlaceholder' | i18n }}
-        </p>
-      </div>
-    } @else if (categorySections().length === 0) {
-      <lib-empty-state data-testid="listing-empty" />
-    } @else {
-      <!-- Scrollable product list grouped by category section -->
-      <div class="listing-scroll" #scrollContainer data-testid="listing-scroll">
+        <span class="listing-filter-bar__veg-switch" aria-hidden="true">
+          <span class="listing-filter-bar__veg-knob"></span>
+        </span>
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <lib-loader data-testid="listing-loader" />
+    }
+
+    @if (hasError()) {
+      <lib-error-state data-testid="listing-error" (retryClicked)="retry()" />
+    }
+
+    @if (!isLoading() && !hasError()) {
+      @if (showNoSearchResults()) {
+        <div class="listing-no-results" data-testid="listing-no-results">
+          <span class="listing-no-results__title">{{
+            'listing.noResults' | i18n
+          }}</span>
+          <p class="listing-no-results__copy">
+            {{ 'listing.searchPlaceholder' | i18n }}
+          </p>
+        </div>
+      } @else if (categorySections().length === 0) {
+        <lib-empty-state data-testid="listing-empty" />
+      } @else {
         @for (section of categorySections(); track section.categoryId) {
           <div
             class="category-section"
@@ -155,30 +165,32 @@
             }
           </div>
         }
-      </div>
-
-      <!-- Single toggle FAB: opens sheet when closed, closes when open -->
-      <button
-        class="category-menu-fab"
-        type="button"
-        (click)="isCategorySheetOpen.set(!isCategorySheetOpen())"
-        data-testid="category-nav-bar"
-      >
-        @if (isCategorySheetOpen()) {
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-            />
-          </svg>
-          <span>{{ 'common.close' | i18n }}</span>
-        } @else {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-          </svg>
-          <span>{{ 'listing.title' | i18n }}</span>
-        }
-      </button>
+      }
     }
+  </div>
+
+  @if (!isLoading() && !hasError() && categorySections().length > 0) {
+    <!-- Single toggle FAB: opens sheet when closed, closes when open -->
+    <button
+      class="category-menu-fab"
+      type="button"
+      (click)="isCategorySheetOpen.set(!isCategorySheetOpen())"
+      data-testid="category-nav-bar"
+    >
+      @if (isCategorySheetOpen()) {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+          />
+        </svg>
+        <span>{{ 'common.close' | i18n }}</span>
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+        </svg>
+        <span>{{ 'listing.title' | i18n }}</span>
+      }
+    </button>
   }
 
   <!-- Category index sheet (Swiggy-style jump list) -->

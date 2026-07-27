@@ -8,14 +8,21 @@ import {
   OnInit,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { I18nPipe } from '@zitro/i18n';
-import { CatalogApiService, CartApiService } from '@zitro/services';
-import { Category, Product, ProductVariation } from '@zitro/models';
+import {
+  CatalogApiService,
+  CartApiService,
+  BannerService,
+  BusinessContextService,
+} from '@zitro/services';
+import { Category, Product, ProductVariation, Banner } from '@zitro/models';
 import { matchesSearch } from '@zitro/utils';
 import {
   CatalogProductGridComponent,
@@ -26,6 +33,7 @@ import {
   EvolvedLoaderComponent as LoaderComponent,
   EmptyStateComponent,
   ErrorStateComponent,
+  BannerCarouselComponent,
 } from '@zitro/ui';
 import type { LoaderConfig } from '@zitro/ui';
 import { APP_SETTINGS_CACHE } from '../../core/constants/app.constants';
@@ -65,6 +73,7 @@ const LIST_GRID_CONFIG: CatalogProductGridConfig = {
     LoaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    BannerCarouselComponent,
   ],
   templateUrl: './listing.component.html',
   styleUrl: './listing.component.scss',
@@ -74,16 +83,21 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('scrollContainer')
   private scrollContainerRef!: ElementRef<HTMLElement>;
 
+  private carouselRef = viewChild(BannerCarouselComponent);
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
   readonly cartApi = inject(CartApiService);
+  private bannerService = inject(BannerService);
+  private businessContext = inject(BusinessContextService);
   private destroyRef = inject(DestroyRef);
   private _scrollCleanup?: () => void;
 
   readonly isLoading = signal(false);
   readonly hasError = signal(false);
   readonly isCartUpdating = signal(false);
+  readonly banners = signal<Banner[]>([]);
 
   readonly cartLoaderConfig: LoaderConfig = {
     size: 'sm',
@@ -173,6 +187,14 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.cartApi.getItemQtyInCart(this._businessSlug(), p.id);
   });
 
+  constructor() {
+    effect(() => {
+      if (this.banners().length > 1) {
+        this.carouselRef()?.startAutoPlay();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -225,6 +247,12 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!slug) return;
     this.isLoading.set(true);
     this.hasError.set(false);
+    this.businessContext.setBusinessId(slug);
+
+    this.bannerService
+      .getBanners()
+      .then((b) => this.banners.set(b))
+      .catch(() => this.banners.set([]));
 
     this.catalogApi
       .getBusinessMenu(slug)
@@ -336,6 +364,12 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
       /* no-op */
     } finally {
       this.isCartUpdating.set(false);
+    }
+  }
+
+  onBannerClick(banner: Banner): void {
+    if (banner.targetUrl) {
+      window.open(banner.targetUrl, '_blank', 'noopener');
     }
   }
 

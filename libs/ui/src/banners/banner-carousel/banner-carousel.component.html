@@ -1,6 +1,9 @@
 <div class="banner-carousel" data-testid="banner-carousel">
   @if (activeBanners().length === 0) {
-    <div class="banner-carousel__empty" data-testid="banner-carousel-empty"></div>
+    <div
+      class="banner-carousel__empty"
+      data-testid="banner-carousel-empty"
+    ></div>
   } @else {
     <div class="banner-carousel__track">
       @for (banner of activeBanners(); track banner.id; let i = $index) {
@@ -11,7 +14,7 @@
           data-testid="banner-carousel-slide"
         >
           <img
-            src="assets/banners/1080_1200_px.png"
+            [src]="banner.imageURL || 'assets/banners/1080_900_px.png'"
             [alt]="banner.title"
             class="banner-carousel__image"
           />
@@ -29,8 +32,22 @@
     </div>
 
     @if (config().showArrows && activeBanners().length > 1) {
-      <button class="banner-carousel__arrow banner-carousel__arrow--prev" (click)="prev()" type="button" data-testid="banner-carousel-prev">&#8249;</button>
-      <button class="banner-carousel__arrow banner-carousel__arrow--next" (click)="next()" type="button" data-testid="banner-carousel-next">&#8250;</button>
+      <button
+        class="banner-carousel__arrow banner-carousel__arrow--prev"
+        (click)="prev()"
+        type="button"
+        data-testid="banner-carousel-prev"
+      >
+        &#8249;
+      </button>
+      <button
+        class="banner-carousel__arrow banner-carousel__arrow--next"
+        (click)="next()"
+        type="button"
+        data-testid="banner-carousel-next"
+      >
+        &#8250;
+      </button>
     }
 
     @if (config().showDots && activeBanners().length > 1) {
