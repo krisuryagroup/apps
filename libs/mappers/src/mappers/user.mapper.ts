@@ -1,4 +1,4 @@
-import type { User, Address } from '@zitro/models';
+import type { User, Address, AddressFormData } from '@zitro/models';
 import type { UserDto, AddressDto } from '../dtos/user.dto';
 import type {
   CreateAddressRequest,
@@ -33,11 +33,25 @@ export const UserMapper = {
       isDefault: dto.isDefault,
       lat: dto.coordinatesLat ?? null,
       lng: dto.coordinatesLng ?? null,
+      addressMode: dto.addressMode ?? 'manual',
+      societyId: dto.societyId ?? null,
+      societyName: dto.societyName ?? null,
+      towerId: dto.towerId ?? null,
+      towerName: dto.towerName ?? null,
+      flatNumber: dto.flatNumber ?? null,
     };
   },
 
-  /** Model → Request: used when creating a new address. */
-  fromAddress(address: Omit<Address, 'id'>): CreateAddressRequest {
+  /**
+   * Model → Request: used when creating/updating an address.
+   * `towerNameOther` only exists on AddressFormData (form-only, outbound), never on
+   * Address (API response) — accepted here as an optional extra so callers passing
+   * either shape both work.
+   */
+  fromAddress(
+    address: Omit<Address, 'id'> &
+      Partial<Pick<AddressFormData, 'towerNameOther'>>,
+  ): CreateAddressRequest {
     return {
       name: address.name,
       phone: address.phone,
@@ -50,6 +64,11 @@ export const UserMapper = {
       isDefault: address.isDefault,
       coordinatesLat: address.lat ?? null,
       coordinatesLng: address.lng ?? null,
+      addressMode: address.addressMode ?? 'manual',
+      societyId: address.societyId ?? null,
+      towerId: address.towerId ?? null,
+      towerNameOther: address.towerNameOther ?? null,
+      flatNumber: address.flatNumber ?? null,
     };
   },
 

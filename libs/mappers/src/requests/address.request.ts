@@ -11,6 +11,12 @@ export interface CreateAddressRequest {
   isDefault: boolean;
   coordinatesLat?: number | null;
   coordinatesLng?: number | null;
+  // Defaults to "manual" server-side when omitted — see AddressMode in @zitro/models.
+  addressMode?: 'manual' | 'society';
+  societyId?: string | null;
+  towerId?: string | null;
+  towerNameOther?: string | null;
+  flatNumber?: string | null;
 }
 
 // Outbound shape for PUT /api/users/addresses/{id}

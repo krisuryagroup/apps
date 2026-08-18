@@ -35,15 +35,185 @@
     </label>
   </div>
 
-  <label class="add-address-form__field">
-    <span>{{ 'address.houseStreet' | i18n }}</span>
-    <input
-      type="text"
-      [value]="houseAndStreet()"
-      (input)="houseAndStreet.set($any($event.target).value)"
-      data-testid="address-house-input"
-    />
-  </label>
+  <!-- Apartment/society picker — offered only when adding, and only when there's
+       something nearby to pick from. Once an address exists its mode is fixed. -->
+  @if (canOfferApartmentPicker() && !showApartmentSection()) {
+    <button
+      type="button"
+      class="add-address-form__apartment-toggle"
+      (click)="toggleApartmentSection()"
+      data-testid="apartment-toggle-btn"
+    >
+      <span class="add-address-form__apartment-toggle-icon">🏢</span>
+      <span class="add-address-form__apartment-toggle-text">
+        <strong>{{ 'address.apartmentToggleLabel' | i18n }}</strong>
+        <small>{{ 'address.apartmentToggleHint' | i18n }}</small>
+      </span>
+    </button>
+  }
+
+  @if (showApartmentSection()) {
+    <div class="add-address-form__apartment" data-testid="apartment-section">
+      @if (!selectedSocietyId()) {
+        <!-- No society chosen yet — search/pick from nearby list (add-mode only,
+             this branch never renders during edit since a society address always
+             already has selectedSocietyId set). -->
+        <label class="add-address-form__field">
+          <span>{{ 'address.apartmentToggleLabel' | i18n }}</span>
+          <input
+            type="text"
+            [value]="apartmentQuery()"
+            (input)="onApartmentQueryInput($any($event.target).value)"
+            [placeholder]="'address.apartmentSearchPlaceholder' | i18n"
+            data-testid="apartment-search-input"
+          />
+        </label>
+        @if (filteredSocieties().length > 0) {
+          <ul
+            class="add-address-form__apartment-list"
+            data-testid="apartment-list"
+          >
+            @for (society of filteredSocieties(); track society.id) {
+              <li>
+                <button
+                  type="button"
+                  class="add-address-form__apartment-item"
+                  (click)="selectSociety(society)"
+                  data-testid="apartment-item"
+                >
+                  <span class="add-address-form__apartment-item-name">{{
+                    society.name
+                  }}</span>
+                  @if (society.area) {
+                    <span class="add-address-form__apartment-item-area">{{
+                      society.area
+                    }}</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p
+            class="add-address-form__apartment-empty"
+            data-testid="apartment-empty"
+          >
+            {{ 'address.noApartmentsNearby' | i18n }}
+          </p>
+        }
+        <button
+          type="button"
+          class="add-address-form__apartment-clear-link"
+          (click)="toggleApartmentSection()"
+          data-testid="apartment-cancel-btn"
+        >
+          {{ 'address.apartmentClear' | i18n }}
+        </button>
+      } @else {
+        <!-- A society is selected (either just picked, or locked-in from an
+             existing society-mode address being edited). -->
+        <div
+          class="add-address-form__apartment-selected"
+          data-testid="apartment-selected"
+        >
+          <span class="add-address-form__apartment-item-name">{{
+            selectedSocietyName()
+          }}</span>
+          @if (canChangeSociety()) {
+            <button
+              type="button"
+              class="add-address-form__apartment-change-btn"
+              (click)="clearSociety()"
+              data-testid="apartment-change-btn"
+            >
+              {{ 'address.apartmentChange' | i18n }}
+            </button>
+          }
+        </div>
+
+        <div class="add-address-form__row">
+          <!-- A plain div, not <label> — the select/input below are mutually
+               exclusive (@if), so a single <label> can't be statically proven
+               to always wrap exactly one control. Styling is unaffected since
+               .add-address-form__field targets by class, not tag. -->
+          <div class="add-address-form__field">
+            <span>{{ 'address.towerOptional' | i18n }}</span>
+            @if (effectiveTowers().length > 0) {
+              <select
+                [value]="selectedTowerId() ?? ''"
+                (change)="onTowerSelectChange($any($event.target).value)"
+                data-testid="apartment-tower-select"
+              >
+                <option value="">{{ 'address.towerOther' | i18n }}</option>
+                @for (t of effectiveTowers(); track t.id) {
+                  <option [value]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            }
+            @if (effectiveTowers().length === 0 || !selectedTowerId()) {
+              <input
+                type="text"
+                [value]="towerNameOther()"
+                (input)="towerNameOther.set($any($event.target).value)"
+                [placeholder]="'address.towerOtherPlaceholder' | i18n"
+                data-testid="apartment-tower-other-input"
+              />
+            }
+          </div>
+
+          <label class="add-address-form__field">
+            <span>{{ 'address.flatNumber' | i18n }}</span>
+            <input
+              type="text"
+              [value]="flatNumber()"
+              (input)="flatNumber.set($any($event.target).value)"
+              [placeholder]="'address.flatNumberPlaceholder' | i18n"
+              data-testid="apartment-flat-input"
+            />
+            @if (!flatNumber().trim()) {
+              <span
+                class="add-address-form__error"
+                data-testid="apartment-flat-error"
+              >
+                {{ 'address.flatNumberError' | i18n }}
+              </span>
+            }
+          </label>
+        </div>
+
+        @if (composedHouseAndStreet()) {
+          <div
+            class="add-address-form__apartment-preview"
+            data-testid="apartment-preview"
+          >
+            <span>{{ 'address.apartmentPreviewLabel' | i18n }}</span>
+            <p>{{ composedHouseAndStreet() }}</p>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  @if (isEditMode() && isSocietyMode()) {
+    <p
+      class="add-address-form__mode-locked-note"
+      data-testid="apartment-mode-locked-note"
+    >
+      {{ 'address.modeLockedNote' | i18n }}
+    </p>
+  }
+
+  @if (!isSocietyMode()) {
+    <label class="add-address-form__field">
+      <span>{{ 'address.houseStreet' | i18n }}</span>
+      <input
+        type="text"
+        [value]="houseAndStreet()"
+        (input)="houseAndStreet.set($any($event.target).value)"
+        data-testid="address-house-input"
+      />
+    </label>
+  }
 
   <label class="add-address-form__field">
     <span>{{ 'address.landmark' | i18n }}</span>
@@ -62,6 +232,7 @@
         type="text"
         [value]="pincode()"
         (input)="pincode.set($any($event.target).value)"
+        [readonly]="isSocietyMode()"
         maxlength="6"
         inputmode="numeric"
         placeholder="6-digit pincode"
@@ -83,6 +254,7 @@
         type="text"
         [value]="town()"
         (input)="town.set($any($event.target).value)"
+        [readonly]="isSocietyMode()"
         placeholder="Enter town / district"
         data-testid="address-town-input"
       />
@@ -95,6 +267,7 @@
       type="text"
       [value]="state()"
       (input)="state.set($any($event.target).value)"
+      [readonly]="isSocietyMode()"
       placeholder="Enter state"
       data-testid="address-state-input"
     />

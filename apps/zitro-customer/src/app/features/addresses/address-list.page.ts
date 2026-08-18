@@ -12,8 +12,8 @@ import {
   AddAddressFormComponent,
   EvolvedLoaderComponent,
 } from '@zitro/ui';
-import { AddressApiService } from '@zitro/services';
-import { Address, AddressFormData } from '@zitro/models';
+import { AddressApiService, SocietyApiService } from '@zitro/services';
+import { Address, AddressFormData, SocietyTower } from '@zitro/models';
 
 @Component({
   selector: 'app-address-list-page',
@@ -30,6 +30,7 @@ import { Address, AddressFormData } from '@zitro/models';
 })
 export class AddressListPage implements OnInit {
   private readonly addressApi = inject(AddressApiService);
+  private readonly societyApi = inject(SocietyApiService);
   private readonly router = inject(Router);
 
   readonly addresses = signal<Address[]>([]);
@@ -38,6 +39,7 @@ export class AddressListPage implements OnInit {
   readonly errorMessage = signal('');
   readonly showForm = signal(false);
   readonly editingAddress = signal<Address | null>(null);
+  readonly societyTowers = signal<SocietyTower[]>([]);
 
   ngOnInit(): void {
     this.loadAddresses();
@@ -68,7 +70,19 @@ export class AddressListPage implements OnInit {
 
   onEdit(address: Address): void {
     this.editingAddress.set(address);
+    this.societyTowers.set([]);
     this.showForm.set(true);
+  }
+
+  onSocietySelected(societyId: string | null): void {
+    if (!societyId) {
+      this.societyTowers.set([]);
+      return;
+    }
+    this.societyApi.getTowers(societyId).subscribe({
+      next: (towers) => this.societyTowers.set(towers),
+      error: () => this.societyTowers.set([]),
+    });
   }
 
   onDelete(id: string): void {

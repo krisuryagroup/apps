@@ -38,6 +38,14 @@
 
   <div class="address-card__type" data-testid="address-card-type">
     {{ address().type }}
+    @if (address().addressMode === 'society') {
+      <span
+        class="address-card__apartment-badge"
+        data-testid="address-card-apartment-badge"
+      >
+        {{ 'address.apartmentBadge' | i18n }}
+      </span>
+    }
   </div>
   <div class="address-card__name" data-testid="address-card-name">
     {{ address().name }}

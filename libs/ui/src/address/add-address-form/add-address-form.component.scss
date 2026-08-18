@@ -31,8 +31,9 @@
     text-transform: uppercase;
   }
 
-  input[type="text"],
-  input[type="tel"] {
+  input[type='text'],
+  input[type='tel'],
+  select {
     padding: 6px 9px;
     border-radius: 6px;
     border: 1px solid #ddd;
@@ -43,15 +44,24 @@
     width: 100%;
     box-sizing: border-box;
 
-    &:focus { border-color: var(--color-primary, #e53935); }
+    &:focus {
+      border-color: var(--color-primary, #e53935);
+    }
 
     &[readonly] {
       background-color: #f5f5f5;
       color: #555;
       cursor: default;
       border-color: #e8e8e8;
-      &:focus { border-color: #e8e8e8; }
+      &:focus {
+        border-color: #e8e8e8;
+      }
     }
+  }
+
+  select {
+    cursor: pointer;
+    margin-bottom: 4px;
   }
 }
 
@@ -106,13 +116,170 @@
   color: #333;
   cursor: pointer;
 
-  input { width: 14px; height: 14px; cursor: pointer; }
+  input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
 }
 
 .add-address-form__actions {
   display: flex;
   gap: 8px;
   margin-top: 2px;
+}
+
+// ── Apartment/society picker ────────────────────────────────────────────
+// Uses @zitro/theme CSS custom properties (var(--zitro-*, fallback)) so it
+// adapts across light/dark/nature/ocean themes, unlike the plain fields above.
+
+.add-address-form__apartment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--zitro-radius-md, 8px);
+  border: 1px dashed var(--zitro-primary, #c73e3a);
+  background: var(--zitro-surface-variant, #f5f5f5);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.add-address-form__apartment-toggle-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.add-address-form__apartment-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  strong {
+    font-size: 12.5px;
+    color: var(--zitro-on-surface, #212121);
+  }
+
+  small {
+    font-size: 10.5px;
+    color: var(--zitro-on-surface-variant, #757575);
+  }
+}
+
+.add-address-form__apartment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--zitro-radius-md, 8px);
+  border: 1px solid var(--zitro-divider, #e0e0e0);
+  background: var(--zitro-surface-variant, #f5f5f5);
+}
+
+.add-address-form__apartment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: var(--zitro-radius-sm, 4px);
+  background: var(--zitro-surface, #ffffff);
+}
+
+.add-address-form__apartment-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--zitro-divider, #e0e0e0);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+
+  &:last-child {
+    border-bottom: none;
+  }
+  &:hover {
+    background: var(--zitro-surface-variant, #f5f5f5);
+  }
+}
+
+.add-address-form__apartment-item-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--zitro-on-surface, #212121);
+}
+
+.add-address-form__apartment-item-area {
+  font-size: 10.5px;
+  color: var(--zitro-on-surface-variant, #757575);
+}
+
+.add-address-form__apartment-empty {
+  font-size: 11.5px;
+  color: var(--zitro-on-surface-variant, #757575);
+  margin: 4px 0;
+}
+
+.add-address-form__apartment-clear-link,
+.add-address-form__apartment-change-btn {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--zitro-primary, #c73e3a);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.add-address-form__apartment-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--zitro-radius-sm, 4px);
+  background: var(--zitro-surface, #ffffff);
+  border: 1px solid var(--zitro-divider, #e0e0e0);
+
+  .add-address-form__apartment-item-name {
+    color: var(--zitro-on-surface, #212121);
+  }
+}
+
+.add-address-form__apartment-preview {
+  padding: 8px 10px;
+  border-left: 3px solid var(--zitro-primary, #c73e3a);
+  background: var(--zitro-surface, #ffffff);
+  border-radius: 0 var(--zitro-radius-sm, 4px) var(--zitro-radius-sm, 4px) 0;
+
+  span {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--zitro-on-surface-variant, #757575);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--zitro-on-surface, #212121);
+  }
+}
+
+.add-address-form__mode-locked-note {
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--zitro-on-surface-variant, #757575);
+  margin: -4px 0 0;
 }
 
 .add-address-form__btn {
@@ -125,7 +292,10 @@
   font-size: 12.5px;
   transition: opacity 0.15s;
 
-  &:disabled { opacity: 0.45; cursor: not-allowed; }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
   &--primary {
     background: var(--color-primary, #e53935);

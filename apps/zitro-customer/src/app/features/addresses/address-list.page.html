@@ -41,6 +41,8 @@
     <lib-add-address-form
       [config]="{ mode: 'edit' }"
       [initialData]="editingAddress()"
+      [societyTowers]="societyTowers()"
+      (societySelected)="onSocietySelected($event)"
       (submitted)="onFormSubmitted($event)"
       (cancelled)="onFormCancelled()"
       data-testid="edit-address-form"

@@ -70,6 +70,12 @@ export interface AddressDto {
   isDefault: boolean;
   coordinatesLat?: number | null;
   coordinatesLng?: number | null;
+  addressMode?: 'manual' | 'society';
+  societyId?: string | null;
+  societyName?: string | null;
+  towerId?: string | null;
+  towerName?: string | null;
+  flatNumber?: string | null;
 }
 
 export interface OrderItemDto {

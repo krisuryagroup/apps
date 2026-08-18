@@ -33,6 +33,24 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.address-card__apartment-badge {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--zitro-primary, #c73e3a);
+  background: color-mix(
+    in srgb,
+    var(--zitro-primary, #c73e3a) 12%,
+    transparent
+  );
+  border-radius: var(--zitro-radius-pill, 999px);
+  padding: 2px 8px;
 }
 
 .address-card__name {

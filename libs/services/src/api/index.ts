@@ -20,3 +20,4 @@ export type {
 } from './geocoding-api.service';
 export { CartApiService } from './cart.service';
 export { PricingApiService } from './pricing.service';
+export { SocietyApiService } from './society-api.service';

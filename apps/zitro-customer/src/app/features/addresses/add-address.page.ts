@@ -23,8 +23,14 @@ import {
   GeoSearchSuggestion as SearchSuggestion,
   DialogService,
   UserManagementService,
+  SocietyApiService,
 } from '@zitro/services';
-import { Address, AddressFormData } from '@zitro/models';
+import {
+  Address,
+  AddressFormData,
+  NearbySociety,
+  SocietyTower,
+} from '@zitro/models';
 import { DELIVERY_PINCODE_CONFIG } from '../../core/constants/app.constants';
 import { environment } from '../../../environments/environment';
 
@@ -46,6 +52,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly geocodingService = inject(GoogleGeocodingService);
   private readonly dialogService = inject(DialogService);
   private readonly userManagement = inject(UserManagementService);
+  private readonly societyApi = inject(SocietyApiService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly ngZone = inject(NgZone);
@@ -66,9 +73,11 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
 
   readonly initialFormData = signal<Partial<Address> | null>(null);
   readonly locationPatch = signal<AddressLocationPatch | null>(null);
+  readonly nearbySocieties = signal<NearbySociety[]>([]);
+  readonly societyTowers = signal<SocietyTower[]>([]);
 
   mode: 'checkout' | 'manage' | 'default' = 'default';
-  private editingAddressId: string | null = null;
+  readonly editingAddressId = signal<string | null>(null);
   private checkoutBusinessSlug: string | null = null;
 
   private map: unknown = null;
@@ -102,7 +111,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
 
     const editId = snap.get('addressId');
     if (editId) {
-      this.editingAddressId = editId;
+      this.editingAddressId.set(editId);
       const addresses = await this.addressApi
         .getAddresses()
         .toPromise()
@@ -222,6 +231,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
         lat,
         lng,
       });
+      this.fetchNearbySocieties(lat, lng);
     } catch {
       this.errorMessage.set(
         'Could not resolve address for this location. Please enter manually.',
@@ -308,6 +318,26 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       state: 'Uttar Pradesh',
       landmark: '',
     });
+    this.nearbySocieties.set([]);
+    this.societyTowers.set([]);
+  }
+
+  private fetchNearbySocieties(lat: number, lng: number): void {
+    this.societyApi.getNearby(lat, lng).subscribe({
+      next: (societies) => this.nearbySocieties.set(societies),
+      error: () => this.nearbySocieties.set([]),
+    });
+  }
+
+  onSocietySelected(societyId: string | null): void {
+    if (!societyId) {
+      this.societyTowers.set([]);
+      return;
+    }
+    this.societyApi.getTowers(societyId).subscribe({
+      next: (towers) => this.societyTowers.set(towers),
+      error: () => this.societyTowers.set([]),
+    });
   }
 
   private checkPincodeRestriction(pincode: string): void {
@@ -337,7 +367,8 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.isSaving.set(true);
     this.errorMessage.set('');
 
-    const addressData: Omit<Address, 'id'> = {
+    const addressData: Omit<Address, 'id'> &
+      Pick<AddressFormData, 'towerNameOther'> = {
       name: data.name,
       phone: data.phone,
       houseAndStreet: data.houseAndStreet,
@@ -349,10 +380,17 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       isDefault: data.isDefault,
       lat: data.lat ?? null,
       lng: data.lng ?? null,
+      addressMode: data.addressMode ?? 'manual',
+      societyId: data.societyId ?? null,
+      societyName: data.societyName ?? null,
+      towerId: data.towerId ?? null,
+      towerNameOther: data.towerNameOther ?? null,
+      flatNumber: data.flatNumber ?? null,
     };
 
-    const save$ = this.editingAddressId
-      ? this.addressApi.updateAddress(this.editingAddressId, addressData)
+    const editingId = this.editingAddressId();
+    const save$ = editingId
+      ? this.addressApi.updateAddress(editingId, addressData)
       : this.addressApi.createAddress(addressData);
 
     save$.subscribe({

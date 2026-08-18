@@ -12,7 +12,11 @@ export * from './cart.model';
 export * from './catalog.model';
 export * from './category-config.model';
 // coupon.model also declares OrderType (same as order.model) — export only coupon-specific types
-export type { OnlineOrderCoupon, CouponValidationResult, AppliedCoupon } from './coupon.model';
+export type {
+  OnlineOrderCoupon,
+  CouponValidationResult,
+  AppliedCoupon,
+} from './coupon.model';
 export * from './delivery.model';
 export * from './fast2sms.model';
 export * from './item-slider.model';
@@ -42,4 +46,5 @@ export * from './api-cart.model';
 export * from './product.model';
 export * from './analytics-config.model';
 export * from './search-term.model';
+export * from './society.model';
 export * from './user.model';
