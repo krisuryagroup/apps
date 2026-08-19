@@ -27,10 +27,12 @@ Before doing anything:
    was mid-flight when the previous session ended. Read the diff to see how far it
    got before continuing it.
 
-**Current state as of this handoff:** Phase 0 (backend APIs + all 3 new app scaffolds
-
-- Firebase Hosting multi-site setup) is in progress. Check the status files above for
-  the exact current picture — don't trust this paragraph, it goes stale immediately.
+**Current state as of this handoff:** Phase 0 backend APIs + all 3 new app scaffolds +
+Firebase Hosting multi-site setup are essentially done — only `zitro-api` TASK-036
+(superadmin feature flags/translations/themes/UI config) remains before Phase 0 backend
+is fully closed out and work moves into the frontend tracks (Track A `zitro-restaurant`,
+Track B `zitro-admin`, Track C `zitro-superadmin`). Check the status files above for the
+exact current picture — don't trust this paragraph, it goes stale immediately.
 
 **Working conventions already established this session** (don't re-litigate, just
 follow): commit after each completed task, directly to `main`, no PR — one task per
@@ -39,5 +41,23 @@ commit, clear message referencing the task ID. Every backend task must pass
 --verify-no-changes` before being considered done. Every frontend task must pass
 `nx build`, `nx lint`, `nx test` for the affected project(s), and ideally a quick
 visual check via a dev server before being marked done.
+
+**Cost-control convention (added during TASK-038):** any feature that calls a paid
+external API (LLM calls, SMS/email providers past free quota, etc.) must ship with a
+runtime, admin-toggleable kill switch — not just an appsettings value that needs a
+redeploy to flip. TASK-038 established the pattern: a `feature_flags` table
+(key → is_enabled, no caching so a toggle takes effect immediately), read via
+`IAdminContract.IsFeatureEnabledAsync(key, ct)` from `Admin.Contracts`, admin endpoints
+`GET/PUT /api/admin/feature-flags/{key}` (SuperAdmin-gated), seeded **OFF by default** in
+schema SQL. When the flag is off, the calling endpoint should return a normal `200` with
+an `enabled:false`-style payload — not an error — so the frontend can fall back
+gracefully (e.g. "add manually") instead of showing a broken feature. TASK-036's
+`app_feature_flags` table is a different, app-scoped concept (per-app/per-platform UI
+toggles) — don't conflate the two, but do flag the overlap when starting TASK-036 since
+both are "a table of flags."
+
+Also: **before starting any task that will call a paid external API**, say so explicitly
+and give a rough cost estimate before writing code — the user wants to approve spend, not
+discover it after the fact.
 
 Continue from wherever the status files + git history say things left off.
