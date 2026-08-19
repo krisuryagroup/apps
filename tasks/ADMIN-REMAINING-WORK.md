@@ -34,19 +34,19 @@ commit.
 
 All committed, one commit per sub-item, each verified live against the local stack:
 
-| Phase     | What                                                                                                                                                                                       | `apps` commit  | `zitro-api` commit                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- | ---------------------------------------- |
-| 1         | `DataTableComponent` error-state + pagination infra; fixed a `PagedResult.total`→`totalCount` contract bug and two silent-crash bare-array/wrapper-object bugs (Orders, Delivery Partners) | `ace5911`      | —                                        |
-| 2.1 & 2.2 | Business detail Users/Orders tabs                                                                                                                                                          | `9660fea`      | —                                        |
-| 2.3       | Orders screen business filter                                                                                                                                                              | `e847dad`      | —                                        |
-| 2.4       | Brands → branches drill-down (expandable row, generic `DataTableComponent` support added)                                                                                                  | `73a85e6`      | —                                        |
-| 3.1       | Coupon form — 5 missing fields (order-type, new-customer-only, cooldown, min-order, usage-limit)                                                                                           | `b4a690d`      | —                                        |
-| 3.2       | Delivery zones scoped per business — turned out to need required `businessId`/`polygonCoords`/`baseFee`/`feePerKm` the old form never collected at all                                     | `8c5346d`      | —                                        |
-| 3.3       | Payouts batch-review + mark-paid UI; fixed a silently-unbound `fromDate`/`toDate`→`from`/`to` request bug                                                                                  | `47c496d`      | `a47ec37` (new `GET /api/admin/payouts`) |
-| doc trim  | Trimmed this file's completed-phase detail into the table above                                                                                                                            | `59a1f9a`      | —                                        |
-| 4.1       | Categories business scoping + validation; fixed parent-select, `isEnabledForOnlineOrders`, and `CategoryDto` contract bugs                                                                 | `572ec4e`      | `47f3ee8` (reject both-null on create)   |
-| 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`      | —                                        |
-| 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | see §4.3 below | —                                        |
+| Phase     | What                                                                                                                                                                                       | `apps` commit | `zitro-api` commit                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------------- |
+| 1         | `DataTableComponent` error-state + pagination infra; fixed a `PagedResult.total`→`totalCount` contract bug and two silent-crash bare-array/wrapper-object bugs (Orders, Delivery Partners) | `ace5911`     | —                                        |
+| 2.1 & 2.2 | Business detail Users/Orders tabs                                                                                                                                                          | `9660fea`     | —                                        |
+| 2.3       | Orders screen business filter                                                                                                                                                              | `e847dad`     | —                                        |
+| 2.4       | Brands → branches drill-down (expandable row, generic `DataTableComponent` support added)                                                                                                  | `73a85e6`     | —                                        |
+| 3.1       | Coupon form — 5 missing fields (order-type, new-customer-only, cooldown, min-order, usage-limit)                                                                                           | `b4a690d`     | —                                        |
+| 3.2       | Delivery zones scoped per business — turned out to need required `businessId`/`polygonCoords`/`baseFee`/`feePerKm` the old form never collected at all                                     | `8c5346d`     | —                                        |
+| 3.3       | Payouts batch-review + mark-paid UI; fixed a silently-unbound `fromDate`/`toDate`→`from`/`to` request bug                                                                                  | `47c496d`     | `a47ec37` (new `GET /api/admin/payouts`) |
+| doc trim  | Trimmed this file's completed-phase detail into the table above                                                                                                                            | `59a1f9a`     | —                                        |
+| 4.1       | Categories business scoping + validation; fixed parent-select, `isEnabledForOnlineOrders`, and `CategoryDto` contract bugs                                                                 | `572ec4e`     | `47f3ee8` (reject both-null on create)   |
+| 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`     | —                                        |
+| 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | `b8b2d66`     | —                                        |
 
 **Recurring bug class found across all three phases:** frontend/backend field-name or
 type contract mismatches that don't crash on write (bad data just gets silently dropped or
@@ -128,8 +128,7 @@ assignment state, no route change, no modal.
 
 ### 4.3 Admins screen — server-side-only permission gating
 
-**Status: DONE — implemented and verified live against local stack, 2026-08-19. Committed
-alongside this doc update (check `git log` in the `apps` repo for the exact hash).**
+**Status: DONE — implemented and verified live against local stack, 2026-08-19 (`b8b2d66`).**
 
 **Gap:** AD-T-707/801 tail. Nav-hiding is done (fix #6). Still missing: a `requirePermission`
 route guard on `/admins` (AD-000 spec'd one, `app.routes.ts` doesn't have it), and
