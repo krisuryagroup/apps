@@ -388,14 +388,10 @@ export class AdminApiService {
   // ── Categories ──────────────────────────────────────────────────────────────
 
   listCategories(params?: Record<string, string>): Observable<CategoryDto[]> {
-    let p = new HttpParams();
-    if (params)
-      Object.entries(params).forEach(([k, v]) => {
-        if (v) p = p.set(k, v);
-      });
-    return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/categories`, {
-      params: p,
-    });
+    // Use admin endpoint for global listing (no businessSlug required).
+    // GET /api/categories requires businessSlug (business-specific); the admin
+    // global catalog uses GET /api/admin/categories instead.
+    return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/admin/categories`);
   }
 
   createCategory(req: Record<string, unknown>): Observable<CategoryDto> {
