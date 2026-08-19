@@ -33,7 +33,16 @@ import {
       [columns]="columns"
       [rows]="brands()"
       [loading]="loading()"
-    />
+    >
+      <ng-template #rowActions let-row>
+        <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
+          {{ 'common.edit' | i18n }}
+        </button>
+        <button class="btn btn-sm btn-danger" (click)="remove(row)">
+          {{ 'common.delete' | i18n }}
+        </button>
+      </ng-template>
+    </lib-data-table>
     @if (showForm()) {
       <div class="overlay">
         <div class="panel">
@@ -116,6 +125,20 @@ export class AdminBrandsComponent implements OnInit {
     this.formName = '';
     this.formDesc = '';
     this.showForm.set(true);
+  }
+
+  protected openEdit(brand: BrandDto): void {
+    this.editing.set(brand);
+    this.formName = brand.name;
+    this.formDesc = brand.description ?? '';
+    this.showForm.set(true);
+  }
+
+  protected remove(brand: BrandDto): void {
+    if (!confirm(`Delete brand "${brand.name}"?`)) return;
+    this.api.deleteBrand(brand.id).subscribe({
+      next: () => this.brands.update((b) => b.filter((x) => x.id !== brand.id)),
+    });
   }
 
   protected save(): void {
