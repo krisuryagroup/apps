@@ -30,37 +30,37 @@
 
 ## Tasks
 
-| ID                      | Page / Feature                                            | Size | Status | Backend dependency                                                                                                                                                                                                                                                                                                                           |
-| ----------------------- | --------------------------------------------------------- | ---- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Foundation**          |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-000                  | Scaffold `zitro-restaurant` Nx app + Capacitor config     | M    | `[x]`  | none — done: app builds/lints/tests clean, theme live, guards verified in browser                                                                                                                                                                                                                                                            |
-| **Onboarding**          |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-001                  | Login                                                     | S    | `[x]`  | done — phone/password login, error states, apply link |
-| RS-002                  | Partner Application (public signup)                       | M    | `[x]`  | done — 3-step public application form; needs manual SQL + EMAIL_API_KEY for live end-to-end |
-| RS-002b                 | Accept Admin Invite                                       | S    | `[x]`  | done — token validation + password set; same caveats as RS-002 |
-| RS-003                  | Onboarding / KYC Completion (FSSAI, GST, PAN, bank, docs) | L    | `[x]`  | done — status display + link to profile/KYC (RS-015) |
-| **Daily Operations**    |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-004                  | Dashboard                                                 | M    | `[x]`  | done — stat cards (today orders/revenue/pending), quick links |
+| ID                      | Page / Feature                                            | Size | Status | Backend dependency                                                                           |
+| ----------------------- | --------------------------------------------------------- | ---- | ------ | -------------------------------------------------------------------------------------------- |
+| **Foundation**          |                                                           |      |        |                                                                                              |
+| RS-000                  | Scaffold `zitro-restaurant` Nx app + Capacitor config     | M    | `[x]`  | none — done: app builds/lints/tests clean, theme live, guards verified in browser            |
+| **Onboarding**          |                                                           |      |        |                                                                                              |
+| RS-001                  | Login                                                     | S    | `[x]`  | done — phone/password login, error states, apply link                                        |
+| RS-002                  | Partner Application (public signup)                       | M    | `[x]`  | done — 3-step public application form; needs manual SQL + EMAIL_API_KEY for live end-to-end  |
+| RS-002b                 | Accept Admin Invite                                       | S    | `[x]`  | done — token validation + password set; same caveats as RS-002                               |
+| RS-003                  | Onboarding / KYC Completion (FSSAI, GST, PAN, bank, docs) | L    | `[x]`  | done — status display + link to profile/KYC (RS-015)                                         |
+| **Daily Operations**    |                                                           |      |        |                                                                                              |
+| RS-004                  | Dashboard                                                 | M    | `[x]`  | done — stat cards (today orders/revenue/pending), quick links                                |
 | RS-005                  | Live Orders Queue                                         | L    | `[x]`  | done — tabbed queue by status, accept/advance/reject with reason, real-time refresh via poll |
-| RS-006                  | Order Detail                                              | M    | `[x]`  | done — line items, charges, customer, status timeline |
-| **Menu Management**     |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-007                  | Menu — Category & Item List + Manual CRUD                 | L    | `[x]`  | done — category sidebar, item table, add/edit/delete both; AI import link |
-| RS-008                  | Menu Import — AI Photo/PDF Upload + Review & Approve      | XL   | `[x]`  | done — AI parse + review + commit; graceful fallback when flag disabled |
-| RS-009                  | Menu Import — Bulk Spreadsheet                            | M    | `[x]`  | done — pending bulk spreadsheet form (uses RS-008 commit endpoint) |
-| RS-010                  | Menu — Clone from Branch/Brand                            | S    | `[x]`  | done (placeholder) — fetch + commit flow via existing endpoints |
-| **Business Operations** |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-011                  | Inventory Management                                      | M    | `[x]`  | done — stock table, adjust qty with reason, alerts list |
-| RS-012                  | Delivery Zones                                            | M    | `[x]`  | done — zone list, add with base fee, delete |
-| RS-013                  | Ratings & Reviews                                         | S    | `[x]`  | done — review list with star rating, reply form |
-| RS-014                  | Payouts                                                   | M    | `[x]`  | done — payout history table |
-| RS-015                  | Business Profile & Settings                               | M    | `[x]`  | done — editable profile with KYC fields, status display |
-| RS-016                  | Staff Management                                          | M    | `[x]`  | done — staff list, add new staff with role |
-| **Platform**            |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-017                  | Push Notifications (Android FCM order alerts)             | M    | `[ ]`  | verify device-token registration exists for business users — see task file                                                                                                                                                                                                                                                                   |
-| RS-018                  | Firebase Hosting Deploy + `partners.zitro.in`             | S    | `[ ]`  | see `DEPLOYMENT-TASKS.md`                                                                                                                                                                                                                                                                                                                    |
-| **Testing**             |                                                           |      |        |                                                                                                                                                                                                                                                                                                                                              |
-| RS-TEST-001             | Unit + Integration Tests                                  | —    | `[ ]`  | after all pages pass manual testing                                                                                                                                                                                                                                                                                                          |
-| RS-TEST-002             | E2E — critical partner journeys                           | —    | `[ ]`  | after RS-TEST-001                                                                                                                                                                                                                                                                                                                            |
+| RS-006                  | Order Detail                                              | M    | `[x]`  | done — line items, charges, customer, status timeline                                        |
+| **Menu Management**     |                                                           |      |        |                                                                                              |
+| RS-007                  | Menu — Category & Item List + Manual CRUD                 | L    | `[x]`  | done — category sidebar, item table, add/edit/delete both; AI import link                    |
+| RS-008                  | Menu Import — AI Photo/PDF Upload + Review & Approve      | XL   | `[x]`  | done — AI parse + review + commit; graceful fallback when flag disabled                      |
+| RS-009                  | Menu Import — Bulk Spreadsheet                            | M    | `[x]`  | done — pending bulk spreadsheet form (uses RS-008 commit endpoint)                           |
+| RS-010                  | Menu — Clone from Branch/Brand                            | S    | `[x]`  | done (placeholder) — fetch + commit flow via existing endpoints                              |
+| **Business Operations** |                                                           |      |        |                                                                                              |
+| RS-011                  | Inventory Management                                      | M    | `[x]`  | done — stock table, adjust qty with reason, alerts list                                      |
+| RS-012                  | Delivery Zones                                            | M    | `[x]`  | done — zone list, add with base fee, delete                                                  |
+| RS-013                  | Ratings & Reviews                                         | S    | `[x]`  | done — review list with star rating, reply form                                              |
+| RS-014                  | Payouts                                                   | M    | `[x]`  | done — payout history table                                                                  |
+| RS-015                  | Business Profile & Settings                               | M    | `[x]`  | done — editable profile with KYC fields, status display                                      |
+| RS-016                  | Staff Management                                          | M    | `[x]`  | done — staff list, add new staff with role                                                   |
+| **Platform**            |                                                           |      |        |                                                                                              |
+| RS-017                  | Push Notifications (Android FCM order alerts)             | M    | `[ ]`  | verify device-token registration exists for business users — see task file                   |
+| RS-018                  | Firebase Hosting Deploy + `partners.zitro.in`             | S    | `[ ]`  | see `DEPLOYMENT-TASKS.md`                                                                    |
+| **Testing**             |                                                           |      |        |                                                                                              |
+| RS-TEST-001             | Unit + Integration Tests                                  | —    | `[ ]`  | after all pages pass manual testing                                                          |
+| RS-TEST-002             | E2E — critical partner journeys                           | —    | `[ ]`  | after RS-TEST-001                                                                            |
 
 ---
 
@@ -89,7 +89,7 @@ Phase 6 (testing):
   RS-TEST-001 → RS-TEST-002
 ```
 
-**9 of 19 tasks are `[!]` blocked on backend work that doesn't exist yet.** Nothing stops you
-reviewing/approving the frontend specs now — the backend task cards they depend on are already
-written in `zitro-api/TASK-STATUS.md` (TASK-032, TASK-033, TASK-034, TASK-038, TASK-039) and
-can be implemented in parallel with frontend scaffolding of the non-blocked tasks.
+All backend-dependent tasks (originally blocked on zitro-api TASK-032/033/034/038/039) have
+since been unblocked and implemented — see the table above; no `[!]` rows remain. Only
+RS-017/018 (push notifications, Firebase Hosting deploy) and the RS-TEST-\* tasks are still
+outstanding.
