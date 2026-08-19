@@ -708,6 +708,9 @@ export const EN_DEFAULTS = {
     add: 'Add Category',
     parent: 'Parent',
     noParent: 'None (top-level)',
+    business: 'Business',
+    selectBusiness: 'Select a business…',
+    enabledForOnlineOrders: 'Enabled for online orders',
   },
   orders: {
     orderId: 'Order ID',

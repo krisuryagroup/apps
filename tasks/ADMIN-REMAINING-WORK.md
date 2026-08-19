@@ -41,16 +41,46 @@ rejects that. Don't just wire the frontend field through; confirm the handler va
 
 ### 4.1 Categories — business scoping on create
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** noted in the execution log §4 as "may not be intended" — the create form has no
 `businessId` field, so every category created is global/unscoped, and the backend accepts
 this without validation either way.
 
-**Scope:** Confirm with `CreateCategoryCommand`/handler whether categories are meant to be
-optionally global (shared taxonomy) or must always belong to a business — read the schema/
-existing seeded data for intent rather than guessing. Add the `businessId` field to the
-create form if scoping is the correct model, and add backend validation so an invalid or
-inconsistent state (e.g. a category that should be scoped but isn't) can't be persisted
-silently.
+**Confirmed the data model:** `Category.BusinessId`/`BrandId` are both legitimately
+nullable (`NULL BusinessId` = brand-level shared category when paired with a `BrandId`), but
+`GetCategoriesHandler` — the only real read path anything uses — queries **either**
+`BusinessId == business.Id` **or** `BrandId == X && BusinessId == null`. A category with
+_both_ null matches neither branch: it's genuinely invisible garbage, not a valid "global"
+state, confirming this was a real bug, not an ambiguous product question.
+
+**Delivered:**
+
+- `zitro-api`: `CreateCategoryHandler` now rejects `VALIDATION_ERROR` when both `BusinessId`
+  and `BrandId` are null, before any DB write. `UpdateCategoryCommand` can't un-scope a
+  category (no such fields in its patch), so no equivalent fix needed there.
+- `apps`: added a required business selector to the create form.
+
+**Two more contract bugs found and fixed in the same area** (same recurring class flagged
+throughout this initiative):
+
+- The parent-category selector sent `parentId`, but `CreateCategoryCommand` binds
+  `ParentCategoryId` (JSON `parentCategoryId`) — parent selection has never actually worked;
+  every category was silently created as top-level regardless of the dropdown.
+- `isEnabledForOnlineOrders` is a non-nullable `bool` with no default in the command — never
+  sent by the old form, so every category was silently created with it `false`. Now sent
+  explicitly (checkbox, defaults checked).
+- `CategoryDto`'s fields didn't match the real `GET /api/admin/categories` shape
+  (`displayOrder`/`parentId` vs. the real `priority`/`parentCategoryId`) — the "Order" column
+  has always rendered `undefined`. `createCategory()` was also typed to return a full
+  `CategoryDto` when the backend only returns `{ id }` — fixed by refetching the list after
+  create instead of reconstructing a row from a response that was never in the payload.
+
+**Verified live end-to-end:** confirmed the validation rejection via a direct API call with
+both fields omitted (`VALIDATION_ERROR`); created a business-scoped category with a parent —
+`path` correctly nested under the parent (`pizzas.veg_pizzas`), something that could never
+have worked before this fix; "Order" column now shows real `priority` values instead of
+blank. Test data cleaned up after.
 
 ### 4.2 Tag → business assignment
 

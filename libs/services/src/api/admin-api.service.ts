@@ -449,8 +449,9 @@ export class AdminApiService {
     return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/admin/categories`);
   }
 
-  createCategory(req: Record<string, unknown>): Observable<CategoryDto> {
-    return this.http.post<CategoryDto>(
+  /** Backend only returns `{ id }` on create, not a full CategoryDto — refetch the list to display it. */
+  createCategory(req: Record<string, unknown>): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
       `${this.baseUrl}/api/admin/categories`,
       req,
     );
@@ -859,12 +860,15 @@ export interface ProductDto {
   businessId?: string;
 }
 
+/** Matches GET /api/admin/categories' actual anonymous-object shape exactly. */
 export interface CategoryDto {
   id: string;
   name: string;
   path: string;
-  displayOrder: number;
-  parentId?: string;
+  parentCategoryId?: string;
+  businessId?: string;
+  priority: number;
+  isEnabledForOnlineOrders: boolean;
 }
 
 export interface OrderSummaryDto {

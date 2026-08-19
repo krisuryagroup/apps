@@ -6,7 +6,11 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, CategoryDto } from '@zitro/services';
+import {
+  AdminApiService,
+  BusinessSummaryDto,
+  CategoryDto,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
@@ -44,6 +48,20 @@ import {
               'categories.name' | i18n
             }}</label>
             <input id="cat-name" class="input" [(ngModel)]="formName" />
+            <label for="cat-business" class="form-label">{{
+              'categories.business' | i18n
+            }}</label>
+            <select
+              id="cat-business"
+              class="select"
+              data-testid="category-business-select"
+              [(ngModel)]="formBusinessId"
+            >
+              <option value="">{{ 'categories.selectBusiness' | i18n }}</option>
+              @for (b of businesses(); track b.id) {
+                <option [value]="b.id">{{ b.name }}</option>
+              }
+            </select>
             <label for="cat-parent" class="form-label">{{
               'categories.parent' | i18n
             }}</label>
@@ -58,11 +76,19 @@ import {
                 <option [value]="c.id">{{ c.path }}</option>
               }
             </select>
+            <label class="form-label checkbox-label" for="cat-online">
+              <input
+                id="cat-online"
+                type="checkbox"
+                [(ngModel)]="formEnabledForOnlineOrders"
+              />
+              {{ 'categories.enabledForOnlineOrders' | i18n }}
+            </label>
           </div>
           <div class="panel-actions">
             <button
               class="btn btn-primary"
-              [disabled]="!formName || saving()"
+              [disabled]="!formName || !formBusinessId || saving()"
               (click)="save()"
             >
               {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
@@ -78,6 +104,12 @@ import {
   styles: [
     `
       @use '../_admin-shared' as *;
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: var(--zitro-spacing-xs);
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,20 +117,31 @@ import {
 export class AdminCategoriesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected categories = signal<CategoryDto[]>([]);
+  protected businesses = signal<BusinessSummaryDto[]>([]);
   protected loading = signal(true);
   protected error = signal(false);
   protected showForm = signal(false);
   protected formName = '';
+  protected formBusinessId = '';
   protected formParentId = '';
+  protected formEnabledForOnlineOrders = true;
   protected saving = signal(false);
 
   protected readonly columns: DataTableColumn<CategoryDto>[] = [
     { key: 'name', labelKey: 'categories.name' },
     { key: 'path', labelKey: 'categories.path' },
-    { key: 'displayOrder', labelKey: 'categories.order' },
+    { key: 'priority', labelKey: 'categories.order' },
   ];
 
   ngOnInit(): void {
+    this.load();
+    this.api.listBusinesses({ pageSize: '200' }).subscribe({
+      next: (r) => this.businesses.set(r.items),
+      error: () => undefined,
+    });
+  }
+
+  private load(): void {
     this.loading.set(true);
     this.error.set(false);
     this.api.listCategories().subscribe({
@@ -114,19 +157,25 @@ export class AdminCategoriesComponent implements OnInit {
   }
   protected openCreate(): void {
     this.formName = '';
+    this.formBusinessId = '';
     this.formParentId = '';
+    this.formEnabledForOnlineOrders = true;
     this.showForm.set(true);
   }
 
   protected save(): void {
     this.saving.set(true);
-    const req: Record<string, unknown> = { name: this.formName };
-    if (this.formParentId) req['parentId'] = this.formParentId;
+    const req: Record<string, unknown> = {
+      name: this.formName,
+      businessId: this.formBusinessId,
+      isEnabledForOnlineOrders: this.formEnabledForOnlineOrders,
+    };
+    if (this.formParentId) req['parentCategoryId'] = this.formParentId;
     this.api.createCategory(req).subscribe({
-      next: (c) => {
-        this.categories.update((cs) => [...cs, c]);
+      next: () => {
         this.saving.set(false);
         this.showForm.set(false);
+        this.load();
       },
       error: () => this.saving.set(false),
     });
