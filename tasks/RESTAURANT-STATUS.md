@@ -44,17 +44,17 @@
 | RS-005                  | Live Orders Queue                                         | L    | `[ ]`  | ready (`BusinessOrdersController`)                                                |
 | RS-006                  | Order Detail                                              | M    | `[ ]`  | ready (`GetOrderDetail`)                                                          |
 | **Menu Management**     |                                                           |      |        |                                                                                   |
-| RS-007                  | Menu — Category & Item List + Manual CRUD                 | L    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
+| RS-007                  | Menu — Category & Item List + Manual CRUD                 | L    | `[ ]`  | ready — zitro-api TASK-033 done                                                   |
 | RS-008                  | Menu Import — AI Photo/PDF Upload + Review & Approve      | XL   | `[!]`  | zitro-api TASK-038 (pending, new)                                                 |
-| RS-009                  | Menu Import — Bulk Spreadsheet                            | M    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
+| RS-009                  | Menu Import — Bulk Spreadsheet                            | M    | `[ ]`  | ready — zitro-api TASK-033 done (reuses RS-007/RS-008 commit endpoint)            |
 | RS-010                  | Menu — Clone from Branch/Brand                            | S    | `[ ]`  | ready (`GetBranches`, needs copy endpoint — see task file)                        |
 | **Business Operations** |                                                           |      |        |                                                                                   |
 | RS-011                  | Inventory Management                                      | M    | `[ ]`  | ready                                                                             |
 | RS-012                  | Delivery Zones                                            | M    | `[ ]`  | ready                                                                             |
 | RS-013                  | Ratings & Reviews                                         | S    | `[ ]`  | ready                                                                             |
 | RS-014                  | Payouts                                                   | M    | `[ ]`  | ready — bank details display needs zitro-api TASK-032 (done)                      |
-| RS-015                  | Business Profile & Settings                               | M    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
-| RS-016                  | Staff Management                                          | M    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
+| RS-015                  | Business Profile & Settings                               | M    | `[ ]`  | ready — zitro-api TASK-033 done                                                   |
+| RS-016                  | Staff Management                                          | M    | `[ ]`  | ready — zitro-api TASK-033 done                                                   |
 | **Platform**            |                                                           |      |        |                                                                                   |
 | RS-017                  | Push Notifications (Android FCM order alerts)             | M    | `[ ]`  | verify device-token registration exists for business users — see task file        |
 | RS-018                  | Firebase Hosting Deploy + `partners.zitro.in`             | S    | `[ ]`  | see `DEPLOYMENT-TASKS.md`                                                         |
