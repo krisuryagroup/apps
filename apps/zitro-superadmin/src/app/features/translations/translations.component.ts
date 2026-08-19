@@ -64,7 +64,7 @@ export class TranslationsComponent implements OnInit {
 
   protected readonly appOptions = APPS;
   protected languages = signal<SupportedLanguage[]>([]);
-  protected selectedLang = signal('hi');
+  protected selectedLang = signal('en');
   protected selectedApp = signal('');
 
   protected rows = signal<TranslationRow[]>([]);
