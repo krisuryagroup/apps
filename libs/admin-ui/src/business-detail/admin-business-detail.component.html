@@ -8,9 +8,17 @@
         biz()!.onboardingStatus
       }}</span>
     </div>
-    <a class="btn btn-outline" routerLink="/businesses"
-      >← {{ 'common.back' | i18n }}</a
-    >
+    <div class="header-actions">
+      <a
+        class="btn btn-primary"
+        data-testid="business-edit-link"
+        [routerLink]="['/businesses', biz()!.id, 'edit']"
+        >{{ 'common.edit' | i18n }}</a
+      >
+      <a class="btn btn-outline" routerLink="/businesses"
+        >← {{ 'common.back' | i18n }}</a
+      >
+    </div>
   </div>
 
   @if (biz()!.onboardingStatus === 'pending') {

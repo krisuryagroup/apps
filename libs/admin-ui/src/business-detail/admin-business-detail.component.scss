@@ -1,1 +1,6 @@
 @use '../_admin-shared' as *;
+
+.header-actions {
+  display: flex;
+  gap: var(--zitro-spacing-sm);
+}
