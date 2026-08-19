@@ -443,7 +443,7 @@ export interface BusinessProfileDto {
 export interface StaffDto {
   id: string;
   name: string;
-  phone: string;
+  phoneNumber: string;
   role: string;
   isActive: boolean;
 }

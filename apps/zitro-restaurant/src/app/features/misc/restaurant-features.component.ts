@@ -35,7 +35,7 @@ import { I18nPipe } from '@zitro/i18n';
           @for (s of staff(); track s.id) {
             <tr>
               <td>{{ s.name }}</td>
-              <td>{{ s.phone }}</td>
+              <td>{{ s.phoneNumber }}</td>
               <td>{{ s.role }}</td>
               <td>{{ s.isActive ? '✓' : '✗' }}</td>
             </tr>
@@ -127,16 +127,24 @@ export class RestaurantStaffComponent implements OnInit {
   }
   protected save() {
     this.saving.set(true);
-    this.api
-      .createStaff(this.api.businessId()!, this.f as Record<string, unknown>)
-      .subscribe({
-        next: (s) => {
-          this.staff.update((ss) => [...ss, s]);
-          this.saving.set(false);
-          this.showForm.set(false);
-        },
-        error: () => this.saving.set(false),
-      });
+    const id = this.api.businessId()!;
+    // Backend requires phoneNumber, not phone — and its response is { id } only
+    // (same narrow-response shape as createCategory, commit df5edc4), so reload the
+    // full list afterward instead of appending the partial object.
+    const req = {
+      name: this.f.name,
+      phoneNumber: this.f.phone,
+      password: this.f.password,
+      role: this.f.role,
+    };
+    this.api.createStaff(id, req).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.showForm.set(false);
+        this.api.listStaff(id).subscribe({ next: (s) => this.staff.set(s) });
+      },
+      error: () => this.saving.set(false),
+    });
   }
 }
 
