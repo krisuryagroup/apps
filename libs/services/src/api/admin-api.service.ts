@@ -297,8 +297,8 @@ export class AdminApiService {
 
   // ── Brands ──────────────────────────────────────────────────────────────────
 
-  listBrands(): Observable<BrandDto[]> {
-    return this.http.get<BrandDto[]>(`${this.baseUrl}/api/brands`);
+  listBrands(): Observable<PagedResult<BrandDto>> {
+    return this.http.get<PagedResult<BrandDto>>(`${this.baseUrl}/api/brands`);
   }
 
   createBrand(req: {
@@ -334,7 +334,7 @@ export class AdminApiService {
 
   createTag(req: {
     name: string;
-    icon?: string;
+    iconUrl?: string;
     priority?: number;
   }): Observable<TagDto> {
     return this.http.post<TagDto>(`${this.baseUrl}/api/admin/tags`, req);
@@ -342,7 +342,7 @@ export class AdminApiService {
 
   updateTag(
     id: string,
-    req: { name: string; icon?: string; priority?: number },
+    req: { name: string; iconUrl?: string; priority?: number },
   ): Observable<TagDto> {
     return this.http.put<TagDto>(`${this.baseUrl}/api/admin/tags/${id}`, req);
   }
@@ -668,8 +668,9 @@ export interface BrandDto {
 
 export interface TagDto {
   id: string;
+  slug: string;
   name: string;
-  icon?: string;
+  iconUrl?: string;
   priority: number;
   isActive: boolean;
 }

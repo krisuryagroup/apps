@@ -103,8 +103,8 @@ export class AdminBrandsComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.listBrands().subscribe({
-      next: (b) => {
-        this.brands.set(b);
+      next: (res) => {
+        this.brands.set(res.items);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
