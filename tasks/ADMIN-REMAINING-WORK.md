@@ -156,16 +156,25 @@ EFC Pizza genuinely has zero linked branches in local seed data).
 
 ### 3.1 Coupon form — remaining fields
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** AD-T-604 — "the single most consequential gap in this document." Current create form
 only has code/type/value/title/description/validFrom (validFrom etc. added in the earlier
 fix pass). Missing against the 9-step validation order in `zitro-api/CLAUDE.md` §12: order-type
 restriction, new-customer-only toggle, cooldown period, min-order-amount, usage-limit.
 
-**Scope:** Extend `AdminCouponsComponent`'s create/edit form with the missing fields; confirm
-each maps to the exact `CreateCouponCommand`/`UpdateCouponCommand` field names in `zitro-api`
-before wiring (check for name drift, same class of bug as fix #1/#4 in the execution log).
+**Delivered:** Read `CreateCouponCommand`/`CreateCouponRequest` directly to confirm exact JSON
+field names before wiring (avoided the name-drift bug class from fix #1/#4). Added five fields
+to the create form: `minOrderAmount` (number), `usageLimit` (number, optional — empty means
+unlimited), `cooldownPeriodDays` (number, optional), `isNewCustomerOnly` (checkbox),
+`applicableOrderTypes` (checkbox group: dine-in/takeout/delivery/scheduled — empty selection
+sends `null`, which the backend's validation treats identically to an empty array: no
+restriction). Verified end-to-end live: created a coupon with all five fields set, confirmed
+via direct API read that every field persisted with the exact values submitted.
 
-**Size:** M — mostly form fields, but needs a field-by-field contract check against the backend.
+Out of scope (not in the original gap list, not added): `maxDiscount`, `maxUsagePerUser`/
+`usagePeriod`, `termsAndConditions`, `campaignName`, cashback fields — the coupon entity
+supports these but they weren't called out in AD-T-604's own scope.
 
 ### 3.2 Delivery zones — scope per business
 

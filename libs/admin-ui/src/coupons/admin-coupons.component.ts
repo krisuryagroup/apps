@@ -85,6 +85,59 @@ import {
               type="date"
               [(ngModel)]="f.validTo"
             />
+            <label for="cp-minorder" class="form-label">{{
+              'coupons.minOrderAmount' | i18n
+            }}</label>
+            <input
+              id="cp-minorder"
+              class="input"
+              type="number"
+              min="0"
+              [(ngModel)]="f.minOrderAmount"
+            />
+            <label for="cp-usagelimit" class="form-label">{{
+              'coupons.usageLimit' | i18n
+            }}</label>
+            <input
+              id="cp-usagelimit"
+              class="input"
+              type="number"
+              min="1"
+              placeholder="{{ 'coupons.usageLimitPlaceholder' | i18n }}"
+              [(ngModel)]="f.usageLimit"
+            />
+            <label for="cp-cooldown" class="form-label">{{
+              'coupons.cooldownDays' | i18n
+            }}</label>
+            <input
+              id="cp-cooldown"
+              class="input"
+              type="number"
+              min="0"
+              placeholder="{{ 'coupons.cooldownDaysPlaceholder' | i18n }}"
+              [(ngModel)]="f.cooldownPeriodDays"
+            />
+            <label class="form-label checkbox-label" for="cp-newcustomer">
+              <input
+                id="cp-newcustomer"
+                type="checkbox"
+                [(ngModel)]="f.isNewCustomerOnly"
+              />
+              {{ 'coupons.newCustomerOnly' | i18n }}
+            </label>
+            <div class="form-label">{{ 'coupons.orderTypes' | i18n }}</div>
+            <div class="checkbox-group">
+              @for (t of ORDER_TYPES; track t) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="f.applicableOrderTypes.includes(t)"
+                    (change)="toggleOrderType(t)"
+                  />
+                  {{ t }}
+                </label>
+              }
+            </div>
           </div>
           <div class="panel-actions">
             <button
@@ -105,6 +158,18 @@ import {
   styles: [
     `
       @use '../_admin-shared' as *;
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: var(--zitro-spacing-xs);
+      }
+
+      .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--zitro-spacing-sm);
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -125,15 +190,36 @@ export class AdminCouponsComponent implements OnInit {
       : null;
   });
   protected saving = signal(false);
-  protected f = {
-    title: '',
-    description: '',
-    code: '',
-    discountType: 'flat',
-    discountValue: 0,
-    validFrom: '',
-    validTo: '',
-  };
+  protected readonly ORDER_TYPES = [
+    'dine-in',
+    'takeout',
+    'delivery',
+    'scheduled',
+  ];
+  protected f = this.emptyForm();
+
+  private emptyForm() {
+    return {
+      title: '',
+      description: '',
+      code: '',
+      discountType: 'flat',
+      discountValue: 0,
+      validFrom: '',
+      validTo: '',
+      minOrderAmount: 0,
+      usageLimit: null as number | null,
+      cooldownPeriodDays: null as number | null,
+      isNewCustomerOnly: false,
+      applicableOrderTypes: [] as string[],
+    };
+  }
+
+  protected toggleOrderType(type: string): void {
+    this.f.applicableOrderTypes = this.f.applicableOrderTypes.includes(type)
+      ? this.f.applicableOrderTypes.filter((t) => t !== type)
+      : [...this.f.applicableOrderTypes, type];
+  }
 
   private toPayload() {
     const today = new Date().toISOString().split('T')[0];
@@ -145,7 +231,12 @@ export class AdminCouponsComponent implements OnInit {
       validTo: this.f.validTo
         ? new Date(this.f.validTo).toISOString()
         : new Date(today).toISOString(),
-      minOrderAmount: 0,
+      // Empty selection means "all order types" — send null for clarity (the
+      // backend's validation treats null and [] identically: no restriction).
+      applicableOrderTypes:
+        this.f.applicableOrderTypes.length > 0
+          ? this.f.applicableOrderTypes
+          : null,
       isActive: true,
       isDisplayedForOnlineOrders: true,
     };
@@ -193,15 +284,7 @@ export class AdminCouponsComponent implements OnInit {
   }
 
   protected openCreate(): void {
-    this.f = {
-      title: '',
-      description: '',
-      code: '',
-      discountType: 'flat',
-      discountValue: 0,
-      validFrom: '',
-      validTo: '',
-    };
+    this.f = this.emptyForm();
     this.showForm.set(true);
   }
 

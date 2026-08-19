@@ -739,6 +739,13 @@ export const EN_DEFAULTS = {
     used: 'Used',
     add: 'Add Coupon',
     validTo: 'Valid To',
+    minOrderAmount: 'Min Order Amount',
+    usageLimit: 'Usage Limit',
+    usageLimitPlaceholder: 'Unlimited',
+    cooldownDays: 'Cooldown (days)',
+    cooldownDaysPlaceholder: 'No cooldown',
+    newCustomerOnly: 'New customers only',
+    orderTypes: 'Applicable Order Types',
   },
   cashback: {
     pending:
