@@ -49,7 +49,7 @@ export class AdminLoginComponent {
         },
         error: (err) => {
           this.loading.set(false);
-          const code: string = err?.error?.error ?? '';
+          const code: string = err?.error?.errorCode ?? '';
           if (code === 'ACCOUNT_DEACTIVATED') {
             this.errorKey.set('login.errorDeactivated');
           } else {
