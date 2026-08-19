@@ -1,0 +1,148 @@
+@if (loading()) {
+  <p class="loading">{{ 'common.loading' | i18n }}</p>
+} @else if (biz()) {
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ biz()!.name }}</h1>
+      <span class="badge" [class]="'badge-' + biz()!.onboardingStatus">{{
+        biz()!.onboardingStatus
+      }}</span>
+    </div>
+    <a class="btn btn-outline" routerLink="/businesses"
+      >← {{ 'common.back' | i18n }}</a
+    >
+  </div>
+
+  @if (biz()!.onboardingStatus === 'pending') {
+    <div class="action-bar">
+      <button
+        class="btn btn-primary"
+        data-testid="business-approve-btn"
+        [disabled]="approving()"
+        (click)="approve()"
+      >
+        {{ 'businesses.approve' | i18n }}
+      </button>
+      <select
+        id="reject-reason"
+        class="select"
+        data-testid="business-reject-reason-select"
+        [(ngModel)]="rejectionReason"
+      >
+        <option value="">{{ 'businesses.selectReason' | i18n }}</option>
+        @for (r of REJECTION_REASONS; track r) {
+          <option [value]="r">{{ r }}</option>
+        }
+      </select>
+      @if (rejectionReason === 'Other') {
+        <input
+          class="input"
+          data-testid="business-reject-reason-text"
+          [(ngModel)]="customReason"
+          placeholder="{{ 'businesses.customReason' | i18n }}"
+        />
+      }
+      <button
+        class="btn btn-danger"
+        data-testid="business-reject-btn"
+        [disabled]="
+          approving() ||
+          !rejectionReason ||
+          (rejectionReason === 'Other' && !customReason)
+        "
+        (click)="reject()"
+      >
+        {{ 'businesses.reject' | i18n }}
+      </button>
+      @if (approveError()) {
+        <span class="error-text">{{ approveError()! | i18n }}</span>
+      }
+      @if (approveSuccess()) {
+        <span class="success-text">{{
+          'businesses.approveSuccess' | i18n
+        }}</span>
+      }
+    </div>
+  }
+
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.active]="activeTab() === 'profile'"
+      (click)="activeTab.set('profile')"
+    >
+      {{ 'businesses.tabProfile' | i18n }}
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab() === 'users'"
+      (click)="activeTab.set('users')"
+    >
+      {{ 'businesses.tabUsers' | i18n }}
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab() === 'orders'"
+      (click)="activeTab.set('orders')"
+    >
+      {{ 'businesses.tabOrders' | i18n }}
+    </button>
+  </div>
+
+  @if (activeTab() === 'profile') {
+    <div class="detail-section" data-testid="business-detail-profile">
+      <div class="info-row">
+        <span class="info-label">Slug</span
+        ><span class="info-value">{{ biz()!.slug }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Type</span
+        ><span class="info-value">{{ biz()!.businessType }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Town</span
+        ><span class="info-value">{{ biz()!.town }}</span>
+      </div>
+      @if (biz()!.phone) {
+        <div class="info-row">
+          <span class="info-label">Phone</span
+          ><span class="info-value">{{ biz()!.phone }}</span>
+        </div>
+      }
+      @if (biz()!.fssaiLicenseNumber) {
+        <div class="info-row">
+          <span class="info-label">FSSAI</span
+          ><span class="info-value">{{ biz()!.fssaiLicenseNumber }}</span>
+        </div>
+      }
+      @if (biz()!.gstNumber) {
+        <div class="info-row">
+          <span class="info-label">GST</span
+          ><span class="info-value">{{ biz()!.gstNumber }}</span>
+        </div>
+      }
+      @if (biz()!.panNumber) {
+        <div class="info-row">
+          <span class="info-label">PAN</span
+          ><span class="info-value">{{ biz()!.panNumber }}</span>
+        </div>
+      }
+      @if (biz()!.commissionPercentage != null) {
+        <div class="info-row">
+          <span class="info-label">Commission</span
+          ><span class="info-value">{{ biz()!.commissionPercentage }}%</span>
+        </div>
+      }
+    </div>
+    @if (biz()!.verificationDocs?.length) {
+      <div data-testid="business-detail-docs" class="detail-section">
+        <p class="detail-title">{{ 'businesses.docs' | i18n }}</p>
+        @for (doc of $any(biz()!.verificationDocs); track doc.url) {
+          <a [href]="doc.url" target="_blank" class="btn btn-outline btn-sm">{{
+            doc.type
+          }}</a>
+        }
+      </div>
+    }
+  }
+}

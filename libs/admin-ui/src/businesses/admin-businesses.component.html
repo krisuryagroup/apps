@@ -1,0 +1,130 @@
+<div class="page-header">
+  <h1 class="page-title">{{ 'nav.businesses' | i18n }}</h1>
+  <button
+    class="btn btn-primary"
+    data-testid="invite-partner-btn"
+    (click)="showInviteForm.set(true)"
+  >
+    + {{ 'businesses.invitePartner' | i18n }}
+  </button>
+</div>
+
+<div class="filters">
+  <input
+    class="input"
+    data-testid="business-search-input"
+    [(ngModel)]="search"
+    (ngModelChange)="load()"
+    placeholder="{{ 'businesses.searchPlaceholder' | i18n }}"
+  />
+  <select
+    class="select"
+    id="biz-status"
+    data-testid="business-filter-status"
+    [(ngModel)]="statusFilter"
+    (ngModelChange)="load()"
+  >
+    <option value="">{{ 'businesses.allStatuses' | i18n }}</option>
+    <option value="pending">pending</option>
+    <option value="approved">approved</option>
+    <option value="rejected">rejected</option>
+  </select>
+  <select
+    class="select"
+    id="biz-type"
+    data-testid="business-filter-type"
+    [(ngModel)]="typeFilter"
+    (ngModelChange)="load()"
+  >
+    <option value="">{{ 'businesses.allTypes' | i18n }}</option>
+    <option value="restaurant">restaurant</option>
+    <option value="grocery">grocery</option>
+  </select>
+</div>
+
+<lib-data-table
+  data-testid="business-table"
+  [columns]="columns"
+  [rows]="result()?.items ?? []"
+  [loading]="loading()"
+  (rowClick)="onRowClick($event)"
+/>
+
+@if (showInviteForm()) {
+  <div class="overlay">
+    <div class="panel">
+      <h2 class="panel-title">{{ 'businesses.invitePartner' | i18n }}</h2>
+      <div class="form-grid">
+        <label for="inv-name" class="form-label">{{
+          'businesses.name' | i18n
+        }}</label>
+        <input
+          id="inv-name"
+          class="input"
+          data-testid="invite-form-name"
+          [(ngModel)]="inviteName"
+        />
+        <label for="inv-type" class="form-label">{{
+          'businesses.type' | i18n
+        }}</label>
+        <select id="inv-type" class="select" [(ngModel)]="inviteType">
+          <option value="restaurant">restaurant</option>
+          <option value="grocery">grocery</option>
+        </select>
+        <label for="inv-town" class="form-label">{{
+          'businesses.town' | i18n
+        }}</label>
+        <input
+          id="inv-town"
+          class="input"
+          data-testid="invite-form-town"
+          [(ngModel)]="inviteTown"
+        />
+        <label for="inv-owner" class="form-label">{{
+          'businesses.ownerName' | i18n
+        }}</label>
+        <input
+          id="inv-owner"
+          class="input"
+          data-testid="invite-form-owner"
+          [(ngModel)]="inviteOwnerName"
+        />
+        <label for="inv-phone" class="form-label">{{
+          'businesses.phone' | i18n
+        }}</label>
+        <input
+          id="inv-phone"
+          class="input"
+          data-testid="invite-form-phone"
+          [(ngModel)]="invitePhone"
+        />
+        <label for="inv-email" class="form-label">{{
+          'businesses.email' | i18n
+        }}</label>
+        <input
+          id="inv-email"
+          class="input"
+          data-testid="invite-form-email"
+          type="email"
+          [(ngModel)]="inviteEmail"
+        />
+      </div>
+      <div class="panel-actions">
+        <button
+          class="btn btn-primary"
+          [disabled]="inviting() || !inviteName || !invitePhone"
+          (click)="submitInvite()"
+        >
+          {{
+            inviting()
+              ? ('common.saving' | i18n)
+              : ('businesses.sendInvite' | i18n)
+          }}
+        </button>
+        <button class="btn btn-outline" (click)="showInviteForm.set(false)">
+          {{ 'common.cancel' | i18n }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
