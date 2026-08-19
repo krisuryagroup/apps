@@ -84,11 +84,21 @@ blank. Test data cleaned up after.
 
 ### 4.2 Tag → business assignment
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** AD-T-408. No `tag-assign-business-select` anywhere in `AdminTagsComponent`, despite
 being in both the testid list and acceptance criteria.
 
-**Scope:** Add an assign-to-business control (multi-select or per-business toggle list) on
-the tag row/detail; confirm backend assignment endpoint exists before building UI for it.
+**Backend:** Fully built already, no bugs found — `GET /tags/{id}/businesses`,
+`POST/DELETE /businesses/{id}/tags`. First clean backend surface this whole initiative;
+worth noting since every other endpoint touched so far had at least one contract bug.
+
+**Delivered:** Reused the generic expandable-row mechanism built for 2.4 (Brands → branches)
+rather than inventing a new pattern — a "Manage Businesses" row action expands in place to
+show currently-assigned businesses (with per-row Remove) plus an Add-business dropdown that
+excludes already-assigned businesses. Verified live: removed and re-added EFC Pizza's Pizza
+tag assignment, confirmed the dropdown correctly excludes/includes it based on current
+assignment state, no route change, no modal.
 
 ### 4.3 Admins screen — server-side-only permission gating
 

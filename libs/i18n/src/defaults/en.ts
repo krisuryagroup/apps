@@ -694,6 +694,11 @@ export const EN_DEFAULTS = {
     add: 'Add Tag',
     edit: 'Edit Tag',
     deactivate: 'Deactivate',
+    manageBusinesses: 'Manage Businesses',
+    hideBusinesses: 'Hide Businesses',
+    selectBusinessToAdd: 'Select a business…',
+    addBusiness: 'Add',
+    noBusinessesAssigned: 'No businesses assigned to this tag yet.',
   },
   products: {
     name: 'Name',

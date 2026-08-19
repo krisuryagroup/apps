@@ -406,6 +406,26 @@ export class AdminApiService {
     return this.http.delete<void>(`${this.baseUrl}/api/admin/tags/${id}`);
   }
 
+  listTagBusinesses(tagId: string): Observable<TagBusinessDto[]> {
+    return this.http.get<TagBusinessDto[]>(
+      `${this.baseUrl}/api/admin/tags/${tagId}/businesses`,
+    );
+  }
+
+  /** Adds this tag to a business without removing its existing tags. */
+  addBusinessTag(businessId: string, tagId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/admin/businesses/${businessId}/tags`,
+      { tagIds: [tagId] },
+    );
+  }
+
+  removeBusinessTag(businessId: string, tagId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/admin/businesses/${businessId}/tags/${tagId}`,
+    );
+  }
+
   // ── Products ────────────────────────────────────────────────────────────────
 
   searchProducts(params?: Record<string, string>): Observable<ProductDto[]> {
@@ -847,6 +867,13 @@ export interface TagDto {
   name: string;
   iconUrl?: string;
   priority: number;
+  isActive: boolean;
+}
+
+export interface TagBusinessDto {
+  id: string;
+  slug: string;
+  name: string;
   isActive: boolean;
 }
 

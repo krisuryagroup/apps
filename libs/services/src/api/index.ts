@@ -17,6 +17,7 @@ export type {
   BusinessUserDto,
   BrandDto,
   TagDto,
+  TagBusinessDto,
   ProductDto,
   CategoryDto,
   OrderSummaryDto,
