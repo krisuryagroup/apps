@@ -36,9 +36,9 @@
 | RS-000                  | Scaffold `zitro-restaurant` Nx app + Capacitor config     | M    | `[x]`  | none — done: app builds/lints/tests clean, theme live, guards verified in browser |
 | **Onboarding**          |                                                           |      |        |                                                                                   |
 | RS-001                  | Login                                                     | S    | `[ ]`  | `POST /api/business-auth/login` — ready                                           |
-| RS-002                  | Partner Application (public signup)                       | M    | `[!]`  | zitro-api TASK-039 (pending)                                                      |
-| RS-002b                 | Accept Admin Invite                                       | S    | `[!]`  | zitro-api TASK-039 (pending, same card)                                           |
-| RS-003                  | Onboarding / KYC Completion (FSSAI, GST, PAN, bank, docs) | L    | `[!]`  | zitro-api TASK-032 (pending)                                                      |
+| RS-002                  | Partner Application (public signup)                       | M    | `[ ]`  | zitro-api TASK-039 done — needs manual SQL + EMAIL_API_KEY before live end-to-end |
+| RS-002b                 | Accept Admin Invite                                       | S    | `[ ]`  | zitro-api TASK-039 done — same caveat as RS-002                                   |
+| RS-003                  | Onboarding / KYC Completion (FSSAI, GST, PAN, bank, docs) | L    | `[ ]`  | zitro-api TASK-032 done — ready                                                   |
 | **Daily Operations**    |                                                           |      |        |                                                                                   |
 | RS-004                  | Dashboard                                                 | M    | `[!]`  | zitro-api TASK-034 (pending)                                                      |
 | RS-005                  | Live Orders Queue                                         | L    | `[ ]`  | ready (`BusinessOrdersController`)                                                |
@@ -52,7 +52,7 @@
 | RS-011                  | Inventory Management                                      | M    | `[ ]`  | ready                                                                             |
 | RS-012                  | Delivery Zones                                            | M    | `[ ]`  | ready                                                                             |
 | RS-013                  | Ratings & Reviews                                         | S    | `[ ]`  | ready                                                                             |
-| RS-014                  | Payouts                                                   | M    | `[!]`  | bank details display needs zitro-api TASK-032                                     |
+| RS-014                  | Payouts                                                   | M    | `[ ]`  | ready — bank details display needs zitro-api TASK-032 (done)                      |
 | RS-015                  | Business Profile & Settings                               | M    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
 | RS-016                  | Staff Management                                          | M    | `[!]`  | zitro-api TASK-033 (pending)                                                      |
 | **Platform**            |                                                           |      |        |                                                                                   |
