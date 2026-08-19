@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -11,6 +12,7 @@ import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -28,6 +30,9 @@ import {
       [columns]="columns"
       [rows]="result()?.items ?? []"
       [loading]="loading()"
+      [error]="error()"
+      [pagination]="pagination()"
+      (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="toggleStatus(row)">
@@ -166,6 +171,9 @@ export class AdminAdminUsersComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected result = signal<PagedResult<AdminUserDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected showForm = signal(false);
   protected saving = signal(false);
   protected saveError = signal<string | null>(null);
@@ -193,15 +201,42 @@ export class AdminAdminUsersComponent implements OnInit {
     },
   ];
 
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
+
   ngOnInit(): void {
-    this.api.listAdmins().subscribe({
-      next: (r) => {
-        this.result.set(r);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.fetch();
   }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.api
+      .listAdmins({
+        page: String(this.page()),
+        pageSize: String(this.pageSize),
+      })
+      .subscribe({
+        next: (r) => {
+          this.result.set(r);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set(true);
+        },
+      });
+  }
+
   protected openCreate(): void {
     this.f = { name: '', email: '', password: '', role: 'Ops' };
     this.saveError.set(null);
@@ -216,7 +251,7 @@ export class AdminAdminUsersComponent implements OnInit {
         this.result.update((r) =>
           r
             ? { ...r, items: [...r.items, a] }
-            : { items: [a], total: 1, page: 1, pageSize: 20 },
+            : { items: [a], totalCount: 1, page: 1, pageSize: 20 },
         );
         this.saving.set(false);
         this.showForm.set(false);

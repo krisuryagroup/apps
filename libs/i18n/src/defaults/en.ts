@@ -533,6 +533,7 @@ export const EN_DEFAULTS = {
   dataTable: {
     loading: 'Loading...',
     empty: 'No results found',
+    error: 'Something went wrong loading this data. Please try again.',
     previous: 'Previous',
     next: 'Next',
   },

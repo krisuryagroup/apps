@@ -33,6 +33,7 @@ import {
       [columns]="columns"
       [rows]="categories()"
       [loading]="loading()"
+      [error]="error()"
     />
     @if (showForm()) {
       <div class="overlay">
@@ -85,6 +86,7 @@ export class AdminCategoriesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected categories = signal<CategoryDto[]>([]);
   protected loading = signal(true);
+  protected error = signal(false);
   protected showForm = signal(false);
   protected formName = '';
   protected formParentId = '';
@@ -97,12 +99,17 @@ export class AdminCategoriesComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loading.set(true);
+    this.error.set(false);
     this.api.listCategories().subscribe({
       next: (c) => {
         this.categories.set(c);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
   protected openCreate(): void {

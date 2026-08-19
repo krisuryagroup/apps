@@ -28,6 +28,7 @@ import {
       [columns]="columns"
       [rows]="zones()"
       [loading]="loading()"
+      [error]="error()"
     />
     @if (showForm()) {
       <div class="overlay">
@@ -66,6 +67,7 @@ export class AdminDeliveryZonesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected zones = signal<DeliveryZoneDto[]>([]);
   protected loading = signal(true);
+  protected error = signal(false);
   protected showForm = signal(false);
   protected formName = '';
   protected saving = signal(false);
@@ -80,12 +82,17 @@ export class AdminDeliveryZonesComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loading.set(true);
+    this.error.set(false);
     this.api.listDeliveryZones().subscribe({
       next: (z) => {
         this.zones.set(z);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
   protected openCreate(): void {

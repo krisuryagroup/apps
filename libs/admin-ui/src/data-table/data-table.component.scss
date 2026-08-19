@@ -43,6 +43,10 @@
     color: var(--zitro-on-surface-variant);
     padding: var(--zitro-spacing-xl);
     cursor: default;
+
+    &--error {
+      color: var(--zitro-error);
+    }
   }
 
   &__actions {

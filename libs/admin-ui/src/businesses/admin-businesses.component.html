@@ -47,7 +47,10 @@
   [columns]="columns"
   [rows]="result()?.items ?? []"
   [loading]="loading()"
+  [error]="error()"
+  [pagination]="pagination()"
   (rowClick)="onRowClick($event)"
+  (pageChange)="onPageChange($event)"
 />
 
 @if (showInviteForm()) {

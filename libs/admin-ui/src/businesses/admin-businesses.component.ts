@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -16,6 +17,7 @@ import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -32,9 +34,19 @@ export class AdminBusinessesComponent implements OnInit {
 
   protected result = signal<PagedResult<BusinessSummaryDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected search = '';
   protected statusFilter = '';
   protected typeFilter = '';
+
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
 
   protected showInviteForm = signal(false);
   protected inviteName = '';
@@ -67,8 +79,22 @@ export class AdminBusinessesComponent implements OnInit {
   }
 
   protected load(): void {
+    this.page.set(1);
+    this.fetch();
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
     this.loading.set(true);
-    const p: Record<string, string> = {};
+    this.error.set(false);
+    const p: Record<string, string> = {
+      page: String(this.page()),
+      pageSize: String(this.pageSize),
+    };
     if (this.search) p['search'] = this.search;
     if (this.statusFilter) p['onboardingStatus'] = this.statusFilter;
     if (this.typeFilter) p['businessType'] = this.typeFilter;
@@ -77,7 +103,10 @@ export class AdminBusinessesComponent implements OnInit {
         this.result.set(r);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
 

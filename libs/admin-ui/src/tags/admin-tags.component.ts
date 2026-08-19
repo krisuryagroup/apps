@@ -33,6 +33,7 @@ import {
       [columns]="columns"
       [rows]="tags()"
       [loading]="loading()"
+      [error]="error()"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
@@ -92,6 +93,7 @@ export class AdminTagsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected tags = signal<TagDto[]>([]);
   protected loading = signal(true);
+  protected error = signal(false);
   protected showForm = signal(false);
   protected editing = signal<TagDto | null>(null);
   protected formName = '';
@@ -109,12 +111,17 @@ export class AdminTagsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loading.set(true);
+    this.error.set(false);
     this.api.listAdminTags().subscribe({
       next: (t) => {
         this.tags.set(t);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
 

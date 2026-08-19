@@ -1,6 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
 import { AdminAuthTokenService } from '../admin-auth-token.service';
 
@@ -343,8 +343,17 @@ export class AdminApiService {
 
   // ── Brands ──────────────────────────────────────────────────────────────────
 
-  listBrands(): Observable<PagedResult<BrandDto>> {
-    return this.http.get<PagedResult<BrandDto>>(`${this.baseUrl}/api/brands`);
+  listBrands(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<BrandDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<PagedResult<BrandDto>>(`${this.baseUrl}/api/brands`, {
+      params: p,
+    });
   }
 
   createBrand(req: {
@@ -463,18 +472,35 @@ export class AdminApiService {
 
   // ── Orders ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Backend returns `{ orders, totalCount, page, pageSize }` (see
+   * AdminSearchOrdersResponse), not a bare array — normalize to the shared
+   * PagedResult shape here so callers don't each have to know the field-name
+   * mismatch.
+   */
   listAdminOrders(
     params?: Record<string, string>,
-  ): Observable<OrderSummaryDto[]> {
+  ): Observable<PagedResult<OrderSummaryDto>> {
     let p = new HttpParams();
     if (params)
       Object.entries(params).forEach(([k, v]) => {
         if (v) p = p.set(k, v);
       });
-    return this.http.get<OrderSummaryDto[]>(
-      `${this.baseUrl}/api/admin/orders`,
-      { params: p },
-    );
+    return this.http
+      .get<{
+        orders: OrderSummaryDto[];
+        totalCount: number;
+        page: number;
+        pageSize: number;
+      }>(`${this.baseUrl}/api/admin/orders`, { params: p })
+      .pipe(
+        map((r) => ({
+          items: r.orders,
+          totalCount: r.totalCount,
+          page: r.page,
+          pageSize: r.pageSize,
+        })),
+      );
   }
 
   // ── Users ───────────────────────────────────────────────────────────────────
@@ -501,8 +527,33 @@ export class AdminApiService {
 
   // ── Coupons ─────────────────────────────────────────────────────────────────
 
-  listCoupons(): Observable<CouponDto[]> {
-    return this.http.get<CouponDto[]>(`${this.baseUrl}/api/admin/coupons`);
+  /**
+   * Backend returns `{ items, totalCount, page, pageSize }` — `totalCount`,
+   * not `total`. Normalize to the shared PagedResult shape here.
+   */
+  listCoupons(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<CouponDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http
+      .get<{
+        items: CouponDto[];
+        totalCount: number;
+        page: number;
+        pageSize: number;
+      }>(`${this.baseUrl}/api/admin/coupons`, { params: p })
+      .pipe(
+        map((r) => ({
+          items: r.items,
+          totalCount: r.totalCount,
+          page: r.page,
+          pageSize: r.pageSize,
+        })),
+      );
   }
 
   createCoupon(req: Record<string, unknown>): Observable<CouponDto> {
@@ -525,18 +576,29 @@ export class AdminApiService {
 
   // ── Delivery partners ───────────────────────────────────────────────────────
 
+  /**
+   * Backend returns `{ items, total }` (see ListPartnersResponse) — no `page`/
+   * `pageSize` echoed back, unlike the other paged admin endpoints. Normalize
+   * to the shared PagedResult shape using the page/pageSize we requested with.
+   */
   listDeliveryPartners(
     params?: Record<string, string>,
-  ): Observable<DeliveryPartnerDto[]> {
+  ): Observable<PagedResult<DeliveryPartnerDto>> {
     let p = new HttpParams();
     if (params)
       Object.entries(params).forEach(([k, v]) => {
         if (v) p = p.set(k, v);
       });
-    return this.http.get<DeliveryPartnerDto[]>(
-      `${this.baseUrl}/api/admin/delivery/partners`,
-      { params: p },
-    );
+    const page = Number(params?.['page'] ?? 1);
+    const pageSize = Number(params?.['pageSize'] ?? 20);
+    return this.http
+      .get<{
+        items: DeliveryPartnerDto[];
+        total: number;
+      }>(`${this.baseUrl}/api/admin/delivery/partners`, { params: p })
+      .pipe(
+        map((r) => ({ items: r.items, totalCount: r.total, page, pageSize })),
+      );
   }
 
   updateDeliveryPartnerStatus(id: string, status: string): Observable<void> {
@@ -692,9 +754,15 @@ export interface AdminDashboardDto {
   pendingPayoutCount: number;
 }
 
+/**
+ * Matches the backend's shared `PagedResult<T>` (Zitro.Shared) JSON shape exactly —
+ * that class serializes the count field as `totalCount`, not `total`. Most admin
+ * paged endpoints return this shape directly; `listDeliveryPartners` is normalized
+ * to it too (its backend response has a differently-named/shaped count field).
+ */
 export interface PagedResult<T> {
   items: T[];
-  total: number;
+  totalCount: number;
   page: number;
   pageSize: number;
 }

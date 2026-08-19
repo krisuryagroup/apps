@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -11,6 +12,7 @@ import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -31,6 +33,9 @@ import {
       [columns]="columns"
       [rows]="result()?.items ?? []"
       [loading]="loading()"
+      [error]="error()"
+      [pagination]="pagination()"
+      (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="toggleBlock(row)">
@@ -50,7 +55,17 @@ export class AdminUsersComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected result = signal<PagedResult<CustomerDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected search = '';
+
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
 
   protected readonly columns: DataTableColumn<CustomerDto>[] = [
     { key: 'name', labelKey: 'users.name', format: (r) => r.name ?? '—' },
@@ -73,15 +88,32 @@ export class AdminUsersComponent implements OnInit {
   }
 
   protected load(): void {
+    this.page.set(1);
+    this.fetch();
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
     this.loading.set(true);
-    const p: Record<string, string> = {};
+    this.error.set(false);
+    const p: Record<string, string> = {
+      page: String(this.page()),
+      pageSize: String(this.pageSize),
+    };
     if (this.search) p['search'] = this.search;
     this.api.listAdminCustomers(p).subscribe({
       next: (r) => {
         this.result.set(r);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
 

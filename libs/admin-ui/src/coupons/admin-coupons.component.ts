@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -11,6 +12,7 @@ import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -26,8 +28,11 @@ import {
     </div>
     <lib-data-table
       [columns]="columns"
-      [rows]="coupons()"
+      [rows]="result()?.items ?? []"
       [loading]="loading()"
+      [error]="error()"
+      [pagination]="pagination()"
+      (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="remove(row)">
@@ -106,9 +111,19 @@ import {
 })
 export class AdminCouponsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  protected coupons = signal<CouponDto[]>([]);
+  protected result = signal<PagedResult<CouponDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected showForm = signal(false);
+
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
   protected saving = signal(false);
   protected f = {
     title: '',
@@ -149,16 +164,32 @@ export class AdminCouponsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.api.listCoupons().subscribe({
-      next: (res) => {
-        this.coupons.set(
-          (res as unknown as PagedResult<CouponDto>).items ??
-            (res as unknown as CouponDto[]),
-        );
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.fetch();
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.api
+      .listCoupons({
+        page: String(this.page()),
+        pageSize: String(this.pageSize),
+      })
+      .subscribe({
+        next: (r) => {
+          this.result.set(r);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set(true);
+        },
+      });
   }
 
   protected openCreate(): void {
@@ -179,10 +210,10 @@ export class AdminCouponsComponent implements OnInit {
     this.api
       .createCoupon(this.toPayload() as Record<string, unknown>)
       .subscribe({
-        next: (c) => {
-          this.coupons.update((cs) => [...cs, c]);
+        next: () => {
           this.saving.set(false);
           this.showForm.set(false);
+          this.load();
         },
         error: () => this.saving.set(false),
       });
@@ -191,7 +222,15 @@ export class AdminCouponsComponent implements OnInit {
   protected remove(c: CouponDto): void {
     if (!confirm(`Delete coupon ${c.code}?`)) return;
     this.api.deleteCoupon(c.id).subscribe({
-      next: () => this.coupons.update((cs) => cs.filter((x) => x.id !== c.id)),
+      next: () =>
+        this.result.update((r) =>
+          r ? { ...r, items: r.items.filter((x) => x.id !== c.id) } : r,
+        ),
     });
+  }
+
+  private load(): void {
+    this.page.set(1);
+    this.fetch();
   }
 }

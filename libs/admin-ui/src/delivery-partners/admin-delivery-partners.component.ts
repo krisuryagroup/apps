@@ -2,15 +2,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, DeliveryPartnerDto } from '@zitro/services';
+import {
+  AdminApiService,
+  DeliveryPartnerDto,
+  PagedResult,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -33,8 +39,11 @@ import {
     </div>
     <lib-data-table
       [columns]="columns"
-      [rows]="partners()"
+      [rows]="result()?.items ?? []"
       [loading]="loading()"
+      [error]="error()"
+      [pagination]="pagination()"
+      (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="toggleStatus(row)">
@@ -56,9 +65,19 @@ import {
 })
 export class AdminDeliveryPartnersComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  protected partners = signal<DeliveryPartnerDto[]>([]);
+  protected result = signal<PagedResult<DeliveryPartnerDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected statusFilter = '';
+
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
 
   protected readonly columns: DataTableColumn<DeliveryPartnerDto>[] = [
     { key: 'name', labelKey: 'delivery.name' },
@@ -77,15 +96,32 @@ export class AdminDeliveryPartnersComponent implements OnInit {
   }
 
   protected load(): void {
+    this.page.set(1);
+    this.fetch();
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
     this.loading.set(true);
-    const p: Record<string, string> = {};
+    this.error.set(false);
+    const p: Record<string, string> = {
+      page: String(this.page()),
+      pageSize: String(this.pageSize),
+    };
     if (this.statusFilter) p['status'] = this.statusFilter;
     this.api.listDeliveryPartners(p).subscribe({
-      next: (d) => {
-        this.partners.set(d);
+      next: (r) => {
+        this.result.set(r);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
 
@@ -93,8 +129,15 @@ export class AdminDeliveryPartnersComponent implements OnInit {
     const newStatus = p.status === 'active' ? 'suspended' : 'active';
     this.api.updateDeliveryPartnerStatus(p.id, newStatus).subscribe({
       next: () =>
-        this.partners.update((ps) =>
-          ps.map((x) => (x.id === p.id ? { ...x, status: newStatus } : x)),
+        this.result.update((r) =>
+          r
+            ? {
+                ...r,
+                items: r.items.map((x) =>
+                  x.id === p.id ? { ...x, status: newStatus } : x,
+                ),
+              }
+            : r,
         ),
     });
   }

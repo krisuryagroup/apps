@@ -50,6 +50,8 @@ export class DataTableComponent<T = Record<string, unknown>> {
   columns = input.required<DataTableColumn<T>[]>();
   rows = input.required<T[]>();
   loading = input(false);
+  /** Set when the load request failed — rendered distinctly from a genuinely empty result. */
+  error = input(false);
   emptyMessageKey = input('dataTable.empty');
   pagination = input<DataTablePagination | null>(null);
   sort = input<DataTableSort | null>(null);

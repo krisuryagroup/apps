@@ -28,6 +28,7 @@ import {
       [columns]="columns"
       [rows]="banners()"
       [loading]="loading()"
+      [error]="error()"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="remove(row)">
@@ -103,6 +104,7 @@ export class AdminBannersComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected banners = signal<BannerAdminDto[]>([]);
   protected loading = signal(true);
+  protected error = signal(false);
   protected showForm = signal(false);
   protected saving = signal(false);
   protected f = {
@@ -127,12 +129,17 @@ export class AdminBannersComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loading.set(true);
+    this.error.set(false);
     this.api.listBanners().subscribe({
       next: (b) => {
         this.banners.set(b);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
   protected openCreate(): void {

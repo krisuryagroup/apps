@@ -2,15 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, BrandDto } from '@zitro/services';
+import { AdminApiService, BrandDto, PagedResult } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
   DataTableColumn,
+  DataTablePagination,
 } from '../data-table/data-table.component';
 
 @Component({
@@ -31,8 +33,11 @@ import {
     <lib-data-table
       data-testid="brand-list"
       [columns]="columns"
-      [rows]="brands()"
+      [rows]="result()?.items ?? []"
       [loading]="loading()"
+      [error]="error()"
+      [pagination]="pagination()"
+      (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
@@ -92,9 +97,19 @@ import {
 })
 export class AdminBrandsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  protected brands = signal<BrandDto[]>([]);
+  protected result = signal<PagedResult<BrandDto> | null>(null);
   protected loading = signal(true);
+  protected error = signal(false);
+  protected page = signal(1);
+  protected readonly pageSize = 20;
   protected showForm = signal(false);
+
+  protected pagination = computed<DataTablePagination | null>(() => {
+    const r = this.result();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
   protected editing = signal<BrandDto | null>(null);
   protected formName = '';
   protected formDesc = '';
@@ -111,13 +126,32 @@ export class AdminBrandsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.api.listBrands().subscribe({
-      next: (res) => {
-        this.brands.set(res.items);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.fetch();
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
+    this.fetch();
+  }
+
+  private fetch(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.api
+      .listBrands({
+        page: String(this.page()),
+        pageSize: String(this.pageSize),
+      })
+      .subscribe({
+        next: (res) => {
+          this.result.set(res);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set(true);
+        },
+      });
   }
 
   protected openCreate(): void {
@@ -137,7 +171,10 @@ export class AdminBrandsComponent implements OnInit {
   protected remove(brand: BrandDto): void {
     if (!confirm(`Delete brand "${brand.name}"?`)) return;
     this.api.deleteBrand(brand.id).subscribe({
-      next: () => this.brands.update((b) => b.filter((x) => x.id !== brand.id)),
+      next: () =>
+        this.result.update((r) =>
+          r ? { ...r, items: r.items.filter((x) => x.id !== brand.id) } : r,
+        ),
     });
   }
 
@@ -150,10 +187,15 @@ export class AdminBrandsComponent implements OnInit {
       : this.api.createBrand(req);
     call$.subscribe({
       next: (saved) => {
-        this.brands.update((b) =>
-          this.editing()
-            ? b.map((x) => (x.id === saved.id ? saved : x))
-            : [...b, saved],
+        this.result.update((r) =>
+          r
+            ? {
+                ...r,
+                items: this.editing()
+                  ? r.items.map((x) => (x.id === saved.id ? saved : x))
+                  : [...r.items, saved],
+              }
+            : r,
         );
         this.saving.set(false);
         this.showForm.set(false);

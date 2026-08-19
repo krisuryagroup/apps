@@ -33,6 +33,7 @@ import {
       [columns]="columns"
       [rows]="products()"
       [loading]="loading()"
+      [error]="error()"
     >
       <ng-template #rowActions let-row>
         <button class="btn btn-sm btn-danger" (click)="remove(row)">
@@ -52,6 +53,7 @@ export class AdminProductsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   protected products = signal<ProductDto[]>([]);
   protected loading = signal(true);
+  protected error = signal(false);
   protected q = '';
 
   protected readonly columns: DataTableColumn<ProductDto>[] = [
@@ -74,6 +76,7 @@ export class AdminProductsComponent implements OnInit {
 
   protected load(): void {
     this.loading.set(true);
+    this.error.set(false);
     const p: Record<string, string> = {};
     if (this.q) p['q'] = this.q;
     this.api.searchProducts(p).subscribe({
@@ -81,7 +84,10 @@ export class AdminProductsComponent implements OnInit {
         this.products.set(ps);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
     });
   }
 

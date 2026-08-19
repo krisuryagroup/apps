@@ -29,6 +29,16 @@
             {{ 'dataTable.loading' | i18n }}
           </td>
         </tr>
+      } @else if (error()) {
+        <tr>
+          <td
+            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
+            class="data-table__state data-table__state--error"
+            data-testid="data-table-error"
+          >
+            {{ 'dataTable.error' | i18n }}
+          </td>
+        </tr>
       } @else if (rows().length === 0) {
         <tr>
           <td
