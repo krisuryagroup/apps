@@ -610,16 +610,24 @@ export class AdminApiService {
 
   // ── Delivery zones ──────────────────────────────────────────────────────────
 
-  listDeliveryZones(): Observable<DeliveryZoneDto[]> {
+  /** Zones are strictly business-scoped server-side — businessId is required. */
+  listDeliveryZones(businessId: string): Observable<DeliveryZoneDto[]> {
+    const params = new HttpParams().set('businessId', businessId);
     return this.http.get<DeliveryZoneDto[]>(
       `${this.baseUrl}/api/admin/delivery/zones`,
+      { params },
     );
   }
 
-  createDeliveryZone(
-    req: Record<string, unknown>,
-  ): Observable<DeliveryZoneDto> {
-    return this.http.post<DeliveryZoneDto>(
+  createDeliveryZone(req: {
+    businessId: string;
+    name: string;
+    polygonCoords: string;
+    baseFee: number;
+    feePerKm: number;
+    surgeMultiplier?: number;
+  }): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
       `${this.baseUrl}/api/admin/delivery/zones`,
       req,
     );
@@ -873,10 +881,13 @@ export interface DeliveryPartnerDto {
   totalDeliveries: number;
 }
 
+/** Matches backend ZoneDto exactly — zones don't echo businessId back (implicit from the query filter). */
 export interface DeliveryZoneDto {
   id: string;
   name: string;
-  businessId?: string;
+  baseFee: number;
+  feePerKm: number;
+  surgeMultiplier: number;
   isActive: boolean;
 }
 

@@ -761,7 +761,19 @@ export const EN_DEFAULTS = {
     suspend: 'Suspend',
     activate: 'Activate',
   },
-  deliveryZones: { name: 'Name', active: 'Active', add: 'Add Zone' },
+  deliveryZones: {
+    name: 'Name',
+    active: 'Active',
+    add: 'Add Zone',
+    selectBusiness: 'Select a business…',
+    selectBusinessHint: 'Select a business above to view its delivery zones.',
+    baseFee: 'Base Fee',
+    feePerKm: 'Fee per KM',
+    polygonCoords: 'Zone Boundary (coordinates)',
+    polygonCoordsPlaceholder:
+      '[{"lat":26.63,"lng":79.55},{"lat":26.64,"lng":79.56}]',
+    polygonCoordsInvalid: 'Must be a valid JSON array of {"lat","lng"} points.',
+  },
   payouts: {
     generate: 'Generate Payouts',
     hint: 'Enter a date range and click Generate to create payout records for all businesses in that period.',

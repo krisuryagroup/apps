@@ -178,13 +178,34 @@ supports these but they weren't called out in AD-T-604's own scope.
 
 ### 3.2 Delivery zones — scope per business
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** AD-T-610. `createDeliveryZone()` only sends `{ name }`. `DeliveryZoneDto` already has
 an optional `businessId` field that nothing sets or filters by.
 
-**Scope:** Add a business-select field to the create form (send `businessId`); add a
-business filter to the list view. Confirm backend already accepts/persists `businessId` on
-create (check `CreateDeliveryZoneCommand` — flagged as a maybe-needs-backend-check item, not
-confirmed clean like 2.1–2.3).
+**Turned out bigger than scoped — the screen was more broken than "not cross-business":**
+reading `CreateZoneCommand`/`ListZonesQuery` directly (the "maybe-needs-backend-check" flagged
+in the original scope) showed `businessId` is a **required** `Guid` on both list and create —
+the previous frontend never sent it, so list requests silently bound to `Guid.Empty` (always
+empty results) and create requests would either write a zone with `BusinessId = Guid.Empty`
+or fail. `CreateZoneCommand` also requires `polygonCoords`, `baseFee`, `feePerKm` — none of
+which the old form collected at all. Also fixed two contract mismatches while in there:
+`DeliveryZoneDto` was typed with `businessId?`/no fee fields (backend's `ZoneDto` has no
+`businessId` — it's implicit from the query filter — but does return `baseFee`/`feePerKm`/
+`surgeMultiplier`); `createDeliveryZone()` was typed to return a full `DeliveryZoneDto` but
+the backend only returns `{ id }`.
+
+**Delivered:** Business-select dropdown gates the whole screen (list only fetches once a
+business is chosen — matches the backend's required-param reality, not an optional filter);
+create form now collects name/baseFee/feePerKm/polygonCoords, submitting the page's selected
+`businessId`. `polygonCoords` is stored as JSONB (`[{lat,lng},...]`) — a first live-test with
+a plain `"lat,lng;lat,lng"` string 500'd (Postgres jsonb parse failure on a non-JSON string);
+fixed with a corrected placeholder plus client-side `JSON.parse` + shape validation that
+disables Save until the input is genuinely a `[{lat,lng},...]` array (no polygon-drawing map
+UI — matches the "match existing utilitarian style" decision, same shortcut pattern as
+Banners' plain-URL image field). Verified end-to-end live: created a zone for EFC Pizza,
+confirmed via direct API read it's correctly scoped (only appears when querying that
+business's zones) with the exact baseFee/feePerKm submitted.
 
 ### 3.3 Payouts — real batch-review + mark-paid UI
 
