@@ -582,6 +582,7 @@ export class AdminApiService {
     email: string;
     password: string;
     role: string;
+    permissions: string[];
   }): Observable<AdminUserDto> {
     return this.http.post<AdminUserDto>(
       `${this.baseUrl}/api/admin/admins`,

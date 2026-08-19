@@ -70,10 +70,15 @@ import {
               'admins.role' | i18n
             }}</label>
             <select id="adm-role" class="select" [(ngModel)]="f.role">
-              <option value="admin">admin</option>
-              <option value="super_admin">super_admin</option>
+              <option value="SuperAdmin">SuperAdmin</option>
+              <option value="Ops">Ops</option>
+              <option value="Support">Support</option>
+              <option value="Finance">Finance</option>
             </select>
           </div>
+          @if (saveError()) {
+            <p class="error-text">{{ saveError() }}</p>
+          }
           <div class="panel-actions">
             <button
               class="btn btn-primary"
@@ -103,7 +108,8 @@ export class AdminAdminUsersComponent implements OnInit {
   protected loading = signal(true);
   protected showForm = signal(false);
   protected saving = signal(false);
-  protected f = { name: '', email: '', password: '', role: 'admin' };
+  protected saveError = signal<string | null>(null);
+  protected f = { name: '', email: '', password: '', role: 'Ops' };
 
   protected readonly columns: DataTableColumn<AdminUserDto>[] = [
     { key: 'name', labelKey: 'admins.name' },
@@ -132,13 +138,15 @@ export class AdminAdminUsersComponent implements OnInit {
     });
   }
   protected openCreate(): void {
-    this.f = { name: '', email: '', password: '', role: 'admin' };
+    this.f = { name: '', email: '', password: '', role: 'Ops' };
+    this.saveError.set(null);
     this.showForm.set(true);
   }
 
   protected save(): void {
     this.saving.set(true);
-    this.api.createAdmin(this.f).subscribe({
+    this.saveError.set(null);
+    this.api.createAdmin({ ...this.f, permissions: [] }).subscribe({
       next: (a) => {
         this.result.update((r) =>
           r
@@ -148,7 +156,10 @@ export class AdminAdminUsersComponent implements OnInit {
         this.saving.set(false);
         this.showForm.set(false);
       },
-      error: () => this.saving.set(false),
+      error: () => {
+        this.saving.set(false);
+        this.saveError.set('Failed to create admin.');
+      },
     });
   }
 
