@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, CouponDto } from '@zitro/services';
+import { AdminApiService, CouponDto, PagedResult } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
@@ -40,6 +40,10 @@ import {
         <div class="panel">
           <h2 class="panel-title">{{ 'coupons.add' | i18n }}</h2>
           <div class="form-grid">
+            <label for="cp-title" class="form-label">Title</label>
+            <input id="cp-title" class="input" [(ngModel)]="f.title" />
+            <label for="cp-desc" class="form-label">Description</label>
+            <input id="cp-desc" class="input" [(ngModel)]="f.description" />
             <label for="cp-code" class="form-label">{{
               'coupons.code' | i18n
             }}</label>
@@ -59,6 +63,13 @@ import {
               class="input"
               type="number"
               [(ngModel)]="f.discountValue"
+            />
+            <label for="cp-validfrom" class="form-label">Valid From</label>
+            <input
+              id="cp-validfrom"
+              class="input"
+              type="date"
+              [(ngModel)]="f.validFrom"
             />
             <label for="cp-validto" class="form-label">{{
               'coupons.validTo' | i18n
@@ -100,11 +111,30 @@ export class AdminCouponsComponent implements OnInit {
   protected showForm = signal(false);
   protected saving = signal(false);
   protected f = {
+    title: '',
+    description: '',
     code: '',
     discountType: 'flat',
     discountValue: 0,
+    validFrom: '',
     validTo: '',
   };
+
+  private toPayload() {
+    const today = new Date().toISOString().split('T')[0];
+    return {
+      ...this.f,
+      validFrom: this.f.validFrom
+        ? new Date(this.f.validFrom).toISOString()
+        : new Date(today).toISOString(),
+      validTo: this.f.validTo
+        ? new Date(this.f.validTo).toISOString()
+        : new Date(today).toISOString(),
+      minOrderAmount: 0,
+      isActive: true,
+      isDisplayedForOnlineOrders: true,
+    };
+  }
 
   protected readonly columns: DataTableColumn<CouponDto>[] = [
     { key: 'code', labelKey: 'coupons.code' },
@@ -120,8 +150,11 @@ export class AdminCouponsComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.listCoupons().subscribe({
-      next: (c) => {
-        this.coupons.set(c);
+      next: (res) => {
+        this.coupons.set(
+          (res as unknown as PagedResult<CouponDto>).items ??
+            (res as unknown as CouponDto[]),
+        );
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -129,20 +162,30 @@ export class AdminCouponsComponent implements OnInit {
   }
 
   protected openCreate(): void {
-    this.f = { code: '', discountType: 'flat', discountValue: 0, validTo: '' };
+    this.f = {
+      title: '',
+      description: '',
+      code: '',
+      discountType: 'flat',
+      discountValue: 0,
+      validFrom: '',
+      validTo: '',
+    };
     this.showForm.set(true);
   }
 
   protected save(): void {
     this.saving.set(true);
-    this.api.createCoupon(this.f as Record<string, unknown>).subscribe({
-      next: (c) => {
-        this.coupons.update((cs) => [...cs, c]);
-        this.saving.set(false);
-        this.showForm.set(false);
-      },
-      error: () => this.saving.set(false),
-    });
+    this.api
+      .createCoupon(this.toPayload() as Record<string, unknown>)
+      .subscribe({
+        next: (c) => {
+          this.coupons.update((cs) => [...cs, c]);
+          this.saving.set(false);
+          this.showForm.set(false);
+        },
+        error: () => this.saving.set(false),
+      });
   }
 
   protected remove(c: CouponDto): void {
