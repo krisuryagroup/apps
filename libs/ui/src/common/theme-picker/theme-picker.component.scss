@@ -16,19 +16,21 @@
     align-items: center;
     gap: 6px;
     padding: 8px;
-    border: 2px solid var(--zitro-color-divider, #e0e0e0);
+    border: 2px solid var(--zitro-divider, #e0e0e0);
     border-radius: 12px;
-    background: var(--zitro-color-surface, #fff);
+    background: var(--zitro-surface, #fff);
     cursor: pointer;
-    transition: border-color 0.2s ease, transform 0.15s ease;
+    transition:
+      border-color 0.2s ease,
+      transform 0.15s ease;
     min-width: 72px;
 
     &:hover {
-      border-color: var(--zitro-color-primary, #009688);
+      border-color: var(--zitro-primary, #009688);
     }
 
     &--active {
-      border-color: var(--zitro-color-primary, #009688);
+      border-color: var(--zitro-primary, #009688);
       background: rgba(0, 150, 136, 0.06);
     }
 
@@ -60,11 +62,11 @@
   &__label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--zitro-color-text-secondary, #666);
+    color: var(--zitro-on-surface-variant, #666);
     white-space: nowrap;
 
     .theme-picker__option--active & {
-      color: var(--zitro-color-primary, #009688);
+      color: var(--zitro-primary, #009688);
     }
   }
 }

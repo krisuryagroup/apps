@@ -4,13 +4,13 @@
   margin-bottom: var(--zitro-spacing-lg);
 }
 .page-title {
-  font-size: var(--zitro-font-size-2xl);
-  font-weight: var(--zitro-font-weight-bold);
-  color: var(--zitro-color-on-surface);
+  font-size: var(--zitro-font-size-xl);
+  font-weight: 700;
+  color: var(--zitro-on-surface);
   margin: 0 0 var(--zitro-spacing-xs);
 }
 .page-subtitle {
-  color: var(--zitro-color-on-surface-variant);
+  color: var(--zitro-on-surface-variant);
   margin: 0;
   font-size: var(--zitro-font-size-sm);
 }
@@ -28,22 +28,22 @@
   }
   .filter-label {
     font-size: var(--zitro-font-size-sm);
-    font-weight: var(--zitro-font-weight-medium);
-    color: var(--zitro-color-on-surface);
+    font-weight: 500;
+    color: var(--zitro-on-surface);
   }
 }
 
 .select,
 .input {
   padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
-  border: 1px solid var(--zitro-color-outline);
+  border: 1px solid var(--zitro-divider);
   border-radius: var(--zitro-radius-md);
-  background: var(--zitro-color-surface);
-  color: var(--zitro-color-on-surface);
-  font-size: var(--zitro-font-size-base);
+  background: var(--zitro-surface);
+  color: var(--zitro-on-surface);
+  font-size: var(--zitro-font-size-md);
   &:focus {
     outline: none;
-    border-color: var(--zitro-color-primary);
+    border-color: var(--zitro-primary);
   }
 }
 .input-sm {
@@ -59,13 +59,13 @@
   td {
     padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
     text-align: left;
-    border-bottom: 1px solid var(--zitro-color-outline-variant);
+    border-bottom: 1px solid var(--zitro-divider);
   }
   th {
     font-size: var(--zitro-font-size-sm);
-    font-weight: var(--zitro-font-weight-medium);
-    color: var(--zitro-color-on-surface-variant);
-    background: var(--zitro-color-surface-container);
+    font-weight: 500;
+    color: var(--zitro-on-surface-variant);
+    background: var(--zitro-surface-variant);
   }
   .flag-key {
     font-family: monospace;
@@ -73,30 +73,30 @@
   }
   .flag-platform {
     font-size: var(--zitro-font-size-sm);
-    color: var(--zitro-color-on-surface-variant);
+    color: var(--zitro-on-surface-variant);
   }
   .empty-cell {
     text-align: center;
-    color: var(--zitro-color-on-surface-variant);
+    color: var(--zitro-on-surface-variant);
     padding: var(--zitro-spacing-xl);
   }
 }
 
 .toggle-btn {
   padding: var(--zitro-spacing-xs) var(--zitro-spacing-md);
-  border: 1px solid var(--zitro-color-outline);
+  border: 1px solid var(--zitro-divider);
   border-radius: 20px;
   font-size: var(--zitro-font-size-sm);
-  font-weight: var(--zitro-font-weight-medium);
+  font-weight: 500;
   cursor: pointer;
-  background: var(--zitro-color-surface-container);
-  color: var(--zitro-color-on-surface-variant);
+  background: var(--zitro-surface-variant);
+  color: var(--zitro-on-surface-variant);
   transition: all 0.15s ease;
 
   &.toggle-on {
-    background: var(--zitro-color-primary);
-    color: var(--zitro-color-on-primary);
-    border-color: var(--zitro-color-primary);
+    background: var(--zitro-primary);
+    color: #ffffff;
+    border-color: var(--zitro-primary);
   }
   &:disabled {
     opacity: 0.5;
@@ -106,14 +106,14 @@
 
 .add-flag-form {
   padding: var(--zitro-spacing-lg);
-  background: var(--zitro-color-surface-container);
+  background: var(--zitro-surface-variant);
   border-radius: var(--zitro-radius-lg);
   margin-bottom: var(--zitro-spacing-md);
 
   .add-flag-title {
     margin: 0 0 var(--zitro-spacing-md);
-    font-size: var(--zitro-font-size-base);
-    font-weight: var(--zitro-font-weight-medium);
+    font-size: var(--zitro-font-size-md);
+    font-weight: 500;
   }
   .add-flag-row {
     display: flex;
@@ -138,8 +138,8 @@
   padding: var(--zitro-spacing-sm) var(--zitro-spacing-lg);
   border: none;
   border-radius: var(--zitro-radius-md);
-  font-size: var(--zitro-font-size-base);
-  font-weight: var(--zitro-font-weight-medium);
+  font-size: var(--zitro-font-size-md);
+  font-weight: 500;
   cursor: pointer;
   &:disabled {
     opacity: 0.5;
@@ -147,36 +147,36 @@
   }
 }
 .btn-primary {
-  background: var(--zitro-color-primary);
-  color: var(--zitro-color-on-primary);
+  background: var(--zitro-primary);
+  color: #ffffff;
 }
 
 .cache-note {
-  font-size: var(--zitro-font-size-xs);
-  color: var(--zitro-color-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
+  color: var(--zitro-on-surface-variant);
   font-style: italic;
 }
 .error-banner {
   padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
   background: color.adjust(red, $lightness: 40%);
-  color: var(--zitro-color-error);
+  color: var(--zitro-error);
   border-radius: var(--zitro-radius-md);
 }
 .error-text {
-  color: var(--zitro-color-error);
+  color: var(--zitro-error);
   font-size: var(--zitro-font-size-sm);
   margin: var(--zitro-spacing-xs) 0 0;
 }
 .row-error {
-  color: var(--zitro-color-error);
-  font-size: var(--zitro-font-size-xs);
+  color: var(--zitro-error);
+  font-size: var(--zitro-font-size-sm);
 }
 .saving-text {
-  color: var(--zitro-color-on-surface-variant);
-  font-size: var(--zitro-font-size-xs);
+  color: var(--zitro-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
 }
 .loading-text {
-  color: var(--zitro-color-on-surface-variant);
+  color: var(--zitro-on-surface-variant);
   padding: var(--zitro-spacing-xl);
   text-align: center;
 }
