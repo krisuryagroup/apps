@@ -256,6 +256,13 @@ export class TranslationsComponent implements OnInit {
             .replace(/^"|"$/g, '');
           if (key && value) preview.push({ key, value });
         }
+        if (preview.length === 0) {
+          // Every line failed to parse as "key,value" (or the file was empty) — surface
+          // this as a real error rather than silently showing zero rows, which reads as
+          // "nothing to import" instead of "your file didn't parse."
+          this.csvError.set('translations.csvParseError');
+          return;
+        }
         this.csvPreview.set(preview);
       } catch {
         this.csvError.set('translations.csvParseError');
