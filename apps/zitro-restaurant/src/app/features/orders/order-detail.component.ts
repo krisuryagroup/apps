@@ -51,7 +51,7 @@ import { I18nPipe } from '@zitro/i18n';
         </section>
         <section class="card" data-testid="order-detail-customer">
           <h2 class="section-title">Customer</h2>
-          <p>{{ order()!.customerPhone }}</p>
+          <p>{{ maskPhone(order()!.customerPhone) }}</p>
           <p>Payment: {{ order()!.paymentMethod ?? '—' }}</p>
         </section>
         <section class="card" data-testid="order-detail-timeline">
@@ -141,5 +141,12 @@ export class RestaurantOrderDetailComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  // RS-T-703: was rendering order()!.customerPhone directly with no masking — shows
+  // only the last 4 digits, matching the partial-masking language in RS-005's spec.
+  protected maskPhone(phone: string | undefined): string {
+    if (!phone || phone.length <= 4) return phone ?? '—';
+    return '•'.repeat(phone.length - 4) + phone.slice(-4);
   }
 }

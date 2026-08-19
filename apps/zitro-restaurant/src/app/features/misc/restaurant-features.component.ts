@@ -586,30 +586,36 @@ export class RestaurantRatingsComponent implements OnInit {
     @if (loading()) {
       <p class="loading">{{ 'common.loading' | i18n }}</p>
     } @else {
-      <table class="table">
+      <table class="table" data-testid="payout-history-table">
         <thead>
           <tr>
             <th>Period</th>
+            <th>Orders</th>
             <th>Gross</th>
+            <th>Commission</th>
             <th>Net</th>
             <th>Status</th>
+            <th>Reference</th>
           </tr>
         </thead>
         <tbody>
           @for (p of payouts(); track p.id) {
             <tr>
               <td>{{ p.periodFrom }} – {{ p.periodTo }}</td>
+              <td>{{ p.orderCount }}</td>
               <td>₹{{ p.grossAmount }}</td>
+              <td>₹{{ p.commissionAmount }}</td>
               <td>₹{{ p.netAmount }}</td>
               <td>
                 <span class="badge" [class]="'badge-' + p.status">{{
                   p.status
                 }}</span>
               </td>
+              <td>{{ p.payoutReference ?? '—' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="4" class="empty">No payouts yet.</td>
+              <td colspan="7" class="empty">No payouts yet.</td>
             </tr>
           }
         </tbody>

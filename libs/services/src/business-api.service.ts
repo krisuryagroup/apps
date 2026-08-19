@@ -500,7 +500,10 @@ export interface PayoutDto {
   periodFrom: string;
   periodTo: string;
   grossAmount: number;
+  commissionAmount: number;
   netAmount: number;
+  orderCount: number;
   status: string;
+  payoutReference?: string;
   paidAt?: string;
 }
