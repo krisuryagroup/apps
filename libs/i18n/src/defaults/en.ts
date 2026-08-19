@@ -719,6 +719,7 @@ export const EN_DEFAULTS = {
     phonePlaceholder: 'Search by phone\u2026',
     orderIdPlaceholder: 'Search by order ID\u2026',
     allStatuses: 'All Statuses',
+    allBusinesses: 'All Businesses',
   },
   users: {
     name: 'Name',

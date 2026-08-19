@@ -7,7 +7,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, OrderSummaryDto, PagedResult } from '@zitro/services';
+import {
+  AdminApiService,
+  BusinessSummaryDto,
+  OrderSummaryDto,
+  PagedResult,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
@@ -35,6 +40,18 @@ import {
         (ngModelChange)="load()"
         placeholder="{{ 'orders.orderIdPlaceholder' | i18n }}"
       />
+      <select
+        id="order-business"
+        class="select"
+        data-testid="order-search-business-filter"
+        [(ngModel)]="businessId"
+        (ngModelChange)="load()"
+      >
+        <option value="">{{ 'orders.allBusinesses' | i18n }}</option>
+        @for (b of businesses(); track b.id) {
+          <option [value]="b.id">{{ b.name }}</option>
+        }
+      </select>
       <select
         id="order-status"
         class="select"
@@ -90,6 +107,8 @@ export class AdminOrdersComponent implements OnInit {
   protected status = '';
   protected fromDate = '';
   protected toDate = '';
+  protected businessId = '';
+  protected businesses = signal<BusinessSummaryDto[]>([]);
 
   protected pagination = computed<DataTablePagination | null>(() => {
     const r = this.result();
@@ -131,6 +150,10 @@ export class AdminOrdersComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.api.listBusinesses({ pageSize: '200' }).subscribe({
+      next: (r) => this.businesses.set(r.items),
+      error: () => undefined,
+    });
   }
 
   protected load(): void {
@@ -155,6 +178,7 @@ export class AdminOrdersComponent implements OnInit {
     if (this.status) p['status'] = this.status;
     if (this.fromDate) p['fromDate'] = this.fromDate;
     if (this.toDate) p['toDate'] = this.toDate;
+    if (this.businessId) p['businessId'] = this.businessId;
     this.api.listAdminOrders(p).subscribe({
       next: (r) => {
         this.result.set(r);
