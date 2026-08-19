@@ -280,8 +280,8 @@ export class BusinessApiService {
     businessId: string,
     userId: string,
     req: Record<string, unknown>,
-  ): Observable<StaffDto> {
-    return this.http.put<StaffDto>(
+  ): Observable<void> {
+    return this.http.put<void>(
       `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
       req,
     );

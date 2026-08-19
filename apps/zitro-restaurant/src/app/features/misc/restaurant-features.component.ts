@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
 import { BusinessApiService, StaffDto } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 
@@ -29,6 +30,7 @@ import { I18nPipe } from '@zitro/i18n';
             <th>Phone</th>
             <th>Role</th>
             <th>Active</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -38,10 +40,31 @@ import { I18nPipe } from '@zitro/i18n';
               <td>{{ s.phoneNumber }}</td>
               <td>{{ s.role }}</td>
               <td>{{ s.isActive ? '✓' : '✗' }}</td>
+              <td class="row-actions">
+                <button class="btn btn-sm btn-outline" (click)="openEdit(s)">
+                  {{ 'common.edit' | i18n }}
+                </button>
+                <button
+                  class="btn btn-sm btn-outline"
+                  (click)="toggleActive(s)"
+                >
+                  {{
+                    s.isActive
+                      ? ('admins.deactivate' | i18n)
+                      : ('admins.activate' | i18n)
+                  }}
+                </button>
+                <button
+                  class="btn btn-sm btn-outline"
+                  (click)="openResetPassword(s)"
+                >
+                  {{ 'admins.resetPassword' | i18n }}
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="4" class="empty">No staff found.</td>
+              <td colspan="5" class="empty">No staff found.</td>
             </tr>
           }
         </tbody>
@@ -50,19 +73,23 @@ import { I18nPipe } from '@zitro/i18n';
     @if (showForm()) {
       <div class="overlay">
         <div class="panel">
-          <h2 class="panel-title">Add Staff</h2>
+          <h2 class="panel-title">
+            {{ editingStaff() ? ('common.edit' | i18n) : 'Add Staff' }}
+          </h2>
           <div class="form-row">
             <label for="staff-name" class="form-label">Name</label
             ><input id="staff-name" class="input" [(ngModel)]="f.name" />
-            <label for="staff-phone" class="form-label">Phone</label
-            ><input id="staff-phone" class="input" [(ngModel)]="f.phone" />
-            <label for="staff-pass" class="form-label">Password</label
-            ><input
-              id="staff-pass"
-              class="input"
-              type="password"
-              [(ngModel)]="f.password"
-            />
+            @if (!editingStaff()) {
+              <label for="staff-phone" class="form-label">Phone</label
+              ><input id="staff-phone" class="input" [(ngModel)]="f.phone" />
+              <label for="staff-pass" class="form-label">Password</label
+              ><input
+                id="staff-pass"
+                class="input"
+                type="password"
+                [(ngModel)]="f.password"
+              />
+            }
             <label for="staff-role" class="form-label">Role</label>
             <select id="staff-role" class="select" [(ngModel)]="f.role">
               <option value="manager">manager</option>
@@ -72,12 +99,51 @@ import { I18nPipe } from '@zitro/i18n';
           <div class="panel-actions">
             <button
               class="btn btn-primary"
-              [disabled]="!f.name || !f.phone || saving()"
+              [disabled]="!f.name || (!editingStaff() && !f.phone) || saving()"
               (click)="save()"
             >
               {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
             </button>
             <button class="btn btn-outline" (click)="showForm.set(false)">
+              {{ 'common.cancel' | i18n }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    @if (resetPasswordTarget(); as target) {
+      <div class="overlay">
+        <div class="panel">
+          <h2 class="panel-title">
+            {{ 'admins.resetPassword' | i18n }} — {{ target.name }}
+          </h2>
+          <div class="form-row">
+            <label for="staff-reset-pass" class="form-label">{{
+              'admins.newPassword' | i18n
+            }}</label>
+            <input
+              id="staff-reset-pass"
+              class="input"
+              type="password"
+              [(ngModel)]="resetPasswordValue"
+            />
+          </div>
+          <div class="panel-actions">
+            <button
+              class="btn btn-primary"
+              [disabled]="!resetPasswordValue || resetPasswordSaving()"
+              (click)="confirmResetPassword(target)"
+            >
+              {{
+                resetPasswordSaving()
+                  ? ('common.saving' | i18n)
+                  : ('common.save' | i18n)
+              }}
+            </button>
+            <button
+              class="btn btn-outline"
+              (click)="resetPasswordTarget.set(null)"
+            >
               {{ 'common.cancel' | i18n }}
             </button>
           </div>
@@ -101,6 +167,10 @@ import { I18nPipe } from '@zitro/i18n';
         font-size: var(--zitro-font-size-sm);
       }
     }
+    .row-actions {
+      display: flex;
+      gap: var(--zitro-spacing-sm);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -110,8 +180,16 @@ export class RestaurantStaffComponent implements OnInit {
   protected loading = signal(true);
   protected showForm = signal(false);
   protected saving = signal(false);
+  protected editingStaff = signal<StaffDto | null>(null);
   protected f = { name: '', phone: '', password: '', role: 'staff' };
+  protected resetPasswordTarget = signal<StaffDto | null>(null);
+  protected resetPasswordValue = '';
+  protected resetPasswordSaving = signal(false);
+
   ngOnInit() {
+    this.reload();
+  }
+  private reload() {
     const id = this.api.businessId()!;
     this.api.listStaff(id).subscribe({
       next: (s) => {
@@ -122,29 +200,66 @@ export class RestaurantStaffComponent implements OnInit {
     });
   }
   protected openAdd() {
+    this.editingStaff.set(null);
     this.f = { name: '', phone: '', password: '', role: 'staff' };
+    this.showForm.set(true);
+  }
+  protected openEdit(s: StaffDto) {
+    this.editingStaff.set(s);
+    this.f = { name: s.name, phone: s.phoneNumber, password: '', role: s.role };
     this.showForm.set(true);
   }
   protected save() {
     this.saving.set(true);
     const id = this.api.businessId()!;
-    // Backend requires phoneNumber, not phone — and its response is { id } only
-    // (same narrow-response shape as createCategory, commit df5edc4), so reload the
-    // full list afterward instead of appending the partial object.
-    const req = {
-      name: this.f.name,
-      phoneNumber: this.f.phone,
-      password: this.f.password,
-      role: this.f.role,
-    };
-    this.api.createStaff(id, req).subscribe({
+    const editing = this.editingStaff();
+    // Backend requires phoneNumber, not phone — and createStaff's response is { id }
+    // only (same narrow-response shape as createCategory, commit df5edc4), so reload
+    // the full list afterward instead of appending the partial object. updateStaff
+    // returns 204 No Content (same shape as UpdateProfile, commit f53efd0) — also
+    // reload rather than expecting a response body.
+    const call$: Observable<unknown> = editing
+      ? this.api.updateStaff(id, editing.id, {
+          name: this.f.name,
+          role: this.f.role,
+        })
+      : this.api.createStaff(id, {
+          name: this.f.name,
+          phoneNumber: this.f.phone,
+          password: this.f.password,
+          role: this.f.role,
+        });
+    call$.subscribe({
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
-        this.api.listStaff(id).subscribe({ next: (s) => this.staff.set(s) });
+        this.reload();
       },
       error: () => this.saving.set(false),
     });
+  }
+  protected toggleActive(s: StaffDto) {
+    const id = this.api.businessId()!;
+    this.api
+      .updateStaff(id, s.id, { isActive: !s.isActive })
+      .subscribe({ next: () => this.reload() });
+  }
+  protected openResetPassword(s: StaffDto) {
+    this.resetPasswordTarget.set(s);
+    this.resetPasswordValue = '';
+  }
+  protected confirmResetPassword(s: StaffDto) {
+    this.resetPasswordSaving.set(true);
+    const id = this.api.businessId()!;
+    this.api
+      .updateStaff(id, s.id, { newPassword: this.resetPasswordValue })
+      .subscribe({
+        next: () => {
+          this.resetPasswordSaving.set(false);
+          this.resetPasswordTarget.set(null);
+        },
+        error: () => this.resetPasswordSaving.set(false),
+      });
   }
 }
 
