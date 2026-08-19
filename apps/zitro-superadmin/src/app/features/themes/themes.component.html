@@ -23,9 +23,7 @@
       <div class="theme-card" [class.built-in]="theme.isBuiltIn">
         <div
           class="theme-preview-swatch"
-          [style.background]="
-            theme.previewColor || 'var(--zitro-color-primary)'
-          "
+          [style.background]="theme.previewColor || 'var(--zitro-primary)'"
         ></div>
         <div class="theme-info">
           <span class="theme-name">{{ theme.name }}</span>
@@ -108,7 +106,7 @@
                 "
                 [value]="token.name"
                 (input)="updateTokenName($index, $any($event.target).value)"
-                placeholder="--zitro-color-primary"
+                placeholder="--zitro-primary"
               />
               <input
                 class="input"
@@ -133,6 +131,30 @@
             + {{ 'themes.addToken' | i18n }}
           </button>
         </div>
+      </div>
+
+      <div class="form-group">
+        <span class="form-label" id="theme-apps-label">{{
+          'themes.availableApps' | i18n
+        }}</span>
+        <div
+          class="app-scope-row"
+          role="group"
+          aria-labelledby="theme-apps-label"
+        >
+          @for (app of apps; track app) {
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [attr.data-testid]="'theme-app-checkbox-' + app"
+                [checked]="isAppSelected(app)"
+                (change)="toggleApp(app, $any($event.target).checked)"
+              />
+              {{ app }}
+            </label>
+          }
+        </div>
+        <p class="form-hint">{{ 'themes.availableAppsHint' | i18n }}</p>
       </div>
 
       <!-- Live preview -->

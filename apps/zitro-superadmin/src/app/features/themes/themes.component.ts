@@ -13,6 +13,15 @@ import { I18nPipe } from '@zitro/i18n';
 
 type EditMode = 'none' | 'create' | 'edit';
 
+const APPS = [
+  'customer',
+  'restaurant',
+  'pos',
+  'admin',
+  'superadmin',
+  'delivery',
+] as const;
+
 interface TokenEntry {
   name: string;
   value: string;
@@ -22,6 +31,8 @@ interface TokenEntry {
  * SA-005 — Theme Management
  * List all themes (GET /api/admin/themes), create/edit custom themes (POST/PUT).
  * Built-in themes are read-only. Live preview via inline CSS variables.
+ * App-scoping (formApps) restricts a custom theme to specific apps — an empty list means
+ * available everywhere, matching the backend's `Apps.Count == 0` "no restriction" semantics.
  */
 @Component({
   selector: 'app-themes',
@@ -34,6 +45,7 @@ interface TokenEntry {
 export class ThemesComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
 
+  protected readonly apps = APPS;
   protected themes = signal<AppThemeDto[]>([]);
   protected loading = signal(false);
   protected loadError = signal<string | null>(null);
@@ -93,7 +105,7 @@ export class ThemesComponent implements OnInit {
       : [];
     if (!tokens.length) tokens.push({ name: '', value: '' });
     this.formTokens.set(tokens);
-    this.formApps = [];
+    this.formApps = [...theme.apps];
     this.editingTheme.set(theme);
     this.saveError.set(null);
     this.editMode.set('edit');
@@ -121,6 +133,16 @@ export class ThemesComponent implements OnInit {
     this.formTokens.update((t) =>
       t.map((entry, i) => (i === index ? { ...entry, value } : entry)),
     );
+  }
+
+  protected isAppSelected(app: string): boolean {
+    return this.formApps.includes(app);
+  }
+
+  protected toggleApp(app: string, checked: boolean): void {
+    this.formApps = checked
+      ? [...this.formApps, app]
+      : this.formApps.filter((a) => a !== app);
   }
 
   protected save(): void {

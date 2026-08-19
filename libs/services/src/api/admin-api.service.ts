@@ -70,6 +70,7 @@ export interface AppThemeDto {
   previewColor: string | null;
   isBuiltIn: boolean;
   tokens: Record<string, string> | null;
+  apps: string[];
 }
 
 export interface UiConfigDto {
