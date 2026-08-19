@@ -777,6 +777,17 @@ export const EN_DEFAULTS = {
   payouts: {
     generate: 'Generate Payouts',
     hint: 'Enter a date range and click Generate to create payout records for all businesses in that period.',
+    business: 'Business',
+    period: 'Period',
+    gross: 'Gross',
+    commission: 'Commission',
+    net: 'Net',
+    orders: 'Orders',
+    status: 'Status',
+    reference: 'Payout Reference',
+    referencePlaceholder: 'e.g. bank transfer UTR / reference number',
+    markPaid: 'Mark Paid',
+    allStatuses: 'All Statuses',
   },
   subscriptions: {
     pending:

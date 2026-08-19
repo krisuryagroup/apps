@@ -635,15 +635,40 @@ export class AdminApiService {
 
   // ── Payouts ─────────────────────────────────────────────────────────────────
 
-  generatePayouts(fromDate: string, toDate: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/admin/payouts/generate`, {
-      fromDate,
-      toDate,
-    });
+  listAdminPayouts(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<AdminPayoutDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<PagedResult<AdminPayoutDto>>(
+      `${this.baseUrl}/api/admin/payouts`,
+      { params: p },
+    );
   }
 
-  markPayoutPaid(id: string, payoutReference: string): Observable<void> {
-    return this.http.put<void>(
+  /**
+   * Request body field names are `from`/`to` (matches GeneratePayoutsRequest's
+   * DateOnly From/To) — NOT fromDate/toDate, which silently bound to nothing
+   * and generated payouts against default dates.
+   */
+  generatePayouts(
+    fromDate: string,
+    toDate: string,
+  ): Observable<GeneratedPayoutDto[]> {
+    return this.http.post<GeneratedPayoutDto[]>(
+      `${this.baseUrl}/api/admin/payouts/generate`,
+      { from: fromDate, to: toDate },
+    );
+  }
+
+  markPayoutPaid(
+    id: string,
+    payoutReference: string,
+  ): Observable<MarkPayoutPaidDto> {
+    return this.http.put<MarkPayoutPaidDto>(
       `${this.baseUrl}/api/admin/payouts/${id}/mark-paid`,
       { payoutReference },
     );
@@ -889,6 +914,41 @@ export interface DeliveryZoneDto {
   feePerKm: number;
   surgeMultiplier: number;
   isActive: boolean;
+}
+
+export interface AdminPayoutDto {
+  id: string;
+  businessId: string;
+  businessName: string;
+  periodFrom: string;
+  periodTo: string;
+  grossAmount: number;
+  commissionAmount: number;
+  netAmount: number;
+  orderCount: number;
+  status: string;
+  payoutReference?: string;
+  paidAt?: string;
+}
+
+/** Shape returned by POST /payouts/generate — narrower than AdminPayoutDto (no period/reference/paidAt). */
+export interface GeneratedPayoutDto {
+  payoutId: string;
+  businessId: string;
+  businessName: string;
+  grossAmount: number;
+  commissionAmount: number;
+  netAmount: number;
+  orderCount: number;
+  status: string;
+}
+
+export interface MarkPayoutPaidDto {
+  payoutId: string;
+  businessId: string;
+  netAmount: number;
+  payoutReference: string;
+  paidAt: string;
 }
 
 export interface BannerAdminDto {

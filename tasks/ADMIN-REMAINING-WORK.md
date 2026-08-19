@@ -209,31 +209,48 @@ business's zones) with the exact baseFee/feePerKm submitted.
 
 ### 3.3 Payouts — real batch-review + mark-paid UI
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** AD-T-612. `AdminPayoutsComponent` is currently just a date-range form + Generate
 button with no result table — confirmed by reading the component source, it's a ~75-line
 stub. `markPayoutPaid()` exists in `AdminApiService` but nothing calls it.
 
-**Backend status (confirmed via code read):**
+**Two more field-name/type-mismatch bugs found while wiring this up** (same recurring class
+as the rest of this initiative):
 
-- `POST /api/admin/payouts/generate` already returns the full calculated rows synchronously —
-  `GeneratedPayoutDto(PayoutId, BusinessId, BusinessName, GrossAmount, CommissionAmount,
-NetAmount, OrderCount, Status)`. No change needed here.
-- `PUT /api/admin/payouts/{id}/mark-paid` already exists — request `{ PayoutReference }`,
-  response `MarkPayoutPaidDto` or a 400 with `ErrorCode` (`ALREADY_PAID`, `PAYOUT_NOT_FOUND`,
-  `INVALID_REFERENCE`).
-- **Missing:** a `GET /api/admin/payouts` list endpoint — needed so the review table survives
-  a page reload / revisit instead of only existing in memory right after a `generate` call.
-  New `zitro-api` work, in scope per this planning session.
+- `generatePayouts()` posted `{ fromDate, toDate }`, but `GeneratePayoutsRequest` binds
+  `From`/`To` (JSON `from`/`to`) — every previous "Generate" click silently sent unbound
+  default dates. Every payout ever generated through this UI up to now was generated against
+  `0001-01-01`–adjacent defaults, not the dates actually entered.
+- `generatePayouts()`/`markPayoutPaid()` were both typed `Observable<void>`, but the backend
+  returns `List<GeneratedPayoutDto>` and `MarkPayoutPaidDto` respectively — real response
+  bodies were being silently discarded.
 
-**Scope:**
+**Delivered:**
 
-- `zitro-api`: add `GET /api/admin/payouts` (paged, filterable by date range/status) —
-  small additive endpoint, same pattern as the AD-T-413 categories fix (commit `26b5954`).
-- `apps`: render the rows returned by `generate()` in a table (business, gross, commission,
-  net, order count, status); add a "Mark Paid" row action with a payout-reference input,
-  wired to `markPayoutPaid()`; on load, call the new list endpoint so a revisit isn't empty.
+- `zitro-api`: added `GET /api/admin/payouts` (paged, filterable by status/date range),
+  reusing `Zitro.Shared.PagedResult<T>` — same pattern as `ListAdminOrders`/
+  `ListAdminCoupons`. `dotnet build --configuration Release /warnaserror` and
+  `dotnet format --verify-no-changes` both pass. Committed separately in the `zitro-api` repo
+  (`a47ec37`).
+- `apps`: fixed the two bugs above; rebuilt `AdminPayoutsComponent` with a real batch-review
+  table (business, period, gross, commission, net, order count, status, reference) backed by
+  the new list endpoint — so a revisit after generating shows the same data, not an empty
+  screen; added a "Mark Paid" row action (hidden once a row is already `paid`) with a
+  reference-input modal wired to `markPayoutPaid()`, surfacing the backend's real error
+  message (`ALREADY_PAID`/`PAYOUT_NOT_FOUND`/`INVALID_REFERENCE`) instead of a generic
+  failure.
 
-**Size:** L — the biggest single item in this plan.
+**Verified live end-to-end against local stack:** existing `paid` payout from a prior session
+loaded correctly on first render (list endpoint works, survives reload); Generate fired with
+the corrected `from`/`to` fields (200 OK, confirmed via network tab) and showed the correct
+"no new payouts" message when every business already had one for the period (local dev DB has
+no delivered+paid orders, so this was the only reachable generate outcome — the empty-result
+path is now confirmed correct, not just assumed); inserted a `pending` test payout directly to
+verify the full Mark Paid flow — button appeared, modal opened, submit updated the row to
+`paid` with the entered reference, button correctly disappeared after; confirmed the
+`ALREADY_PAID` error path via a direct API call against the already-paid row. Test data
+cleaned up after verification.
 
 ---
 
