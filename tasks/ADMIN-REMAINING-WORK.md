@@ -10,7 +10,8 @@
 
 ## What's left — start here
 
-Only two items remain in the whole plan (Phases 1–3 and Phase 4.1–4.3 are all done):
+Only two items remain in the whole plan (Phases 1–3 and Phase 4.1–4.3 are all done, plus one
+ad-hoc fix outside the original plan — see the table below):
 
 - **4.4 — Confirmation dialogs, native → shared component.** Cosmetic, no functional gap.
   Swap `confirm()` for a shared dialog across tags/coupons/products/banners/brands/admins
@@ -47,6 +48,7 @@ All committed, one commit per sub-item, each verified live against the local sta
 | 4.1       | Categories business scoping + validation; fixed parent-select, `isEnabledForOnlineOrders`, and `CategoryDto` contract bugs                                                                 | `572ec4e`     | `47f3ee8` (reject both-null on create)   |
 | 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`     | —                                        |
 | 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | `b8b2d66`     | —                                        |
+| ad-hoc    | Shared login page title now dynamic per app (`ZITRO Admin` vs `ZITRO Super Admin`) via `input()` + route `data` — not from the original gap list, a direct user request                    | `7b42fd7`     | —                                        |
 
 **Recurring bug class found across all three phases:** frontend/backend field-name or
 type contract mismatches that don't crash on write (bad data just gets silently dropped or
