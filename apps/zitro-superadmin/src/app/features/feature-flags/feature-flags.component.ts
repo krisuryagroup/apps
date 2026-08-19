@@ -34,7 +34,10 @@ interface FlagRow {
 
 /**
  * SA-003 — Feature Flags Management
- * Reads current flags via GET /api/app-config, toggles via PUT /api/admin/feature-flags/{app}.
+ * Reads current flags via GET /api/admin/feature-flags/{app} (raw per-row, real platform per
+ * row — NOT the public /api/app-config/bundle, which merges platform rows into a flat
+ * key→bool map for runtime consumption and would lose per-row platform here), toggles via
+ * PUT /api/admin/feature-flags/{app}.
  * Changes propagate within the Cache-Control max-age (1 hour) documented in the architecture.
  */
 @Component({
@@ -83,20 +86,16 @@ export class FeatureFlagsComponent implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.adminApi.getAppConfig(this.selectedApp()).subscribe({
-      next: (config) => {
-        // GET /api/app-config returns features as a flat key→bool map for the selected platform.
-        // We show them as a list of toggleable rows.
-        const rows: FlagRow[] = Object.entries(config.features).map(
-          ([key, isEnabled]) => ({
-            key,
-            platform: 'all',
-            isEnabled,
-            description: null,
-            saving: false,
-            error: null,
-          }),
-        );
+    this.adminApi.listAppFeatureFlags(this.selectedApp()).subscribe({
+      next: (dtos) => {
+        const rows: FlagRow[] = dtos.map((dto) => ({
+          key: dto.key,
+          platform: dto.platform as Platform,
+          isEnabled: dto.isEnabled,
+          description: dto.description,
+          saving: false,
+          error: null,
+        }));
         this.flags.set(rows);
         this.loading.set(false);
       },

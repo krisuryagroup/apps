@@ -151,6 +151,12 @@ export class AdminApiService {
 
   // ── App feature flags admin ─────────────────────────────────────────────────
 
+  listAppFeatureFlags(appSlug: string): Observable<AppFeatureFlagDto[]> {
+    return this.http.get<AppFeatureFlagDto[]>(
+      `${this.baseUrl}/api/admin/app-feature-flags/${appSlug}`,
+    );
+  }
+
   updateAppFeatureFlag(
     appSlug: string,
     req: {
@@ -161,7 +167,7 @@ export class AdminApiService {
     },
   ): Observable<AppFeatureFlagDto> {
     return this.http.put<AppFeatureFlagDto>(
-      `${this.baseUrl}/api/admin/feature-flags/${appSlug}`,
+      `${this.baseUrl}/api/admin/app-feature-flags/${appSlug}`,
       req,
     );
   }
