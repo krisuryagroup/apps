@@ -1,0 +1,20 @@
+<div class="stat-card" [attr.data-testid]="'stat-card-' + labelKey()">
+  @if (config().icon) {
+    <span class="stat-card__icon">{{ config().icon }}</span>
+  }
+  <div class="stat-card__value">{{ value() }}</div>
+  <div class="stat-card__label">{{ labelKey() | i18n }}</div>
+  @if (config().trend && trendValue()) {
+    <div
+      class="stat-card__trend"
+      [class]="'stat-card__trend--' + config().trend"
+    >
+      @if (config().trend === 'up') {
+        <span>&#9650;</span>
+      } @else if (config().trend === 'down') {
+        <span>&#9660;</span>
+      }
+      {{ trendValue() }}
+    </div>
+  }
+</div>

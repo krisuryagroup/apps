@@ -495,6 +495,42 @@ export const EN_DEFAULTS = {
     uploadPhoto: 'Upload photo',
     submitButton: 'Get Started',
   },
+  // ── zitro-admin / zitro-superadmin app shell (AD-000 / SA-000) ─────────────
+  app: {
+    name: 'Zitro Admin',
+    superadminName: 'Zitro Super Admin',
+  },
+  nav: {
+    dashboard: 'Dashboard',
+    businesses: 'Businesses',
+    brands: 'Brands',
+    tags: 'Tags',
+    products: 'Products',
+    categories: 'Categories',
+    orders: 'Orders',
+    users: 'Users',
+    coupons: 'Coupons',
+    cashback: 'Cashback Rules',
+    delivery: 'Delivery Partners',
+    deliveryZones: 'Delivery Zones',
+    payouts: 'Payouts',
+    subscriptions: 'Subscriptions',
+    banners: 'Banners',
+    admins: 'Admins',
+    featureFlags: 'Feature Flags',
+    translations: 'Translations',
+    themes: 'Themes',
+    uiConfig: 'UI Config',
+    logout: 'Log Out',
+    closeMenu: 'Close menu',
+  },
+  // ── @zitro/admin-ui shared components (AD-000) ─────────────────────────────
+  dataTable: {
+    loading: 'Loading...',
+    empty: 'No results found',
+    previous: 'Previous',
+    next: 'Next',
+  },
 } as const;
 
 export type TranslationMap = typeof EN_DEFAULTS;

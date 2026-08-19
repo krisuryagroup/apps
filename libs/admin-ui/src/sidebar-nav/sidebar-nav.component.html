@@ -1,0 +1,54 @@
+<button
+  type="button"
+  class="sidebar-nav__mobile-toggle"
+  data-testid="sidebar-mobile-toggle"
+  (click)="toggleMobile()"
+>
+  &#9776;
+</button>
+
+@if (mobileOpen()) {
+  <button
+    type="button"
+    class="sidebar-nav__overlay"
+    data-testid="sidebar-overlay"
+    [attr.aria-label]="'nav.closeMenu' | i18n"
+    (click)="closeMobile()"
+  ></button>
+}
+
+<nav
+  class="sidebar-nav"
+  [class.sidebar-nav--open]="mobileOpen()"
+  data-testid="sidebar-nav"
+>
+  @if (titleKey()) {
+    <div class="sidebar-nav__title">{{ titleKey()! | i18n }}</div>
+  }
+
+  <ul class="sidebar-nav__list">
+    @for (item of items(); track item.route) {
+      <li>
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="sidebar-nav__link--active"
+          class="sidebar-nav__link"
+          [attr.data-testid]="'sidebar-link-' + item.route"
+          (click)="closeMobile()"
+        >
+          <span class="sidebar-nav__icon">{{ item.icon }}</span>
+          <span class="sidebar-nav__label">{{ item.labelKey | i18n }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+
+  <button
+    type="button"
+    class="sidebar-nav__logout"
+    data-testid="sidebar-logout-btn"
+    (click)="logoutClicked.emit()"
+  >
+    {{ 'nav.logout' | i18n }}
+  </button>
+</nav>

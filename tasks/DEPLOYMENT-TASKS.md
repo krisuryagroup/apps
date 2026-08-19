@@ -35,9 +35,9 @@ independent static sites/domains.
 
 ---
 
-## DEP-001 — Create Firebase Hosting Sites + Targets
+## DEP-001 — Create Firebase Hosting Sites + Targets — `[x]` Done
 
-**Size:** S | **Depends on:** confirming the real project ID (see note above)
+**Size:** S | **Depends on:** confirming the real project ID (see note above — confirmed `zitro-customer`)
 
 **Steps:**
 
@@ -94,9 +94,11 @@ This writes the `"targets"` block into `.firebaserc` automatically.
 
 **Acceptance criteria:**
 
-- [ ] All 4 sites exist in Firebase Console → Hosting
-- [ ] `firebase deploy --only hosting:restaurant` deploys only that site, doesn't touch the others
-- [ ] `zitro-customer` deploy behaviour is unchanged (regression check)
+- [x] All 4 sites exist in Firebase Console → Hosting
+- [x] `firebase deploy --only hosting:restaurant` deploys only that site, doesn't touch the others (validated via a temporary preview channel, since deleted)
+- [x] `zitro-customer` deploy behaviour is unchanged (regression check — confirmed HTTP 200 on the live site after the restaurant deploy)
+
+**Note found during this task:** the real Firebase project is confirmed `zitro-customer`, but `zitro-api`'s backend is configured against a _third_, different project (`zitro-7044d`) — see the flag raised in chat. DEP-002/DEP-003 are unaffected by this (Hosting doesn't touch Auth/Firestore), but it's worth resolving before it causes confusion elsewhere.
 
 ---
 

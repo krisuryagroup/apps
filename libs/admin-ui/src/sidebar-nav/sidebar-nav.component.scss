@@ -1,0 +1,116 @@
+@use 'breakpoints' as *;
+
+.sidebar-nav__mobile-toggle {
+  display: block;
+  position: fixed;
+  top: var(--zitro-spacing-md);
+  left: var(--zitro-spacing-md);
+  z-index: 40;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--zitro-radius-md);
+  background: var(--zitro-surface);
+  box-shadow: var(--zitro-shadow-card);
+  font-size: 1.25rem;
+  cursor: pointer;
+
+  @include respond-above(tablet) {
+    display: none;
+  }
+}
+
+.sidebar-nav__overlay {
+  position: fixed;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 30;
+  cursor: pointer;
+
+  @include respond-above(tablet) {
+    display: none;
+  }
+}
+
+.sidebar-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  background: var(--zitro-surface);
+  border-right: 1px solid var(--zitro-divider);
+  display: flex;
+  flex-direction: column;
+  padding: var(--zitro-spacing-lg) var(--zitro-spacing-sm);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  z-index: 35;
+
+  &--open {
+    transform: translateX(0);
+  }
+
+  @include respond-above(tablet) {
+    transform: translateX(0);
+    position: sticky;
+  }
+}
+
+.sidebar-nav__title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  margin-bottom: var(--zitro-spacing-md);
+  color: var(--zitro-primary);
+}
+
+.sidebar-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--zitro-spacing-sm);
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  border-radius: var(--zitro-radius-sm);
+  color: var(--zitro-on-surface);
+  text-decoration: none;
+  font-size: var(--zitro-font-size-md);
+
+  &:hover {
+    background: var(--zitro-surface-variant);
+  }
+
+  &--active {
+    background: var(--zitro-primary);
+    color: white;
+  }
+}
+
+.sidebar-nav__icon {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-nav__logout {
+  margin-top: auto;
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  border: 1px solid var(--zitro-divider);
+  border-radius: var(--zitro-radius-sm);
+  background: transparent;
+  color: var(--zitro-on-surface-variant);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--zitro-surface-variant);
+  }
+}

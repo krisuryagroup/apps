@@ -3,23 +3,16 @@ import { inject } from '@angular/core';
 import { from, switchMap, catchError } from 'rxjs';
 import { FirebaseAuthService } from '../firebase-auth.service';
 import { ZITRO_PUBLIC_ENDPOINTS } from '../tokens';
-
-function isPublicEndpoint(url: string, publicEndpoints: string[]): boolean {
-  return publicEndpoints.some((path) => url.includes(path));
-}
-
-function isInternalApiRequest(url: string): boolean {
-  if (url.includes('googleapis.com') || url.includes('places.googleapis.com')) {
-    return false;
-  }
-  return url.includes('/api/');
-}
+import { isInternalApiRequest, isPublicEndpoint } from './url-matchers';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const firebaseAuth = inject(FirebaseAuthService);
   const publicEndpoints = inject(ZITRO_PUBLIC_ENDPOINTS);
 
-  if (!isInternalApiRequest(req.url) || isPublicEndpoint(req.url, publicEndpoints)) {
+  if (
+    !isInternalApiRequest(req.url) ||
+    isPublicEndpoint(req.url, publicEndpoints)
+  ) {
     return next(req);
   }
 
@@ -37,6 +30,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
       }
       throw err;
-    })
+    }),
   );
 };

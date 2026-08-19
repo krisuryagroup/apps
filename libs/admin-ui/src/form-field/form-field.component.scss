@@ -1,0 +1,56 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--zitro-spacing-md);
+
+  &__label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__label-text {
+    font-size: var(--zitro-font-size-sm);
+    font-weight: 600;
+    color: var(--zitro-on-surface);
+  }
+
+  &__required {
+    color: var(--zitro-error);
+    margin-left: 2px;
+  }
+
+  &__hint {
+    font-size: var(--zitro-font-size-sm);
+    color: var(--zitro-on-surface-variant);
+  }
+
+  &__error {
+    font-size: var(--zitro-font-size-sm);
+    color: var(--zitro-error);
+  }
+
+  ::ng-deep input,
+  ::ng-deep select,
+  ::ng-deep textarea {
+    padding: var(--zitro-spacing-sm);
+    border: 1px solid var(--zitro-divider);
+    border-radius: var(--zitro-radius-sm);
+    font-size: var(--zitro-font-size-md);
+    font-family: inherit;
+    color: var(--zitro-on-surface);
+    background: var(--zitro-surface);
+
+    &:focus {
+      outline: none;
+      border-color: var(--zitro-primary);
+    }
+  }
+
+  &--error ::ng-deep input,
+  &--error ::ng-deep select,
+  &--error ::ng-deep textarea {
+    border-color: var(--zitro-error);
+  }
+}

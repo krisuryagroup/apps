@@ -1,5 +1,24 @@
 {
   "projects": {
     "default": "zitro-customer"
-  }
+  },
+  "targets": {
+    "zitro-customer": {
+      "hosting": {
+        "customer": [
+          "zitro-customer"
+        ],
+        "restaurant": [
+          "zitro-restaurant"
+        ],
+        "admin": [
+          "zitro-admin"
+        ],
+        "superadmin": [
+          "zitro-superadmin"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

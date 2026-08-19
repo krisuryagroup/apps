@@ -1,0 +1,73 @@
+.data-table {
+  background: var(--zitro-surface);
+  border-radius: var(--zitro-radius-md);
+  box-shadow: var(--zitro-shadow-card);
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    text-align: left;
+    padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+    font-size: var(--zitro-font-size-sm);
+    color: var(--zitro-on-surface-variant);
+    border-bottom: 1px solid var(--zitro-divider);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+    border-bottom: 1px solid var(--zitro-divider);
+    font-size: var(--zitro-font-size-md);
+    color: var(--zitro-on-surface);
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--zitro-surface-variant);
+    }
+  }
+
+  &__sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__state {
+    text-align: center;
+    color: var(--zitro-on-surface-variant);
+    padding: var(--zitro-spacing-xl);
+    cursor: default;
+  }
+
+  &__actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  &__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--zitro-spacing-sm);
+    padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+
+    button {
+      padding: 4px 10px;
+      border: 1px solid var(--zitro-divider);
+      border-radius: var(--zitro-radius-sm);
+      background: var(--zitro-surface);
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

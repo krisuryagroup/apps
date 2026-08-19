@@ -1,0 +1,100 @@
+{
+  "name": "zitro-admin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/zitro-admin/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/zitro-admin",
+        "browser": "apps/zitro-admin/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/zitro-admin/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/zitro-admin/public"
+          }
+        ],
+        "styles": ["apps/zitro-admin/src/styles.scss"],
+        "stylePreprocessorOptions": {
+          "includePaths": ["libs/theme/src"]
+        }
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/zitro-admin/src/environments/environment.ts",
+              "with": "apps/zitro-admin/src/environments/environment.prod.ts"
+            }
+          ],
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "50kb",
+              "maximumError": "100kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "zitro-admin:build:production"
+        },
+        "development": {
+          "buildTarget": "zitro-admin:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular/build:extract-i18n",
+      "options": {
+        "buildTarget": "zitro-admin:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/zitro-admin/jest.config.cts",
+        "tsConfig": "apps/zitro-admin/tsconfig.spec.json"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "zitro-admin:build",
+        "port": 4200,
+        "staticFilePath": "dist/apps/zitro-admin/browser",
+        "spa": true
+      }
+    }
+  }
+}
