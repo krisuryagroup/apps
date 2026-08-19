@@ -1,8 +1,16 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BusinessAuthTokenService } from './business-auth-token.service';
 import { ZITRO_API_BASE_URL } from './tokens';
+
+interface BusinessOrdersPagedResult {
+  orders: BusinessOrderDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
 
 interface BusinessJwtPayload {
   sub: string;
@@ -92,10 +100,18 @@ export class BusinessApiService {
       Object.entries(params).forEach(([k, v]) => {
         if (v) p = p.set(k, v);
       });
-    return this.http.get<BusinessOrderDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/orders`,
-      { params: p },
-    );
+    // GET .../orders returns a paginated wrapper ({ orders, totalCount, page, pageSize }),
+    // not a bare array — unwrap here so every existing caller (typed on the array) keeps
+    // working. Found live: the whole wrapper object was landing in a signal typed
+    // BusinessOrderDto[], producing "newCollection[Symbol.iterator] is not a function" the
+    // moment the template tried to @for over it — the Orders screen appeared empty despite
+    // the dashboard correctly showing a non-zero pending count from a different endpoint.
+    return this.http
+      .get<BusinessOrdersPagedResult>(
+        `${this.baseUrl}/api/business-portal/${businessId}/orders`,
+        { params: p },
+      )
+      .pipe(map((res) => res.orders));
   }
 
   getOrderDetail(
