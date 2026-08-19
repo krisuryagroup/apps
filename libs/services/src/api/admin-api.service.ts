@@ -129,6 +129,15 @@ export class AdminApiService {
 
   // ── Translations admin ──────────────────────────────────────────────────────
 
+  listTranslations(lang: string, app?: string): Observable<TranslationDto[]> {
+    let params = new HttpParams().set('lang', lang);
+    if (app) params = params.set('app', app);
+    return this.http.get<TranslationDto[]>(
+      `${this.baseUrl}/api/admin/translations`,
+      { params },
+    );
+  }
+
   upsertTranslation(req: {
     lang: string;
     key: string;

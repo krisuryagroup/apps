@@ -50,6 +50,9 @@ interface TranslationRow {
 /**
  * SA-004 — Translations Management
  * Language selector, key-value editor, search/filter, bulk CSV import, missing-key report.
+ * Reads via GET /api/admin/translations (raw per-row, real app per row — NOT the public
+ * /api/translations, which merges app-specific and global rows into a flat key→value map
+ * and would make edit/delete target the wrong row here).
  */
 @Component({
   selector: 'app-translations',
@@ -129,15 +132,15 @@ export class TranslationsComponent implements OnInit {
     }
     this.loading.set(true);
     this.loadError.set(null);
-    this.adminApi.getTranslations(lang, app || 'customer').subscribe({
-      next: (res) => {
+    this.adminApi.listTranslations(lang, app || undefined).subscribe({
+      next: (dtos) => {
         this.rows.set(
-          Object.entries(res.keys).map(([key, value]) => ({
-            key,
-            app,
-            value,
+          dtos.map((dto) => ({
+            key: dto.key,
+            app: dto.app,
+            value: dto.value,
             editing: false,
-            editValue: value,
+            editValue: dto.value,
             saving: false,
           })),
         );
