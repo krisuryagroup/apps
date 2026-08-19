@@ -413,11 +413,15 @@ export class RestaurantMenuComponent implements OnInit {
   protected saveCategory(): void {
     this.saving.set(true);
     const id = this.api.businessId()!;
+    // createCategory's response is just { id } (the Create command it calls is shared with
+    // the admin module and only ever returns the new Guid) — reload instead of appending
+    // that partial object, same as saveItem() already does for products. Appending it
+    // directly used to render a nameless row (just the delete "✕") until the next reload.
     this.api.createCategory(id, { name: this.catFormName }).subscribe({
-      next: (c) => {
-        this.categories.update((cs) => [...cs, c]);
+      next: () => {
         this.saving.set(false);
         this.showCatForm.set(false);
+        this.loadAll();
       },
       error: () => this.saving.set(false),
     });
@@ -425,11 +429,9 @@ export class RestaurantMenuComponent implements OnInit {
 
   protected deleteItem(i: MenuItemDto): void {
     if (!confirm(`Delete "${i.name}"?`)) return;
-    this.api
-      .deleteProduct(this.api.businessId()!, i.id)
-      .subscribe({
-        next: () => this.items.update((is) => is.filter((x) => x.id !== i.id)),
-      });
+    this.api.deleteProduct(this.api.businessId()!, i.id).subscribe({
+      next: () => this.items.update((is) => is.filter((x) => x.id !== i.id)),
+    });
   }
 
   protected deleteCategory(c: MenuCategoryDto): void {
