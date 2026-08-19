@@ -243,6 +243,9 @@ import {
               <option value="wastage">wastage</option>
             </select>
           </div>
+          @if (adjustError()) {
+            <p class="error-text">{{ adjustError() }}</p>
+          }
           <div class="panel-actions">
             <button class="btn btn-primary" (click)="saveAdjust()">
               {{ 'common.save' | i18n }}
@@ -289,6 +292,7 @@ export class RestaurantInventoryComponent implements OnInit {
   protected adjustingItem = signal<InventoryItemDto | null>(null);
   protected adjQty = 0;
   protected adjReason = 'restock';
+  protected adjustError = signal<string | null>(null);
   ngOnInit() {
     const id = this.api.businessId()!;
     this.loading.set(true);
@@ -306,8 +310,10 @@ export class RestaurantInventoryComponent implements OnInit {
   protected openAdjust(i: InventoryItemDto) {
     this.adjustingItem.set(i);
     this.adjQty = 0;
+    this.adjustError.set(null);
   }
   protected saveAdjust() {
+    this.adjustError.set(null);
     const id = this.api.businessId()!;
     this.api
       .adjustInventory(id, {
@@ -319,6 +325,16 @@ export class RestaurantInventoryComponent implements OnInit {
         next: () => {
           this.adjustingItem.set(null);
           this.ngOnInit();
+        },
+        error: (err) => {
+          // Previously had no error callback at all — a rejected adjustment (e.g.
+          // INSUFFICIENT_STOCK) failed completely silently, panel stayed open with no
+          // feedback. Surface the backend's error code/message instead.
+          this.adjustError.set(
+            err?.error?.errorCode ??
+              err?.error?.error ??
+              'Could not save adjustment.',
+          );
         },
       });
   }
