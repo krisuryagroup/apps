@@ -2,20 +2,32 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, BusinessDetailDto } from '@zitro/services';
+import {
+  AdminApiService,
+  BusinessDetailDto,
+  BusinessUserDto,
+  OrderSummaryDto,
+  PagedResult,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+import {
+  DataTableComponent,
+  DataTableColumn,
+  DataTablePagination,
+} from '../data-table/data-table.component';
 
 type Tab = 'profile' | 'users' | 'orders';
 
 @Component({
   selector: 'lib-admin-business-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, I18nPipe],
+  imports: [FormsModule, RouterLink, I18nPipe, DataTableComponent],
   templateUrl: './admin-business-detail.component.html',
   styleUrl: './admin-business-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +40,47 @@ export class AdminBusinessDetailComponent implements OnInit {
   protected biz = signal<BusinessDetailDto | null>(null);
   protected loading = signal(true);
   protected activeTab = signal<Tab>('profile');
+
+  protected usersLoading = signal(false);
+  protected usersError = signal(false);
+  protected users = signal<BusinessUserDto[] | null>(null);
+  protected readonly userColumns: DataTableColumn<BusinessUserDto>[] = [
+    { key: 'name', labelKey: 'businesses.userName' },
+    { key: 'phone', labelKey: 'businesses.userPhone' },
+    {
+      key: 'email',
+      labelKey: 'businesses.userEmail',
+      format: (r) => r.email ?? '—',
+    },
+    { key: 'role', labelKey: 'businesses.userRole' },
+    {
+      key: 'isActive',
+      labelKey: 'businesses.active',
+      format: (r) => (r.isActive ? '✓' : '✗'),
+    },
+  ];
+
+  protected ordersLoading = signal(false);
+  protected ordersError = signal(false);
+  protected ordersResult = signal<PagedResult<OrderSummaryDto> | null>(null);
+  protected ordersPage = signal(1);
+  protected readonly ordersPageSize = 20;
+  protected ordersPagination = computed<DataTablePagination | null>(() => {
+    const r = this.ordersResult();
+    return r
+      ? { page: r.page, pageSize: r.pageSize, total: r.totalCount }
+      : null;
+  });
+  protected readonly orderColumns: DataTableColumn<OrderSummaryDto>[] = [
+    { key: 'orderId', labelKey: 'orders.orderId' },
+    { key: 'status', labelKey: 'orders.status' },
+    { key: 'total', labelKey: 'orders.total', format: (r) => `₹${r.total}` },
+    {
+      key: 'createdAt',
+      labelKey: 'orders.date',
+      format: (r) => new Date(r.createdAt).toLocaleDateString(),
+    },
+  ];
 
   protected rejectionReason = '';
   protected customReason = '';
@@ -51,6 +104,60 @@ export class AdminBusinessDetailComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  protected switchTab(tab: Tab): void {
+    this.activeTab.set(tab);
+    if (tab === 'users' && this.users() === null) {
+      this.loadUsers();
+    } else if (tab === 'orders' && this.ordersResult() === null) {
+      this.loadOrders();
+    }
+  }
+
+  private loadUsers(): void {
+    const id = this.biz()?.id;
+    if (!id) return;
+    this.usersLoading.set(true);
+    this.usersError.set(false);
+    this.api.listBusinessUsers(id).subscribe({
+      next: (u) => {
+        this.users.set(u);
+        this.usersLoading.set(false);
+      },
+      error: () => {
+        this.usersLoading.set(false);
+        this.usersError.set(true);
+      },
+    });
+  }
+
+  protected onOrdersPageChange(page: number): void {
+    this.ordersPage.set(page);
+    this.loadOrders();
+  }
+
+  private loadOrders(): void {
+    const id = this.biz()?.id;
+    if (!id) return;
+    this.ordersLoading.set(true);
+    this.ordersError.set(false);
+    this.api
+      .listAdminOrders({
+        businessId: id,
+        page: String(this.ordersPage()),
+        pageSize: String(this.ordersPageSize),
+      })
+      .subscribe({
+        next: (r) => {
+          this.ordersResult.set(r);
+          this.ordersLoading.set(false);
+        },
+        error: () => {
+          this.ordersLoading.set(false);
+          this.ordersError.set(true);
+        },
+      });
   }
 
   protected approve(): void {

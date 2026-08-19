@@ -84,14 +84,14 @@
     <button
       class="tab"
       [class.active]="activeTab() === 'users'"
-      (click)="activeTab.set('users')"
+      (click)="switchTab('users')"
     >
       {{ 'businesses.tabUsers' | i18n }}
     </button>
     <button
       class="tab"
       [class.active]="activeTab() === 'orders'"
-      (click)="activeTab.set('orders')"
+      (click)="switchTab('orders')"
     >
       {{ 'businesses.tabOrders' | i18n }}
     </button>
@@ -152,5 +152,29 @@
         }
       </div>
     }
+  }
+
+  @if (activeTab() === 'users') {
+    <div class="detail-section" data-testid="business-detail-users">
+      <lib-data-table
+        [columns]="userColumns"
+        [rows]="users() ?? []"
+        [loading]="usersLoading()"
+        [error]="usersError()"
+      />
+    </div>
+  }
+
+  @if (activeTab() === 'orders') {
+    <div class="detail-section" data-testid="business-detail-orders">
+      <lib-data-table
+        [columns]="orderColumns"
+        [rows]="ordersResult()?.items ?? []"
+        [loading]="ordersLoading()"
+        [error]="ordersError()"
+        [pagination]="ordersPagination()"
+        (pageChange)="onOrdersPageChange($event)"
+      />
+    </div>
   }
 }
