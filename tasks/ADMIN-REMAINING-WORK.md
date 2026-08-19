@@ -45,8 +45,8 @@ All committed, one commit per sub-item, each verified live against the local sta
 | 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`     | —                                        |
 | 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | `b8b2d66`     | —                                        |
 | ad-hoc    | Shared login page title now dynamic per app (`ZITRO Admin` vs `ZITRO Super Admin`) via `input()` + route `data` — not from the original gap list, a direct user request                    | `7b42fd7`     | —                                        |
-| 4.4       | Native `confirm()` → shared `lib-confirmation-dialog`, 5 real call-sites (Products/Brands/Banners delete, Tags deactivate, Coupons delete)                                                 | see §4.4      | —                                        |
-| 4.5       | Banners real image upload (Firebase Storage) + 3-way target-link toggle; blocked end-to-end by a pre-existing Storage-bucket infra gap, see §4.5                                           | see §4.5      | see §4.5                                 |
+| 4.4       | Native `confirm()` → shared `lib-confirmation-dialog`, 5 real call-sites (Products/Brands/Banners delete, Tags deactivate, Coupons delete)                                                 | `8580f2c`     | —                                        |
+| 4.5       | Banners real image upload (Firebase Storage) + 3-way target-link toggle; blocked end-to-end by a pre-existing Storage-bucket infra gap, see §4.5                                           | `d97abbf`     | `1a6cd75`                                |
 
 **Recurring bug class found across all three phases:** frontend/backend field-name or
 type contract mismatches that don't crash on write (bad data just gets silently dropped or
