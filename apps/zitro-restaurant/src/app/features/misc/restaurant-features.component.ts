@@ -94,10 +94,10 @@ import { I18nPipe } from '@zitro/i18n';
       td {
         padding: var(--zitro-spacing-sm);
         text-align: left;
-        border-bottom: 1px solid var(--zitro-color-outline-variant);
+        border-bottom: 1px solid var(--zitro-divider);
       }
       th {
-        background: var(--zitro-color-surface-container);
+        background: var(--zitro-surface-variant);
         font-size: var(--zitro-font-size-sm);
       }
     }
@@ -177,7 +177,7 @@ import {
               <td
                 [style.color]="
                   item.qtyAvailable <= item.lowStockThreshold
-                    ? 'var(--zitro-color-error)'
+                    ? 'var(--zitro-error)'
                     : 'inherit'
                 "
               >
@@ -256,10 +256,10 @@ import {
       td {
         padding: var(--zitro-spacing-sm);
         text-align: left;
-        border-bottom: 1px solid var(--zitro-color-outline-variant);
+        border-bottom: 1px solid var(--zitro-divider);
       }
       th {
-        background: var(--zitro-color-surface-container);
+        background: var(--zitro-surface-variant);
         font-size: var(--zitro-font-size-sm);
       }
     }
@@ -381,15 +381,15 @@ export class RestaurantInventoryComponent implements OnInit {
       letter-spacing: 2px;
     }
     .rating-type {
-      font-size: var(--zitro-font-size-xs);
-      color: var(--zitro-color-on-surface-variant);
+      font-size: var(--zitro-font-size-sm);
+      color: var(--zitro-on-surface-variant);
     }
     .rating-comment {
       margin: 0 0 var(--zitro-spacing-sm);
       font-size: var(--zitro-font-size-sm);
     }
     .rating-reply {
-      background: var(--zitro-color-surface-container);
+      background: var(--zitro-surface-variant);
       padding: var(--zitro-spacing-sm);
       border-radius: var(--zitro-radius-md);
       font-size: var(--zitro-font-size-sm);
@@ -480,10 +480,10 @@ export class RestaurantRatingsComponent implements OnInit {
       td {
         padding: var(--zitro-spacing-sm);
         text-align: left;
-        border-bottom: 1px solid var(--zitro-color-outline-variant);
+        border-bottom: 1px solid var(--zitro-divider);
       }
       th {
-        background: var(--zitro-color-surface-container);
+        background: var(--zitro-surface-variant);
         font-size: var(--zitro-font-size-sm);
       }
     }
@@ -554,15 +554,18 @@ export class RestaurantPayoutsComponent implements OnInit {
           <div class="form-row">
             <label for="zone-name" class="form-label">Name</label
             ><input id="zone-name" class="input" [(ngModel)]="f.name" />
-            <label for="zone-fee" class="form-label" data-testid="zone-fee-base"
-              >Base fee (₹)</label
+            <label for="zone-fee" class="form-label">Base fee (₹)</label
             ><input
               id="zone-fee"
               class="input"
+              data-testid="zone-fee-base"
               type="number"
               [(ngModel)]="f.baseFee"
             />
           </div>
+          @if (saveError()) {
+            <p class="error-text">{{ saveError() }}</p>
+          }
           <div class="panel-actions">
             <button
               class="btn btn-primary"
@@ -606,6 +609,7 @@ export class RestaurantDeliveryZonesComponent implements OnInit {
   protected loading = signal(true);
   protected showForm = signal(false);
   protected saving = signal(false);
+  protected saveError = signal<string | null>(null);
   protected f = { name: '', baseFee: 0, isActive: true };
   ngOnInit() {
     const id = this.api.businessId()!;
@@ -619,10 +623,12 @@ export class RestaurantDeliveryZonesComponent implements OnInit {
   }
   protected openAdd() {
     this.f = { name: '', baseFee: 0, isActive: true };
+    this.saveError.set(null);
     this.showForm.set(true);
   }
   protected save() {
     this.saving.set(true);
+    this.saveError.set(null);
     this.api
       .createDeliveryZone(
         this.api.businessId()!,
@@ -634,16 +640,24 @@ export class RestaurantDeliveryZonesComponent implements OnInit {
           this.saving.set(false);
           this.showForm.set(false);
         },
-        error: () => this.saving.set(false),
+        error: () => {
+          this.saving.set(false);
+          // This form only collects name + base fee, but the backend also requires
+          // PolygonCoords (a zone's geographic boundary) — there's no map or radius UI
+          // anywhere in this app to define one (confirmed gap, RS-T-1305), so every save
+          // 400s here today. Surfacing a real message instead of failing silently, per
+          // RS-T-1903 — a genuine map/radius UI is a separate, larger follow-up.
+          this.saveError.set(
+            'Could not save zone: this form does not yet support defining a delivery area.',
+          );
+        },
       });
   }
   protected deleteZone(z: BusinessZoneDto) {
     if (!confirm(`Delete zone "${z.name}"?`)) return;
-    this.api
-      .deleteDeliveryZone(this.api.businessId()!, z.id)
-      .subscribe({
-        next: () => this.zones.update((zs) => zs.filter((x) => x.id !== z.id)),
-      });
+    this.api.deleteDeliveryZone(this.api.businessId()!, z.id).subscribe({
+      next: () => this.zones.update((zs) => zs.filter((x) => x.id !== z.id)),
+    });
   }
 }
 

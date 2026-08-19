@@ -239,8 +239,8 @@ import { I18nPipe } from '@zitro/i18n';
     }
     .sidebar-title {
       font-size: var(--zitro-font-size-sm);
-      font-weight: var(--zitro-font-weight-medium);
-      color: var(--zitro-color-on-surface-variant);
+      font-weight: 500;
+      color: var(--zitro-on-surface-variant);
       margin: 0 0 var(--zitro-spacing-sm);
     }
     .cat-item-btn {
@@ -256,29 +256,21 @@ import { I18nPipe } from '@zitro/i18n';
       align-items: center;
       justify-content: space-between;
       &.active {
-        background: color-mix(
-          in srgb,
-          var(--zitro-color-primary) 10%,
-          transparent
-        );
-        color: var(--zitro-color-primary);
+        background: color-mix(in srgb, var(--zitro-primary) 10%, transparent);
+        color: var(--zitro-primary);
         &:hover {
-          background: color-mix(
-            in srgb,
-            var(--zitro-color-primary) 15%,
-            transparent
-          );
+          background: color-mix(in srgb, var(--zitro-primary) 15%, transparent);
         }
       }
       &:hover {
-        background: var(--zitro-color-surface-container);
+        background: var(--zitro-surface-variant);
       }
     }
     .btn-icon {
       background: none;
       border: none;
       cursor: pointer;
-      color: var(--zitro-color-on-surface-variant);
+      color: var(--zitro-on-surface-variant);
       font-size: 12px;
     }
     .item-section {
@@ -291,17 +283,17 @@ import { I18nPipe } from '@zitro/i18n';
       td {
         padding: var(--zitro-spacing-sm);
         text-align: left;
-        border-bottom: 1px solid var(--zitro-color-outline-variant);
+        border-bottom: 1px solid var(--zitro-divider);
       }
       th {
         font-size: var(--zitro-font-size-sm);
-        color: var(--zitro-color-on-surface-variant);
-        background: var(--zitro-color-surface-container);
+        color: var(--zitro-on-surface-variant);
+        background: var(--zitro-surface-variant);
       }
     }
     .empty {
       text-align: center;
-      color: var(--zitro-color-on-surface-variant);
+      color: var(--zitro-on-surface-variant);
       padding: var(--zitro-spacing-xl);
     }
     .checkbox-label {

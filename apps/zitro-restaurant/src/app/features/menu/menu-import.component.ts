@@ -83,7 +83,7 @@ import { I18nPipe } from '@zitro/i18n';
     @use '../../_restaurant-shared' as *;
     .info-card {
       padding: var(--zitro-spacing-xl);
-      background: var(--zitro-color-surface-container);
+      background: var(--zitro-surface-variant);
       border-radius: var(--zitro-radius-lg);
     }
     .upload-section {
@@ -95,7 +95,7 @@ import { I18nPipe } from '@zitro/i18n';
     }
     .upload-label {
       font-size: var(--zitro-font-size-sm);
-      font-weight: var(--zitro-font-weight-medium);
+      font-weight: 500;
     }
     .preview-section {
       margin-top: var(--zitro-spacing-xl);
@@ -105,7 +105,7 @@ import { I18nPipe } from '@zitro/i18n';
     }
     .item-preview {
       padding: var(--zitro-spacing-xs) 0;
-      border-bottom: 1px solid var(--zitro-color-outline-variant);
+      border-bottom: 1px solid var(--zitro-divider);
       font-size: var(--zitro-font-size-sm);
     }
   `,
