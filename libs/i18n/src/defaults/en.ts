@@ -813,7 +813,12 @@ export const EN_DEFAULTS = {
     impressions: 'Impressions',
     clicks: 'Clicks',
     add: 'Add Banner',
-    imageUrl: 'Image URL',
+    image: 'Image',
+    target: 'On tap, open…',
+    targetNone: 'Nothing',
+    targetBusiness: 'A business',
+    targetUrl: 'A URL',
+    selectBusiness: 'Select a business…',
   },
   admins: {
     name: 'Name',

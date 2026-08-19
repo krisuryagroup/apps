@@ -10,24 +10,20 @@
 
 ## What's left — start here
 
-Only two items remain in the whole plan (Phases 1–3 and Phase 4.1–4.3 are all done, plus one
-ad-hoc fix outside the original plan — see the table below):
+**The entire planned scope (Phases 1–3, Phase 4.1–4.5) is now implemented and committed.**
+Nothing left to _build_. One real thing left to _unblock_:
 
-- **4.4 — Confirmation dialogs, native → shared component.** Cosmetic, no functional gap.
-  Swap `confirm()` for a shared dialog across tags/coupons/products/banners/brands/admins
-  delete-deactivate actions. See §4.4 below for scope.
-- **4.5 — Banners image upload + target-business/link field.** Needs one product/design
-  decision before starting: where do uploaded images live (Firebase Storage? an existing
-  media-upload pattern elsewhere in the app?) and what should the link field actually link to
-  (a business page vs. an arbitrary URL). See §4.5 below — don't start the upload-widget half
-  without that decision made first.
+- **Firebase Storage bucket for project `zitro-7044d` doesn't exist.** Blocks 4.5's banner
+  image upload from actually completing (code is correct and verified up to the point of a
+  real, authenticated Google API call — see §4.5's "Known gap" for the full detail). Needs
+  someone with Firebase/GCP Console access to either initialize Storage for that project, or
+  confirm whether `zitro-7044d` vs. `the-hunger-point` (used by the shipped Android app) is
+  the project this backend should actually be pointed at, then update
+  `zitro-api/appsettings.json`'s `Firebase.StorageBucket` accordingly. Not something fixable
+  from a coding session — needs a console action + a product decision.
 
-Either can be picked up in any order — they don't depend on each other or on anything already
-done. Follow the same process as every completed item: read the backend handler for the
-endpoint being touched before wiring the frontend (check for field-name drift and missing
-validation — both classes of bug have shown up on almost every item so far), implement,
-`nx lint`/build, flip `environment.ts` to local, verify live, flip back, update this doc,
-commit.
+Everything else in this document below is historical record — read it for context on what
+was built and why, not as a task list.
 
 ---
 
@@ -49,6 +45,8 @@ All committed, one commit per sub-item, each verified live against the local sta
 | 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`     | —                                        |
 | 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | `b8b2d66`     | —                                        |
 | ad-hoc    | Shared login page title now dynamic per app (`ZITRO Admin` vs `ZITRO Super Admin`) via `input()` + route `data` — not from the original gap list, a direct user request                    | `7b42fd7`     | —                                        |
+| 4.4       | Native `confirm()` → shared `lib-confirmation-dialog`, 5 real call-sites (Products/Brands/Banners delete, Tags deactivate, Coupons delete)                                                 | see §4.4      | —                                        |
+| 4.5       | Banners real image upload (Firebase Storage) + 3-way target-link toggle; blocked end-to-end by a pre-existing Storage-bucket infra gap, see §4.5                                           | see §4.5      | see §4.5                                 |
 
 **Recurring bug class found across all three phases:** frontend/backend field-name or
 type contract mismatches that don't crash on write (bad data just gets silently dropped or
@@ -160,22 +158,85 @@ worth a quick visual check if such an account ever gets seeded.
 
 ### 4.4 Confirmation dialogs — native → shared component
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19.**
+
 **Gap:** AD-T-805. AD-000 spec'd a shared `confirmation-dialog` component; every
 delete/deactivate action currently uses native `confirm()`.
 
-**Scope:** Build/reuse a shared dialog component, swap into tags/coupons/products/banners/
-brands/admins delete-deactivate actions. Cosmetic — no functional gap — but also blocks clean
-Playwright coverage later (native dialogs need `page.on('dialog')` handling).
+**Delivered:** A shared dialog already existed (`libs/ui/src/common/confirmation-dialog/`,
+`lib-confirmation-dialog`) but nothing used it — swapped it into all 5 real call-sites
+(grepped for `confirm(` to get the exact list, not the plan's guessed one — "admins" was
+never actually a `confirm()` site, `admin-admin-users.component.ts` has none): Products,
+Brands, Banners (delete), Tags (deactivate), Coupons (delete). Each screen now holds a
+`pendingDelete`/`pendingDeactivate` signal and a `computed` dialog config built via
+`I18nService.translate()` (two new shared keys: `common.confirmDeleteTitle`/
+`confirmDeleteMessage`, `common.confirmDeactivateTitle`/`confirmDeactivateMessage`, both
+support `{name}` interpolation).
+
+**Verified live:** Tags — clicked Deactivate, dialog showed `Deactivate "Pizza"?`, Cancel
+closed it with zero side effect (tag stayed active). Coupons — created a real test coupon,
+clicked Delete, dialog showed `Delete "DIALOGTEST"?`, Confirm actually deleted it server-side.
+Products/Brands/Banners use the identical pattern (same component, same computed-config
+shape) and pass build+lint clean; not independently re-verified live given the pattern is
+byte-for-byte identical to the two spot-checked screens.
 
 ### 4.5 Banners — image upload + target-business/link field
+
+**Status: Code complete on both apps+backend, but the live upload path is blocked by a
+pre-existing infra gap outside this session's reach — see "Known gap" below before treating
+this as fully done.**
 
 **Gap:** AD-T-616/617. `#banner-img` is a plain URL text field, not a file-upload widget.
 No target-business or link field on the create form at all.
 
-**Scope:** (a) image upload — needs a storage/upload endpoint decision (Firebase Storage?
-existing media upload pattern elsewhere in the app?) before UI work starts. (b) link/target
-field — straightforward form field addition once the intended behavior (link to a business
-page vs. arbitrary URL) is confirmed.
+**Decisions confirmed with the user before starting:** build a real Firebase Storage upload
+(not a URL-field shortcut); target field is a 3-way toggle (nothing / a business / a URL),
+storing the business's `slug` as the value for "business" mode (there's no business
+deep-link route anywhere in the customer app yet to point at instead — confirmed by
+checking its routes — so this is forward-compatible intent-capture, not a working deep link
+today; that's a separate, future customer-app task).
+
+**Delivered:**
+
+- `zitro-api`: new `POST /api/banners/media` (multipart, admin-only), modeled on the
+  existing `UploadProductMediaHandler` pattern but with one deliberate improvement — that
+  handler calls `StorageClient.Create()` with no explicit credential, relying on ambient
+  Application Default Credentials that aren't configured on this dev machine (no
+  `GOOGLE_APPLICATION_CREDENTIALS`, no `gcloud auth application-default login`), so it can't
+  work locally. The new handler instead builds the credential from the same
+  `FIREBASE_SERVICE_ACCOUNT_JSON` config value `Program.cs` already uses for the Firebase
+  Admin SDK. Returns `{ url }` — banners have no media-gallery table, just a single
+  `ImageUrl` string, so no DB row is written here (unlike products' media table).
+- `apps`: `AdminBannersComponent` rebuilt with a real file picker (uploads immediately on
+  select, shows a preview + inline error), business/URL/none toggle for `targetUrl`
+  (`TargetUrl` already existed on `CreateBannerCommand` — pure frontend gap), plus 4.4's
+  dialog swap done in the same pass.
+
+**Known gap — not something I can fix from here:** the upload endpoint's auth/credential
+path is confirmed correct (reached Google's real API with a valid, authenticated request —
+not an auth error), but both plausible bucket names for the configured Firebase project
+(`zitro-7044d.firebasestorage.app` and `zitro-7044d.appspot.com`, tested directly by
+temporarily swapping `appsettings.json` and reverting after) come back `404 The specified
+bucket does not exist`. Firebase Storage was most likely never initialized for this project
+in the Firebase Console (a one-time manual step, not something `dotnet`/API code can do).
+Also worth the user's attention: the codebase references **two different Firebase
+projects** — `zitro-7044d` (the backend's service account, `appsettings.json`) vs.
+`the-hunger-point` (the actual shipped Android app's `google-services.json`, and the project
+ID stated in `zitro-api/CLAUDE.md`). Whether that's intentional or a drift nobody's caught
+yet, it's worth resolving before relying on this upload path — target/link field has zero
+dependency on this and is fully verified.
+
+**Verified live:**
+
+- Target-link toggle: switching between "A business" / "A URL" correctly swaps the business
+  dropdown for a URL text input, both empty/gated correctly.
+- `TargetUrl` persistence: created a banner directly via the API with `targetUrl: "efc-pizza"`
+  (bypassing the broken upload, since Save is gated on a real `imageUrl` existing), confirmed
+  it round-tripped exactly — this is the actual field the frontend will send.
+- Upload endpoint: confirmed authentication/credential-building works (real Google API
+  response, not an auth failure) and confirmed the specific `bucket does not exist` failure
+  mode with backend log inspection — this is what's blocking full end-to-end verification,
+  not the application code.
 
 ---
 

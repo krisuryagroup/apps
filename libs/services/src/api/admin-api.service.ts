@@ -705,6 +705,16 @@ export class AdminApiService {
     return this.http.post<BannerAdminDto>(`${this.baseUrl}/api/banners`, req);
   }
 
+  /** Uploads an image file to Firebase Storage and returns its public URL. */
+  uploadBannerMedia(file: File): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string }>(
+      `${this.baseUrl}/api/banners/media`,
+      formData,
+    );
+  }
+
   updateBanner(
     id: string,
     req: Record<string, unknown>,
