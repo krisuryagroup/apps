@@ -21,7 +21,11 @@ import {
   AdminAdminUsersComponent,
   AdminMyProfileComponent,
 } from '@zitro/admin-ui';
-import { adminAuthGuard, guestOnlyGuard } from './core/guards/admin-auth.guard';
+import {
+  adminAuthGuard,
+  guestOnlyGuard,
+  requirePermissionGuard,
+} from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
 
 export const routes: Routes = [
@@ -53,7 +57,11 @@ export const routes: Routes = [
       { path: 'payouts', component: AdminPayoutsComponent },
       { path: 'subscriptions', component: AdminSubscriptionsComponent },
       { path: 'banners', component: AdminBannersComponent },
-      { path: 'admins', component: AdminAdminUsersComponent },
+      {
+        path: 'admins',
+        component: AdminAdminUsersComponent,
+        canActivate: [requirePermissionGuard('admins:read')],
+      },
       { path: 'my-profile', component: AdminMyProfileComponent },
     ],
   },

@@ -824,6 +824,7 @@ export const EN_DEFAULTS = {
     resetPassword: 'Reset Password',
     newPassword: 'New Password',
     resetPasswordSuccess: 'Password reset successfully.',
+    noWritePermission: "You don't have permission to make changes here.",
   },
   myProfile: {
     title: 'My Profile',

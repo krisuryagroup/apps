@@ -8,19 +8,45 @@
 
 ---
 
+## What's left — start here
+
+Only two items remain in the whole plan (Phases 1–3 and Phase 4.1–4.3 are all done):
+
+- **4.4 — Confirmation dialogs, native → shared component.** Cosmetic, no functional gap.
+  Swap `confirm()` for a shared dialog across tags/coupons/products/banners/brands/admins
+  delete-deactivate actions. See §4.4 below for scope.
+- **4.5 — Banners image upload + target-business/link field.** Needs one product/design
+  decision before starting: where do uploaded images live (Firebase Storage? an existing
+  media-upload pattern elsewhere in the app?) and what should the link field actually link to
+  (a business page vs. an arbitrary URL). See §4.5 below — don't start the upload-widget half
+  without that decision made first.
+
+Either can be picked up in any order — they don't depend on each other or on anything already
+done. Follow the same process as every completed item: read the backend handler for the
+endpoint being touched before wiring the frontend (check for field-name drift and missing
+validation — both classes of bug have shown up on almost every item so far), implement,
+`nx lint`/build, flip `environment.ts` to local, verify live, flip back, update this doc,
+commit.
+
+---
+
 ## Completed — Phases 1–3 (2026-08-19)
 
 All committed, one commit per sub-item, each verified live against the local stack:
 
-| Phase     | What                                                                                                                                                                                       | `apps` commit | `zitro-api` commit                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------------- |
-| 1         | `DataTableComponent` error-state + pagination infra; fixed a `PagedResult.total`→`totalCount` contract bug and two silent-crash bare-array/wrapper-object bugs (Orders, Delivery Partners) | `ace5911`     | —                                        |
-| 2.1 & 2.2 | Business detail Users/Orders tabs                                                                                                                                                          | `9660fea`     | —                                        |
-| 2.3       | Orders screen business filter                                                                                                                                                              | `e847dad`     | —                                        |
-| 2.4       | Brands → branches drill-down (expandable row, generic `DataTableComponent` support added)                                                                                                  | `73a85e6`     | —                                        |
-| 3.1       | Coupon form — 5 missing fields (order-type, new-customer-only, cooldown, min-order, usage-limit)                                                                                           | `b4a690d`     | —                                        |
-| 3.2       | Delivery zones scoped per business — turned out to need required `businessId`/`polygonCoords`/`baseFee`/`feePerKm` the old form never collected at all                                     | `8c5346d`     | —                                        |
-| 3.3       | Payouts batch-review + mark-paid UI; fixed a silently-unbound `fromDate`/`toDate`→`from`/`to` request bug                                                                                  | `47c496d`     | `a47ec37` (new `GET /api/admin/payouts`) |
+| Phase     | What                                                                                                                                                                                       | `apps` commit  | `zitro-api` commit                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- | ---------------------------------------- |
+| 1         | `DataTableComponent` error-state + pagination infra; fixed a `PagedResult.total`→`totalCount` contract bug and two silent-crash bare-array/wrapper-object bugs (Orders, Delivery Partners) | `ace5911`      | —                                        |
+| 2.1 & 2.2 | Business detail Users/Orders tabs                                                                                                                                                          | `9660fea`      | —                                        |
+| 2.3       | Orders screen business filter                                                                                                                                                              | `e847dad`      | —                                        |
+| 2.4       | Brands → branches drill-down (expandable row, generic `DataTableComponent` support added)                                                                                                  | `73a85e6`      | —                                        |
+| 3.1       | Coupon form — 5 missing fields (order-type, new-customer-only, cooldown, min-order, usage-limit)                                                                                           | `b4a690d`      | —                                        |
+| 3.2       | Delivery zones scoped per business — turned out to need required `businessId`/`polygonCoords`/`baseFee`/`feePerKm` the old form never collected at all                                     | `8c5346d`      | —                                        |
+| 3.3       | Payouts batch-review + mark-paid UI; fixed a silently-unbound `fromDate`/`toDate`→`from`/`to` request bug                                                                                  | `47c496d`      | `a47ec37` (new `GET /api/admin/payouts`) |
+| doc trim  | Trimmed this file's completed-phase detail into the table above                                                                                                                            | `59a1f9a`      | —                                        |
+| 4.1       | Categories business scoping + validation; fixed parent-select, `isEnabledForOnlineOrders`, and `CategoryDto` contract bugs                                                                 | `572ec4e`      | `47f3ee8` (reject both-null on create)   |
+| 4.2       | Tag → business assignment (expandable row, reused 2.4's mechanism) — first clean backend surface, no bugs found                                                                            | `0c9d268`      | —                                        |
+| 4.3       | Admins screen permission gating — route guard + disabled (not hidden) write actions                                                                                                        | see §4.3 below | —                                        |
 
 **Recurring bug class found across all three phases:** frontend/backend field-name or
 type contract mismatches that don't crash on write (bad data just gets silently dropped or
@@ -102,14 +128,34 @@ assignment state, no route change, no modal.
 
 ### 4.3 Admins screen — server-side-only permission gating
 
+**Status: DONE — implemented and verified live against local stack, 2026-08-19. Committed
+alongside this doc update (check `git log` in the `apps` repo for the exact hash).**
+
 **Gap:** AD-T-707/801 tail. Nav-hiding is done (fix #6). Still missing: a `requirePermission`
 route guard on `/admins` (AD-000 spec'd one, `app.routes.ts` doesn't have it), and
 `AdminAdminUsersComponent` doesn't hide/disable its own Add/Deactivate buttons by role — only
 the backend's `[RequirePermission]` check actually stops a non-SuperAdmin, client-side is
 purely cosmetic right now.
 
-**Scope:** Add the route guard; disable (not just hide) write actions in the component based
-on the same `hasPermission()` logic already added to `AdminApiService` in fix #6.
+**Delivered:** Added a `requirePermissionGuard(permission)` factory (mirrors the backend's
+`RequirePermissionAttribute` semantics — SuperAdmin bypasses, otherwise checks the JWT's
+permission claims) to **both** `zitro-admin` and `zitro-superadmin`'s route guards, since
+both apps expose `/admins` via the same shared `AdminAdminUsersComponent`. Wired it onto both
+apps' `/admins` route requiring `admins:read`. In the component itself, added a `canWrite`
+computed gated on `admins:write` (matching the backend's write-endpoint permission exactly)
+and used it to `[disabled]` — not hide — the Add Admin button, both row actions
+(Activate/Deactivate, Reset Password), and both modals' Save buttons.
+
+**Verified live:** logged in as the Finance test account (role `finance`, no permissions
+granted — `createAdmin()` still always sends `permissions: []`, a separate pre-existing gap
+not in this item's scope) and navigated directly to `/admins` by URL — redirected straight to
+`/dashboard`, confirming the route guard closes the "hidden nav link is still directly
+reachable" gap. Logged back in as SuperAdmin and confirmed `/admins` still loads fully with
+every action enabled (SuperAdmin's permission bypass still works). Did not have a test
+account with `admins:read` but not `admins:write` to directly verify the disabled-not-hidden
+button state visually — that logic reuses the same `hasPermission()` already verified working
+in the nav-filter fix, so this is a reasonable-confidence gap rather than a fully closed loop;
+worth a quick visual check if such an account ever gets seeded.
 
 ### 4.4 Confirmation dialogs — native → shared component
 

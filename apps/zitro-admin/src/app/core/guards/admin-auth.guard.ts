@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AdminAuthTokenService } from '@zitro/services';
+import { AdminApiService, AdminAuthTokenService } from '@zitro/services';
 
 /** Blocks any route behind login — redirects to /login if no Admin JWT is stored. */
 export const adminAuthGuard: CanActivateFn = () => {
@@ -24,4 +24,24 @@ export const guestOnlyGuard: CanActivateFn = () => {
   }
 
   return router.createUrlTree(['/dashboard']);
+};
+
+/**
+ * Blocks a route unless the current JWT carries `permission` (or the admin is a
+ * SuperAdmin, which bypasses all permission checks — matches the backend's
+ * RequirePermissionAttribute). Redirects to /dashboard otherwise. Previously the
+ * only real protection on e.g. /admins was the backend's own 403 — this closes the
+ * client-side gap: a nav link hidden by permission was still directly reachable by URL.
+ */
+export const requirePermissionGuard = (permission: string): CanActivateFn => {
+  return () => {
+    const api = inject(AdminApiService);
+    const router = inject(Router);
+
+    if (api.hasPermission(permission)) {
+      return true;
+    }
+
+    return router.createUrlTree(['/dashboard']);
+  };
 };

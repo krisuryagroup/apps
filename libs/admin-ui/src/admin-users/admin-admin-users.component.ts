@@ -22,7 +22,12 @@ import {
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.admins' | i18n }}</h1>
-      <button class="btn btn-primary" (click)="openCreate()">
+      <button
+        class="btn btn-primary"
+        [disabled]="!canWrite()"
+        [title]="!canWrite() ? ('admins.noWritePermission' | i18n) : ''"
+        (click)="openCreate()"
+      >
         + {{ 'admins.add' | i18n }}
       </button>
     </div>
@@ -35,7 +40,12 @@ import {
       (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
-        <button class="btn btn-sm btn-danger" (click)="toggleStatus(row)">
+        <button
+          class="btn btn-sm btn-danger"
+          [disabled]="!canWrite()"
+          [title]="!canWrite() ? ('admins.noWritePermission' | i18n) : ''"
+          (click)="toggleStatus(row)"
+        >
           {{
             row.isActive
               ? ('admins.deactivate' | i18n)
@@ -45,6 +55,8 @@ import {
         <button
           class="btn btn-sm btn-outline"
           data-testid="admin-reset-password-btn"
+          [disabled]="!canWrite()"
+          [title]="!canWrite() ? ('admins.noWritePermission' | i18n) : ''"
           (click)="openResetPassword(row)"
         >
           {{ 'admins.resetPassword' | i18n }}
@@ -94,7 +106,9 @@ import {
           <div class="panel-actions">
             <button
               class="btn btn-primary"
-              [disabled]="!f.name || !f.email || !f.password || saving()"
+              [disabled]="
+                !f.name || !f.email || !f.password || saving() || !canWrite()
+              "
               (click)="save()"
             >
               {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
@@ -139,7 +153,8 @@ import {
               [disabled]="
                 !resetPasswordValue ||
                 resetPasswordValue.length < 8 ||
-                resetPasswordSaving()
+                resetPasswordSaving() ||
+                !canWrite()
               "
               (click)="confirmResetPassword(target)"
             >
@@ -183,6 +198,9 @@ export class AdminAdminUsersComponent implements OnInit {
   protected resetPasswordSaving = signal(false);
   protected resetPasswordError = signal<string | null>(null);
   protected resetPasswordSuccess = signal(false);
+
+  /** Matches the backend's [RequirePermission("admins:write")] on create/activate/deactivate/reset-password. */
+  protected canWrite = computed(() => this.api.hasPermission('admins:write'));
 
   protected readonly columns: DataTableColumn<AdminUserDto>[] = [
     { key: 'name', labelKey: 'admins.name' },
