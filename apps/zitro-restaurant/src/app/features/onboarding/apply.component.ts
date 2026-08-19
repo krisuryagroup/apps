@@ -171,25 +171,25 @@ type Step = 'business' | 'address' | 'account' | 'success';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--zitro-color-surface-container);
+      background: var(--zitro-surface-variant);
       padding: var(--zitro-spacing-lg);
     }
     .apply-card {
       width: 100%;
       max-width: 480px;
-      background: var(--zitro-color-surface);
+      background: var(--zitro-surface);
       border-radius: var(--zitro-radius-lg);
       padding: var(--zitro-spacing-xl);
-      box-shadow: var(--zitro-elevation-2);
+      box-shadow: var(--zitro-shadow-card);
     }
     .apply-title {
-      font-size: var(--zitro-font-size-2xl);
-      font-weight: var(--zitro-font-weight-bold);
-      color: var(--zitro-color-primary);
+      font-size: var(--zitro-font-size-xl);
+      font-weight: 700;
+      color: var(--zitro-primary);
       margin: 0 0 var(--zitro-spacing-xs);
     }
     .apply-subtitle {
-      color: var(--zitro-color-on-surface-variant);
+      color: var(--zitro-on-surface-variant);
       margin: 0 0 var(--zitro-spacing-xl);
     }
     .step-indicator {
@@ -200,15 +200,15 @@ type Step = 'business' | 'address' | 'account' | 'success';
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: var(--zitro-color-surface-container);
-        color: var(--zitro-color-on-surface-variant);
+        background: var(--zitro-surface-variant);
+        color: var(--zitro-on-surface-variant);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: var(--zitro-font-size-sm);
         &.active {
-          background: var(--zitro-color-primary);
-          color: var(--zitro-color-on-primary);
+          background: var(--zitro-primary);
+          color: #ffffff;
         }
       }
     }
@@ -220,25 +220,25 @@ type Step = 'business' | 'address' | 'account' | 'success';
     }
     .form-label {
       font-size: var(--zitro-font-size-sm);
-      font-weight: var(--zitro-font-weight-medium);
+      font-weight: 500;
     }
     .input,
     .select {
       padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
-      border: 1px solid var(--zitro-color-outline);
+      border: 1px solid var(--zitro-divider);
       border-radius: var(--zitro-radius-md);
-      background: var(--zitro-color-surface);
-      font-size: var(--zitro-font-size-base);
+      background: var(--zitro-surface);
+      font-size: var(--zitro-font-size-md);
       &:focus {
         outline: none;
-        border-color: var(--zitro-color-primary);
+        border-color: var(--zitro-primary);
       }
     }
     .btn {
       padding: var(--zitro-spacing-sm) var(--zitro-spacing-lg);
       border: 1px solid transparent;
       border-radius: var(--zitro-radius-md);
-      font-size: var(--zitro-font-size-base);
+      font-size: var(--zitro-font-size-md);
       cursor: pointer;
       &:disabled {
         opacity: 0.5;
@@ -246,13 +246,13 @@ type Step = 'business' | 'address' | 'account' | 'success';
       }
     }
     .btn-primary {
-      background: var(--zitro-color-primary);
-      color: var(--zitro-color-on-primary);
+      background: var(--zitro-primary);
+      color: #ffffff;
     }
     .btn-outline {
       background: transparent;
-      color: var(--zitro-color-primary);
-      border-color: var(--zitro-color-primary);
+      color: var(--zitro-primary);
+      border-color: var(--zitro-primary);
     }
     .btn-row {
       display: flex;
@@ -260,7 +260,7 @@ type Step = 'business' | 'address' | 'account' | 'success';
       justify-content: space-between;
     }
     .error-text {
-      color: var(--zitro-color-error);
+      color: var(--zitro-error);
       font-size: var(--zitro-font-size-sm);
       margin-bottom: var(--zitro-spacing-sm);
     }
@@ -301,11 +301,11 @@ export class RestaurantApplyComponent {
       .submitApplication({
         name: this.f.name,
         businessType: this.f.businessType,
-        town: this.f.town,
+        address: { town: this.f.town },
         phone: this.f.phone,
         ownerName: this.f.ownerName,
         ownerPhone: this.f.ownerPhone,
-        password: this.f.password,
+        ownerPassword: this.f.password,
       })
       .subscribe({
         next: () => {
@@ -314,9 +314,9 @@ export class RestaurantApplyComponent {
         },
         error: (err) => {
           this.submitting.set(false);
-          const code: string = err?.error?.error ?? '';
+          const code: string = err?.error?.errorCode ?? '';
           this.errorKey.set(
-            code === 'CONFLICT'
+            code === 'DUPLICATE_PHONE' || code === 'DUPLICATE_SLUG'
               ? 'restaurant.apply.errorConflict'
               : 'common.error',
           );
@@ -391,19 +391,19 @@ import { ActivatedRoute } from '@angular/router';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--zitro-color-surface-container);
+      background: var(--zitro-surface-variant);
     }
     .apply-card {
       width: 100%;
       max-width: 400px;
-      background: var(--zitro-color-surface);
+      background: var(--zitro-surface);
       border-radius: var(--zitro-radius-lg);
       padding: var(--zitro-spacing-xl);
-      box-shadow: var(--zitro-elevation-2);
+      box-shadow: var(--zitro-shadow-card);
     }
     .apply-title {
       font-size: var(--zitro-font-size-xl);
-      font-weight: var(--zitro-font-weight-bold);
+      font-weight: 700;
       margin: 0 0 var(--zitro-spacing-lg);
     }
     .form-group {
@@ -417,11 +417,11 @@ import { ActivatedRoute } from '@angular/router';
     .input {
       width: 100%;
       padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
-      border: 1px solid var(--zitro-color-outline);
+      border: 1px solid var(--zitro-divider);
       border-radius: var(--zitro-radius-md);
       &:focus {
         outline: none;
-        border-color: var(--zitro-color-primary);
+        border-color: var(--zitro-primary);
       }
     }
     .btn {
@@ -434,16 +434,16 @@ import { ActivatedRoute } from '@angular/router';
       }
     }
     .btn-primary {
-      background: var(--zitro-color-primary);
-      color: var(--zitro-color-on-primary);
+      background: var(--zitro-primary);
+      color: #ffffff;
       width: 100%;
     }
     .error-text {
-      color: var(--zitro-color-error);
+      color: var(--zitro-error);
       font-size: var(--zitro-font-size-sm);
     }
     .loading {
-      color: var(--zitro-color-on-surface-variant);
+      color: var(--zitro-on-surface-variant);
       text-align: center;
       padding: var(--zitro-spacing-xl);
     }
