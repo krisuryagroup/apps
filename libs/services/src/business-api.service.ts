@@ -391,12 +391,12 @@ export interface BusinessOrderDetailDto extends BusinessOrderDto {
 }
 
 export interface OrderItemDto {
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  lineTotal: number;
-  specialInstructions?: string;
-  variationName?: string;
+  name: string;
+  price: number;
+  qty: number;
+  selectedVariationLabel?: string;
+  selectedVariationPrice?: number;
+  imageUrl?: string;
 }
 
 export interface StatusTimelineEntry {
