@@ -1,0 +1,22 @@
+<div class="form-field" [class.form-field--error]="error()">
+  <!-- The control is projected via ng-content and the label wraps it (implicit association) —
+       the static template linter can't see that, hence the disable below. -->
+  <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -->
+  <label class="form-field__label">
+    <span class="form-field__label-text">
+      {{ labelKey() | i18n }}
+      @if (required()) {
+        <span class="form-field__required">*</span>
+      }
+    </span>
+    <ng-content />
+  </label>
+
+  @if (error()) {
+    <div class="form-field__error" data-testid="form-field-error">
+      {{ error()! | i18n }}
+    </div>
+  } @else if (hintKey()) {
+    <div class="form-field__hint">{{ hintKey()! | i18n }}</div>
+  }
+</div>

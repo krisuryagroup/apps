@@ -1,0 +1,87 @@
+<div class="data-table" data-testid="data-table">
+  <table>
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+          <th
+            [class.data-table__sortable]="column.sortable"
+            (click)="onHeaderClick(column)"
+            [attr.data-testid]="'data-table-header-' + column.key"
+          >
+            {{ column.labelKey | i18n }}
+            @if (column.sortable && sort()?.key === column.key) {
+              <span>{{ sort()!.direction === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+        }
+        @if (rowActionsTemplate) {
+          <th></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td
+            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
+            class="data-table__state"
+          >
+            {{ 'dataTable.loading' | i18n }}
+          </td>
+        </tr>
+      } @else if (rows().length === 0) {
+        <tr>
+          <td
+            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
+            class="data-table__state"
+          >
+            {{ emptyMessageKey() | i18n }}
+          </td>
+        </tr>
+      } @else {
+        @for (row of rows(); track $index) {
+          <tr (click)="rowClick.emit(row)" data-testid="data-table-row">
+            @for (column of columns(); track column.key) {
+              <td>{{ cellValue(row, column) }}</td>
+            }
+            @if (rowActionsTemplate) {
+              <td
+                class="data-table__actions"
+                (click)="$event.stopPropagation()"
+              >
+                <ng-container
+                  *ngTemplateOutlet="
+                    rowActionsTemplate;
+                    context: { $implicit: row }
+                  "
+                />
+              </td>
+            }
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+  @if (pagination(); as p) {
+    <div class="data-table__pagination" data-testid="data-table-pagination">
+      <button
+        type="button"
+        [disabled]="p.page <= 1"
+        (click)="pageChange.emit(p.page - 1)"
+        data-testid="data-table-prev-page"
+      >
+        {{ 'dataTable.previous' | i18n }}
+      </button>
+      <span>{{ p.page }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        [disabled]="p.page >= totalPages"
+        (click)="pageChange.emit(p.page + 1)"
+        data-testid="data-table-next-page"
+      >
+        {{ 'dataTable.next' | i18n }}
+      </button>
+    </div>
+  }
+</div>

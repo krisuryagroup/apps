@@ -1,0 +1,45 @@
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zitro-spacing-xs);
+  padding: var(--zitro-spacing-lg);
+  background: var(--zitro-surface);
+  border-radius: var(--zitro-radius-md);
+  box-shadow: var(--zitro-shadow-card);
+
+  &__icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  &__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--zitro-on-surface);
+  }
+
+  &__label {
+    font-size: var(--zitro-font-size-sm);
+    color: var(--zitro-on-surface-variant);
+  }
+
+  &__trend {
+    font-size: var(--zitro-font-size-sm);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &--up {
+      color: var(--zitro-success);
+    }
+
+    &--down {
+      color: var(--zitro-error);
+    }
+
+    &--neutral {
+      color: var(--zitro-on-surface-variant);
+    }
+  }
+}

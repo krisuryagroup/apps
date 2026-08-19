@@ -1,0 +1,25 @@
+// Full @zitro/theme barrel — legacy $vars (theme.scss) + breakpoints + the
+// --zitro-* CSS custom property tokens + all 4 theme variants (default/dark/nature/ocean).
+// Importing the barrel (not just 'theme') is what actually makes ThemeService's runtime
+// [data-theme] switching take effect — see libs/theme/src/index.scss.
+@use 'index' as *;
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--zitro-background);
+  font-family: var(--zitro-font-family);
+  color: var(--zitro-on-surface);
+}
