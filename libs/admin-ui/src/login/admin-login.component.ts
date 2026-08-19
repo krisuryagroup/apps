@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,10 @@ import { FormFieldComponent } from '../form-field/form-field.component';
  * Shared login page for zitro-admin and zitro-superadmin.
  * Both apps use the same endpoint (POST /api/admin/auth/login) and Admin JWT.
  * On success: stores the JWT and navigates to /dashboard.
+ *
+ * `appTitle` is bound from the route's `data.appTitle` (see each app's
+ * app.routes.ts — requires `withComponentInputBinding()` on provideRouter)
+ * so each app shows its own name without forking this component.
  */
 @Component({
   selector: 'lib-admin-login',
@@ -28,6 +33,8 @@ export class AdminLoginComponent {
   private readonly adminApi = inject(AdminApiService);
   private readonly tokenService = inject(AdminAuthTokenService);
   private readonly router = inject(Router);
+
+  protected appTitle = input('ZITRO Admin');
 
   protected email = '';
   protected password = '';

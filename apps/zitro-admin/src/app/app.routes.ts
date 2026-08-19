@@ -33,6 +33,7 @@ export const routes: Routes = [
     path: 'login',
     canActivate: [guestOnlyGuard],
     component: AdminLoginComponent,
+    data: { appTitle: 'ZITRO Admin' },
   },
   {
     path: '',
