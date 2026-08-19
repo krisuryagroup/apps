@@ -605,6 +605,8 @@ export const EN_DEFAULTS = {
     empty: 'No themes found.',
     loadError: 'Failed to load themes.',
     saveError: 'Failed to save theme.',
+    invalidColor:
+      'One or more color values are not valid CSS colors. Use a hex code (#c73e3a), rgb(), or a named color.',
     builtIn: 'Built-in',
     createTitle: 'Create theme',
     editTitle: 'Edit theme',

@@ -145,8 +145,32 @@ export class ThemesComponent implements OnInit {
       : this.formApps.filter((a) => a !== app);
   }
 
+  /**
+   * CSS.supports('color', value) delegates to the browser's own color parser — covers hex,
+   * rgb()/rgba(), hsl(), and named colors without hand-rolling a format regex. Tokens store
+   * CSS custom-property values, and every real --zitro-* token used by these forms is a
+   * color, so this is the right check for what this form actually collects (name + preview
+   * color + per-token color overrides), not a general CSS-value validator.
+   */
+  private isValidColor(value: string): boolean {
+    return CSS.supports('color', value);
+  }
+
   protected save(): void {
     if (!this.formName.trim()) return;
+
+    if (this.formPreviewColor && !this.isValidColor(this.formPreviewColor)) {
+      this.saveError.set('themes.invalidColor');
+      return;
+    }
+    const invalidToken = this.formTokens().find(
+      (t) => t.name && t.value && !this.isValidColor(t.value),
+    );
+    if (invalidToken) {
+      this.saveError.set('themes.invalidColor');
+      return;
+    }
+
     this.saving.set(true);
     this.saveError.set(null);
 
