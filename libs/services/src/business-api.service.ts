@@ -12,6 +12,13 @@ interface BusinessOrdersPagedResult {
   pageSize: number;
 }
 
+interface ItemsPagedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 interface BusinessJwtPayload {
   sub: string;
   business_id: string;
@@ -49,6 +56,7 @@ export class BusinessApiService {
   });
 
   readonly businessId = computed(() => this.currentUser()?.business_id ?? null);
+  readonly currentUserId = computed(() => this.currentUser()?.sub ?? null);
 
   // ── Auth ────────────────────────────────────────────────────────────────────
 
@@ -330,28 +338,32 @@ export class BusinessApiService {
   // ── Ratings ─────────────────────────────────────────────────────────────────
 
   listRatings(businessId: string): Observable<RatingDto[]> {
-    return this.http.get<RatingDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/ratings`,
-    );
+    return this.http
+      .get<
+        ItemsPagedResult<RatingDto>
+      >(`${this.baseUrl}/api/business-portal/${businessId}/ratings`)
+      .pipe(map((res) => res.items));
   }
 
   replyToRating(
     businessId: string,
     ratingId: string,
-    reply: string,
+    replyText: string,
   ): Observable<void> {
     return this.http.post<void>(
       `${this.baseUrl}/api/business-portal/${businessId}/ratings/${ratingId}/reply`,
-      { reply },
+      { replyText, repliedByUserId: this.currentUserId() },
     );
   }
 
   // ── Payouts ─────────────────────────────────────────────────────────────────
 
   listPayouts(businessId: string): Observable<PayoutDto[]> {
-    return this.http.get<PayoutDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/payouts`,
-    );
+    return this.http
+      .get<
+        ItemsPagedResult<PayoutDto>
+      >(`${this.baseUrl}/api/business-portal/${businessId}/payouts`)
+      .pipe(map((res) => res.items));
   }
 }
 
@@ -471,11 +483,10 @@ export interface BusinessZoneDto {
 
 export interface RatingDto {
   id: string;
-  rating: number;
-  comment?: string;
-  targetType: string;
+  ratingValue: number;
+  reviewText?: string;
   createdAt: string;
-  reply?: string;
+  replyText?: string;
 }
 
 export interface MenuImportParseResult {

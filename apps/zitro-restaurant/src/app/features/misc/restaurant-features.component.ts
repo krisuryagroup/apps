@@ -340,15 +340,14 @@ export class RestaurantInventoryComponent implements OnInit {
           <div class="rating-card card">
             <div class="rating-header">
               <span class="stars">{{
-                '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating)
-              }}</span
-              ><span class="rating-type">{{ r.targetType }}</span>
+                '★'.repeat(r.ratingValue) + '☆'.repeat(5 - r.ratingValue)
+              }}</span>
             </div>
-            @if (r.comment) {
-              <p class="rating-comment">{{ r.comment }}</p>
+            @if (r.reviewText) {
+              <p class="rating-comment">{{ r.reviewText }}</p>
             }
-            @if (r.reply) {
-              <div class="rating-reply">📩 {{ r.reply }}</div>
+            @if (r.replyText) {
+              <div class="rating-reply">📩 {{ r.replyText }}</div>
             } @else {
               <div class="reply-form">
                 <input
@@ -367,12 +366,19 @@ export class RestaurantInventoryComponent implements OnInit {
               </div>
             }
           </div>
+        } @empty {
+          <p class="empty">No ratings yet.</p>
         }
       </div>
     }
   `,
   styles: `
     @use '../../_restaurant-shared' as *;
+    .empty {
+      text-align: center;
+      color: var(--zitro-on-surface-variant);
+      padding: var(--zitro-spacing-xl);
+    }
     .ratings-list {
       display: flex;
       flex-direction: column;
@@ -430,7 +436,7 @@ export class RestaurantRatingsComponent implements OnInit {
     this.api.replyToRating(this.api.businessId()!, r.id, reply).subscribe({
       next: () => {
         this.ratings.update((rs) =>
-          rs.map((x) => (x.id === r.id ? { ...x, reply } : x)),
+          rs.map((x) => (x.id === r.id ? { ...x, replyText: reply } : x)),
         );
         delete this.replies[r.id];
       },
