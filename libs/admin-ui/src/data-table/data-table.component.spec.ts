@@ -42,7 +42,7 @@ describe('DataTableComponent', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="data-table"]')
         .textContent,
-    ).toContain('dataTable.empty');
+    ).toContain('No results found');
   });
 
   it('emits pageChange when the next-page button is clicked', () => {

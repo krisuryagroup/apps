@@ -1,0 +1,82 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--zitro-color-surface-container);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--zitro-spacing-xl);
+  background: var(--zitro-color-surface);
+  border-radius: var(--zitro-radius-lg);
+  box-shadow: var(--zitro-elevation-2);
+}
+
+.login-title {
+  font-size: var(--zitro-font-size-2xl);
+  font-weight: var(--zitro-font-weight-bold);
+  color: var(--zitro-color-primary);
+  text-align: center;
+  margin-bottom: var(--zitro-spacing-xl);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zitro-spacing-md);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  border: 1px solid var(--zitro-color-outline);
+  border-radius: var(--zitro-radius-md);
+  font-size: var(--zitro-font-size-base);
+  background: var(--zitro-color-surface);
+  color: var(--zitro-color-on-surface);
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: var(--zitro-color-primary);
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--zitro-color-primary) 20%, transparent);
+  }
+}
+
+.error-message {
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  background: color-mix(in srgb, var(--zitro-color-error) 10%, transparent);
+  color: var(--zitro-color-error);
+  border-radius: var(--zitro-radius-md);
+  font-size: var(--zitro-font-size-sm);
+  border: 1px solid
+    color-mix(in srgb, var(--zitro-color-error) 30%, transparent);
+  margin: 0;
+}
+
+.login-btn {
+  width: 100%;
+  padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
+  background: var(--zitro-color-primary);
+  color: var(--zitro-color-on-primary);
+  border: none;
+  border-radius: var(--zitro-radius-md);
+  font-size: var(--zitro-font-size-base);
+  font-weight: var(--zitro-font-weight-medium);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  margin-top: var(--zitro-spacing-sm);
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

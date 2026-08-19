@@ -21,19 +21,19 @@ Same as the other status boards.
 
 ## Tasks
 
-| ID          | Page / Feature                                                      | Size | Status | Backend dependency                                                                                  |
-| ----------- | ------------------------------------------------------------------- | ---- | ------ | --------------------------------------------------------------------------------------------------- |
-| SA-000      | Scaffold `zitro-superadmin` Nx app                                  | M    | `[x]`  | done — app builds/lints/tests clean, sidebar shows all AD-\* + SA-003..006 nav, verified in browser |
-| SA-001      | Login                                                               | S    | `[ ]`  | `POST /api/admin/auth/login` — ready (same endpoint as zitro-admin)                                 |
-| SA-002      | Compose shared admin screens (AD-002…AD-019) into this app's routes | M    | `[ ]`  | depends on the corresponding AD-XXX tasks being built                                               |
-| SA-003      | Feature Flags Management                                            | M    | `[!]`  | zitro-api TASK-036 (pending, new)                                                                   |
-| SA-004      | Translations Management                                             | L    | `[!]`  | zitro-api TASK-036 (pending, new)                                                                   |
-| SA-005      | Theme Management                                                    | M    | `[!]`  | zitro-api TASK-036 (pending, new)                                                                   |
-| SA-006      | Per-App UI Config Management                                        | M    | `[!]`  | zitro-api TASK-036 (pending, new)                                                                   |
-| SA-007      | Platform Analytics (extended)                                       | M    | `[ ]`  | base data ready via AD-002; extended breakdowns may need new queries — assess at task start         |
-| SA-008      | Firebase Hosting Deploy + `console.zitro.in`                        | S    | `[ ]`  | see `DEPLOYMENT-TASKS.md`                                                                           |
-| SA-TEST-001 | Unit + Integration Tests                                            | —    | `[ ]`  | after all pages pass manual testing                                                                 |
-| SA-TEST-002 | E2E — critical superadmin journeys                                  | —    | `[ ]`  | after SA-TEST-001                                                                                   |
+| ID          | Page / Feature                                                      | Size | Status | Backend dependency                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------- | ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SA-000      | Scaffold `zitro-superadmin` Nx app                                  | M    | `[x]`  | done — app builds/lints/tests clean, sidebar shows all AD-\* + SA-003..006 nav, verified in browser                                                        |
+| SA-001      | Login                                                               | S    | `[x]`  | done — shared `AdminLoginComponent` in `@zitro/admin-ui`, email/password, invalid-credentials vs deactivated-account error states, all `data-testid` attrs |
+| SA-002      | Compose shared admin screens (AD-002…AD-019) into this app's routes | M    | `[ ]`  | depends on the corresponding AD-XXX tasks being built                                                                                                      |
+| SA-003      | Feature Flags Management                                            | M    | `[ ]`  | zitro-api TASK-036 done ✓ backend ready                                                                                                                    |
+| SA-004      | Translations Management                                             | L    | `[ ]`  | zitro-api TASK-036 done ✓ backend ready                                                                                                                    |
+| SA-005      | Theme Management                                                    | M    | `[ ]`  | zitro-api TASK-036 done ✓ backend ready                                                                                                                    |
+| SA-006      | Per-App UI Config Management                                        | M    | `[ ]`  | zitro-api TASK-036 done ✓ backend ready                                                                                                                    |
+| SA-007      | Platform Analytics (extended)                                       | M    | `[ ]`  | base data ready via AD-002; extended breakdowns may need new queries — assess at task start                                                                |
+| SA-008      | Firebase Hosting Deploy + `console.zitro.in`                        | S    | `[ ]`  | see `DEPLOYMENT-TASKS.md`                                                                                                                                  |
+| SA-TEST-001 | Unit + Integration Tests                                            | —    | `[ ]`  | after all pages pass manual testing                                                                                                                        |
+| SA-TEST-002 | E2E — critical superadmin journeys                                  | —    | `[ ]`  | after SA-TEST-001                                                                                                                                          |
 
 ---
 

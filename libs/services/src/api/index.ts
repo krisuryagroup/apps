@@ -1,4 +1,9 @@
 export { CatalogApiService } from './catalog-api.service';
+export { AdminApiService } from './admin-api.service';
+export type {
+  AdminLoginRequest,
+  AdminLoginResponse,
+} from './admin-api.service';
 export { BannerApiService } from './banner-api.service';
 export { CouponApiService } from './coupon-api.service';
 export { OrderApiService } from './order-api.service';

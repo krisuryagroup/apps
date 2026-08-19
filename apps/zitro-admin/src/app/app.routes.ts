@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AdminLoginComponent } from '@zitro/admin-ui';
 import { ComingSoonComponent } from '@zitro/ui';
 import { adminAuthGuard, guestOnlyGuard } from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
@@ -7,8 +8,7 @@ export const routes: Routes = [
   {
     path: 'login',
     canActivate: [guestOnlyGuard],
-    component: ComingSoonComponent,
-    data: { title: 'AD-001 — Login' },
+    component: AdminLoginComponent,
   },
   {
     path: '',

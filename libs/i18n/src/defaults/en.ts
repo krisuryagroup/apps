@@ -531,6 +531,16 @@ export const EN_DEFAULTS = {
     previous: 'Previous',
     next: 'Next',
   },
+  // ── Admin login (AD-001 / SA-001) ──────────────────────────────────────────
+  login: {
+    email: 'Email',
+    password: 'Password',
+    signIn: 'Sign in',
+    signingIn: 'Signing in\u2026',
+    errorInvalidCredentials: 'Invalid email or password.',
+    errorDeactivated:
+      'This account has been deactivated. Contact your administrator.',
+  },
 } as const;
 
 export type TranslationMap = typeof EN_DEFAULTS;
