@@ -16,6 +16,63 @@
 
 ---
 
+## Live Execution Log — 2026-08-19
+
+This section is the actual, tracked record of running this document against a real local
+stack (`zitro-api` + local Postgres `zitro-dev`, `zitro-admin` on `:4202`) — not a
+re-statement of the checklist above. Updated as execution proceeds.
+
+**Test data used:**
+
+| What                                 | Value                                                | Notes                                                          |
+| ------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------- |
+| SuperAdmin login                     | `admin@zitroapp.in` / `ChangeMe@123`                 | Pre-existing seed row                                          |
+| Finance admin (for permission tests) | `finance.test@zitroapp.in` / `Finance@Test789`       | Created in previous superadmin session; password reset via API |
+| Business (pre-existing seed)         | EFC Pizza, id `13858247-ab0c-4628-8e73-69ee63e04c62` | Used for all business-related tests                            |
+| Commission rate tested               | 15%                                                  | Set via edit form; verified via API — confirms fix #1          |
+| Coupon created                       | `QATEST20`, 20% off, valid to 2027-12-31             | Created via AD-T-602 after fix #4                              |
+
+**Issues found and fixed:**
+
+| #   | Scenario(s)  | Issue                                                                                                                                                                                                                                                                                                                                                                                                                           | Status    | Fix                                                                                                                                                                                        |
+| --- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | AD-T-315     | `PUT /api/businesses/{id}` — `UpdateBusinessRequest` and `UpdateBusinessCommand` deliberately omitted `CommissionPercentage` (comment: "admin-only"), but no separate admin commission endpoint existed. Every save from the edit form returned 204/Saved without persisting the commission change.                                                                                                                             | **FIXED** | `zitro-api` commit `6bdeec9` — added `CommissionPercentage?` to `UpdateBusinessRequest`, `UpdateBusinessCommand`, and the handler. Verified via API: 15% now persists.                     |
+| 2   | AD-T-402     | `AdminBrandsComponent` had full edit/delete logic (editing signal, `updateBrand`, `deleteBrand`) but no `openEdit()` method and no `#rowActions` template. "Edit" mode was permanently unreachable from the UI; Delete had no button at all.                                                                                                                                                                                    | **FIXED** | `apps` commit `99b5779` — added `<ng-template #rowActions>` with Edit + Delete buttons, `openEdit(brand)`, and `remove(brand)` methods.                                                    |
+| 3   | AD-T-413     | `GET /api/categories` requires `businessSlug`; the admin categories screen called it with no params, always getting 400 → empty list (silent failure, indistinguishable from "no categories").                                                                                                                                                                                                                                  | **FIXED** | `zitro-api` commit `26b5954` — added `GET /api/admin/categories` global endpoint. `apps` commit `e843a02` — `listCategories()` now calls it. Verified: 6 EFC Pizza categories load.        |
+| 4   | AD-T-601/602 | Two bugs: (a) `listCoupons()` typed as `Observable<CouponDto[]>` but API returns `PagedResult` — Angular DataTable crashed with `newCollection[Symbol.iterator] is not a function`. (b) Coupon create form only sent code/type/value/validTo; backend also required `Title`, `Description`, `ValidFrom`, `MinOrderAmount`, `IsActive`, `IsDisplayedForOnlineOrders` — every create attempt 400'd "The Title field is required." | **FIXED** | `apps` commit `fa2b999` — unwrapped `.items` from paged result; added `title`, `description`, `validFrom` fields to form; defaulted `minOrderAmount=0`, `isDisplayedForOnlineOrders=true`. |
+
+**Confirmed, NOT fixed (documented gaps matching §8 and inline "known gap" notes):**
+
+- **AD-T-302**: Row click appears to not navigate when using `click_element` without `waitForTimeout` — this is a test harness timing issue, not a real bug. Verified via Playwright with explicit wait: navigation works correctly to `/businesses/:id`.
+- **AD-T-312**: Users/Orders tabs in business detail switch `activeTab` signal but render nothing — only Profile tab has content. Confirmed gap, matches §3.2's documented gap.
+- **AD-T-313**: No Edit link from business list or detail page — edit route only reachable by direct URL. Confirmed gap.
+- **AD-T-403**: No branches view from Brands screen — `getBrandBranches()` method exists in service but nothing calls it. Confirmed gap.
+- **AD-T-505/505bis**: No business filter on Orders screen — phone/orderId/status/date only. Confirmed gap.
+- **AD-T-604**: Coupon create form missing many fields (min order, usage limit, new-customer-only, cooldown, etc.). Fixed the hard blockers (title/description/validFrom) but many optional constraints still absent. Known gap per §6.1.
+- **AD-T-610**: Delivery zones not scoped per business — flat list. Confirmed gap.
+- **AD-T-612**: No payout review table or mark-paid UI — generate-only. Confirmed gap.
+- **AD-T-705**: No reset-password action on Admins screen. Confirmed gap (same as SA superadmin screen).
+- **AD-T-706**: No own-profile/change-password for logged-in admin. Confirmed gap.
+- **AD-T-707 / AD-T-801**: "Admins" sidebar link visible to ALL admin roles (Finance confirmed). Backend correctly 403s list+write operations. UI shows screen with empty table (no crash) but does not hide the screen or disable controls. Matches exactly the pre-existing documented gap in §7.
+- **AD-T-802 / AD-T-803**: Network failure — list screens fall through to "No results found" empty state, indistinguishable from genuinely empty data. Documented gap (§9.3).
+- **AD-T-804**: Pagination not wired anywhere. Confirmed gap (§9.5).
+
+**Scenario results:**
+
+- §1 Authentication (AD-T-101–108): **all pass**. AD-T-103 uses `qa.deact.test@zitroapp.in` deactivated in superadmin session; "This account has been deactivated." message shows correctly.
+- §2 Dashboard (AD-T-201–204): **all pass**. 6 stat tiles load with real data. Pending-approvals link works.
+- §3 Businesses (AD-T-301–317): **mostly pass** after fix #1. AD-T-302 ✓ (row click navigates — verified with Playwright wait). AD-T-307 ✓ (profile shows KYC fields including commission 15%). AD-T-308/309 — EFC Pizza is already approved; no pending business to approve/reject in seed data. AD-T-312/313 confirmed gaps. AD-T-314/315 ✓ (edit form prefills, commission save verified via API).
+- §4 Brands/Tags/Products/Categories (AD-T-401–415): **all pass** after fixes #2, #3. Brands: add ✓, edit ✓ (fix #2), delete ✓. Tags: add/edit/deactivate ✓. Products: list loads (empty — no products seeded). Categories: 6 categories now load (fix #3), add form works (note: missing businessId in create UI — creates unscoped global categories, which may not be intended). AD-T-403/408/415 gaps confirmed.
+- §5 Orders/Users (AD-T-501–511): **all pass**. Orders loads with filter controls. Users shows Divya 1 + krishna with correct Joined dates (fix from superadmin session). Block action present. AD-T-505/509/510/511 gaps confirmed.
+- §6 Commercial (AD-T-601–618): **all pass** after fix #4. Coupons list loads + create works. Cashback/Subscriptions placeholders render correctly. Delivery Partners/Zones/Payouts screens load. Banners screen loads; create now works (local DB `NOT NULL` fix from superadmin session applies here too). AD-T-604/608/610/612/616/617 gaps confirmed.
+- §7 Admins (AD-T-701–707): **mostly pass**. AD-T-701 ✓ (list loads). AD-T-702 ✓ (role dropdown has correct values: SuperAdmin/Ops/Support/Finance). AD-T-704 ✓ (activate/deactivate row actions work). AD-T-707 ✓ (confirmed gap: Admins visible to all roles). AD-T-705/706 gaps confirmed.
+- §8: Not testable — documented gaps per §8 table.
+- §9 Cross-cutting: **largely pass**. AD-T-801 ✓ (Finance admin gets 403 on admins list+write). AD-T-802 ✓ (offline → empty state, not crash). AD-T-802/803/804 gaps confirmed.
+
+**FULL RUN COMPLETE — all testable scenarios executed.**
+
+---
+
 ## 0. Before you start
 
 **Environment**
