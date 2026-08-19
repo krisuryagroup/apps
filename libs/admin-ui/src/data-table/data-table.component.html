@@ -22,17 +22,14 @@
     <tbody>
       @if (loading()) {
         <tr>
-          <td
-            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
-            class="data-table__state"
-          >
+          <td [attr.colspan]="colspan" class="data-table__state">
             {{ 'dataTable.loading' | i18n }}
           </td>
         </tr>
       } @else if (error()) {
         <tr>
           <td
-            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
+            [attr.colspan]="colspan"
             class="data-table__state data-table__state--error"
             data-testid="data-table-error"
           >
@@ -41,10 +38,7 @@
         </tr>
       } @else if (rows().length === 0) {
         <tr>
-          <td
-            [attr.colspan]="columns().length + (rowActionsTemplate ? 1 : 0)"
-            class="data-table__state"
-          >
+          <td [attr.colspan]="colspan" class="data-table__state">
             {{ emptyMessageKey() | i18n }}
           </td>
         </tr>
@@ -68,6 +62,18 @@
               </td>
             }
           </tr>
+          @if (expandedRowTemplate && isRowExpanded()(row)) {
+            <tr data-testid="data-table-expanded-row">
+              <td [attr.colspan]="colspan" class="data-table__expanded">
+                <ng-container
+                  *ngTemplateOutlet="
+                    expandedRowTemplate;
+                    context: { $implicit: row }
+                  "
+                />
+              </td>
+            </tr>
+          }
         }
       }
     </tbody>

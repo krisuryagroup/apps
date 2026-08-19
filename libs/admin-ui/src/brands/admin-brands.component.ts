@@ -7,7 +7,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AdminApiService, BrandDto, PagedResult } from '@zitro/services';
+import {
+  AdminApiService,
+  BrandDto,
+  BusinessSummaryDto,
+  PagedResult,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import {
   DataTableComponent,
@@ -37,15 +42,55 @@ import {
       [loading]="loading()"
       [error]="error()"
       [pagination]="pagination()"
+      [isRowExpanded]="isBrandExpanded"
       (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
+        <button
+          class="btn btn-sm btn-outline"
+          data-testid="brand-view-branches-btn"
+          (click)="toggleBranches(row)"
+        >
+          {{
+            expandedBrandId() === row.id
+              ? ('brands.hideBranches' | i18n)
+              : ('brands.viewBranches' | i18n)
+          }}
+        </button>
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
           {{ 'common.edit' | i18n }}
         </button>
         <button class="btn btn-sm btn-danger" (click)="remove(row)">
           {{ 'common.delete' | i18n }}
         </button>
+      </ng-template>
+      <ng-template #expandedRow let-row>
+        <div data-testid="brand-branches-panel">
+          @if (branchesLoading()[row.id]) {
+            <p class="loading">{{ 'common.loading' | i18n }}</p>
+          } @else if ((branchesByBrand()[row.id] ?? []).length === 0) {
+            <p class="empty">{{ 'brands.noBranches' | i18n }}</p>
+          } @else {
+            <table class="brands-branches-table">
+              <thead>
+                <tr>
+                  <th>{{ 'businesses.name' | i18n }}</th>
+                  <th>{{ 'businesses.town' | i18n }}</th>
+                  <th>{{ 'businesses.active' | i18n }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (branch of branchesByBrand()[row.id]; track branch.id) {
+                  <tr>
+                    <td>{{ branch.name }}</td>
+                    <td>{{ branch.town }}</td>
+                    <td>{{ branch.isActive ? '✓' : '✗' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
       </ng-template>
     </lib-data-table>
     @if (showForm()) {
@@ -91,6 +136,22 @@ import {
   styles: [
     `
       @use '../_admin-shared' as *;
+
+      .brands-branches-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th {
+          text-align: left;
+          font-size: var(--zitro-font-size-sm);
+          color: var(--zitro-on-surface-variant);
+          padding: var(--zitro-spacing-xs) var(--zitro-spacing-sm);
+        }
+
+        td {
+          padding: var(--zitro-spacing-xs) var(--zitro-spacing-sm);
+        }
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +176,16 @@ export class AdminBrandsComponent implements OnInit {
   protected formDesc = '';
   protected saving = signal(false);
   protected saveError = signal(false);
+
+  protected expandedBrandId = signal<string | null>(null);
+  protected branchesByBrand = signal<
+    Record<string, BusinessSummaryDto[] | undefined>
+  >({});
+  protected branchesLoading = signal<Record<string, boolean>>({});
+
+  /** Arrow field (not a method) so `this` stays bound when passed as [isRowExpanded]. */
+  protected isBrandExpanded = (row: BrandDto): boolean =>
+    row.id === this.expandedBrandId();
 
   protected readonly columns: DataTableColumn<BrandDto>[] = [
     { key: 'name', labelKey: 'brands.name' },
@@ -166,6 +237,26 @@ export class AdminBrandsComponent implements OnInit {
     this.formName = brand.name;
     this.formDesc = brand.description ?? '';
     this.showForm.set(true);
+  }
+
+  protected toggleBranches(brand: BrandDto): void {
+    if (this.expandedBrandId() === brand.id) {
+      this.expandedBrandId.set(null);
+      return;
+    }
+    this.expandedBrandId.set(brand.id);
+    if (this.branchesByBrand()[brand.id]) return;
+    this.branchesLoading.update((m) => ({ ...m, [brand.id]: true }));
+    this.api.getBrandBranches(brand.id).subscribe({
+      next: (branches) => {
+        this.branchesByBrand.update((m) => ({ ...m, [brand.id]: branches }));
+        this.branchesLoading.update((m) => ({ ...m, [brand.id]: false }));
+      },
+      error: () => {
+        this.branchesByBrand.update((m) => ({ ...m, [brand.id]: [] }));
+        this.branchesLoading.update((m) => ({ ...m, [brand.id]: false }));
+      },
+    });
   }
 
   protected remove(brand: BrandDto): void {

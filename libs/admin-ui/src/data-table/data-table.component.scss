@@ -54,6 +54,12 @@
     white-space: nowrap;
   }
 
+  &__expanded {
+    background: var(--zitro-surface-variant);
+    cursor: default;
+    padding: var(--zitro-spacing-md);
+  }
+
   &__pagination {
     display: flex;
     align-items: center;
