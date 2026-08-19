@@ -10,6 +10,22 @@ export type {
   AppFeatureFlagDto,
   AppThemeDto,
   UiConfigDto,
+  AdminDashboardDto,
+  PagedResult,
+  BusinessSummaryDto,
+  BusinessDetailDto,
+  BusinessUserDto,
+  BrandDto,
+  TagDto,
+  ProductDto,
+  CategoryDto,
+  OrderSummaryDto,
+  CustomerDto,
+  CouponDto,
+  DeliveryPartnerDto,
+  DeliveryZoneDto,
+  BannerAdminDto,
+  AdminUserDto,
 } from './admin-api.service';
 export { BannerApiService } from './banner-api.service';
 export { CouponApiService } from './coupon-api.service';

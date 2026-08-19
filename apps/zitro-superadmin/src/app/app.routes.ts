@@ -1,6 +1,25 @@
 import { Routes } from '@angular/router';
-import { AdminLoginComponent } from '@zitro/admin-ui';
-import { ComingSoonComponent } from '@zitro/ui';
+import {
+  AdminLoginComponent,
+  AdminDashboardComponent,
+  AdminBusinessesComponent,
+  AdminBusinessDetailComponent,
+  AdminBusinessEditComponent,
+  AdminBrandsComponent,
+  AdminTagsComponent,
+  AdminProductsComponent,
+  AdminCategoriesComponent,
+  AdminOrdersComponent,
+  AdminUsersComponent,
+  AdminCouponsComponent,
+  AdminCashbackRulesComponent,
+  AdminDeliveryPartnersComponent,
+  AdminDeliveryZonesComponent,
+  AdminPayoutsComponent,
+  AdminSubscriptionsComponent,
+  AdminBannersComponent,
+  AdminAdminUsersComponent,
+} from '@zitro/admin-ui';
 import { adminAuthGuard, guestOnlyGuard } from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { FeatureFlagsComponent } from './features/feature-flags/feature-flags.component';
@@ -8,10 +27,7 @@ import { TranslationsComponent } from './features/translations/translations.comp
 import { ThemesComponent } from './features/themes/themes.component';
 import { UiConfigComponent } from './features/ui-config/ui-config.component';
 
-// NOTE: the AD-002..AD-019 routes below are placeholders today, same as zitro-admin's.
-// SA-002 (compose shared admin screens) is the task that rewires these to import the
-// real components built for zitro-admin instead of duplicating ComingSoonComponent —
-// do that once those components exist for real, not before.
+// SA-002 — shared admin screens now composed from @zitro/admin-ui components.
 export const routes: Routes = [
   {
     path: 'login',
@@ -24,107 +40,28 @@ export const routes: Routes = [
     canActivate: [adminAuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      {
-        path: 'dashboard',
-        component: ComingSoonComponent,
-        data: { title: 'AD-002 — Dashboard (shared via SA-002)' },
-      },
-      {
-        path: 'businesses',
-        component: ComingSoonComponent,
-        data: { title: 'AD-003 — Businesses (shared via SA-002)' },
-      },
-      {
-        path: 'businesses/:id',
-        component: ComingSoonComponent,
-        data: { title: 'AD-004 — Business Detail (shared via SA-002)' },
-      },
-      {
-        path: 'brands',
-        component: ComingSoonComponent,
-        data: { title: 'AD-006 — Brands (shared via SA-002)' },
-      },
-      {
-        path: 'tags',
-        component: ComingSoonComponent,
-        data: { title: 'AD-007 — Tags (shared via SA-002)' },
-      },
-      {
-        path: 'products',
-        component: ComingSoonComponent,
-        data: { title: 'AD-008 — Products (shared via SA-002)' },
-      },
-      {
-        path: 'categories',
-        component: ComingSoonComponent,
-        data: { title: 'AD-009 — Categories (shared via SA-002)' },
-      },
-      {
-        path: 'orders',
-        component: ComingSoonComponent,
-        data: { title: 'AD-010 — Order Oversight (shared via SA-002)' },
-      },
-      {
-        path: 'users',
-        component: ComingSoonComponent,
-        data: { title: 'AD-011 — Users (shared via SA-002)' },
-      },
-      {
-        path: 'coupons',
-        component: ComingSoonComponent,
-        data: { title: 'AD-012 — Coupons (shared via SA-002)' },
-      },
-      {
-        path: 'cashback-rules',
-        component: ComingSoonComponent,
-        data: { title: 'AD-013 — Cashback Rules (shared via SA-002)' },
-      },
-      {
-        path: 'delivery-partners',
-        component: ComingSoonComponent,
-        data: { title: 'AD-014 — Delivery Partners (shared via SA-002)' },
-      },
-      {
-        path: 'delivery-zones',
-        component: ComingSoonComponent,
-        data: { title: 'AD-015 — Delivery Zones (shared via SA-002)' },
-      },
-      {
-        path: 'payouts',
-        component: ComingSoonComponent,
-        data: { title: 'AD-016 — Payouts (shared via SA-002)' },
-      },
-      {
-        path: 'subscriptions',
-        component: ComingSoonComponent,
-        data: { title: 'AD-017 — Subscriptions (shared via SA-002)' },
-      },
-      {
-        path: 'banners',
-        component: ComingSoonComponent,
-        data: { title: 'AD-018 — Banners (shared via SA-002)' },
-      },
-      {
-        path: 'admins',
-        component: ComingSoonComponent,
-        data: { title: 'AD-019 — Admin Users (shared via SA-002)' },
-      },
-      {
-        path: 'feature-flags',
-        component: FeatureFlagsComponent,
-      },
-      {
-        path: 'translations',
-        component: TranslationsComponent,
-      },
-      {
-        path: 'themes',
-        component: ThemesComponent,
-      },
-      {
-        path: 'ui-config',
-        component: UiConfigComponent,
-      },
+      { path: 'dashboard', component: AdminDashboardComponent },
+      { path: 'businesses', component: AdminBusinessesComponent },
+      { path: 'businesses/:id', component: AdminBusinessDetailComponent },
+      { path: 'businesses/:id/edit', component: AdminBusinessEditComponent },
+      { path: 'brands', component: AdminBrandsComponent },
+      { path: 'tags', component: AdminTagsComponent },
+      { path: 'products', component: AdminProductsComponent },
+      { path: 'categories', component: AdminCategoriesComponent },
+      { path: 'orders', component: AdminOrdersComponent },
+      { path: 'users', component: AdminUsersComponent },
+      { path: 'coupons', component: AdminCouponsComponent },
+      { path: 'cashback-rules', component: AdminCashbackRulesComponent },
+      { path: 'delivery-partners', component: AdminDeliveryPartnersComponent },
+      { path: 'delivery-zones', component: AdminDeliveryZonesComponent },
+      { path: 'payouts', component: AdminPayoutsComponent },
+      { path: 'subscriptions', component: AdminSubscriptionsComponent },
+      { path: 'banners', component: AdminBannersComponent },
+      { path: 'admins', component: AdminAdminUsersComponent },
+      { path: 'feature-flags', component: FeatureFlagsComponent },
+      { path: 'translations', component: TranslationsComponent },
+      { path: 'themes', component: ThemesComponent },
+      { path: 'ui-config', component: UiConfigComponent },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

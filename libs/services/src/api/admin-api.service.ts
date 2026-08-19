@@ -206,4 +206,536 @@ export class AdminApiService {
       { configJson },
     );
   }
+
+  // ── Dashboard ───────────────────────────────────────────────────────────────
+
+  getDashboard(): Observable<AdminDashboardDto> {
+    return this.http.get<AdminDashboardDto>(
+      `${this.baseUrl}/api/admin/dashboard`,
+    );
+  }
+
+  // ── Businesses ──────────────────────────────────────────────────────────────
+
+  listBusinesses(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<BusinessSummaryDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<PagedResult<BusinessSummaryDto>>(
+      `${this.baseUrl}/api/businesses`,
+      { params: p },
+    );
+  }
+
+  getBusinessById(id: string): Observable<BusinessDetailDto> {
+    return this.http.get<BusinessDetailDto>(
+      `${this.baseUrl}/api/businesses/${id}`,
+    );
+  }
+
+  createBusiness(req: Record<string, unknown>): Observable<BusinessDetailDto> {
+    return this.http.post<BusinessDetailDto>(
+      `${this.baseUrl}/api/businesses`,
+      req,
+    );
+  }
+
+  updateBusiness(
+    id: string,
+    req: Record<string, unknown>,
+  ): Observable<BusinessDetailDto> {
+    return this.http.put<BusinessDetailDto>(
+      `${this.baseUrl}/api/businesses/${id}`,
+      req,
+    );
+  }
+
+  approveBusiness(
+    id: string,
+    approved: boolean,
+    rejectionReason?: string,
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/businesses/${id}/approve`,
+      { approved, rejectionReason },
+    );
+  }
+
+  inviteBusinessOwner(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/api/businesses/invite`, req);
+  }
+
+  listBusinessUsers(businessId: string): Observable<BusinessUserDto[]> {
+    return this.http.get<BusinessUserDto[]>(
+      `${this.baseUrl}/api/businesses/${businessId}/users`,
+    );
+  }
+
+  // ── Brands ──────────────────────────────────────────────────────────────────
+
+  listBrands(): Observable<BrandDto[]> {
+    return this.http.get<BrandDto[]>(`${this.baseUrl}/api/brands`);
+  }
+
+  createBrand(req: {
+    name: string;
+    description?: string;
+    logoUrl?: string;
+  }): Observable<BrandDto> {
+    return this.http.post<BrandDto>(`${this.baseUrl}/api/brands`, req);
+  }
+
+  updateBrand(
+    id: string,
+    req: { name: string; description?: string; logoUrl?: string },
+  ): Observable<BrandDto> {
+    return this.http.put<BrandDto>(`${this.baseUrl}/api/brands/${id}`, req);
+  }
+
+  deleteBrand(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/brands/${id}`);
+  }
+
+  getBrandBranches(brandId: string): Observable<BusinessSummaryDto[]> {
+    return this.http.get<BusinessSummaryDto[]>(
+      `${this.baseUrl}/api/brands/${brandId}/branches`,
+    );
+  }
+
+  // ── Tags ────────────────────────────────────────────────────────────────────
+
+  listAdminTags(): Observable<TagDto[]> {
+    return this.http.get<TagDto[]>(`${this.baseUrl}/api/admin/tags`);
+  }
+
+  createTag(req: {
+    name: string;
+    icon?: string;
+    priority?: number;
+  }): Observable<TagDto> {
+    return this.http.post<TagDto>(`${this.baseUrl}/api/admin/tags`, req);
+  }
+
+  updateTag(
+    id: string,
+    req: { name: string; icon?: string; priority?: number },
+  ): Observable<TagDto> {
+    return this.http.put<TagDto>(`${this.baseUrl}/api/admin/tags/${id}`, req);
+  }
+
+  deactivateTag(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/admin/tags/${id}`);
+  }
+
+  // ── Products ────────────────────────────────────────────────────────────────
+
+  searchProducts(params?: Record<string, string>): Observable<ProductDto[]> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<ProductDto[]>(`${this.baseUrl}/api/products/search`, {
+      params: p,
+    });
+  }
+
+  createProduct(req: Record<string, unknown>): Observable<ProductDto> {
+    return this.http.post<ProductDto>(
+      `${this.baseUrl}/api/admin/products`,
+      req,
+    );
+  }
+
+  updateProduct(
+    id: string,
+    req: Record<string, unknown>,
+  ): Observable<ProductDto> {
+    return this.http.put<ProductDto>(
+      `${this.baseUrl}/api/admin/products/${id}`,
+      req,
+    );
+  }
+
+  deleteProduct(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/admin/products/${id}`);
+  }
+
+  // ── Categories ──────────────────────────────────────────────────────────────
+
+  listCategories(params?: Record<string, string>): Observable<CategoryDto[]> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/categories`, {
+      params: p,
+    });
+  }
+
+  createCategory(req: Record<string, unknown>): Observable<CategoryDto> {
+    return this.http.post<CategoryDto>(
+      `${this.baseUrl}/api/admin/categories`,
+      req,
+    );
+  }
+
+  updateCategory(
+    id: string,
+    req: Record<string, unknown>,
+  ): Observable<CategoryDto> {
+    return this.http.put<CategoryDto>(
+      `${this.baseUrl}/api/admin/categories/${id}`,
+      req,
+    );
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/admin/categories/${id}`);
+  }
+
+  // ── Orders ──────────────────────────────────────────────────────────────────
+
+  listAdminOrders(
+    params?: Record<string, string>,
+  ): Observable<OrderSummaryDto[]> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<OrderSummaryDto[]>(
+      `${this.baseUrl}/api/admin/orders`,
+      { params: p },
+    );
+  }
+
+  // ── Users ───────────────────────────────────────────────────────────────────
+
+  listAdminCustomers(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<CustomerDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<PagedResult<CustomerDto>>(
+      `${this.baseUrl}/api/admin/users`,
+      { params: p },
+    );
+  }
+
+  updateCustomerStatus(id: string, isActive: boolean): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/api/admin/users/${id}/status`, {
+      isActive,
+    });
+  }
+
+  // ── Coupons ─────────────────────────────────────────────────────────────────
+
+  listCoupons(): Observable<CouponDto[]> {
+    return this.http.get<CouponDto[]>(`${this.baseUrl}/api/admin/coupons`);
+  }
+
+  createCoupon(req: Record<string, unknown>): Observable<CouponDto> {
+    return this.http.post<CouponDto>(`${this.baseUrl}/api/admin/coupons`, req);
+  }
+
+  updateCoupon(
+    id: string,
+    req: Record<string, unknown>,
+  ): Observable<CouponDto> {
+    return this.http.put<CouponDto>(
+      `${this.baseUrl}/api/admin/coupons/${id}`,
+      req,
+    );
+  }
+
+  deleteCoupon(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/admin/coupons/${id}`);
+  }
+
+  // ── Delivery partners ───────────────────────────────────────────────────────
+
+  listDeliveryPartners(
+    params?: Record<string, string>,
+  ): Observable<DeliveryPartnerDto[]> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<DeliveryPartnerDto[]>(
+      `${this.baseUrl}/api/admin/delivery/partners`,
+      { params: p },
+    );
+  }
+
+  updateDeliveryPartnerStatus(id: string, status: string): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseUrl}/api/admin/delivery/partners/${id}/status`,
+      { status },
+    );
+  }
+
+  // ── Delivery zones ──────────────────────────────────────────────────────────
+
+  listDeliveryZones(): Observable<DeliveryZoneDto[]> {
+    return this.http.get<DeliveryZoneDto[]>(
+      `${this.baseUrl}/api/admin/delivery/zones`,
+    );
+  }
+
+  createDeliveryZone(
+    req: Record<string, unknown>,
+  ): Observable<DeliveryZoneDto> {
+    return this.http.post<DeliveryZoneDto>(
+      `${this.baseUrl}/api/admin/delivery/zones`,
+      req,
+    );
+  }
+
+  // ── Payouts ─────────────────────────────────────────────────────────────────
+
+  generatePayouts(fromDate: string, toDate: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/api/admin/payouts/generate`, {
+      fromDate,
+      toDate,
+    });
+  }
+
+  markPayoutPaid(id: string, payoutReference: string): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseUrl}/api/admin/payouts/${id}/mark-paid`,
+      { payoutReference },
+    );
+  }
+
+  // ── Banners ─────────────────────────────────────────────────────────────────
+
+  listBanners(): Observable<BannerAdminDto[]> {
+    return this.http.get<BannerAdminDto[]>(`${this.baseUrl}/api/banners`);
+  }
+
+  createBanner(req: Record<string, unknown>): Observable<BannerAdminDto> {
+    return this.http.post<BannerAdminDto>(`${this.baseUrl}/api/banners`, req);
+  }
+
+  updateBanner(
+    id: string,
+    req: Record<string, unknown>,
+  ): Observable<BannerAdminDto> {
+    return this.http.put<BannerAdminDto>(
+      `${this.baseUrl}/api/banners/${id}`,
+      req,
+    );
+  }
+
+  deleteBanner(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/banners/${id}`);
+  }
+
+  // ── Admin users (SuperAdmin) ────────────────────────────────────────────────
+
+  listAdmins(
+    params?: Record<string, string>,
+  ): Observable<PagedResult<AdminUserDto>> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<PagedResult<AdminUserDto>>(
+      `${this.baseUrl}/api/admin/admins`,
+      { params: p },
+    );
+  }
+
+  createAdmin(req: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+  }): Observable<AdminUserDto> {
+    return this.http.post<AdminUserDto>(
+      `${this.baseUrl}/api/admin/admins`,
+      req,
+    );
+  }
+
+  updateAdmin(
+    id: string,
+    req: { name: string; role: string; permissions?: string[] },
+  ): Observable<AdminUserDto> {
+    return this.http.put<AdminUserDto>(
+      `${this.baseUrl}/api/admin/admins/${id}`,
+      req,
+    );
+  }
+
+  setAdminStatus(id: string, activate: boolean): Observable<void> {
+    const action = activate ? 'activate' : 'deactivate';
+    return this.http.post<void>(
+      `${this.baseUrl}/api/admin/admins/${id}/${action}`,
+      {},
+    );
+  }
+}
+
+// ── Shared DTO types ──────────────────────────────────────────────────────────
+
+export interface AdminDashboardDto {
+  todayOrderCount: number;
+  todayRevenue: number;
+  newUsersToday: number;
+  activeBusinesses: number;
+  pendingOnboardingCount: number;
+  pendingPayoutCount: number;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface BusinessSummaryDto {
+  id: string;
+  name: string;
+  slug: string;
+  businessType: string;
+  town: string;
+  onboardingStatus: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface BusinessDetailDto extends BusinessSummaryDto {
+  description?: string;
+  phone?: string;
+  email?: string;
+  fssaiLicenseNumber?: string;
+  gstNumber?: string;
+  panNumber?: string;
+  commissionPercentage?: number;
+  onboardingRejectionReason?: string;
+  verificationDocs?: unknown[];
+}
+
+export interface BusinessUserDto {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  role: string;
+  isActive: boolean;
+}
+
+export interface BrandDto {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  branchCount?: number;
+}
+
+export interface TagDto {
+  id: string;
+  name: string;
+  icon?: string;
+  priority: number;
+  isActive: boolean;
+}
+
+export interface ProductDto {
+  id: string;
+  name: string;
+  description?: string;
+  basePrice: number;
+  isAvailable: boolean;
+  categoryId?: string;
+  businessId?: string;
+}
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+  path: string;
+  displayOrder: number;
+  parentId?: string;
+}
+
+export interface OrderSummaryDto {
+  id: string;
+  orderId: string;
+  businessName?: string;
+  customerPhone?: string;
+  status: string;
+  total: number;
+  createdAt: string;
+}
+
+export interface CustomerDto {
+  id: string;
+  name?: string;
+  phone: string;
+  email?: string;
+  isActive: boolean;
+  totalOrders: number;
+  createdAt: string;
+}
+
+export interface CouponDto {
+  id: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  isActive: boolean;
+  validTo?: string;
+  usedCount: number;
+}
+
+export interface DeliveryPartnerDto {
+  id: string;
+  name: string;
+  phone: string;
+  status: string;
+  isAvailable: boolean;
+  totalDeliveries: number;
+}
+
+export interface DeliveryZoneDto {
+  id: string;
+  name: string;
+  businessId?: string;
+  isActive: boolean;
+}
+
+export interface BannerAdminDto {
+  id: string;
+  title: string;
+  bannerType: string;
+  isActive: boolean;
+  displayOrder: number;
+  impressionCount: number;
+  clickCount: number;
+}
+
+export interface AdminUserDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  lastLoginAt?: string;
 }

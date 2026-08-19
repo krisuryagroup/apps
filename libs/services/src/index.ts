@@ -6,6 +6,7 @@ export * from './tokens';
 export * from './business-context.service';
 export * from './business-auth-token.service';
 export * from './admin-auth-token.service';
+export * from './business-api.service';
 export * from './toast.service';
 export * from './feature-flag.service';
 export * from './interceptors';
