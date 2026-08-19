@@ -40,7 +40,7 @@
 | RS-002b                 | Accept Admin Invite                                       | S    | `[ ]`  | zitro-api TASK-039 done — same caveat as RS-002                                   |
 | RS-003                  | Onboarding / KYC Completion (FSSAI, GST, PAN, bank, docs) | L    | `[ ]`  | zitro-api TASK-032 done — ready                                                   |
 | **Daily Operations**    |                                                           |      |        |                                                                                   |
-| RS-004                  | Dashboard                                                 | M    | `[!]`  | zitro-api TASK-034 (pending)                                                      |
+| RS-004                  | Dashboard                                                 | M    | `[ ]`  | ready — zitro-api TASK-034 done                                                   |
 | RS-005                  | Live Orders Queue                                         | L    | `[ ]`  | ready (`BusinessOrdersController`)                                                |
 | RS-006                  | Order Detail                                              | M    | `[ ]`  | ready (`GetOrderDetail`)                                                          |
 | **Menu Management**     |                                                           |      |        |                                                                                   |
