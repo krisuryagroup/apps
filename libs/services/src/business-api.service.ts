@@ -47,157 +47,295 @@ export class BusinessApiService {
   login(phone: string, password: string): Observable<BusinessLoginResponse> {
     return this.http.post<BusinessLoginResponse>(
       `${this.baseUrl}/api/business-auth/login`,
-      { phone, password },
+      { phoneNumber: phone, password },
     );
   }
 
   // ── Public application / invite ─────────────────────────────────────────────
 
   submitApplication(req: Record<string, unknown>): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/business-applications`, req);
+    return this.http.post<void>(
+      `${this.baseUrl}/api/business-applications`,
+      req,
+    );
   }
 
   validateInviteToken(token: string): Observable<{ businessName: string }> {
-    return this.http.get<{ businessName: string }>(`${this.baseUrl}/api/business-invite/${token}`);
+    return this.http.get<{ businessName: string }>(
+      `${this.baseUrl}/api/business-invite/${token}`,
+    );
   }
 
   acceptInvite(token: string, password: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/business-invite/${token}/accept`, { password });
+    return this.http.post<void>(
+      `${this.baseUrl}/api/business-invite/${token}/accept`,
+      { password },
+    );
   }
 
   // ── Dashboard ───────────────────────────────────────────────────────────────
 
   getDashboard(businessId: string): Observable<BusinessDashboardDto> {
-    return this.http.get<BusinessDashboardDto>(`${this.baseUrl}/api/business-portal/${businessId}/dashboard`);
+    return this.http.get<BusinessDashboardDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/dashboard`,
+    );
   }
 
   // ── Orders ──────────────────────────────────────────────────────────────────
 
-  listOrders(businessId: string, params?: Record<string, string>): Observable<BusinessOrderDto[]> {
+  listOrders(
+    businessId: string,
+    params?: Record<string, string>,
+  ): Observable<BusinessOrderDto[]> {
     let p = new HttpParams();
-    if (params) Object.entries(params).forEach(([k, v]) => { if (v) p = p.set(k, v); });
-    return this.http.get<BusinessOrderDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/orders`, { params: p });
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<BusinessOrderDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/orders`,
+      { params: p },
+    );
   }
 
-  getOrderDetail(businessId: string, orderId: string): Observable<BusinessOrderDetailDto> {
-    return this.http.get<BusinessOrderDetailDto>(`${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}`);
+  getOrderDetail(
+    businessId: string,
+    orderId: string,
+  ): Observable<BusinessOrderDetailDto> {
+    return this.http.get<BusinessOrderDetailDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}`,
+    );
   }
 
-  updateOrderStatus(businessId: string, orderId: string, status: string, note?: string): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}/status`, { status, note });
+  updateOrderStatus(
+    businessId: string,
+    orderId: string,
+    status: string,
+    note?: string,
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}/status`,
+      { status, note },
+    );
   }
 
   // ── Menu ────────────────────────────────────────────────────────────────────
 
   listCategories(businessId: string): Observable<MenuCategoryDto[]> {
-    return this.http.get<MenuCategoryDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/categories`);
+    return this.http.get<MenuCategoryDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/categories`,
+    );
   }
 
-  createCategory(businessId: string, req: Record<string, unknown>): Observable<MenuCategoryDto> {
-    return this.http.post<MenuCategoryDto>(`${this.baseUrl}/api/business-portal/${businessId}/categories`, req);
+  createCategory(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<MenuCategoryDto> {
+    return this.http.post<MenuCategoryDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/categories`,
+      req,
+    );
   }
 
-  updateCategory(businessId: string, categoryId: string, req: Record<string, unknown>): Observable<MenuCategoryDto> {
-    return this.http.put<MenuCategoryDto>(`${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`, req);
+  updateCategory(
+    businessId: string,
+    categoryId: string,
+    req: Record<string, unknown>,
+  ): Observable<MenuCategoryDto> {
+    return this.http.put<MenuCategoryDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`,
+      req,
+    );
   }
 
   deleteCategory(businessId: string, categoryId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`,
+    );
   }
 
-  listProducts(businessId: string, categoryId?: string): Observable<MenuItemDto[]> {
-    const params = categoryId ? new HttpParams().set('categoryId', categoryId) : undefined;
-    return this.http.get<MenuItemDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/products`, { params });
+  listProducts(
+    businessId: string,
+    categoryId?: string,
+  ): Observable<MenuItemDto[]> {
+    const params = categoryId
+      ? new HttpParams().set('categoryId', categoryId)
+      : undefined;
+    return this.http.get<MenuItemDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products`,
+      { params },
+    );
   }
 
-  createProduct(businessId: string, req: Record<string, unknown>): Observable<MenuItemDto> {
-    return this.http.post<MenuItemDto>(`${this.baseUrl}/api/business-portal/${businessId}/products`, req);
+  createProduct(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<MenuItemDto> {
+    return this.http.post<MenuItemDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products`,
+      req,
+    );
   }
 
-  updateProduct(businessId: string, productId: string, req: Record<string, unknown>): Observable<MenuItemDto> {
-    return this.http.put<MenuItemDto>(`${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`, req);
+  updateProduct(
+    businessId: string,
+    productId: string,
+    req: Record<string, unknown>,
+  ): Observable<MenuItemDto> {
+    return this.http.put<MenuItemDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`,
+      req,
+    );
   }
 
   deleteProduct(businessId: string, productId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`,
+    );
   }
 
-  parseMenuImages(businessId: string, files: File[]): Observable<MenuImportParseResult> {
+  parseMenuImages(
+    businessId: string,
+    files: File[],
+  ): Observable<MenuImportParseResult> {
     const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    return this.http.post<MenuImportParseResult>(`${this.baseUrl}/api/business-portal/${businessId}/menu-import/parse`, formData);
+    files.forEach((f) => formData.append('files', f));
+    return this.http.post<MenuImportParseResult>(
+      `${this.baseUrl}/api/business-portal/${businessId}/menu-import/parse`,
+      formData,
+    );
   }
 
-  commitMenuImport(businessId: string, categories: unknown[]): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/business-portal/${businessId}/menu-import/commit`, { categories });
+  commitMenuImport(
+    businessId: string,
+    categories: unknown[],
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/menu-import/commit`,
+      { categories },
+    );
   }
 
   // ── Profile ─────────────────────────────────────────────────────────────────
 
   getProfile(businessId: string): Observable<BusinessProfileDto> {
-    return this.http.get<BusinessProfileDto>(`${this.baseUrl}/api/business-portal/${businessId}`);
+    return this.http.get<BusinessProfileDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}`,
+    );
   }
 
-  updateProfile(businessId: string, req: Record<string, unknown>): Observable<BusinessProfileDto> {
-    return this.http.put<BusinessProfileDto>(`${this.baseUrl}/api/business-portal/${businessId}`, req);
+  updateProfile(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<BusinessProfileDto> {
+    return this.http.put<BusinessProfileDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}`,
+      req,
+    );
   }
 
   // ── Staff ───────────────────────────────────────────────────────────────────
 
   listStaff(businessId: string): Observable<StaffDto[]> {
-    return this.http.get<StaffDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/users`);
+    return this.http.get<StaffDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/users`,
+    );
   }
 
-  createStaff(businessId: string, req: Record<string, unknown>): Observable<StaffDto> {
-    return this.http.post<StaffDto>(`${this.baseUrl}/api/business-portal/${businessId}/users`, req);
+  createStaff(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<StaffDto> {
+    return this.http.post<StaffDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/users`,
+      req,
+    );
   }
 
-  updateStaff(businessId: string, userId: string, req: Record<string, unknown>): Observable<StaffDto> {
-    return this.http.put<StaffDto>(`${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`, req);
+  updateStaff(
+    businessId: string,
+    userId: string,
+    req: Record<string, unknown>,
+  ): Observable<StaffDto> {
+    return this.http.put<StaffDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
+      req,
+    );
   }
 
   // ── Inventory ───────────────────────────────────────────────────────────────
 
   getInventory(businessId: string): Observable<InventoryItemDto[]> {
-    return this.http.get<InventoryItemDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/inventory`);
+    return this.http.get<InventoryItemDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/inventory`,
+    );
   }
 
-  adjustInventory(businessId: string, req: { productId: string; quantity: number; reason: string }): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/business-portal/${businessId}/inventory/adjust`, req);
+  adjustInventory(
+    businessId: string,
+    req: { productId: string; quantity: number; reason: string },
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/inventory/adjust`,
+      req,
+    );
   }
 
   getInventoryAlerts(businessId: string): Observable<InventoryAlertDto[]> {
-    return this.http.get<InventoryAlertDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/inventory/alerts`);
+    return this.http.get<InventoryAlertDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/inventory/alerts`,
+    );
   }
 
   // ── Delivery zones ──────────────────────────────────────────────────────────
 
   listDeliveryZones(businessId: string): Observable<BusinessZoneDto[]> {
-    return this.http.get<BusinessZoneDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`);
+    return this.http.get<BusinessZoneDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`,
+    );
   }
 
-  createDeliveryZone(businessId: string, req: Record<string, unknown>): Observable<BusinessZoneDto> {
-    return this.http.post<BusinessZoneDto>(`${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`, req);
+  createDeliveryZone(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<BusinessZoneDto> {
+    return this.http.post<BusinessZoneDto>(
+      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`,
+      req,
+    );
   }
 
   deleteDeliveryZone(businessId: string, zoneId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/business-portal/${businessId}/delivery-zones/${zoneId}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones/${zoneId}`,
+    );
   }
 
   // ── Ratings ─────────────────────────────────────────────────────────────────
 
   listRatings(businessId: string): Observable<RatingDto[]> {
-    return this.http.get<RatingDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/ratings`);
+    return this.http.get<RatingDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/ratings`,
+    );
   }
 
-  replyToRating(businessId: string, ratingId: string, reply: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/business-portal/${businessId}/ratings/${ratingId}/reply`, { reply });
+  replyToRating(
+    businessId: string,
+    ratingId: string,
+    reply: string,
+  ): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/ratings/${ratingId}/reply`,
+      { reply },
+    );
   }
 
   // ── Payouts ─────────────────────────────────────────────────────────────────
 
   listPayouts(businessId: string): Observable<PayoutDto[]> {
-    return this.http.get<PayoutDto[]>(`${this.baseUrl}/api/business-portal/${businessId}/payouts`);
+    return this.http.get<PayoutDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/payouts`,
+    );
   }
 }
 
