@@ -132,8 +132,23 @@ export class RestaurantProfileComponent implements OnInit {
         gstNumber: this.f.gst,
       })
       .subscribe({
-        next: (p) => {
-          this.profile.set(p);
+        next: () => {
+          // PUT returns 204 No Content by design (see BusinessPortalController.UpdateProfile)
+          // — there's no response body to re-set profile() from, so merge the saved fields
+          // into the existing signal instead. Setting profile() to the (undefined) response
+          // body used to null it out entirely, collapsing the whole form after every save.
+          this.profile.update((p) =>
+            p
+              ? {
+                  ...p,
+                  name: this.f.name,
+                  description: this.f.description,
+                  phone: this.f.phone,
+                  fssaiLicenseNumber: this.f.fssai,
+                  gstNumber: this.f.gst,
+                }
+              : p,
+          );
           this.saving.set(false);
           this.saveSuccess.set(true);
         },

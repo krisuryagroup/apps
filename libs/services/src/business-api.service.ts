@@ -251,8 +251,8 @@ export class BusinessApiService {
   updateProfile(
     businessId: string,
     req: Record<string, unknown>,
-  ): Observable<BusinessProfileDto> {
-    return this.http.put<BusinessProfileDto>(
+  ): Observable<void> {
+    return this.http.put<void>(
       `${this.baseUrl}/api/business-portal/${businessId}`,
       req,
     );
