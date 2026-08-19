@@ -1,0 +1,262 @@
+<div class="page-header">
+  <h1 class="page-title">{{ 'translations.title' | i18n }}</h1>
+</div>
+
+<div class="filters">
+  <div class="filter-group">
+    <label class="filter-label" for="lang-select">{{
+      'translations.language' | i18n
+    }}</label>
+    <select
+      id="lang-select"
+      data-testid="lang-select"
+      class="select"
+      [(ngModel)]="selectedLang"
+      (ngModelChange)="onLangChange()"
+    >
+      @for (lang of languages(); track lang.code) {
+        <option [value]="lang.code">
+          {{ lang.nativeName }} ({{ lang.code }})
+        </option>
+      }
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label" for="trans-app">{{
+      'translations.app' | i18n
+    }}</label>
+    <select
+      id="trans-app"
+      class="select"
+      [(ngModel)]="selectedApp"
+      (ngModelChange)="onAppChange()"
+    >
+      @for (app of appOptions; track app) {
+        <option [value]="app">
+          {{ app || ('translations.allApps' | i18n) }}
+        </option>
+      }
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label" for="trans-search">{{
+      'translations.search' | i18n
+    }}</label>
+    <input
+      id="trans-search"
+      data-testid="translation-search"
+      class="input"
+      type="search"
+      [(ngModel)]="searchQuery"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="{{ 'translations.searchPlaceholder' | i18n }}"
+    />
+  </div>
+  <button
+    class="btn btn-outline"
+    data-testid="translation-missing-report"
+    (click)="showMissingReport.set(!showMissingReport())"
+  >
+    {{ 'translations.missingReport' | i18n }} ({{ missingKeys().length }})
+  </button>
+</div>
+
+@if (showMissingReport()) {
+  <div class="missing-report">
+    <h3 class="missing-title">
+      {{ 'translations.missingReportTitle' | i18n }}
+    </h3>
+    @if (missingKeys().length === 0) {
+      <p>{{ 'translations.noMissing' | i18n }}</p>
+    } @else {
+      <ul class="missing-list">
+        @for (key of missingKeys(); track key) {
+          <li class="missing-key">
+            <code>{{ key }}</code>
+            <button
+              class="btn-link"
+              (click)="newKey = key; showMissingReport.set(false)"
+            >
+              {{ 'translations.addThis' | i18n }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
+
+@if (selectedLang() === 'en') {
+  <p class="info-note">{{ 'translations.enNote' | i18n }}</p>
+} @else {
+  @if (loadError()) {
+    <p class="error-banner">{{ loadError()! | i18n }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading-text">{{ 'common.loading' | i18n }}</p>
+  } @else {
+    <table class="table">
+      <thead>
+        <tr>
+          <th>{{ 'translations.key' | i18n }}</th>
+          <th>{{ 'translations.app' | i18n }}</th>
+          <th>{{ 'translations.value' | i18n }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of filteredRows(); track trackByKey($index, row)) {
+          <tr data-testid="translation-key-row">
+            <td class="key-cell">
+              <code>{{ row.key }}</code>
+            </td>
+            <td class="app-cell">{{ row.app || '—' }}</td>
+            <td class="value-cell">
+              @if (row.editing) {
+                <input
+                  data-testid="translation-value-input"
+                  class="input input-value"
+                  [(ngModel)]="row.editValue"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+              } @else {
+                {{ row.value }}
+              }
+            </td>
+            <td class="actions-cell">
+              @if (row.editing) {
+                <button
+                  class="btn btn-sm btn-primary"
+                  [disabled]="row.saving"
+                  (click)="saveEdit(row)"
+                >
+                  {{ 'common.save' | i18n }}
+                </button>
+                <button
+                  class="btn btn-sm btn-outline"
+                  (click)="cancelEdit(row)"
+                >
+                  {{ 'common.cancel' | i18n }}
+                </button>
+              } @else {
+                <button class="btn btn-sm btn-outline" (click)="startEdit(row)">
+                  {{ 'common.edit' | i18n }}
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="deleteRow(row)">
+                  {{ 'common.delete' | i18n }}
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty-cell">
+              {{ 'translations.empty' | i18n }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Add row -->
+    <div class="add-form">
+      <h3 class="add-title">{{ 'translations.addKey' | i18n }}</h3>
+      <div class="add-row">
+        <input
+          class="input"
+          [(ngModel)]="newKey"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="{{ 'translations.keyPlaceholder' | i18n }}"
+        />
+        <input
+          class="input"
+          [(ngModel)]="newValue"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="{{ 'translations.valuePlaceholder' | i18n }}"
+        />
+        <select
+          class="select"
+          [(ngModel)]="newApp"
+          [ngModelOptions]="{ standalone: true }"
+        >
+          @for (app of appOptions; track app) {
+            <option [value]="app">
+              {{ app || ('translations.allApps' | i18n) }}
+            </option>
+          }
+        </select>
+        <button
+          class="btn btn-primary"
+          [disabled]="!newKey.trim() || !newValue.trim() || adding()"
+          (click)="addRow()"
+        >
+          {{ 'common.add' | i18n }}
+        </button>
+      </div>
+      @if (addError()) {
+        <p class="error-text">{{ addError()! | i18n }}</p>
+      }
+    </div>
+
+    <!-- CSV Import -->
+    <div class="import-section">
+      <h3 class="import-title">{{ 'translations.bulkImport' | i18n }}</h3>
+      <p class="import-hint">{{ 'translations.bulkImportHint' | i18n }}</p>
+      <input
+        data-testid="translation-bulk-import-btn"
+        type="file"
+        accept=".csv,.txt"
+        class="file-input"
+        (change)="onCsvFileChange($event)"
+      />
+      @if (csvError()) {
+        <p class="error-text">{{ csvError()! | i18n }}</p>
+      }
+      @if (csvPreview().length > 0) {
+        <div class="csv-preview">
+          <p class="preview-count">
+            {{ csvPreview().length }} {{ 'translations.rowsToImport' | i18n }}
+          </p>
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>{{ 'translations.key' | i18n }}</th>
+                <th>{{ 'translations.value' | i18n }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of csvPreview().slice(0, 5); track row.key) {
+                <tr>
+                  <td>
+                    <code>{{ row.key }}</code>
+                  </td>
+                  <td>{{ row.value }}</td>
+                </tr>
+              }
+              @if (csvPreview().length > 5) {
+                <tr>
+                  <td colspan="2" class="empty-cell">
+                    …{{ csvPreview().length - 5 }}
+                    {{ 'translations.more' | i18n }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <button
+            class="btn btn-primary"
+            [disabled]="importing()"
+            (click)="commitCsv()"
+          >
+            {{
+              importing()
+                ? ('common.saving' | i18n)
+                : ('translations.commitImport' | i18n)
+            }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+}

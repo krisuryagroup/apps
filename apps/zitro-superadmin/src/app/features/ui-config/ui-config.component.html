@@ -1,0 +1,66 @@
+<div class="page-header">
+  <h1 class="page-title">{{ 'uiConfig.title' | i18n }}</h1>
+  <p class="page-subtitle">{{ 'uiConfig.subtitle' | i18n }}</p>
+</div>
+
+<div class="app-select-row">
+  <label class="filter-label" for="ui-app">{{ 'uiConfig.app' | i18n }}</label>
+  <select
+    id="ui-app"
+    class="select"
+    [(ngModel)]="selectedApp"
+    (ngModelChange)="onAppChange()"
+  >
+    @for (app of apps; track app) {
+      <option [value]="app">{{ app }}</option>
+    }
+  </select>
+</div>
+
+@if (loadError()) {
+  <p class="error-banner">{{ loadError()! | i18n }}</p>
+}
+
+@if (loading()) {
+  <p class="loading-text">{{ 'common.loading' | i18n }}</p>
+} @else {
+  <div class="editor-section">
+    <div class="editor-header">
+      <label class="form-label" for="json-editor">{{
+        'uiConfig.configJson' | i18n
+      }}</label>
+      <button class="btn btn-outline btn-sm" (click)="formatJson()">
+        {{ 'uiConfig.format' | i18n }}
+      </button>
+    </div>
+    <textarea
+      id="json-editor"
+      class="json-editor"
+      [value]="editValue"
+      (input)="onEditChange($any($event.target).value)"
+      rows="20"
+      spellcheck="false"
+    ></textarea>
+
+    @if (jsonError()) {
+      <p class="error-text">{{ jsonError()! | i18n }}</p>
+    }
+
+    <div class="actions-row">
+      <button
+        class="btn btn-primary"
+        [disabled]="saving() || !!jsonError()"
+        (click)="save()"
+      >
+        {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
+      </button>
+      @if (saveError()) {
+        <span class="error-text">{{ saveError()! | i18n }}</span>
+      }
+      @if (saveSuccess()) {
+        <span class="success-text">{{ 'uiConfig.saved' | i18n }}</span>
+      }
+    </div>
+    <p class="hint-text">{{ 'uiConfig.hint' | i18n }}</p>
+  </div>
+}

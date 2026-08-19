@@ -1,0 +1,178 @@
+<div class="page-header">
+  <div class="page-header-row">
+    <h1 class="page-title">{{ 'themes.title' | i18n }}</h1>
+    <button
+      class="btn btn-primary"
+      data-testid="theme-add-btn"
+      (click)="openCreate()"
+    >
+      + {{ 'themes.add' | i18n }}
+    </button>
+  </div>
+</div>
+
+@if (loadError()) {
+  <p class="error-banner">{{ loadError()! | i18n }}</p>
+}
+
+@if (loading()) {
+  <p class="loading-text">{{ 'common.loading' | i18n }}</p>
+} @else {
+  <div class="theme-list" data-testid="theme-list">
+    @for (theme of themes(); track trackById($index, theme)) {
+      <div class="theme-card" [class.built-in]="theme.isBuiltIn">
+        <div
+          class="theme-preview-swatch"
+          [style.background]="
+            theme.previewColor || 'var(--zitro-color-primary)'
+          "
+        ></div>
+        <div class="theme-info">
+          <span class="theme-name">{{ theme.name }}</span>
+          @if (theme.isBuiltIn) {
+            <span class="badge badge-built-in">{{
+              'themes.builtIn' | i18n
+            }}</span>
+          }
+        </div>
+        <div class="theme-actions">
+          @if (!theme.isBuiltIn) {
+            <button class="btn btn-sm btn-outline" (click)="openEdit(theme)">
+              {{ 'common.edit' | i18n }}
+            </button>
+          }
+        </div>
+      </div>
+    } @empty {
+      <p class="empty-text">{{ 'themes.empty' | i18n }}</p>
+    }
+  </div>
+}
+
+<!-- Create / Edit panel -->
+@if (editMode() !== 'none') {
+  <div class="edit-overlay">
+    <div class="edit-panel">
+      <h2 class="panel-title">
+        {{
+          (editMode() === 'create' ? 'themes.createTitle' : 'themes.editTitle')
+            | i18n
+        }}
+      </h2>
+
+      <div class="form-group">
+        <label class="form-label" for="theme-name">{{
+          'themes.name' | i18n
+        }}</label>
+        <input
+          id="theme-name"
+          class="input"
+          [(ngModel)]="formName"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="My Custom Theme"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="theme-preview-color">{{
+          'themes.previewColor' | i18n
+        }}</label>
+        <div class="color-row">
+          <input
+            type="color"
+            class="color-input"
+            id="theme-preview-color"
+            [(ngModel)]="formPreviewColor"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <input
+            class="input"
+            [(ngModel)]="formPreviewColor"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="#c73e3a"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="theme-tokens">{{
+          'themes.tokens' | i18n
+        }}</label>
+        <div id="theme-tokens" class="tokens-list">
+          @for (token of formTokens(); track $index) {
+            <div class="token-row">
+              <input
+                class="input input-token-name"
+                [attr.data-testid]="
+                  'theme-token-input-' + (token.name || $index)
+                "
+                [value]="token.name"
+                (input)="updateTokenName($index, $any($event.target).value)"
+                placeholder="--zitro-color-primary"
+              />
+              <input
+                class="input"
+                [value]="token.value"
+                (input)="updateTokenValue($index, $any($event.target).value)"
+                placeholder="#c73e3a"
+              />
+              @if (token.value && token.value.match('^#')) {
+                <input
+                  type="color"
+                  class="color-input-sm"
+                  [value]="token.value"
+                  (input)="updateTokenValue($index, $any($event.target).value)"
+                />
+              }
+              <button class="btn-icon" (click)="removeTokenRow($index)">
+                ✕
+              </button>
+            </div>
+          }
+          <button class="btn btn-outline btn-sm" (click)="addTokenRow()">
+            + {{ 'themes.addToken' | i18n }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="form-group">
+        <label class="form-label" for="theme-preview">{{
+          'themes.preview' | i18n
+        }}</label>
+        <div
+          id="theme-preview"
+          class="preview-pane"
+          data-testid="theme-preview-pane"
+          [ngStyle]="previewStyle()"
+        >
+          <button class="preview-btn">
+            {{ 'themes.previewButton' | i18n }}
+          </button>
+          <div class="preview-card">
+            <div class="preview-tag"></div>
+            <div class="preview-text">Sample text</div>
+          </div>
+        </div>
+      </div>
+
+      @if (saveError()) {
+        <p class="error-text">{{ saveError()! | i18n }}</p>
+      }
+
+      <div class="panel-actions">
+        <button
+          class="btn btn-primary"
+          data-testid="theme-save-btn"
+          [disabled]="!formName.trim() || saving()"
+          (click)="save()"
+        >
+          {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
+        </button>
+        <button class="btn btn-outline" (click)="closeForm()">
+          {{ 'common.cancel' | i18n }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

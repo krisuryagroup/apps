@@ -1,0 +1,127 @@
+<div class="page-header">
+  <h1 class="page-title">{{ 'featureFlags.title' | i18n }}</h1>
+  <p class="page-subtitle">{{ 'featureFlags.subtitle' | i18n }}</p>
+</div>
+
+<div class="filters">
+  <div class="filter-group">
+    <label class="filter-label" for="flag-app">{{
+      'featureFlags.app' | i18n
+    }}</label>
+    <select
+      id="flag-app"
+      data-testid="flag-app-select"
+      class="select"
+      [(ngModel)]="selectedApp"
+      (ngModelChange)="onAppChange()"
+    >
+      @for (app of apps; track app) {
+        <option [value]="app">{{ app }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <label class="filter-label" for="flag-platform">{{
+      'featureFlags.platform' | i18n
+    }}</label>
+    <select id="flag-platform" class="select" [(ngModel)]="selectedPlatform">
+      @for (p of platforms; track p) {
+        <option [value]="p">{{ p }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+@if (loadError()) {
+  <p class="error-banner">{{ loadError()! | i18n }}</p>
+}
+
+@if (loading()) {
+  <p class="loading-text">{{ 'common.loading' | i18n }}</p>
+} @else {
+  <div class="flags-section">
+    <table class="flags-table" data-testid="flag-list">
+      <thead>
+        <tr>
+          <th>{{ 'featureFlags.key' | i18n }}</th>
+          <th>{{ 'featureFlags.platform' | i18n }}</th>
+          <th>{{ 'featureFlags.status' | i18n }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (flag of filteredFlags(); track trackByKey($index, flag)) {
+          <tr class="flag-row" [attr.data-testid]="'flag-row-' + flag.key">
+            <td class="flag-key">{{ flag.key }}</td>
+            <td class="flag-platform">{{ flag.platform }}</td>
+            <td>
+              <button
+                class="toggle-btn"
+                [class.toggle-on]="flag.isEnabled"
+                [attr.data-testid]="'flag-toggle-' + flag.key"
+                [disabled]="flag.saving"
+                (click)="toggle(flag)"
+                [attr.aria-label]="flag.key"
+              >
+                {{
+                  flag.isEnabled
+                    ? ('featureFlags.on' | i18n)
+                    : ('featureFlags.off' | i18n)
+                }}
+              </button>
+            </td>
+            <td>
+              @if (flag.error) {
+                <span class="row-error">{{ flag.error | i18n }}</span>
+              }
+              @if (flag.saving) {
+                <span class="saving-text">{{ 'common.saving' | i18n }}</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty-cell">
+              {{ 'featureFlags.empty' | i18n }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Add new flag -->
+    <div class="add-flag-form">
+      <h3 class="add-flag-title">{{ 'featureFlags.addTitle' | i18n }}</h3>
+      <div class="add-flag-row">
+        <input
+          class="input"
+          [(ngModel)]="newKey"
+          placeholder="{{ 'featureFlags.keyPlaceholder' | i18n }}"
+        />
+        <input
+          class="input input-sm"
+          [(ngModel)]="newDescription"
+          placeholder="{{ 'featureFlags.descriptionPlaceholder' | i18n }}"
+        />
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="newEnabled" />
+          {{ 'featureFlags.enabledByDefault' | i18n }}
+        </label>
+        <button
+          class="btn btn-primary"
+          data-testid="flag-save-btn"
+          [disabled]="!newKey.trim() || adding()"
+          (click)="addFlag()"
+        >
+          {{ 'featureFlags.add' | i18n }}
+        </button>
+      </div>
+      @if (addError()) {
+        <p class="error-text">{{ addError()! | i18n }}</p>
+      }
+    </div>
+
+    <p class="cache-note">{{ 'featureFlags.cacheNote' | i18n }}</p>
+  </div>
+}

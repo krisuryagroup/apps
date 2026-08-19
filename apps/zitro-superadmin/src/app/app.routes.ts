@@ -3,6 +3,10 @@ import { AdminLoginComponent } from '@zitro/admin-ui';
 import { ComingSoonComponent } from '@zitro/ui';
 import { adminAuthGuard, guestOnlyGuard } from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
+import { FeatureFlagsComponent } from './features/feature-flags/feature-flags.component';
+import { TranslationsComponent } from './features/translations/translations.component';
+import { ThemesComponent } from './features/themes/themes.component';
+import { UiConfigComponent } from './features/ui-config/ui-config.component';
 
 // NOTE: the AD-002..AD-019 routes below are placeholders today, same as zitro-admin's.
 // SA-002 (compose shared admin screens) is the task that rewires these to import the
@@ -107,23 +111,19 @@ export const routes: Routes = [
       },
       {
         path: 'feature-flags',
-        component: ComingSoonComponent,
-        data: { title: 'SA-003 — Feature Flags Management' },
+        component: FeatureFlagsComponent,
       },
       {
         path: 'translations',
-        component: ComingSoonComponent,
-        data: { title: 'SA-004 — Translations Management' },
+        component: TranslationsComponent,
       },
       {
         path: 'themes',
-        component: ComingSoonComponent,
-        data: { title: 'SA-005 — Theme Management' },
+        component: ThemesComponent,
       },
       {
         path: 'ui-config',
-        component: ComingSoonComponent,
-        data: { title: 'SA-006 — Per-App UI Config Management' },
+        component: UiConfigComponent,
       },
     ],
   },

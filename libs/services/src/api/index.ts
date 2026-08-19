@@ -3,6 +3,13 @@ export { AdminApiService } from './admin-api.service';
 export type {
   AdminLoginRequest,
   AdminLoginResponse,
+  AppConfigResponse,
+  TranslationsResponse,
+  SupportedLanguage,
+  TranslationDto,
+  AppFeatureFlagDto,
+  AppThemeDto,
+  UiConfigDto,
 } from './admin-api.service';
 export { BannerApiService } from './banner-api.service';
 export { CouponApiService } from './coupon-api.service';

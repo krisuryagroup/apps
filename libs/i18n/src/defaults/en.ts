@@ -18,6 +18,7 @@ export const EN_DEFAULTS = {
     remove: 'Remove',
     or: 'or',
     readMore: 'read more',
+    add: 'Add',
     readLess: 'read less',
     clickToZoom: 'Click to zoom',
     zoomIn: 'Zoom in',
@@ -540,6 +541,90 @@ export const EN_DEFAULTS = {
     errorInvalidCredentials: 'Invalid email or password.',
     errorDeactivated:
       'This account has been deactivated. Contact your administrator.',
+  },
+  // ── SA-003 — Feature Flags ──────────────────────────────────────────────────
+  featureFlags: {
+    title: 'Feature Flags',
+    subtitle:
+      'Toggle per-app, per-platform feature switches. Changes propagate within 1 hour (cache TTL).',
+    app: 'App',
+    platform: 'Platform',
+    key: 'Flag key',
+    status: 'Status',
+    on: 'On',
+    off: 'Off',
+    empty: 'No flags found for this app.',
+    loadError: 'Failed to load feature flags.',
+    saveError: 'Failed to save flag.',
+    addTitle: 'Add / upsert flag',
+    keyPlaceholder: 'e.g. wallet',
+    descriptionPlaceholder: 'Optional description',
+    enabledByDefault: 'Enabled',
+    add: 'Add flag',
+    cacheNote:
+      'Flag changes are read fresh on every API call \u2014 no cache \u2014 so they take effect immediately for the backend. The frontend app-config response is cached for 1 hour.',
+  },
+  // ── SA-004 — Translations ──────────────────────────────────────────────────
+  translations: {
+    title: 'Translations',
+    language: 'Language',
+    app: 'App',
+    allApps: 'All apps (global)',
+    search: 'Search',
+    searchPlaceholder: 'Filter by key or value\u2026',
+    key: 'Key',
+    value: 'Value',
+    empty: 'No translations found.',
+    loadError: 'Failed to load translations.',
+    saveError: 'Failed to save translation.',
+    addKey: 'Add translation key',
+    keyPlaceholder: 'e.g. buttons.addToCart',
+    valuePlaceholder: 'Translated value',
+    bulkImport: 'Bulk import (CSV)',
+    bulkImportHint:
+      'Upload a CSV file with two columns: key,value (no header row).',
+    csvParseError: 'Could not parse the CSV file.',
+    rowsToImport: 'rows to import',
+    more: 'more',
+    commitImport: 'Import all',
+    missingReport: 'Missing keys',
+    missingReportTitle:
+      'Keys present in English but missing from this language',
+    noMissing: 'All English keys are present in this language.',
+    addThis: 'Add',
+    enNote:
+      'English is the baseline \u2014 it lives in the frontend bundle (@zitro/i18n/defaults/en.ts) and is never stored in the database.',
+  },
+  // ── SA-005 — Themes ────────────────────────────────────────────────────────
+  themes: {
+    title: 'Themes',
+    add: 'New theme',
+    empty: 'No themes found.',
+    loadError: 'Failed to load themes.',
+    saveError: 'Failed to save theme.',
+    builtIn: 'Built-in',
+    createTitle: 'Create theme',
+    editTitle: 'Edit theme',
+    name: 'Name',
+    previewColor: 'Preview color (hex)',
+    tokens: 'CSS token overrides',
+    addToken: 'Add token',
+    preview: 'Live preview',
+    previewButton: 'Button',
+  },
+  // ── SA-006 — UI Config ─────────────────────────────────────────────────────
+  uiConfig: {
+    title: 'Per-App UI Config',
+    subtitle:
+      'Edit the JSON config blob for each app. Shape is open-ended \u2014 check the architecture doc for documented fields.',
+    app: 'App',
+    configJson: 'Config JSON',
+    format: 'Format JSON',
+    hint: 'Changes are applied on the next GET /api/app-config call (cached 1 hour). Use the maintenance.isUnderMaintenance field to put an app in maintenance mode.',
+    invalidJson: 'Invalid JSON \u2014 fix syntax before saving.',
+    loadError: 'Failed to load UI config.',
+    saveError: 'Failed to save UI config.',
+    saved: 'Saved successfully.',
   },
 } as const;
 
