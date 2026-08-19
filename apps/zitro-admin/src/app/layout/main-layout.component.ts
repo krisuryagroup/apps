@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { SidebarNavComponent, SidebarNavItem } from '@zitro/admin-ui';
-import { AdminAuthTokenService } from '@zitro/services';
+import { AdminApiService, AdminAuthTokenService } from '@zitro/services';
 
 const NAV_ITEMS: SidebarNavItem[] = [
   { labelKey: 'nav.dashboard', icon: '📊', route: '/dashboard' },
@@ -25,6 +30,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
     route: '/admins',
     permission: 'admins:read',
   },
+  { labelKey: 'nav.myProfile', icon: '👤', route: '/my-profile' },
 ];
 
 @Component({
@@ -33,7 +39,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   imports: [RouterOutlet, SidebarNavComponent],
   template: `
     <lib-sidebar-nav
-      [items]="navItems"
+      [items]="navItems()"
       titleKey="app.name"
       (logoutClicked)="logout()"
     />
@@ -54,9 +60,18 @@ const NAV_ITEMS: SidebarNavItem[] = [
 })
 export class MainLayoutComponent {
   private readonly tokenService = inject(AdminAuthTokenService);
+  private readonly api = inject(AdminApiService);
   private readonly router = inject(Router);
 
-  protected readonly navItems = NAV_ITEMS;
+  // Was previously unfiltered — every NAV_ITEM rendered regardless of its `permission`
+  // field, so a non-SuperAdmin role saw "Admins" in the sidebar even though every write
+  // (and the list itself) 403s server-side. The item's own `permission: 'admins:read'`
+  // tag existed but nothing ever read it.
+  protected readonly navItems = computed(() =>
+    NAV_ITEMS.filter(
+      (item) => !item.permission || this.api.hasPermission(item.permission),
+    ),
+  );
 
   logout(): void {
     this.tokenService.clearToken();

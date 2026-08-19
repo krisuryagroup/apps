@@ -26,6 +26,7 @@ export type {
   DeliveryZoneDto,
   BannerAdminDto,
   AdminUserDto,
+  MyProfileDto,
 } from './admin-api.service';
 export { BannerApiService } from './banner-api.service';
 export { CouponApiService } from './coupon-api.service';

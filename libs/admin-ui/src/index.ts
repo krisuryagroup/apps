@@ -19,4 +19,5 @@ export * from './delivery-zones/admin-delivery-zones.component';
 export * from './payouts/admin-payouts.component';
 export * from './banners/admin-banners.component';
 export * from './admin-users/admin-admin-users.component';
+export * from './my-profile/admin-my-profile.component';
 export * from './stubs/admin-stubs.component';

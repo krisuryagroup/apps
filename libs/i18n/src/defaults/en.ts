@@ -521,6 +521,7 @@ export const EN_DEFAULTS = {
     subscriptions: 'Subscriptions',
     banners: 'Banners',
     admins: 'Admins',
+    myProfile: 'My Profile',
     featureFlags: 'Feature Flags',
     translations: 'Translations',
     themes: 'Themes',
@@ -773,6 +774,16 @@ export const EN_DEFAULTS = {
     add: 'Add Admin',
     deactivate: 'Deactivate',
     activate: 'Activate',
+    resetPassword: 'Reset Password',
+    newPassword: 'New Password',
+    resetPasswordSuccess: 'Password reset successfully.',
+  },
+  myProfile: {
+    title: 'My Profile',
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    changeSuccess: 'Password changed successfully.',
   },
   // ── Restaurant portal keys (RS-001..RS-016) ───────────────────────────────
   restaurant: {

@@ -1,7 +1,27 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
+import { AdminAuthTokenService } from '../admin-auth-token.service';
+
+interface AdminJwtPayload {
+  sub: string;
+  role: string;
+  exp: number;
+  /** JWT encodes repeated "permission" claims — a single one decodes as a bare string, not an array. */
+  permission?: string | string[];
+}
+
+/** Decode a JWT payload without verifying signature — client-side only. */
+function decodeAdminJwt(token: string): AdminJwtPayload | null {
+  try {
+    const base64Payload = token.split('.')[1];
+    const payload = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(payload) as AdminJwtPayload;
+  } catch {
+    return null;
+  }
+}
 
 export interface AdminLoginRequest {
   email: string;
@@ -87,6 +107,32 @@ export interface UiConfigDto {
 export class AdminApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(ZITRO_API_BASE_URL);
+  private readonly tokenService = inject(AdminAuthTokenService);
+
+  /** Decoded payload from the stored Admin JWT, or null if not logged in. */
+  readonly currentAdmin = computed<AdminJwtPayload | null>(() => {
+    const token = this.tokenService.token();
+    if (!token) return null;
+    return decodeAdminJwt(token);
+  });
+
+  /** JWT `role` claim is lowercase snake_case (super_admin/ops/support/finance) — see TokenService.CreateAdminToken. */
+  readonly isSuperAdmin = computed(
+    () => this.currentAdmin()?.role === 'super_admin',
+  );
+
+  private readonly currentPermissions = computed<string[]>(() => {
+    const p = this.currentAdmin()?.permission;
+    if (!p) return [];
+    return Array.isArray(p) ? p : [p];
+  });
+
+  /** SuperAdmin bypasses all permission checks server-side too — see RequirePermissionAttribute. */
+  hasPermission(permission: string): boolean {
+    return (
+      this.isSuperAdmin() || this.currentPermissions().includes(permission)
+    );
+  }
 
   // ── Auth ────────────────────────────────────────────────────────────────────
 
@@ -603,6 +649,36 @@ export class AdminApiService {
       {},
     );
   }
+
+  resetAdminPassword(id: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/admin/admins/${id}/reset-password`,
+      { newPassword },
+    );
+  }
+
+  getMyProfile(): Observable<MyProfileDto> {
+    return this.http.get<MyProfileDto>(`${this.baseUrl}/api/admin/admins/me`);
+  }
+
+  changeMyPassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/api/admin/admins/me/password`, {
+      currentPassword,
+      newPassword,
+    });
+  }
+}
+
+export interface MyProfileDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  lastLoginAt?: string;
+  permissions: string[];
 }
 
 // ── Shared DTO types ──────────────────────────────────────────────────────────

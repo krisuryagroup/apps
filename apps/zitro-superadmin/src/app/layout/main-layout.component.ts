@@ -22,6 +22,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { labelKey: 'nav.subscriptions', icon: '⭐', route: '/subscriptions' },
   { labelKey: 'nav.banners', icon: '🖼️', route: '/banners' },
   { labelKey: 'nav.admins', icon: '🛡️', route: '/admins' },
+  { labelKey: 'nav.myProfile', icon: '👤', route: '/my-profile' },
   { labelKey: 'nav.featureFlags', icon: '🚩', route: '/feature-flags' },
   { labelKey: 'nav.translations', icon: '🌐', route: '/translations' },
   { labelKey: 'nav.themes', icon: '🎨', route: '/themes' },

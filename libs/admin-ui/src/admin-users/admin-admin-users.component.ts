@@ -37,6 +37,13 @@ import {
               : ('admins.activate' | i18n)
           }}
         </button>
+        <button
+          class="btn btn-sm btn-outline"
+          data-testid="admin-reset-password-btn"
+          (click)="openResetPassword(row)"
+        >
+          {{ 'admins.resetPassword' | i18n }}
+        </button>
       </ng-template>
     </lib-data-table>
     @if (showForm()) {
@@ -94,6 +101,59 @@ import {
         </div>
       </div>
     }
+    @if (resetPasswordTarget(); as target) {
+      <div class="overlay">
+        <div class="panel">
+          <h2 class="panel-title">
+            {{ 'admins.resetPassword' | i18n }} — {{ target.name }}
+          </h2>
+          <div class="form-grid">
+            <label for="adm-reset-pass" class="form-label">{{
+              'admins.newPassword' | i18n
+            }}</label>
+            <input
+              id="adm-reset-pass"
+              class="input"
+              type="password"
+              data-testid="admin-reset-password-input"
+              [(ngModel)]="resetPasswordValue"
+            />
+          </div>
+          @if (resetPasswordError()) {
+            <p class="error-text">{{ resetPasswordError() }}</p>
+          }
+          @if (resetPasswordSuccess()) {
+            <p class="success-text">
+              {{ 'admins.resetPasswordSuccess' | i18n }}
+            </p>
+          }
+          <div class="panel-actions">
+            <button
+              class="btn btn-primary"
+              data-testid="admin-reset-password-confirm-btn"
+              [disabled]="
+                !resetPasswordValue ||
+                resetPasswordValue.length < 8 ||
+                resetPasswordSaving()
+              "
+              (click)="confirmResetPassword(target)"
+            >
+              {{
+                resetPasswordSaving()
+                  ? ('common.saving' | i18n)
+                  : ('common.save' | i18n)
+              }}
+            </button>
+            <button
+              class="btn btn-outline"
+              (click)="resetPasswordTarget.set(null)"
+            >
+              {{ 'common.cancel' | i18n }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `
@@ -110,6 +170,11 @@ export class AdminAdminUsersComponent implements OnInit {
   protected saving = signal(false);
   protected saveError = signal<string | null>(null);
   protected f = { name: '', email: '', password: '', role: 'Ops' };
+  protected resetPasswordTarget = signal<AdminUserDto | null>(null);
+  protected resetPasswordValue = '';
+  protected resetPasswordSaving = signal(false);
+  protected resetPasswordError = signal<string | null>(null);
+  protected resetPasswordSuccess = signal(false);
 
   protected readonly columns: DataTableColumn<AdminUserDto>[] = [
     { key: 'name', labelKey: 'admins.name' },
@@ -176,6 +241,28 @@ export class AdminAdminUsersComponent implements OnInit {
               }
             : r,
         ),
+    });
+  }
+
+  protected openResetPassword(a: AdminUserDto): void {
+    this.resetPasswordTarget.set(a);
+    this.resetPasswordValue = '';
+    this.resetPasswordError.set(null);
+    this.resetPasswordSuccess.set(false);
+  }
+
+  protected confirmResetPassword(a: AdminUserDto): void {
+    this.resetPasswordSaving.set(true);
+    this.resetPasswordError.set(null);
+    this.api.resetAdminPassword(a.id, this.resetPasswordValue).subscribe({
+      next: () => {
+        this.resetPasswordSaving.set(false);
+        this.resetPasswordSuccess.set(true);
+      },
+      error: () => {
+        this.resetPasswordSaving.set(false);
+        this.resetPasswordError.set('Failed to reset password.');
+      },
     });
   }
 }

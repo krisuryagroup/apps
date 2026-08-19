@@ -19,6 +19,7 @@ import {
   AdminSubscriptionsComponent,
   AdminBannersComponent,
   AdminAdminUsersComponent,
+  AdminMyProfileComponent,
 } from '@zitro/admin-ui';
 import { adminAuthGuard, guestOnlyGuard } from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
@@ -53,6 +54,7 @@ export const routes: Routes = [
       { path: 'subscriptions', component: AdminSubscriptionsComponent },
       { path: 'banners', component: AdminBannersComponent },
       { path: 'admins', component: AdminAdminUsersComponent },
+      { path: 'my-profile', component: AdminMyProfileComponent },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },
