@@ -29,6 +29,10 @@ export const EN_DEFAULTS = {
     loginNow: 'Login Now',
     copyCode: 'Copy Code',
     gotIt: 'Got it!',
+    confirmDeleteTitle: 'Delete',
+    confirmDeleteMessage: 'Delete "{name}"?',
+    confirmDeactivateTitle: 'Deactivate',
+    confirmDeactivateMessage: 'Deactivate "{name}"?',
   },
   auth: {
     header: 'Welcome Back!',

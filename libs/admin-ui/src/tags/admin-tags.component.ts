@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -12,7 +13,11 @@ import {
   TagBusinessDto,
   TagDto,
 } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogConfig,
+} from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -21,7 +26,12 @@ import {
 @Component({
   selector: 'lib-admin-tags',
   standalone: true,
-  imports: [FormsModule, I18nPipe, DataTableComponent],
+  imports: [
+    FormsModule,
+    I18nPipe,
+    DataTableComponent,
+    ConfirmationDialogComponent,
+  ],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.tags' | i18n }}</h1>
@@ -56,7 +66,7 @@ import {
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
           {{ 'common.edit' | i18n }}
         </button>
-        <button class="btn btn-sm btn-danger" (click)="deactivate(row)">
+        <button class="btn btn-sm btn-danger" (click)="requestDeactivate(row)">
           {{ 'tags.deactivate' | i18n }}
         </button>
       </ng-template>
@@ -104,6 +114,12 @@ import {
         </div>
       </ng-template>
     </lib-data-table>
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingDeactivate()"
+      [config]="deactivateDialogConfig()"
+      (confirmed)="confirmDeactivate()"
+      (cancelled)="pendingDeactivate.set(null)"
+    />
     @if (showForm()) {
       <div class="overlay">
         <div class="panel">
@@ -180,6 +196,7 @@ import {
 })
 export class AdminTagsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly i18n = inject(I18nService);
   protected tags = signal<TagDto[]>([]);
   protected loading = signal(true);
   protected error = signal(false);
@@ -310,8 +327,26 @@ export class AdminTagsComponent implements OnInit {
     });
   }
 
-  protected deactivate(t: TagDto): void {
-    if (!confirm(`Deactivate "${t.name}"?`)) return;
+  protected pendingDeactivate = signal<TagDto | null>(null);
+  protected deactivateDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('common.confirmDeactivateTitle'),
+    message: this.i18n.translate('common.confirmDeactivateMessage', {
+      name: this.pendingDeactivate()?.name ?? '',
+    }),
+    confirmLabel: this.i18n.translate('tags.deactivate'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
+
+  protected requestDeactivate(t: TagDto): void {
+    this.pendingDeactivate.set(t);
+  }
+
+  protected confirmDeactivate(): void {
+    const t = this.pendingDeactivate();
+    if (!t) return;
+    this.pendingDeactivate.set(null);
     this.api.deactivateTag(t.id).subscribe({
       next: () =>
         this.tags.update((tags) =>

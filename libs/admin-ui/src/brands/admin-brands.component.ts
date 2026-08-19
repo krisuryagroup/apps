@@ -13,7 +13,11 @@ import {
   BusinessSummaryDto,
   PagedResult,
 } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogConfig,
+} from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -23,7 +27,12 @@ import {
 @Component({
   selector: 'lib-admin-brands',
   standalone: true,
-  imports: [FormsModule, I18nPipe, DataTableComponent],
+  imports: [
+    FormsModule,
+    I18nPipe,
+    DataTableComponent,
+    ConfirmationDialogComponent,
+  ],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.brands' | i18n }}</h1>
@@ -60,7 +69,7 @@ import {
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
           {{ 'common.edit' | i18n }}
         </button>
-        <button class="btn btn-sm btn-danger" (click)="remove(row)">
+        <button class="btn btn-sm btn-danger" (click)="requestRemove(row)">
           {{ 'common.delete' | i18n }}
         </button>
       </ng-template>
@@ -93,6 +102,12 @@ import {
         </div>
       </ng-template>
     </lib-data-table>
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingDelete()"
+      [config]="deleteDialogConfig()"
+      (confirmed)="confirmRemove()"
+      (cancelled)="pendingDelete.set(null)"
+    />
     @if (showForm()) {
       <div class="overlay">
         <div class="panel">
@@ -158,6 +173,7 @@ import {
 })
 export class AdminBrandsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly i18n = inject(I18nService);
   protected result = signal<PagedResult<BrandDto> | null>(null);
   protected loading = signal(true);
   protected error = signal(false);
@@ -259,8 +275,26 @@ export class AdminBrandsComponent implements OnInit {
     });
   }
 
-  protected remove(brand: BrandDto): void {
-    if (!confirm(`Delete brand "${brand.name}"?`)) return;
+  protected pendingDelete = signal<BrandDto | null>(null);
+  protected deleteDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('common.confirmDeleteTitle'),
+    message: this.i18n.translate('common.confirmDeleteMessage', {
+      name: this.pendingDelete()?.name ?? '',
+    }),
+    confirmLabel: this.i18n.translate('common.delete'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
+
+  protected requestRemove(brand: BrandDto): void {
+    this.pendingDelete.set(brand);
+  }
+
+  protected confirmRemove(): void {
+    const brand = this.pendingDelete();
+    if (!brand) return;
+    this.pendingDelete.set(null);
     this.api.deleteBrand(brand.id).subscribe({
       next: () =>
         this.result.update((r) =>

@@ -2,12 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminApiService, ProductDto } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogConfig,
+} from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -16,7 +21,12 @@ import {
 @Component({
   selector: 'lib-admin-products',
   standalone: true,
-  imports: [FormsModule, I18nPipe, DataTableComponent],
+  imports: [
+    FormsModule,
+    I18nPipe,
+    DataTableComponent,
+    ConfirmationDialogComponent,
+  ],
   template: `
     <h1 class="page-title">{{ 'nav.products' | i18n }}</h1>
     <div class="filters">
@@ -36,11 +46,17 @@ import {
       [error]="error()"
     >
       <ng-template #rowActions let-row>
-        <button class="btn btn-sm btn-danger" (click)="remove(row)">
+        <button class="btn btn-sm btn-danger" (click)="requestRemove(row)">
           {{ 'common.delete' | i18n }}
         </button>
       </ng-template>
     </lib-data-table>
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingDelete()"
+      [config]="deleteDialogConfig()"
+      (confirmed)="confirmRemove()"
+      (cancelled)="pendingDelete.set(null)"
+    />
   `,
   styles: [
     `
@@ -51,6 +67,7 @@ import {
 })
 export class AdminProductsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly i18n = inject(I18nService);
   protected products = signal<ProductDto[]>([]);
   protected loading = signal(true);
   protected error = signal(false);
@@ -91,8 +108,26 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  protected remove(p: ProductDto): void {
-    if (!confirm(`Delete "${p.name}"?`)) return;
+  protected pendingDelete = signal<ProductDto | null>(null);
+  protected deleteDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('common.confirmDeleteTitle'),
+    message: this.i18n.translate('common.confirmDeleteMessage', {
+      name: this.pendingDelete()?.name ?? '',
+    }),
+    confirmLabel: this.i18n.translate('common.delete'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
+
+  protected requestRemove(p: ProductDto): void {
+    this.pendingDelete.set(p);
+  }
+
+  protected confirmRemove(): void {
+    const p = this.pendingDelete();
+    if (!p) return;
+    this.pendingDelete.set(null);
     this.api.deleteProduct(p.id).subscribe({
       next: () => this.products.update((ps) => ps.filter((x) => x.id !== p.id)),
     });
