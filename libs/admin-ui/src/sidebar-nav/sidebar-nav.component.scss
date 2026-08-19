@@ -55,7 +55,15 @@
 
   @include respond-above(tablet) {
     transform: translateX(0);
-    position: sticky;
+    // Stay `position: fixed` (set above) at every breakpoint — only the mobile
+    // off-canvas transform changes here. `position: sticky` was previously set on
+    // this breakpoint, which pulls the nav back into normal document flow: since
+    // it's the first sibling of `<main>` in every consuming layout
+    // (zitro-admin's and zitro-superadmin's MainLayoutComponent), the desktop
+    // sidebar's full content height then pushes `<main>` down below the fold
+    // instead of positioning beside it via `.main-content { margin-left: 240px }`.
+    // The nav's own `.sidebar-nav__list { overflow-y: auto }` already handles a
+    // nav list taller than the viewport, so `fixed` needs no scroll compromise.
   }
 }
 
