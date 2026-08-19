@@ -107,9 +107,10 @@ export class AdminApiService {
       .set('app', app)
       .set('platform', platform)
       .set('lang', lang);
-    return this.http.get<AppConfigResponse>(`${this.baseUrl}/api/app-config`, {
-      params,
-    });
+    return this.http.get<AppConfigResponse>(
+      `${this.baseUrl}/api/app-config/bundle`,
+      { params },
+    );
   }
 
   getSupportedLanguages(): Observable<SupportedLanguage[]> {
