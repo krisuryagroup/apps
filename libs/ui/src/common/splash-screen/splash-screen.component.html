@@ -5,6 +5,7 @@
       data-testid="splash-logo"
       [src]="config().logoUrl"
       [alt]="config().appName"
+      (error)="onLogoError($event)"
     />
 
     @if (config().tagline) {

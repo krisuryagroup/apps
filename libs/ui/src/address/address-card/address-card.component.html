@@ -51,8 +51,7 @@
     {{ address().name }}
   </div>
   <div class="address-card__details" data-testid="address-card-details">
-    {{ address().houseAndStreet }}, {{ address().landmark }},
-    {{ address().town }}, {{ address().state }} — {{ address().pincode }}
+    {{ formattedDetails() }}
   </div>
   <div class="address-card__phone" data-testid="address-card-phone">
     {{ address().phone }}

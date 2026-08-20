@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
 } from '@angular/core';
@@ -33,4 +34,15 @@ export class AddressCardComponent {
   addressSelect = output<Address>();
   edit = output<Address>();
   delete = output<string>();
+
+  /** Skips empty segments (landmark is optional) instead of always joining
+   * every field with a comma — an empty landmark used to leave a stray
+   * ", ," in the rendered address ("Shop 1, , Dibiyapur, UP — 206244"). */
+  readonly formattedDetails = computed(() => {
+    const a = this.address();
+    return [a.houseAndStreet, a.landmark, a.town, a.state]
+      .filter((part) => !!part?.trim())
+      .join(', ')
+      .concat(` — ${a.pincode}`);
+  });
 }
