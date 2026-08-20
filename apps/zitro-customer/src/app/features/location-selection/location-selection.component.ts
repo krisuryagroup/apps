@@ -67,11 +67,12 @@ export class LocationSelectionComponent implements OnInit {
 
   async onSelectSavedAddress(addr: UserAddress): Promise<void> {
     const fullAddress = `${addr.houseAndStreet}, ${addr.town}, ${addr.pincode}`;
-    
+
     try {
       // Geocode the address to get actual coordinates
-      const suggestions = await this.locationSelectionService.searchAddresses(fullAddress);
-      
+      const suggestions =
+        await this.locationSelectionService.searchAddresses(fullAddress);
+
       if (suggestions.length > 0) {
         // Use coordinates from the first matching suggestion
         const coords = suggestions[0].coordinates;
@@ -104,7 +105,9 @@ export class LocationSelectionComponent implements OnInit {
   }
 
   onSearchLocation(): void {
-    this.router.navigate(['/add-address']);
+    this.router.navigate(['/add-address'], {
+      queryParams: { setInitialLocation: 'true' },
+    });
   }
 
   private saveAndNavigate(location: UserLocation): void {
