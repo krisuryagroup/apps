@@ -21,6 +21,7 @@ import {
   CartApiService,
   BannerService,
   BusinessContextService,
+  ToastService,
 } from '@zitro/services';
 import { Category, Product, ProductVariation, Banner } from '@zitro/models';
 import { matchesSearch } from '@zitro/utils';
@@ -91,6 +92,7 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly cartApi = inject(CartApiService);
   private bannerService = inject(BannerService);
   private businessContext = inject(BusinessContextService);
+  private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
   private _scrollCleanup?: () => void;
 
@@ -317,6 +319,17 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProduct.set(null);
   }
 
+  /** Surfaces a cart-mutation failure instead of swallowing it silently — a
+   * failed add/update used to leave the tapped button doing nothing with no
+   * indication why (e.g. 400 PRODUCT_UNAVAILABLE for an item that slipped
+   * through as looking available). */
+  private showCartError(err: unknown): void {
+    const message =
+      (err as { error?: { error?: string } })?.error?.error ||
+      'listing.addToCartFailed';
+    this.toast.show({ message, color: 'danger', duration: 4000 });
+  }
+
   async onAddToCart(event: {
     product: Product;
     variation: ProductVariation | null;
@@ -330,8 +343,8 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
         event.product.id,
         event.variation?.id ?? undefined,
       );
-    } catch {
-      /* no-op */
+    } catch (err) {
+      this.showCartError(err);
     } finally {
       this.isCartUpdating.set(false);
     }
@@ -343,8 +356,8 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isCartUpdating.set(true);
     try {
       await this.cartApi.addToCart(slug, product.id);
-    } catch {
-      /* no-op */
+    } catch (err) {
+      this.showCartError(err);
     } finally {
       this.isCartUpdating.set(false);
     }
@@ -360,8 +373,8 @@ export class ListingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isCartUpdating.set(true);
     try {
       await this.cartApi.updateQty(slug, cartItem.id, cartItem.quantity - 1);
-    } catch {
-      /* no-op */
+    } catch (err) {
+      this.showCartError(err);
     } finally {
       this.isCartUpdating.set(false);
     }
