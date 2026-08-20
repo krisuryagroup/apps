@@ -15,6 +15,14 @@
 > pruned from this doc since they're closed; see git log (`fix(customer): ...` /
 > `fix: ...` commits dated 2026-08-20) for exactly what changed on each. **What's below is what's
 > still open.**
+>
+> **Correction (same day, user-caught):** the first fix for "Search your Location" (finding 1.1,
+> now closed) was itself wrong on manual re-test — it routed to `/add-address`, which still has its
+> own `AuthGuard` and bounced any non-signed-in user straight to `/auth/signin`, never showing a
+> search field. Replaced with the actual right fix: reuse the existing, already-guest-friendly
+> `LocationBottomSheetComponent` (the same "Select a location" sheet already used elsewhere in the
+> app) instead of routing anywhere. See commit
+> `fix(customer): use the existing location bottom sheet for "Search your Location"...`.
 
 ---
 
