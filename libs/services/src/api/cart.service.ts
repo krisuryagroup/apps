@@ -19,13 +19,16 @@ export class CartApiService {
 
   /** All business carts that have at least one item — drives the floating slider. */
   readonly cartList = computed(() =>
-    [...this._carts().values()].filter(c => c.items.length > 0)
+    [...this._carts().values()].filter((c) => c.items.length > 0),
   );
 
   readonly hasActiveCarts = computed(() => this.cartList().length > 0);
 
   readonly totalCount = computed(() =>
-    this.cartList().reduce((n, c) => n + c.items.reduce((s, i) => s + i.quantity, 0), 0)
+    this.cartList().reduce(
+      (n, c) => n + c.items.reduce((s, i) => s + i.quantity, 0),
+      0,
+    ),
   );
 
   getCartForBusiness(slug: string): ApiCart | undefined {
@@ -33,53 +36,78 @@ export class CartApiService {
   }
 
   /** Returns total qty of a product (optionally scoped to a variation) in a business cart. */
-  getItemQtyInCart(businessSlug: string, productId: string, variationId?: string): number {
+  getItemQtyInCart(
+    businessSlug: string,
+    productId: string,
+    variationId?: string,
+  ): number {
     const cart = this._carts().get(businessSlug);
     if (!cart) return 0;
     return cart.items
-      .filter(i => i.productId === productId && (!variationId || i.variationId === variationId))
+      .filter(
+        (i) =>
+          i.productId === productId &&
+          (!variationId || i.variationId === variationId),
+      )
       .reduce((sum, i) => sum + i.quantity, 0);
   }
 
-  /** Called on app init (if logged in) — fetches all previously active business carts. */
+  /**
+   * Called on app init (if logged in) — fetches all previously active business carts.
+   *
+   * A failed fetch (network error, transient 5xx, server restart, etc.) is left as-is
+   * — the slug stays tracked so the next load attempt retries it. GET /api/cart always
+   * gets-or-creates a cart and returns 200, so a *successful* response with zero items
+   * is the only legitimate "this cart is genuinely empty" signal — loadCart() already
+   * untracks the slug on that path. Untracking on failure here used to make a business
+   * with a real, non-empty server-side cart look permanently empty to the user after
+   * any transient blip, surviving even a hard reload, since nothing else ever retried it.
+   */
   async loadAllCarts(): Promise<void> {
     const slugs = this.readSlugsFromStorage();
     await Promise.all(
-      slugs.map(slug =>
-        this.loadCart(slug).catch(() => this.removeSlugFromStorage(slug))
-      )
+      slugs.map((slug) => this.loadCart(slug).catch(() => undefined)),
     );
   }
 
   async loadCart(slug: string): Promise<void> {
     const dto = await firstValueFrom(
-      this.http.get<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug))
+      this.http.get<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug)),
     );
     const cart = CartMapper.toCart(dto);
     this.setCart(slug, cart);
     if (cart.items.length === 0) this.removeSlugFromStorage(slug);
   }
 
-  async addToCart(slug: string, productId: string, variationId?: string, qty = 1): Promise<void> {
+  async addToCart(
+    slug: string,
+    productId: string,
+    variationId?: string,
+    qty = 1,
+  ): Promise<void> {
     const dto = await firstValueFrom(
       this.http.post<CartDto>(
         `${this.baseUrl}/api/cart/items`,
         { productId, variationId: variationId ?? null, quantity: qty },
-        this.ctxFor(slug)
-      )
+        this.ctxFor(slug),
+      ),
     );
     this.setCart(slug, CartMapper.toCart(dto));
     this.addSlugToStorage(slug);
   }
 
   /** qty = 0 removes the item entirely (maps to PUT /api/cart/items/{id} with quantity:0). */
-  async updateQty(slug: string, cartItemId: string, qty: number): Promise<void> {
+  async updateQty(
+    slug: string,
+    cartItemId: string,
+    qty: number,
+  ): Promise<void> {
     const dto = await firstValueFrom(
       this.http.put<CartDto>(
         `${this.baseUrl}/api/cart/items/${cartItemId}`,
         { quantity: qty },
-        this.ctxFor(slug)
-      )
+        this.ctxFor(slug),
+      ),
     );
     const cart = CartMapper.toCart(dto);
     this.setCart(slug, cart);
@@ -88,20 +116,23 @@ export class CartApiService {
 
   async clearCart(slug: string): Promise<void> {
     await firstValueFrom(
-      this.http.delete<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug))
+      this.http.delete<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug)),
     );
     this.deleteCart(slug);
     this.removeSlugFromStorage(slug);
   }
 
-  async applyCoupon(slug: string, code: string): Promise<{ success: boolean; error?: string }> {
+  async applyCoupon(
+    slug: string,
+    code: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const dto = await firstValueFrom(
         this.http.post<CartDto>(
           `${this.baseUrl}/api/cart/coupon`,
           { couponCode: code },
-          this.ctxFor(slug)
-        )
+          this.ctxFor(slug),
+        ),
       );
       this.setCart(slug, CartMapper.toCart(dto));
       return { success: true };
@@ -118,8 +149,8 @@ export class CartApiService {
       this.http.post<CartDto>(
         `${this.baseUrl}/api/cart/coupon`,
         { couponCode: null },
-        this.ctxFor(slug)
-      )
+        this.ctxFor(slug),
+      ),
     );
     this.setCart(slug, CartMapper.toCart(dto));
   }
@@ -129,8 +160,8 @@ export class CartApiService {
       this.http.post<CheckoutSummaryDto>(
         `${this.baseUrl}/api/cart/checkout`,
         {},
-        this.ctxFor(slug)
-      )
+        this.ctxFor(slug),
+      ),
     );
     return CartMapper.toCheckoutSummary(dto);
   }
@@ -138,11 +169,11 @@ export class CartApiService {
   // ── State helpers ────────────────────────────────────────────────────────
 
   private setCart(slug: string, cart: ApiCart): void {
-    this._carts.update(m => new Map(m).set(slug, cart));
+    this._carts.update((m) => new Map(m).set(slug, cart));
   }
 
   private deleteCart(slug: string): void {
-    this._carts.update(m => {
+    this._carts.update((m) => {
       const next = new Map(m);
       next.delete(slug);
       return next;
@@ -173,7 +204,7 @@ export class CartApiService {
   }
 
   private removeSlugFromStorage(slug: string): void {
-    const slugs = this.readSlugsFromStorage().filter(s => s !== slug);
+    const slugs = this.readSlugsFromStorage().filter((s) => s !== slug);
     localStorage.setItem(ACTIVE_SLUGS_KEY, JSON.stringify(slugs));
   }
 }
