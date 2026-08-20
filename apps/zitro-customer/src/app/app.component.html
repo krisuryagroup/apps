@@ -1,14 +1,19 @@
 <!-- Splash Screen -->
-<app-splash-screen 
-  *ngIf="showSplash" 
-  (splashComplete)="onSplashComplete()">
+<app-splash-screen *ngIf="showSplash" (splashComplete)="onSplashComplete()">
 </app-splash-screen>
 
 <!-- No Internet Screen -->
-<app-no-internet 
-  *ngIf="!showSplash && showNoInternet" 
-  (retry)="onRetryConnection()">
+<app-no-internet
+  *ngIf="!showSplash && showNoInternet"
+  (retry)="onRetryConnection()"
+>
 </app-no-internet>
 
 <!-- Main App Content -->
 <router-outlet *ngIf="!showSplash && !showNoInternet"></router-outlet>
+
+<!-- Location Selection Bottom Sheet (global — must be reachable from every route,
+     including /location-selection and /auth/*, not just pages under MainLayoutComponent) -->
+<app-location-bottom-sheet
+  *ngIf="!showSplash && !showNoInternet"
+></app-location-bottom-sheet>

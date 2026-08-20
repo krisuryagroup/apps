@@ -32,10 +32,7 @@ import {
   NearbySociety,
   SocietyTower,
 } from '@zitro/models';
-import {
-  DELIVERY_PINCODE_CONFIG,
-  LOCATION_STORAGE_KEY,
-} from '../../core/constants/app.constants';
+import { DELIVERY_PINCODE_CONFIG } from '../../core/constants/app.constants';
 import { environment } from '../../../environments/environment';
 
 declare const google: any;
@@ -84,10 +81,6 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   mode: 'checkout' | 'manage' | 'default' = 'default';
   readonly editingAddressId = signal<string | null>(null);
   private checkoutBusinessSlug: string | null = null;
-  /** True when reached via LocationSelectionComponent's "Search your Location" —
-   * this page doubles as how a location-less user sets their initial delivery
-   * location, so a successful save must also persist LOCATION_STORAGE_KEY. */
-  private setInitialLocation = false;
 
   private map: unknown = null;
   private marker: unknown = null;
@@ -102,7 +95,6 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     if (modeParam === 'checkout') this.mode = 'checkout';
     else if (modeParam === 'manage') this.mode = 'manage';
 
-    this.setInitialLocation = snap.get('setInitialLocation') === 'true';
     this.checkoutBusinessSlug = snap.get('business');
 
     const lat = snap.get('lat');
@@ -412,7 +404,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     save$.subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.handlePostSave(addressData);
+        this.handlePostSave();
       },
       error: () => {
         this.errorMessage.set('Failed to save address. Please try again.');
@@ -425,33 +417,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.goBack();
   }
 
-  private async handlePostSave(saved: {
-    houseAndStreet: string;
-    town: string;
-    lat?: number | null;
-    lng?: number | null;
-  }): Promise<void> {
-    if (this.setInitialLocation) {
-      const location = {
-        lat: saved.lat ?? 0,
-        lng: saved.lng ?? 0,
-        label: saved.town,
-        address: `${saved.houseAndStreet}, ${saved.town}`,
-      };
-      localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(location));
-      this.locationSelectionService.setLocation({
-        label: location.label,
-        address: location.address,
-        coordinates:
-          location.lat !== 0 || location.lng !== 0
-            ? { lat: location.lat, lng: location.lng }
-            : undefined,
-        type: location.lat !== 0 ? 'gps' : 'saved',
-      });
-      this.router.navigate(['/home']);
-      return;
-    }
-
+  private async handlePostSave(): Promise<void> {
     if (this.mode === 'checkout') {
       const cartPath = this.checkoutBusinessSlug
         ? `/cart?business=${this.checkoutBusinessSlug}`

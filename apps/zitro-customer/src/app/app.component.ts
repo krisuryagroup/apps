@@ -11,6 +11,7 @@ import { AppSettingsService } from '@zitro/services';
 import { GlobalImageErrorService } from '@zitro/services';
 import { SplashScreenComponent } from '@zitro/ui';
 import { NoInternetComponent } from '@zitro/ui';
+import { LocationBottomSheetComponent } from '@zitro/ui';
 import { getAppVersion } from '@zitro/utils';
 
 @Component({
@@ -21,6 +22,7 @@ import { getAppVersion } from '@zitro/utils';
     RouterOutlet,
     SplashScreenComponent,
     NoInternetComponent,
+    LocationBottomSheetComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

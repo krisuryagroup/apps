@@ -30,6 +30,7 @@
   <div class="lbs-search-wrap">
     <span class="material-icons lbs-search-icon">search</span>
     <input
+      #searchInput
       class="lbs-search-input"
       type="text"
       placeholder="Search for area, street name..."
@@ -38,14 +39,18 @@
       autocomplete="off"
       autocorrect="off"
     />
-    <button *ngIf="searchQuery" class="lbs-clear-btn" (click)="clearSearch()" aria-label="Clear search">
+    <button
+      *ngIf="searchQuery"
+      class="lbs-clear-btn"
+      (click)="clearSearch()"
+      aria-label="Clear search"
+    >
       <span class="material-icons">close</span>
     </button>
   </div>
 
   <!-- ── SEARCH SUGGESTIONS (shown when typing) ── -->
   <div class="lbs-body" *ngIf="searchQuery">
-
     <!-- Loading indicator -->
     <div class="lbs-loading-row" *ngIf="isSearching">
       <span class="lbs-spinner"></span>
@@ -55,11 +60,17 @@
     <!-- No results -->
     <div class="lbs-empty" *ngIf="!isSearching && suggestions.length === 0">
       <span class="material-icons">search_off</span>
-      <p>No results found for "<strong>{{ searchQuery }}</strong>"</p>
+      <p>
+        No results found for "<strong>{{ searchQuery }}</strong
+        >"
+      </p>
     </div>
 
     <!-- Results list -->
-    <ul class="lbs-suggestion-list" *ngIf="!isSearching && suggestions.length > 0">
+    <ul
+      class="lbs-suggestion-list"
+      *ngIf="!isSearching && suggestions.length > 0"
+    >
       <li
         class="lbs-suggestion-item"
         *ngFor="let s of suggestions"
@@ -79,12 +90,16 @@
 
   <!-- ── MAIN CONTENT (shown when not searching) ── -->
   <div class="lbs-body lbs-scrollable" *ngIf="!searchQuery">
-
     <!-- ── QUICK ACTIONS CARD ── -->
     <div class="lbs-card">
-
       <!-- Use Current Location -->
-      <div class="lbs-action-row" (click)="useCurrentLocation()" role="button" tabindex="0" (keyup.enter)="useCurrentLocation()">
+      <div
+        class="lbs-action-row"
+        (click)="useCurrentLocation()"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="useCurrentLocation()"
+      >
         <div class="lbs-action-icon lbs-action-icon--gps">
           <span class="material-icons" *ngIf="!isLocating">my_location</span>
           <span class="lbs-spinner" *ngIf="isLocating"></span>
@@ -94,12 +109,17 @@
           <span class="lbs-action-sub" *ngIf="!isLocating && !locationError">
             {{ currentGPSAddress || 'Tap to detect your location' }}
           </span>
-          <span class="lbs-action-sub lbs-action-sub--loading" *ngIf="isLocating">Detecting location...</span>
+          <span
+            class="lbs-action-sub lbs-action-sub--loading"
+            *ngIf="isLocating"
+            >Detecting location...</span
+          >
           <button
             *ngIf="currentGPSAddress && !isLocating"
             class="lbs-save-location-btn"
             type="button"
-            (click)="$event.stopPropagation(); saveCurrentLocationAsAddress()">
+            (click)="$event.stopPropagation(); saveCurrentLocationAsAddress()"
+          >
             <span class="material-icons">bookmark_add</span>
             Save as address
           </button>
@@ -111,13 +131,21 @@
       <div class="lbs-error-row" *ngIf="locationError">
         <span class="material-icons lbs-error-icon">warning</span>
         <span class="lbs-error-text">{{ locationError }}</span>
-        <button class="lbs-retry-btn" (click)="useCurrentLocation()">Retry</button>
+        <button class="lbs-retry-btn" (click)="useCurrentLocation()">
+          Retry
+        </button>
       </div>
 
       <div class="lbs-divider"></div>
 
       <!-- Add Address -->
-      <div class="lbs-action-row" (click)="goToAddAddress()" role="button" tabindex="0" (keyup.enter)="goToAddAddress()">
+      <div
+        class="lbs-action-row"
+        (click)="goToAddAddress()"
+        role="button"
+        tabindex="0"
+        (keyup.enter)="goToAddAddress()"
+      >
         <div class="lbs-action-icon lbs-action-icon--add">
           <span class="material-icons">add</span>
         </div>
@@ -139,8 +167,12 @@
       </div>
 
       <!-- Empty state -->
-      <div class="lbs-empty-small" *ngIf="!isLoadingAddresses && savedAddresses.length === 0">
-        No saved addresses. <span class="lbs-link" (click)="goToAddAddress()">Add one →</span>
+      <div
+        class="lbs-empty-small"
+        *ngIf="!isLoadingAddresses && savedAddresses.length === 0"
+      >
+        No saved addresses.
+        <span class="lbs-link" (click)="goToAddAddress()">Add one →</span>
       </div>
 
       <!-- Address cards -->
@@ -153,8 +185,13 @@
         (keyup.enter)="selectSavedAddress(addr)"
       >
         <div class="lbs-addr-icon-col">
-          <span class="material-icons lbs-addr-type-icon">{{ getAddressTypeIcon(addr.type) }}</span>
-          <span class="lbs-addr-distance" *ngIf="userCoords && savedAddressDistance(addr)">
+          <span class="material-icons lbs-addr-type-icon">{{
+            getAddressTypeIcon(addr.type)
+          }}</span>
+          <span
+            class="lbs-addr-distance"
+            *ngIf="userCoords && savedAddressDistance(addr)"
+          >
             {{ savedAddressDistance(addr) }}
           </span>
         </div>
@@ -162,10 +199,14 @@
           <div class="lbs-addr-type">{{ addr.type }}</div>
           <div class="lbs-addr-full">
             {{ addr.houseAndStreet }}
-            <ng-container *ngIf="addr.landmark">, {{ addr.landmark }}</ng-container>
+            <ng-container *ngIf="addr.landmark"
+              >, {{ addr.landmark }}</ng-container
+            >
             , {{ addr.town }}, {{ addr.state }}
           </div>
-          <div class="lbs-addr-phone" *ngIf="addr.phone">Phone number: {{ addr.phone }}</div>
+          <div class="lbs-addr-phone" *ngIf="addr.phone">
+            Phone number: {{ addr.phone }}
+          </div>
         </div>
         <div class="lbs-addr-actions" (click)="$event.stopPropagation()">
           <!-- dots + share kept minimal; full management is on /addresses page -->
@@ -182,7 +223,9 @@
       <div class="lbs-card lbs-login-nudge">
         <span class="material-icons lbs-nudge-icon">person_outline</span>
         <p class="lbs-nudge-text">Sign in to view your saved addresses</p>
-        <button class="lbs-nudge-btn" (click)="goToAddAddress()">Sign In</button>
+        <button class="lbs-nudge-btn" (click)="goToAddAddress()">
+          Sign In
+        </button>
       </div>
     </ng-container>
 
@@ -195,11 +238,17 @@
         <span class="lbs-loading-text">Finding nearby locations...</span>
       </div>
 
-      <div class="lbs-empty-small" *ngIf="!isLoadingNearby && nearbyPlaces.length === 0">
+      <div
+        class="lbs-empty-small"
+        *ngIf="!isLoadingNearby && nearbyPlaces.length === 0"
+      >
         No nearby locations found within 15 km.
       </div>
 
-      <div class="lbs-card lbs-nearby-card" *ngIf="!isLoadingNearby && nearbyPlaces.length > 0">
+      <div
+        class="lbs-card lbs-nearby-card"
+        *ngIf="!isLoadingNearby && nearbyPlaces.length > 0"
+      >
         <div
           class="lbs-nearby-row"
           *ngFor="let place of nearbyPlaces; let last = last"

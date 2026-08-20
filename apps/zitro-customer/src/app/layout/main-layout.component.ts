@@ -42,7 +42,6 @@ import { RestaurantSwitchingUtil } from '@zitro/utils';
 import { BreakpointService, Breakpoint } from '@zitro/services';
 import { LocationService } from '@zitro/services';
 import { LocationSelectionService } from '@zitro/services';
-import { LocationBottomSheetComponent } from '@zitro/ui';
 import { BannerService } from '@zitro/services';
 import { BannerConfigs } from '@zitro/models';
 
@@ -56,7 +55,6 @@ import { BannerConfigs } from '@zitro/models';
     SidebarComponent,
     BottomNavComponent,
     FooterComponent,
-    LocationBottomSheetComponent,
     FloatingCartPreviewComponent,
   ],
   templateUrl: './main-layout.component.html',

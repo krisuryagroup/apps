@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
 import {
   LocationService,
@@ -19,7 +20,7 @@ import {
   templateUrl: './location-selection.component.html',
   styleUrl: './location-selection.component.scss',
 })
-export class LocationSelectionComponent implements OnInit {
+export class LocationSelectionComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly locationService = inject(LocationService);
   private readonly locationSelectionService = inject(LocationSelectionService);
@@ -29,12 +30,43 @@ export class LocationSelectionComponent implements OnInit {
   readonly locationError = signal<string | null>(null);
   readonly savedAddresses = signal<UserAddress[]>([]);
 
+  private readonly destroy$ = new Subject<void>();
+
   async ngOnInit(): Promise<void> {
     const phone = await this.userManagement.getCurrentUserPhone();
     if (phone) {
       const userData = await this.userManagement.getUserData(phone);
       this.savedAddresses.set(userData?.addresses ?? []);
     }
+
+    // The bottom sheet opened by onSearchLocation() picks a location by
+    // writing to LocationSelectionService's own store (zitro_selected_location_v2),
+    // not the LOCATION_STORAGE_KEY (zitro_user_location) that locationGuard
+    // actually checks — without this bridge, selecting a location there would
+    // close the sheet but leave the user stuck on this page (or bounced back
+    // to it), since the guard would still see no saved location.
+    //
+    // Uses persistAndNavigate(), NOT saveAndNavigate() — the location is
+    // already set on locationSelectionService (that's why this subscription
+    // is firing), so calling setLocation() again here would re-trigger this
+    // same subscription synchronously and recurse forever (confirmed live:
+    // "Maximum call stack size exceeded" before this was split out).
+    this.locationSelectionService.selectedLocation$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loc) => {
+        if (loc.type === 'none') return;
+        this.persistAndNavigate({
+          lat: loc.coordinates?.lat ?? 0,
+          lng: loc.coordinates?.lng ?? 0,
+          label: loc.label,
+          address: loc.address,
+        });
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async onEnableGps(): Promise<void> {
@@ -105,13 +137,15 @@ export class LocationSelectionComponent implements OnInit {
   }
 
   onSearchLocation(): void {
-    this.router.navigate(['/add-address'], {
-      queryParams: { setInitialLocation: 'true' },
-    });
+    // Opens the same global location bottom sheet used everywhere else in the
+    // app (search, GPS, nearby places) — works for guests, no sign-in
+    // required. Only its own "Add Address"/"Save as address" actions gate on
+    // being signed in. Selecting a location there resolves through the
+    // selectedLocation$ subscription in ngOnInit above.
+    this.locationSelectionService.open();
   }
 
   private saveAndNavigate(location: UserLocation): void {
-    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(location));
     // Also update the app-wide header display via LocationSelectionService
     this.locationSelectionService.setLocation({
       label: location.label,
@@ -122,6 +156,11 @@ export class LocationSelectionComponent implements OnInit {
           : undefined,
       type: location.lat !== 0 ? 'gps' : 'saved',
     });
+    this.persistAndNavigate(location);
+  }
+
+  private persistAndNavigate(location: UserLocation): void {
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(location));
     this.router.navigate(['/home']);
   }
 }

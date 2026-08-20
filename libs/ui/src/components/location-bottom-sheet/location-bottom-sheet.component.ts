@@ -4,6 +4,8 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  ElementRef,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -35,6 +37,8 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
   private authService = inject(FirebaseAuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+
+  @ViewChild('searchInput') searchInputRef?: ElementRef<HTMLInputElement>;
 
   // ── Sheet visibility ─────────────────────────────────────────────────────
   isOpen = false;
@@ -110,6 +114,11 @@ export class LocationBottomSheetComponent implements OnInit, OnDestroy {
       this.isAnimatingIn = false;
       this.cdr.markForCheck();
     }, 350);
+
+    // Focus the search input as the sheet opens — this is titled "Search
+    // your Location" wherever it's triggered from, so the keyboard should
+    // already be up by the time the user sees it, not require a second tap.
+    setTimeout(() => this.searchInputRef?.nativeElement.focus(), 100);
 
     // Load data in parallel
     await Promise.all([this.loadSavedAddresses(), this.initGPSAndNearby()]);
