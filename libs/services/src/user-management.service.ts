@@ -75,11 +75,18 @@ export class UserManagementService {
   /**
    * Load and emit the current user profile from the REST API.
    * Called by AppComponent and OtpPage after sign-in.
-   * Skipped for guest users — they have no profile.
+   * Skipped for guest users (no profile) and for anyone with no auth token at
+   * all — e.g. a first-time visitor who set their location via GPS and landed
+   * on /home directly, without ever visiting the sign-in screen. Calling this
+   * unconditionally used to fire GET /api/users/me with no Authorization
+   * header, which 401'd and (via errorInterceptor) kicked a never-authenticated
+   * user out to /auth/signin — even though they were never supposed to need to
+   * sign in to browse.
    */
   async loadCurrentUserProfile(): Promise<void> {
     const isGuest = localStorage.getItem('isGuest') === 'true';
-    if (isGuest) return;
+    const hasToken = !!localStorage.getItem('token');
+    if (isGuest || !hasToken) return;
     try {
       const user = await firstValueFrom(this.userApi.getProfile());
       this.userProfileSubject.next({

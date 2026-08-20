@@ -16,9 +16,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       switch (error.status) {
         case 401: {
-          // Never redirect guests — they intentionally have no auth token.
+          // Only force a sign-in redirect when a session actually existed and
+          // expired/was rejected. Never redirect guests (intentionally no
+          // token) or a never-authenticated visitor (no token yet, simply
+          // browsing) — both are expected to get 401s on user-scoped calls
+          // and should be left alone rather than kicked to /auth/signin.
           const isGuest = localStorage.getItem('isGuest') === 'true';
-          if (!isGuest) {
+          const hadToken = !!localStorage.getItem('token');
+          if (hadToken && !isGuest) {
             firebaseAuth.signOut();
             router.navigate(['/auth/signin']);
           }
