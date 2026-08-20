@@ -154,11 +154,14 @@ export class CartPage implements OnDestroy {
     () =>
       this.addresses().find((a) => a.id === this.selectedAddressId()) ?? null,
   );
-  readonly isAddressSelected = computed(
-    () =>
-      !!this.selectedAddressId() ||
-      this.locationService.snapshot.type !== 'none',
-  );
+  // Requires an actual saved address to be selected — falling back to "a
+  // delivery location/coordinates is set" here (as this used to) let the
+  // Place Order button stay enabled and validateOrderType() pass with zero
+  // address chosen, since a general delivery-area location is set as soon as
+  // the location gate is passed, well before any address exists. The backend
+  // requires a real deliveryAddressId and rejects orders without one
+  // (ADDRESS_REQUIRED) — this must agree with that.
+  readonly isAddressSelected = computed(() => !!this.selectedAddressId());
   readonly canPlaceOrder = computed(
     () =>
       this.hasItems() &&
@@ -623,6 +626,15 @@ export class CartPage implements OnDestroy {
 
   // ── Order placement ──────────────────────────────────────────────────────
 
+  /** True when the checkout-summary items about to be charged don't match
+   * (by cart-item id + quantity) what the cart page is currently showing. */
+  private hasCartDiverged(checkoutItems: ApiCartItem[]): boolean {
+    const displayed = this.apiCart()?.items ?? [];
+    if (displayed.length !== checkoutItems.length) return true;
+    const displayedQtyById = new Map(displayed.map((i) => [i.id, i.quantity]));
+    return checkoutItems.some((i) => displayedQtyById.get(i.id) !== i.quantity);
+  }
+
   async placeOrder(): Promise<void> {
     if (!this.hasItems()) return;
 
@@ -660,6 +672,24 @@ export class CartPage implements OnDestroy {
         this.orderProcessing.updateStage(
           'error',
           `Some items are unavailable: ${unavailable}`,
+        );
+        await new Promise((r) => setTimeout(r, 3000));
+        return;
+      }
+
+      // The order is built from `summary.items` below, not from the cart
+      // exactly as last rendered on screen (`this.apiCart()`) — those can
+      // diverge (e.g. a duplicated/retried add-to-cart request landing after
+      // the page already displayed and priced an earlier, lower quantity),
+      // which would silently charge the customer for more than they saw and
+      // confirmed. Fail safe instead: if what's about to be charged doesn't
+      // match what's currently on screen, refresh the display and stop
+      // rather than place a mismatched order.
+      if (this.hasCartDiverged(summary.items)) {
+        await this.cartApi.loadCart(slug);
+        this.orderProcessing.updateStage(
+          'error',
+          'Your cart changed just now — please review it and try again.',
         );
         await new Promise((r) => setTimeout(r, 3000));
         return;
@@ -723,13 +753,20 @@ export class CartPage implements OnDestroy {
       if (err && typeof err === 'object' && 'error' in err) {
         const apiError = (err as any).error;
         if (apiError && typeof apiError === 'object') {
-          // Prefer i18n key if available, else fallback to backend message
+          // Prefer i18n key if available, else fallback to backend message.
+          // I18nService.translate() has no `fallback` option — it only takes
+          // {variable} interpolation params — so a missing key used to leak
+          // the raw "order.error.xxx" string straight to the user instead of
+          // falling back. translate() returns the key itself when a
+          // translation is missing (see its own console.warn branch), so
+          // detect that here and fall back to the backend's own message.
           if (apiError.errorCode) {
-            // Optionally map errorCode to i18n key here
-            userMessage = this.i18n.translate(
-              `order.error.${apiError.errorCode.toLowerCase()}`,
-              { fallback: apiError.error || apiError.message },
-            );
+            const i18nKey = `order.error.${apiError.errorCode.toLowerCase()}`;
+            const translated = this.i18n.translate(i18nKey);
+            userMessage =
+              translated === i18nKey
+                ? apiError.error || apiError.message || userMessage
+                : translated;
           } else if (apiError.error) {
             userMessage = apiError.error;
           }
