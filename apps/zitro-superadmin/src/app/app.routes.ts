@@ -31,6 +31,7 @@ import { FeatureFlagsComponent } from './features/feature-flags/feature-flags.co
 import { TranslationsComponent } from './features/translations/translations.component';
 import { ThemesComponent } from './features/themes/themes.component';
 import { UiConfigComponent } from './features/ui-config/ui-config.component';
+import { RemoteSettingsComponent } from './features/remote-settings/remote-settings.component';
 
 // SA-002 — shared admin screens now composed from @zitro/admin-ui components.
 export const routes: Routes = [
@@ -73,6 +74,11 @@ export const routes: Routes = [
       { path: 'translations', component: TranslationsComponent },
       { path: 'themes', component: ThemesComponent },
       { path: 'ui-config', component: UiConfigComponent },
+      {
+        path: 'remote-settings',
+        component: RemoteSettingsComponent,
+        canActivate: [requirePermissionGuard('app-config:write')],
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

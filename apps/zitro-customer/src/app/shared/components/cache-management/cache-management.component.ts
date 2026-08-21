@@ -4,6 +4,12 @@ import { AppSettingsService } from '@zitro/services';
 import { CacheManagerService } from '@zitro/services';
 import { CacheType } from '@zitro/models';
 
+/**
+ * Local, single-device cache/login debug actions. The global force-logout / cache-clear
+ * admin triggers that used to live here moved to zitro-superadmin's Remote Settings screen
+ * (real Admin JWT auth) — those affect every device, not just this one, so they don't belong
+ * behind an unauthenticated customer-app route.
+ */
 @Component({
   selector: 'app-cache-management',
   standalone: true,
@@ -37,58 +43,6 @@ import { CacheType } from '@zitro/models';
           <button class="btn btn-info" (click)="refreshStats()">
             🔄 Refresh Stats
           </button>
-        </div>
-      </div>
-
-      <!-- Admin Actions (Force Logout All Devices) -->
-      <div class="section admin-section">
-        <h4>🔐 Admin Actions - Force Logout All Devices</h4>
-        <div class="warning-box">
-          <p>
-            ⚠️ <strong>Warning:</strong> This will force logout ALL users on ALL
-            devices on their next app launch.
-          </p>
-          <p>
-            Each device will logout ONCE when they detect the new timestamp.
-          </p>
-        </div>
-        <div class="admin-actions">
-          <button
-            class="btn btn-critical"
-            (click)="triggerForceLogoutAllDevices()"
-            [disabled]="isProcessing"
-          >
-            {{
-              isProcessing
-                ? 'Processing...'
-                : '🚨 Trigger Force Logout (All Devices)'
-            }}
-          </button>
-          <div class="action-info">
-            <small
-              >Sets isLoginClearCacheMandatory and bumps the remote-settings
-              timestamp via the backend.</small
-            >
-          </div>
-        </div>
-        <div class="admin-actions">
-          <button
-            class="btn btn-critical"
-            (click)="triggerCacheClearAllDevices()"
-            [disabled]="isProcessing"
-          >
-            {{
-              isProcessing
-                ? 'Processing...'
-                : '🗑️ Trigger Cache Clear (All Devices)'
-            }}
-          </button>
-          <div class="action-info">
-            <small
-              >Sets isClearCacheMandatory and bumps the remote-settings
-              timestamp via the backend.</small
-            >
-          </div>
         </div>
       </div>
 
@@ -146,64 +100,13 @@ import { CacheType } from '@zitro/models';
         </div>
       </div>
 
-      <!-- Remote Settings Configuration Guide -->
       <div class="section info-section">
-        <h4>📝 Remote Settings Configuration Guide</h4>
-
-        <div class="config-example">
-          <h5>
-            cache_management_json shape (remote_settings row, backend-only — no
-            admin UI to edit this blob directly yet):
-          </h5>
-          <pre>{{ firebaseConfigExample }}</pre>
-        </div>
-
-        <div class="how-it-works">
-          <h5>How Force Refresh Works:</h5>
-          <ol>
-            <li>
-              Set <code>forceRefresh.cacheType</code> to <code>true</code> in
-              the stored config
-            </li>
-            <li>
-              <code>updatedAt</code> bumps automatically on every admin trigger
-              call
-            </li>
-            <li>Each device clears cache once when detecting new timestamp</li>
-            <li>No need to reset flags - only triggers on timestamp update</li>
-          </ol>
-        </div>
-
-        <div class="how-it-works">
-          <h5>Global Clear Options:</h5>
-          <ul>
-            <li><code>enableCache.clearAll</code>: Clears ALL localStorage</li>
-            <li><code>forceRefresh.clearAll</code>: Clears all cache types</li>
-          </ul>
-        </div>
-
-        <div class="how-it-works">
-          <h5>Force Logout / Cache Clear (All Devices):</h5>
-          <ol>
-            <li>
-              Use the buttons above — they call
-              <code>POST /api/admin/remote-settings/force-logout</code> and
-              <code>POST /api/admin/remote-settings/cache-clear</code>
-              respectively, which require an Admin JWT
-              (<code>AdminAuthTokenService</code>)
-            </li>
-            <li>
-              Each sets its flag (<code>isLoginClearCacheMandatory</code> /
-              <code>isClearCacheMandatory</code>) and bumps
-              <code>updatedAt</code> on the single <code>remote_settings</code>
-              row
-            </li>
-            <li>Each device acts ONCE when it detects the new timestamp</li>
-            <li>
-              Devices won't repeat the action unless the timestamp changes again
-            </li>
-          </ol>
-        </div>
+        <h4>🔐 Force Logout / Cache Clear (All Devices)</h4>
+        <p>
+          Moved to <strong>zitro-superadmin → Remote Settings</strong> — those
+          triggers affect every device, not just this one, and now require a
+          real Admin JWT instead of an open, unauthenticated route.
+        </p>
       </div>
     </div>
   `,
@@ -230,12 +133,6 @@ import { CacheType } from '@zitro/models';
         font-size: 1.2rem;
       }
 
-      h5 {
-        color: #666;
-        margin: 1rem 0 0.5rem;
-        font-size: 1rem;
-      }
-
       .section {
         margin-bottom: 2rem;
         padding-bottom: 2rem;
@@ -250,43 +147,6 @@ import { CacheType } from '@zitro/models';
         display: flex;
         gap: 1rem;
         flex-wrap: wrap;
-      }
-
-      .admin-section {
-        background: #fff3cd;
-        padding: 1.5rem;
-        border-radius: 8px;
-        border: 2px solid #ffc107;
-      }
-
-      .warning-box {
-        background: #fff3cd;
-        border: 2px solid #ff9800;
-        border-radius: 6px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-
-        p {
-          margin: 0.5rem 0;
-          color: #856404;
-        }
-
-        strong {
-          color: #d32f2f;
-        }
-      }
-
-      .admin-actions {
-        margin-top: 1rem;
-      }
-
-      .action-info {
-        margin-top: 0.5rem;
-
-        small {
-          color: #666;
-          font-style: italic;
-        }
       }
 
       .btn {
@@ -315,29 +175,6 @@ import { CacheType } from '@zitro/models';
 
         &:hover:not(:disabled) {
           background: #f57c00;
-        }
-      }
-      .btn-danger {
-        background: #dc3545;
-        color: white;
-
-        &:hover:not(:disabled) {
-          background: #c82333;
-        }
-      }
-
-      .btn-critical {
-        background: #d32f2f;
-        color: white;
-        font-weight: 600;
-        font-size: 1rem;
-        padding: 0.75rem 1.5rem;
-        border: 2px solid #b71c1c;
-
-        &:hover:not(:disabled) {
-          background: #b71c1c;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
         }
       }
       .btn-danger {
@@ -442,39 +279,11 @@ import { CacheType } from '@zitro/models';
         background: #f5f5f5;
         padding: 1.5rem;
         border-radius: 6px;
-      }
 
-      .config-example pre {
-        background: #263238;
-        color: #aed581;
-        padding: 1rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        overflow-x: auto;
-        line-height: 1.5;
-      }
-
-      .how-it-works {
-        margin-top: 1rem;
-
-        ol,
-        ul {
-          margin: 0.5rem 0 0 1.5rem;
-
-          li {
-            margin-bottom: 0.5rem;
-            color: #555;
-            line-height: 1.5;
-          }
-        }
-
-        code {
-          background: #e0e0e0;
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-family: 'Courier New', monospace;
-          font-size: 0.9em;
-          color: #d32f2f;
+        p {
+          margin: 0;
+          color: #555;
+          line-height: 1.5;
         }
       }
     `,
@@ -487,31 +296,6 @@ export class CacheManagementComponent implements OnInit {
   isProcessing = false;
   cacheStats: any = null;
   cacheTypes: string[] = Object.values(CacheType);
-
-  firebaseConfigExample = `{
-  "cacheManagement": {
-    "cacheDurations": {
-      "banners": 168,
-      "products": 9000,
-      "categories": 9000,
-      "coupons": 24
-    },
-    "enableCache": {
-      "banners": true,
-      "products": true,
-      "clearAll": false
-    },
-    "forceRefresh": {
-      "banners": false,
-      "products": false,
-      "clearAll": false
-    },
-    "lastCacheRefreshTimestamp": {
-      "_seconds": 1705395600,
-      "_nanoseconds": 0
-    }
-  }
-}`;
 
   ngOnInit() {
     this.refreshStats();
@@ -573,77 +357,6 @@ export class CacheManagementComponent implements OnInit {
       await this.appSettingsService.manualLogout();
     } catch (error) {
       console.error('Error during logout:', error);
-    } finally {
-      this.isProcessing = false;
-    }
-  }
-
-  async triggerForceLogoutAllDevices() {
-    if (this.isProcessing) return;
-
-    // Confirm action
-    const confirmed = confirm(
-      '⚠️ WARNING: This will force logout ALL users on ALL devices!\n\n' +
-        'Each device will logout once on their next app launch.\n\n' +
-        'Are you sure you want to proceed?',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.isProcessing = true;
-    try {
-      await this.appSettingsService.triggerForceLogoutAllDevices();
-      alert(
-        '✅ Force logout triggered successfully!\n\n' +
-          'All users will be logged out on their next app launch.\n' +
-          'Each device will logout ONCE when they detect the new timestamp.',
-      );
-      console.log('✅ Force logout triggered for all devices');
-    } catch (error) {
-      console.error('❌ Error triggering force logout:', error);
-      alert(
-        '❌ Failed to trigger force logout.\n\n' +
-          'Requires an Admin JWT — see RemoteSettingsApiService.\n\n' +
-          'Error: ' +
-          (error as Error).message,
-      );
-    } finally {
-      this.isProcessing = false;
-    }
-  }
-
-  async triggerCacheClearAllDevices() {
-    if (this.isProcessing) return;
-
-    const confirmed = confirm(
-      '⚠️ WARNING: This will clear the local cache on ALL devices!\n\n' +
-        'Each device will clear its cache once on their next app launch.\n\n' +
-        'Are you sure you want to proceed?',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.isProcessing = true;
-    try {
-      await this.appSettingsService.triggerCacheClearAllDevices();
-      alert(
-        '✅ Cache clear triggered successfully!\n\n' +
-          'All devices will clear their cache on their next app launch.\n' +
-          'Each device will clear ONCE when they detect the new timestamp.',
-      );
-      console.log('✅ Cache clear triggered for all devices');
-    } catch (error) {
-      console.error('❌ Error triggering cache clear:', error);
-      alert(
-        '❌ Failed to trigger cache clear.\n\n' +
-          'Requires an Admin JWT — see RemoteSettingsApiService.\n\n' +
-          'Error: ' +
-          (error as Error).message,
-      );
     } finally {
       this.isProcessing = false;
     }

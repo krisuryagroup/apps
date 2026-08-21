@@ -27,6 +27,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { labelKey: 'nav.translations', icon: '🌐', route: '/translations' },
   { labelKey: 'nav.themes', icon: '🎨', route: '/themes' },
   { labelKey: 'nav.uiConfig', icon: '⚙️', route: '/ui-config' },
+  { labelKey: 'nav.remoteSettings', icon: '🚨', route: '/remote-settings' },
 ];
 
 @Component({

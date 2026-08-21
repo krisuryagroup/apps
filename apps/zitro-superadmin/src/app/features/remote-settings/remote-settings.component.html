@@ -1,0 +1,109 @@
+<div class="page-header">
+  <h1 class="page-title">{{ 'remoteSettings.title' | i18n }}</h1>
+  <p class="page-subtitle">{{ 'remoteSettings.subtitle' | i18n }}</p>
+</div>
+
+@if (loadError()) {
+  <p class="error-banner">{{ loadError()! | i18n }}</p>
+}
+
+@if (loading()) {
+  <p class="loading-text">{{ 'common.loading' | i18n }}</p>
+} @else if (settings()) {
+  <div class="status-grid">
+    <div class="status-card">
+      <span class="status-label">{{
+        'remoteSettings.clearCacheFlag' | i18n
+      }}</span>
+      <span
+        class="status-value"
+        [class.status-on]="settings()!.isClearCacheMandatory"
+      >
+        {{
+          settings()!.isClearCacheMandatory
+            ? ('remoteSettings.pending' | i18n)
+            : ('remoteSettings.clear' | i18n)
+        }}
+      </span>
+    </div>
+    <div class="status-card">
+      <span class="status-label">{{
+        'remoteSettings.loginClearFlag' | i18n
+      }}</span>
+      <span
+        class="status-value"
+        [class.status-on]="settings()!.isLoginClearCacheMandatory"
+      >
+        {{
+          settings()!.isLoginClearCacheMandatory
+            ? ('remoteSettings.pending' | i18n)
+            : ('remoteSettings.clear' | i18n)
+        }}
+      </span>
+    </div>
+    <div class="status-card">
+      <span class="status-label">{{ 'remoteSettings.updatedAt' | i18n }}</span>
+      <span class="status-value">{{ formatDate(settings()!.updatedAt) }}</span>
+    </div>
+  </div>
+
+  <div class="admin-actions-section">
+    <div class="warning-box">
+      <p>
+        ⚠️ <strong>{{ 'remoteSettings.warningTitle' | i18n }}</strong>
+        {{ 'remoteSettings.warningBody' | i18n }}
+      </p>
+    </div>
+
+    <div class="action-row">
+      <button
+        class="btn btn-critical"
+        data-testid="trigger-force-logout-btn"
+        [disabled]="!!processing()"
+        (click)="requestForceLogout()"
+      >
+        {{
+          processing() === 'logout'
+            ? ('common.saving' | i18n)
+            : ('remoteSettings.triggerForceLogout' | i18n)
+        }}
+      </button>
+      <p class="action-hint">
+        {{ 'remoteSettings.triggerForceLogoutHint' | i18n }}
+      </p>
+    </div>
+
+    <div class="action-row">
+      <button
+        class="btn btn-critical"
+        data-testid="trigger-cache-clear-btn"
+        [disabled]="!!processing()"
+        (click)="requestCacheClear()"
+      >
+        {{
+          processing() === 'cache'
+            ? ('common.saving' | i18n)
+            : ('remoteSettings.triggerCacheClear' | i18n)
+        }}
+      </button>
+      <p class="action-hint">
+        {{ 'remoteSettings.triggerCacheClearHint' | i18n }}
+      </p>
+    </div>
+
+    @if (actionError()) {
+      <p class="error-text">{{ actionError()! | i18n }}</p>
+    }
+    @if (actionSuccess()) {
+      <p class="success-text">{{ actionSuccess()! | i18n }}</p>
+    }
+  </div>
+}
+
+<lib-confirmation-dialog
+  data-testid="remote-settings-confirm-dialog"
+  [isVisible]="!!pendingAction()"
+  [config]="dialogConfig()"
+  (confirmed)="onDialogConfirmed()"
+  (cancelled)="onDialogCancelled()"
+/>

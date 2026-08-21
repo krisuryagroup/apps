@@ -1278,59 +1278,7 @@ export class AppSettingsService {
   // END ORDER CANCELLATION CONFIGURATION METHODS
   // ============================================================================
 
-  /**
-   * Trigger force logout for all devices (Admin function).
-   * Migrated off Firestore — POST /api/admin/remote-settings/force-logout.
-   * Each device will logout ONCE when they detect the new timestamp.
-   */
-  async triggerForceLogoutAllDevices(): Promise<void> {
-    try {
-      console.log(
-        '🚨 App Settings Service: Triggering force logout for all devices...',
-      );
-      const result = await firstValueFrom(
-        this.remoteSettingsApi.triggerForceLogout(),
-      );
-      console.log(
-        '✅ App Settings Service: Force logout triggered successfully, updatedAt:',
-        result.updatedAt,
-      );
-    } catch (error) {
-      console.error(
-        '❌ App Settings Service: Failed to trigger force logout:',
-        error,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Trigger a cache clear for all devices (Admin function).
-   * Migrated off Firestore — POST /api/admin/remote-settings/cache-clear.
-   * Each device will clear its local cache ONCE when it detects the new timestamp.
-   */
-  async triggerCacheClearAllDevices(
-    cacheManagement?: CacheManagementConfig,
-  ): Promise<void> {
-    try {
-      console.log(
-        '🚨 App Settings Service: Triggering cache clear for all devices...',
-      );
-      const result = await firstValueFrom(
-        this.remoteSettingsApi.triggerCacheClear(
-          cacheManagement ? JSON.stringify(cacheManagement) : undefined,
-        ),
-      );
-      console.log(
-        '✅ App Settings Service: Cache clear triggered successfully, updatedAt:',
-        result.updatedAt,
-      );
-    } catch (error) {
-      console.error(
-        '❌ App Settings Service: Failed to trigger cache clear:',
-        error,
-      );
-      throw error;
-    }
-  }
+  // Force-logout / cache-clear admin triggers moved to zitro-superadmin's
+  // RemoteSettingsComponent, which calls RemoteSettingsApiService directly —
+  // see apps/zitro-superadmin/src/app/features/remote-settings/.
 }

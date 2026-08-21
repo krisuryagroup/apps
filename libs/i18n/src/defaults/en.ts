@@ -530,6 +530,7 @@ export const EN_DEFAULTS = {
     translations: 'Translations',
     themes: 'Themes',
     uiConfig: 'UI Config',
+    remoteSettings: 'Remote Settings',
     logout: 'Log Out',
     closeMenu: 'Close menu',
   },
@@ -639,6 +640,38 @@ export const EN_DEFAULTS = {
     loadError: 'Failed to load UI config.',
     saveError: 'Failed to save UI config.',
     saved: 'Saved successfully.',
+  },
+  // ── Force-logout / cache-clear remote triggers (global, device-wide) ───────
+  remoteSettings: {
+    title: 'Remote Settings',
+    subtitle:
+      'Force-logout and cache-clear triggers polled by every app at boot. These are global — not scoped to any one user or device.',
+    clearCacheFlag: 'Cache clear',
+    loginClearFlag: 'Force logout',
+    updatedAt: 'Last updated',
+    pending: 'Pending',
+    clear: 'Clear',
+    warningTitle: 'Warning:',
+    warningBody:
+      'These actions affect every device running the customer app, not a single user. Each device acts once, the next time it launches.',
+    triggerForceLogout: 'Trigger Force Logout (All Devices)',
+    triggerForceLogoutHint:
+      'Sets the force-logout flag and bumps the remote-settings timestamp.',
+    triggerCacheClear: 'Trigger Cache Clear (All Devices)',
+    triggerCacheClearHint:
+      'Sets the cache-clear flag and bumps the remote-settings timestamp.',
+    forceLogoutSuccess: 'Force logout triggered for all devices.',
+    forceLogoutError: 'Failed to trigger force logout.',
+    cacheClearSuccess: 'Cache clear triggered for all devices.',
+    cacheClearError: 'Failed to trigger cache clear.',
+    loadError: 'Failed to load remote settings.',
+    confirmLogoutTitle: 'Force logout all devices?',
+    confirmLogoutMessage:
+      'This will log out every user on every device the next time they open the app. This cannot be undone.',
+    confirmCacheTitle: 'Clear cache on all devices?',
+    confirmCacheMessage:
+      'This will clear the local cache on every device the next time they open the app.',
+    confirmProceed: 'Yes, proceed',
   },
   // ── Admin domain keys (AD-002..AD-019) ────────────────────────────────────
   dashboard: {
