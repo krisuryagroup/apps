@@ -1,15 +1,4 @@
 import { Injectable, Injector, inject } from '@angular/core';
-import {
-  Firestore,
-  doc,
-  getDoc,
-  collection,
-  query,
-  getDocs,
-  limit,
-  updateDoc,
-  serverTimestamp,
-} from '@angular/fire/firestore';
 import { firstValueFrom } from 'rxjs';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { ProductsService } from './products.service';
@@ -22,9 +11,6 @@ import {
   OrderCancellationMessages,
 } from '@zitro/models';
 import {
-  FIREBASE_COLLECTIONS,
-  FIREBASE_DOCUMENTS,
-  FIREBASE_SUBCOLLECTIONS,
   APP_SETTINGS_CACHE,
   AUTH_KEYS,
   CACHE_KEYS,
@@ -36,6 +22,7 @@ import { AuthConfig, DEFAULT_AUTH_CONFIG } from '@zitro/models';
 import { AnalyticsConfigModel } from '@zitro/models';
 import { FcmTokenService } from './fcm-token.service';
 import { ConfigApiService } from './api/config-api.service';
+import { RemoteSettingsApiService } from './api/remote-settings-api.service';
 
 export interface AppSettings {
   id: string;
@@ -59,13 +46,13 @@ export interface SmsConfigs {
   providedIn: 'root',
 })
 export class AppSettingsService {
-  private firestore = inject(Firestore);
   private injector = inject(Injector);
   private productsService = inject(ProductsService);
   private categoriesService = inject(CategoriesService);
   private router = inject(Router);
   private cacheManager = inject(CacheManagerService);
   private configApi = inject(ConfigApiService);
+  private remoteSettingsApi = inject(RemoteSettingsApiService);
 
   private isInitialized = false;
   private isInitializing = false;
@@ -372,7 +359,7 @@ export class AppSettingsService {
     try {
       const t0 = performance.now();
       console.log(
-        '[STARTUP] AppSettings.performSettingsCheck — Firestore fetch start',
+        '[STARTUP] AppSettings.performSettingsCheck — remote-settings fetch start',
       );
       const settings = await this.getAppSettings();
       console.log(
@@ -415,119 +402,45 @@ export class AppSettingsService {
   }
 
   /**
-   * Get app settings from Firebase subcollection
-   * Path: appSettings/appSettings/onlineorders
+   * Get remote settings from the backend (force-logout / cache-clear triggers).
+   * Migrated off Firestore — GET /api/app-config/remote-settings.
    */
   private async getAppSettings(): Promise<AppSettings | null> {
-    try {
-      console.log(
-        '🔥 App Settings Service: Connecting to Firebase path:',
-        `${FIREBASE_COLLECTIONS.APP_SETTINGS}/${FIREBASE_DOCUMENTS.APP_SETTINGS}/${FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS}`,
-      );
+    return this.withTimeout(
+      async () => {
+        const _tFs = performance.now();
+        const settings = await firstValueFrom(
+          this.remoteSettingsApi.getRemoteSettings(),
+        );
+        console.log(
+          '[STARTUP] AppSettings remote-settings fetch took',
+          (performance.now() - _tFs).toFixed(0),
+          'ms',
+        );
 
-      // Create reference to the subcollection: appSettings/appSettings/onlineorders
-      const subcollectionRef = collection(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-      );
-
-      // Get the first document from the subcollection (assuming there's only one settings document)
-      const q = query(subcollectionRef, limit(1));
-
-      return this.withTimeout(
-        async () => {
-          const _tFs = performance.now();
-          const querySnapshot = await getDocs(q);
-          console.log(
-            '[STARTUP] AppSettings Firestore getDocs took',
-            (performance.now() - _tFs).toFixed(0),
-            'ms',
-          );
-
-          if (!querySnapshot.empty) {
-            const settingsDoc = querySnapshot.docs[0];
-            const data = settingsDoc.data();
-
-            return {
-              id: settingsDoc.id,
-              isClearCacheMandatoryForOnlineOrder:
-                data['isClearCacheMandatoryForOnlineOrder'] || false,
-              isLoginClearCacheMandatoryForOnlineOrder:
-                data['isLoginClearCacheMandatoryForOnlineOrder'] || false,
-              lastUpdated: this.convertFirebaseTimestamp(data['lastUpdated']),
-              cacheManagement: data['cacheManagement'] as
-                | CacheManagementConfig
-                | undefined,
-            } as AppSettings;
-          }
-
-          console.warn(
-            '⚠️ App Settings Service: No settings documents found in subcollection',
-          );
-          return null;
-        },
-        AppSettingsService.REMOTE_TIMEOUT_MS,
-        null,
-        'AppSettings Firestore fetch',
-      );
-    } catch (error) {
+        return {
+          id: 'default',
+          isClearCacheMandatoryForOnlineOrder: settings.isClearCacheMandatory,
+          isLoginClearCacheMandatoryForOnlineOrder:
+            settings.isLoginClearCacheMandatory,
+          lastUpdated: settings.updatedAt,
+          cacheManagement: settings.cacheManagementJson
+            ? (JSON.parse(
+                settings.cacheManagementJson,
+              ) as CacheManagementConfig)
+            : undefined,
+        } as AppSettings;
+      },
+      AppSettingsService.REMOTE_TIMEOUT_MS,
+      null,
+      'AppSettings remote-settings fetch',
+    ).catch((error) => {
       console.error(
-        '❌ App Settings Service: Error fetching app settings from subcollection:',
+        '❌ App Settings Service: Error fetching remote settings:',
         error,
       );
       return null;
-    }
-  }
-
-  /**
-   * Convert Firebase Timestamp to ISO string
-   * @param timestamp - Firebase Timestamp object or any other timestamp format
-   * @returns ISO string representation of the timestamp
-   */
-  private convertFirebaseTimestamp(timestamp: any): string {
-    if (!timestamp) {
-      return new Date().toISOString();
-    }
-
-    try {
-      // Check if it's a Firebase Timestamp object
-      if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toISOString();
-      }
-
-      // Check if it's already a Date object
-      if (timestamp instanceof Date) {
-        return timestamp.toISOString();
-      }
-
-      // Check if it's a timestamp number
-      if (typeof timestamp === 'number') {
-        return new Date(timestamp).toISOString();
-      }
-
-      // Check if it's a string
-      if (typeof timestamp === 'string') {
-        const date = new Date(timestamp);
-        if (!isNaN(date.getTime())) {
-          return date.toISOString();
-        }
-      }
-
-      // Fallback to current time
-      console.warn(
-        '⚠️ App Settings Service: Unable to convert timestamp, using current time:',
-        timestamp,
-      );
-      return new Date().toISOString();
-    } catch (error) {
-      console.error(
-        '❌ App Settings Service: Error converting timestamp:',
-        error,
-      );
-      return new Date().toISOString();
-    }
+    });
   }
 
   /**
@@ -1366,56 +1279,55 @@ export class AppSettingsService {
   // ============================================================================
 
   /**
-   * Trigger force logout for all devices (Admin function)
-   * This updates Firebase settings to enable force logout and updates the timestamp
-   * Each device will logout ONCE when they detect the new timestamp
+   * Trigger force logout for all devices (Admin function).
+   * Migrated off Firestore — POST /api/admin/remote-settings/force-logout.
+   * Each device will logout ONCE when they detect the new timestamp.
    */
   async triggerForceLogoutAllDevices(): Promise<void> {
     try {
       console.log(
         '🚨 App Settings Service: Triggering force logout for all devices...',
       );
-
-      // Get the current settings document
-      const subcollectionRef = collection(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
+      const result = await firstValueFrom(
+        this.remoteSettingsApi.triggerForceLogout(),
       );
-
-      const q = query(subcollectionRef, limit(1));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        throw new Error('Settings document not found in Firebase');
-      }
-
-      const settingsDoc = querySnapshot.docs[0];
-      const docRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        settingsDoc.id,
-      );
-
-      // Update Firebase document to trigger force logout
-      await updateDoc(docRef, {
-        isLoginClearCacheMandatoryForOnlineOrder: true,
-        lastUpdated: serverTimestamp(),
-      });
-
       console.log(
-        '✅ App Settings Service: Force logout triggered successfully',
-      );
-      console.log('   Updated document:', settingsDoc.id);
-      console.log(
-        '   All devices will logout on next app launch when they detect the new timestamp',
+        '✅ App Settings Service: Force logout triggered successfully, updatedAt:',
+        result.updatedAt,
       );
     } catch (error) {
       console.error(
         '❌ App Settings Service: Failed to trigger force logout:',
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Trigger a cache clear for all devices (Admin function).
+   * Migrated off Firestore — POST /api/admin/remote-settings/cache-clear.
+   * Each device will clear its local cache ONCE when it detects the new timestamp.
+   */
+  async triggerCacheClearAllDevices(
+    cacheManagement?: CacheManagementConfig,
+  ): Promise<void> {
+    try {
+      console.log(
+        '🚨 App Settings Service: Triggering cache clear for all devices...',
+      );
+      const result = await firstValueFrom(
+        this.remoteSettingsApi.triggerCacheClear(
+          cacheManagement ? JSON.stringify(cacheManagement) : undefined,
+        ),
+      );
+      console.log(
+        '✅ App Settings Service: Cache clear triggered successfully, updatedAt:',
+        result.updatedAt,
+      );
+    } catch (error) {
+      console.error(
+        '❌ App Settings Service: Failed to trigger cache clear:',
         error,
       );
       throw error;

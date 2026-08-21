@@ -53,28 +53,34 @@ race between `GetCartHandler` and `CheckoutHandler`.
 
 ---
 
-### 1.2 — Slow Firestore call at startup (~26s) — root cause pinned down, not fixed
+### 1.2 — Slow Firestore call at startup (~26s) — FIXED (2026-08-21)
 
-`AppSettings Firestore getDocs` genuinely takes ~26 seconds to resolve. A 5s timeout (`Promise.race`)
-already lets the rest of the app proceed after 5s, so this is **not currently user-blocking**, but
-the real Firestore query keeps running orphaned in the background for the full ~26s regardless —
-the Firestore JS SDK has no way to cancel an in-flight `getDocs()` call.
+`AppSettings Firestore getDocs` used to take ~26 seconds to resolve on every app boot.
 
-**Update (2026-08-21):** most of `appSettings/restaurantDetails/onlineorders/` has since been
-migrated off Firestore (`getCheckoutSettings()` now calls `GET /api/app-config`;
-`getCategoryConfigs()`, dead, was deleted). The exact call causing this 26s delay is the one piece
-deliberately left in place: `AppSettingsService.getAppSettings()` (private) → called from
-`performSettingsCheck()` on every app boot → feeds `handleCacheClearRequirement()` /
-`handleLoginClearRequirement()`, which back a live admin feature — the "force logout all devices /
-clear cache" button in `cache-management.component.ts` (`triggerForceLogoutAllDevices()`). There is
-**no REST equivalent for this feature in zitro-api** yet, so it can't be migrated without first
-building one (e.g. an admin-triggered `remote_settings` table + `GET /api/app/remote-settings`
-polled at boot, replacing the Firestore subcollection read). Until that exists, this stays on
-Firestore and the startup delay remains.
+**Resolved:** built the REST replacement this was blocked on. New `remote_settings` table
+(single global row) + `GET /api/app-config/remote-settings` (public, polled at boot) +
+`POST /api/admin/remote-settings/force-logout` / `POST /api/admin/remote-settings/cache-clear`
+(Admin JWT + `app-config:write` permission, same pattern as the rest of `AdminAppConfigController`).
+`AppSettingsService.getAppSettings()` now calls the REST endpoint instead of Firestore —
+verified live: boot-time fetch is now ~10-14ms (was ~26,000ms). `triggerForceLogoutAllDevices()`
+and the new `triggerCacheClearAllDevices()` in `cache-management.component.ts` call the two admin
+endpoints. The whole `appSettings/restaurantDetails/onlineorders/` Firestore path is now fully
+retired — `AppSettingsService` no longer imports `@angular/fire/firestore` at all.
 
-**Where:** `apps/libs/services/src/app-settings.service.ts` (`getAppSettings`,
-`performSettingsCheck`, `triggerForceLogoutAllDevices`) and
-`apps/apps/zitro-customer/src/app/shared/components/cache-management/cache-management.component.ts`.
+One caveat, by design: the two admin trigger buttons in `cache-management.component.ts` require an
+Admin JWT (`AdminAuthTokenService`, key `zitro_admin_jwt`), which zitro-customer has no login flow
+for — the component is explicitly "Development Only" and was reachable with **no auth at all**
+before (an open Firestore write); it's a strict security improvement, but a developer needs to seed
+that localStorage key manually (e.g. paste a token obtained via `POST /api/admin/auth/login`) to
+actually use those two buttons locally. The public GET (the one that fixed the startup delay) needs
+no auth and works for every user.
+
+**Migration:** `zitro-api/docs/schema/apply-2026-08-21-remote-settings.sql` (idempotent, already
+applied to local `zitro-dev`) — run it against any other database this needs to reach.
+
+**Where:** `apps/libs/services/src/app-settings.service.ts`, `apps/libs/services/src/api/remote-settings-api.service.ts` (new),
+`apps/apps/zitro-customer/src/app/shared/components/cache-management/cache-management.component.ts`,
+`zitro-api/src/Modules/AppConfig/AppConfig.Module/Features/{GetRemoteSettings,TriggerForceLogout,TriggerCacheClear}/`.
 
 ---
 

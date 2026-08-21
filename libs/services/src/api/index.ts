@@ -57,3 +57,8 @@ export { PricingApiService } from './pricing.service';
 export { SocietyApiService } from './society-api.service';
 export { GameApiService } from './game-api.service';
 export type { GameScoreResult } from './game-api.service';
+export { RemoteSettingsApiService } from './remote-settings-api.service';
+export type {
+  RemoteSettingsResponse,
+  RemoteSettingsTriggerResult,
+} from './remote-settings-api.service';
