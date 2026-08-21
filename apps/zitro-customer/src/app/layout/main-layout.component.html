@@ -53,7 +53,7 @@
       <!-- Non-home: restaurant name + page title -->
       <div class="dh-header-center" *ngIf="!isOnHomePage">
         <div class="dh-restaurant-info">
-          <div class="dh-restaurant-name">The Hunger Point</div>
+          <div class="dh-restaurant-name">{{ restaurantName }}</div>
         </div>
         <div class="dh-user-info" *ngIf="!isLargeScreen()">
           <span class="dh-user-name">{{ userName }}</span>

@@ -84,17 +84,51 @@ applied to local `zitro-dev`) — run it against any other database this needs t
 
 ---
 
-### 1.3 — Known gaps confirmed live, not fixed this pass
+### 1.3 — Known gaps confirmed live
 
-- **§16.8 — header hardcodes "The Hunger Point"**: confirmed on every screen while browsing EFC
-  Pizza's actual menu/cart/checkout/order-tracking — the top bar never once said "EFC Pizza."
-- **CUST-T-907 — Invoice/Download-bill buttons are permanently disabled**: confirmed on
-  order-tracking for a real, just-placed order.
-- **§9.1/CUST-T-903 — no status timeline on order-tracking, only a single banner**: confirmed.
+- **§16.8 — header hardcodes "The Hunger Point" — FIXED (2026-08-21).** The desktop header
+  (`main-layout.component.html`'s `.dh-restaurant-name`) had the literal string `"The Hunger
+Point"` in the template — never wired to the actual business being browsed. Added
+  `ConfigApiService.getBusinessDetail(slug)` (`GET /api/businesses/{slug}`, public, 1h cache) and
+  a `restaurantName` property on `MainLayoutComponent`, refreshed on `NavigationEnd` and deduped
+  against `BusinessContextService.businessId()` so it only refetches when the business actually
+  changes. Falls back to a generic "Restaurant" string if the lookup fails, rather than showing
+  stale or wrong data. **Verified live:** browsing EFC Pizza's menu now correctly shows "EFC
+  Pizza" in the header (was hardcoded "The Hunger Point" before); confirmed the fallback path too
+  by hitting a nonexistent slug — header showed "Restaurant", not a crash or stale name. Only one
+  business (`efc-pizza`) is seeded in local `zitro-dev`, so a live two-business comparison wasn't
+  possible locally, but the mechanism (fetch-by-slug, not a hardcoded value) is the actual fix.
+  Note: on mobile/tablet breakpoints this header is hidden entirely off the home page
+  (`shouldShowHeader` returns `false` there by design) — this fix only affects desktop width,
+  matching where the bug was actually confirmed.
+  **Where:** `apps/apps/zitro-customer/src/app/layout/main-layout.component.ts` (`.html` too),
+  `apps/libs/services/src/api/config-api.service.ts` (`getBusinessDetail`, `BusinessDetail`).
+- **CUST-T-907 — Invoice/Download-bill buttons permanently disabled — FIXED (2026-08-21).** Was
+  never implemented, not broken: both buttons were literally `disabled` in the template with no
+  click handler, no PDF library anywhere in the frontend, no invoice endpoint on the backend.
+  Built the backend-generated PDF path (product decision: same document backs both buttons, they
+  were never meant to differ). New `GET /api/orders/{orderId}/invoice` in `Orders.Module`, built
+  with QuestPDF (**Community license — free under $1M USD annual revenue, re-check before scaling
+  past that**), reusing `OrderRepository`/`OrderDto` — no new query needed, just a PDF renderer
+  layered on the same data `GetOrder` already returns. Renders business name/address/GSTIN/FSSAI,
+  order ID/date/status, billed-to + delivery address, payment method, itemized table, GST/coupon/
+  wallet breakdown (parsed from the `Charges` JSONB blob, falling back to top-level
+  Subtotal/Tax/Total if that's absent), and total. Frontend: `OrderApiService.getInvoicePdf()`
+  fetches the blob, both buttons trigger a real browser download via a temporary `<a download>`.
+  **Verified live, end to end:** clicked the real "Invoice" button on order `#ORD937977142239` in
+  a logged-in browser session → `GET .../invoice` → `200`, `Content-Type: application/pdf` →
+  downloaded a genuine single-page PDF that renders correctly with every field matching the order
+  exactly (₹1,150.80 total, all 4 line items, 5% GST = ₹54.80).
+  **Where:** `zitro-api/src/Modules/Orders/Orders.Module/Features/GetOrderInvoice/` (new),
+  `zitro-api/src/Modules/Orders/Orders.Module/Controllers/OrdersController.cs`,
+  `apps/libs/services/src/api/order-api.service.ts` (`getInvoicePdf`),
+  `apps/apps/zitro-customer/src/app/features/order-tracking/order-tracking.page.ts` (`.html` too).
+- **§9.1/CUST-T-903 — no status timeline on order-tracking, only a single banner**: confirmed. Not
+  fixed this pass.
 
-These were pre-existing, already-documented gaps (source doc §16 / relevant `CUST-T-*` scenarios) —
-out of scope for this fix pass, listed here only because this session independently reproduced them
-live rather than just reading the code.
+The latter was a pre-existing, already-documented gap (source doc §16 / relevant `CUST-T-*`
+scenario) — out of scope, listed here only because this session independently reproduced it live
+rather than just reading the code.
 
 ---
 

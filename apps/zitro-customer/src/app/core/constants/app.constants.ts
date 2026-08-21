@@ -412,6 +412,7 @@ export const APP_CONSTANTS = {
   FALLBACK_VALUES: {
     UNKNOWN_ITEM: 'Unknown Item',
     USER_PREFIX: 'User',
+    RESTAURANT_NAME: 'Restaurant',
   },
 
   // Category Order

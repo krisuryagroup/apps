@@ -42,6 +42,7 @@ export { AddressApiService } from './address-api.service';
 export { ConfigApiService } from './config-api.service';
 export type {
   BusinessConfig,
+  BusinessDetail,
   Banner,
   AppVersionInfo,
   AppVersionCheckResult,

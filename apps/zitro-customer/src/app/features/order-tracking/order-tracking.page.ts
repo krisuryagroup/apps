@@ -206,6 +206,29 @@ export class OrderTrackingPage implements OnInit {
     this.router.navigate(['/contact']);
   }
 
+  readonly downloadingInvoice = signal(false);
+
+  /** Backs both "Download bill" and "Invoice" — same PDF document for both. */
+  async downloadInvoice(): Promise<void> {
+    if (this.downloadingInvoice() || !this.orderId) return;
+    this.downloadingInvoice.set(true);
+    try {
+      const blob = await firstValueFrom(
+        this.orderApi.getInvoicePdf(this.orderId),
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${this.orderId}-invoice.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Could not download the invoice right now. Please try again.');
+    } finally {
+      this.downloadingInvoice.set(false);
+    }
+  }
+
   private maskPhone(phone: string): string {
     if (!phone) return '';
     const digits = phone.replace(/\D/g, '');

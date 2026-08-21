@@ -101,7 +101,12 @@
         <span class="material-icons od-bill-icon">receipt_long</span>
         <h3>{{ 'order.billSummary' | i18n }}</h3>
       </div>
-      <button class="od-download-btn" disabled data-testid="download-bill-btn">
+      <button
+        class="od-download-btn"
+        [disabled]="downloadingInvoice()"
+        (click)="downloadInvoice()"
+        data-testid="download-bill-btn"
+      >
         <span class="material-icons">file_download</span>
       </button>
     </div>
@@ -227,9 +232,15 @@
 
   <!-- Invoice Button -->
   <div class="od-invoice-section">
-    <button class="od-invoice-btn" disabled data-testid="invoice-btn">
+    <button
+      class="od-invoice-btn"
+      [disabled]="downloadingInvoice()"
+      (click)="downloadInvoice()"
+      data-testid="invoice-btn"
+    >
       <span class="material-icons">file_download</span>
-      {{ 'order.invoice' | i18n }}
+      {{ downloadingInvoice() ? ('common.loading' | i18n) : ('order.invoice' |
+      i18n) }}
     </button>
   </div>
 

@@ -43,6 +43,8 @@ import { LocationService } from '@zitro/services';
 import { LocationSelectionService } from '@zitro/services';
 import { BannerService } from '@zitro/services';
 import { BannerConfigs } from '@zitro/models';
+import { ConfigApiService } from '@zitro/services';
+import { BusinessContextService } from '@zitro/services';
 
 @Component({
   selector: 'app-main-layout',
@@ -71,6 +73,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
   private locationService = inject(LocationService);
   private locationSelectionService = inject(LocationSelectionService);
   private bannerService = inject(BannerService);
+  private configApi = inject(ConfigApiService);
+  private businessContext = inject(BusinessContextService);
 
   private destroy$ = new Subject<void>();
   sidebarOpen = false;
@@ -81,6 +85,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
   currentRoute = '';
   isRestaurantOpen = false;
   restaurantTime = '';
+  restaurantName: string = FALLBACK_VALUES.RESTAURANT_NAME;
+  private lastFetchedBusinessSlug: string | null = null;
   breakpoint: Breakpoint = 'mobile';
   isLoggedIn = false;
   headerTitle = '';
@@ -259,6 +265,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
         if (this.isOnHomePage) {
           this.tryGetLocation();
         }
+        this.refreshRestaurantNameIfNeeded();
         // // Refresh settings on critical route changes
         // this.refreshSettingsOnRouteChange(event.urlAfterRedirects);
       });
@@ -272,6 +279,31 @@ export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
       this.router.url.startsWith('/favorites');
     this.isOnHomePage = this.router.url === '/home' || this.router.url === '/';
     this.updateHeaderTitle();
+    this.refreshRestaurantNameIfNeeded();
+  }
+
+  /**
+   * Fetches the current business's real display name for the header, replacing what used
+   * to be a hardcoded "The Hunger Point" — confirmed broken live on every other business
+   * (e.g. EFC Pizza) in apps/tasks/CUSTOMER-TEST-FINDINGS.md §16.8. Deduped on the slug
+   * (BusinessContextService) since NavigationEnd fires far more often than the business
+   * actually changes.
+   */
+  private refreshRestaurantNameIfNeeded(): void {
+    const slug = this.businessContext.businessId();
+    if (!slug || slug === this.lastFetchedBusinessSlug) {
+      return;
+    }
+    this.lastFetchedBusinessSlug = slug;
+    this.configApi.getBusinessDetail(slug).subscribe({
+      next: (detail) => {
+        this.restaurantName = detail.name || FALLBACK_VALUES.RESTAURANT_NAME;
+      },
+      error: () => {
+        // Keep whatever was last shown; allow retrying on the next navigation.
+        this.lastFetchedBusinessSlug = null;
+      },
+    });
   }
 
   updateHeaderTitle() {

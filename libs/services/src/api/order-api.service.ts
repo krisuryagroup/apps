@@ -66,6 +66,13 @@ export class OrderApiService {
       );
   }
 
+  /** GET /api/orders/{orderId}/invoice — PDF blob. Serves both "Download bill" and "Invoice". */
+  getInvoicePdf(orderId: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/orders/${orderId}/invoice`, {
+      responseType: 'blob',
+    });
+  }
+
   getOrderHistory(page = 1, status?: string): Observable<Order[]> {
     const cacheKey = ORDER_HISTORY_KEY;
     if (!status) {

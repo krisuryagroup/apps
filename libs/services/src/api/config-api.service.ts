@@ -88,6 +88,17 @@ export interface AppVersionCheckResult {
   storeUrl: string | null;
 }
 
+// Matches BusinessDto returned by GET /api/businesses/{slug} — only the fields the
+// customer app actually reads today. The backend returns many more.
+export interface BusinessDetail {
+  id: string;
+  slug: string;
+  name: string;
+  openTime: string | null;
+  closeTime: string | null;
+  is24Hours: boolean;
+}
+
 export interface AppConfigResponse {
   auth: {
     sms: {
@@ -129,6 +140,16 @@ export class ConfigApiService {
   private http = inject(HttpClient);
   private cache = inject(CacheService);
   private baseUrl = inject(ZITRO_API_BASE_URL);
+
+  /** GET /api/businesses/{slug} — public. Used for display info (name, hours) outside of pricing/cart concerns. */
+  getBusinessDetail(businessSlug: string): Observable<BusinessDetail> {
+    const cacheKey = `businessDetail:${businessSlug}`;
+    const cached = this.cache.get<BusinessDetail>(cacheKey);
+    if (cached) return of(cached);
+    return this.http
+      .get<BusinessDetail>(`${this.baseUrl}/api/businesses/${businessSlug}`)
+      .pipe(tap((detail) => this.cache.set(cacheKey, detail, { ttlHours: 1 })));
+  }
 
   getBusinessConfig(businessSlug: string): Observable<BusinessConfig> {
     const cacheKey = `config:${businessSlug}`;
