@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AdminApiService,
@@ -66,6 +67,13 @@ import {
               : ('brands.viewBranches' | i18n)
           }}
         </button>
+        <button
+          class="btn btn-sm btn-outline"
+          data-testid="brand-add-branch-btn"
+          (click)="addBranch(row)"
+        >
+          {{ 'brands.addBranch' | i18n }}
+        </button>
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
           {{ 'common.edit' | i18n }}
         </button>
@@ -86,6 +94,8 @@ import {
                   <th>{{ 'businesses.name' | i18n }}</th>
                   <th>{{ 'businesses.town' | i18n }}</th>
                   <th>{{ 'businesses.active' | i18n }}</th>
+                  <th>{{ 'businesses.menuMode' | i18n }}</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -94,6 +104,19 @@ import {
                     <td>{{ branch.name }}</td>
                     <td>{{ branch.town }}</td>
                     <td>{{ branch.isActive ? '✓' : '✗' }}</td>
+                    <td>{{ branch.menuMode }}</td>
+                    <td>
+                      @if (branch.menuMode === 'independent') {
+                        <button
+                          class="btn btn-sm btn-outline"
+                          data-testid="branch-promote-btn"
+                          [disabled]="promoting()[branch.id]"
+                          (click)="requestPromote(branch)"
+                        >
+                          {{ 'brands.promote' | i18n }}
+                        </button>
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -107,6 +130,12 @@ import {
       [config]="deleteDialogConfig()"
       (confirmed)="confirmRemove()"
       (cancelled)="pendingDelete.set(null)"
+    />
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingPromote()"
+      [config]="promoteDialogConfig()"
+      (confirmed)="confirmPromote()"
+      (cancelled)="pendingPromote.set(null)"
     />
     @if (showForm()) {
       <div class="overlay">
@@ -174,6 +203,7 @@ import {
 export class AdminBrandsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly i18n = inject(I18nService);
+  private readonly router = inject(Router);
   protected result = signal<PagedResult<BrandDto> | null>(null);
   protected loading = signal(true);
   protected error = signal(false);
@@ -262,15 +292,19 @@ export class AdminBrandsComponent implements OnInit {
     }
     this.expandedBrandId.set(brand.id);
     if (this.branchesByBrand()[brand.id]) return;
-    this.branchesLoading.update((m) => ({ ...m, [brand.id]: true }));
-    this.api.getBrandBranches(brand.id).subscribe({
+    this.loadBranches(brand.id);
+  }
+
+  private loadBranches(brandId: string): void {
+    this.branchesLoading.update((m) => ({ ...m, [brandId]: true }));
+    this.api.getBrandBranches(brandId).subscribe({
       next: (branches) => {
-        this.branchesByBrand.update((m) => ({ ...m, [brand.id]: branches }));
-        this.branchesLoading.update((m) => ({ ...m, [brand.id]: false }));
+        this.branchesByBrand.update((m) => ({ ...m, [brandId]: branches }));
+        this.branchesLoading.update((m) => ({ ...m, [brandId]: false }));
       },
       error: () => {
-        this.branchesByBrand.update((m) => ({ ...m, [brand.id]: [] }));
-        this.branchesLoading.update((m) => ({ ...m, [brand.id]: false }));
+        this.branchesByBrand.update((m) => ({ ...m, [brandId]: [] }));
+        this.branchesLoading.update((m) => ({ ...m, [brandId]: false }));
       },
     });
   }
@@ -328,6 +362,46 @@ export class AdminBrandsComponent implements OnInit {
       error: () => {
         this.saving.set(false);
         this.saveError.set(true);
+      },
+    });
+  }
+
+  /** Jumps to the business-create flow with this brand pre-selected. */
+  protected addBranch(brand: BrandDto): void {
+    this.router.navigate(['/businesses'], {
+      queryParams: { brandId: brand.id },
+    });
+  }
+
+  protected promoting = signal<Record<string, boolean>>({});
+  protected pendingPromote = signal<BusinessSummaryDto | null>(null);
+  protected promoteDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('businesses.promoteConfirmTitle'),
+    message: this.i18n.translate('businesses.promoteConfirmMessage'),
+    confirmLabel: this.i18n.translate('businesses.promoteToBrandMaster'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
+
+  protected requestPromote(branch: BusinessSummaryDto): void {
+    this.pendingPromote.set(branch);
+  }
+
+  protected confirmPromote(): void {
+    const branch = this.pendingPromote();
+    const brandId = this.expandedBrandId();
+    if (!branch || !brandId) return;
+    this.pendingPromote.set(null);
+    this.promoting.update((m) => ({ ...m, [branch.id]: true }));
+    this.api.promoteBranchToBrandMaster(branch.id).subscribe({
+      next: () => {
+        this.promoting.update((m) => ({ ...m, [branch.id]: false }));
+        // Re-fetch so the branches table reflects the new menuMode.
+        this.loadBranches(brandId);
+      },
+      error: () => {
+        this.promoting.update((m) => ({ ...m, [branch.id]: false }));
       },
     });
   }

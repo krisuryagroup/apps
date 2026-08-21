@@ -3,6 +3,7 @@ export const environment = {
   // Local dev default. To point this local frontend at the deployed backend
   // instead, edit this value temporarily — never commit that change.
   apiUrl: 'http://localhost:8080',
+  // apiUrl: 'https://zitro-api.onrender.com',
   appVersion: '1.0.0', // App version fallback for web/browser
   google: {
     mapsApiKey: 'AIzaSyDCzOAMLNb1I0_ae9j4HXWO_ASjNkZFwMk', // Maps Platform  — browser map rendering

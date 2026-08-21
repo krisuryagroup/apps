@@ -44,14 +44,6 @@ race between `GetCartHandler` and `CheckoutHandler`.
 
 ---
 
-## 2. Environment — remaining action items
-
-- **`apps/apps/zitro-customer/src/environments/environment.ts`** `apiUrl` is currently pointed at
-  `http://localhost:8080` for local testing (deliberately left uncommitted). Revert to
-  `https://zitro-api.onrender.com` before building for deploy, or just don't commit it.
-
----
-
 ## 3. Not reached this pass
 
 §2 (location gate's GPS-permission branches — couldn't grant real OS-level geolocation permission

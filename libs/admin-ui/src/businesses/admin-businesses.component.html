@@ -111,6 +111,49 @@
           type="email"
           [(ngModel)]="inviteEmail"
         />
+        <label for="inv-brand" class="form-label">{{
+          'businesses.brand' | i18n
+        }}</label>
+        <select
+          id="inv-brand"
+          class="select"
+          data-testid="invite-form-brand"
+          [(ngModel)]="inviteBrandId"
+        >
+          <option [value]="''">{{ 'businesses.noBrand' | i18n }}</option>
+          @for (brand of brands(); track brand.id) {
+            <option [value]="brand.id">{{ brand.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="map-picker-section">
+        <button
+          class="btn btn-sm btn-outline"
+          type="button"
+          data-testid="invite-form-pick-location-btn"
+          (click)="showMapPicker.set(!showMapPicker())"
+        >
+          {{
+            showMapPicker()
+              ? ('businesses.hideMap' | i18n)
+              : ('businesses.pickOnMap' | i18n)
+          }}
+        </button>
+        @if (showMapPicker()) {
+          <p class="map-hint">{{ 'businesses.mapHint' | i18n }}</p>
+          <lib-location-picker
+            data-testid="invite-form-map-picker"
+            (locationPicked)="onLocationPicked($event)"
+          />
+          @if (resolvingLocation()) {
+            <p class="map-hint">{{ 'common.loading' | i18n }}</p>
+          } @else if (inviteLat !== null && inviteLng !== null) {
+            <p class="map-hint" data-testid="invite-form-coordinates">
+              {{ inviteLat | number: '1.5-5' }},
+              {{ inviteLng | number: '1.5-5' }}
+            </p>
+          }
+        }
       </div>
       <div class="panel-actions">
         <button

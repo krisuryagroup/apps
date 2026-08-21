@@ -1,0 +1,60 @@
+<div class="search-row">
+  <input
+    class="search-input"
+    type="text"
+    [ngModel]="searchQuery"
+    (ngModelChange)="onSearchInput($event)"
+    placeholder="{{ 'locationPicker.searchPlaceholder' | i18n }}"
+    data-testid="location-picker-search-input"
+  />
+  @if (searchQuery) {
+    <button
+      class="clear-search-btn"
+      type="button"
+      (click)="clearSearch()"
+      data-testid="location-picker-clear-search-btn"
+    >
+      ✕
+    </button>
+  }
+</div>
+@if (searchSuggestions().length) {
+  <ul class="suggestions-list" data-testid="location-picker-suggestions-list">
+    @for (s of searchSuggestions(); track s.name) {
+      <li
+        class="suggestion-item"
+        (click)="selectSuggestion(s)"
+        data-testid="location-picker-suggestion-item"
+      >
+        <span class="suggestion-name">{{ s.name }}</span>
+        <span class="suggestion-address">{{ s.fullAddress }}</span>
+      </li>
+    }
+  </ul>
+}
+
+<button
+  class="btn btn-sm btn-outline current-location-btn"
+  type="button"
+  [disabled]="isGettingLocation()"
+  (click)="useCurrentLocation()"
+  data-testid="location-picker-current-location-btn"
+>
+  {{
+    isGettingLocation()
+      ? ('locationPicker.detecting' | i18n)
+      : ('locationPicker.useCurrentLocation' | i18n)
+  }}
+</button>
+@if (locationError()) {
+  <p class="location-error" data-testid="location-picker-error">
+    {{ locationError() }}
+  </p>
+}
+
+<lib-map-picker
+  [config]="config()"
+  [initialCoordinates]="initialCoordinates()"
+  (locationPicked)="onLocationPicked($event)"
+  (loadError)="onLoadError()"
+/>

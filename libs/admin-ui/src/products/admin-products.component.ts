@@ -76,14 +76,14 @@ export class AdminProductsComponent implements OnInit {
   protected readonly columns: DataTableColumn<ProductDto>[] = [
     { key: 'name', labelKey: 'products.name' },
     {
-      key: 'basePrice',
+      key: 'price',
       labelKey: 'products.price',
-      format: (r) => `₹${r.basePrice}`,
+      format: (r) => `₹${r.price}`,
     },
     {
-      key: 'isAvailable',
+      key: 'isEnabledForOnlineOrders',
       labelKey: 'products.available',
-      format: (r) => (r.isAvailable ? '✓' : '✗'),
+      format: (r) => (r.isEnabledForOnlineOrders ? '✓' : '✗'),
     },
   ];
 

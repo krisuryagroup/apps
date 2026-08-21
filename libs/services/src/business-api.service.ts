@@ -218,6 +218,46 @@ export class BusinessApiService {
     );
   }
 
+  // ── Shared brand menu (menu_mode = 'shared' branches only) ────────────────────
+
+  getBrandMasterProducts(
+    businessId: string,
+  ): Observable<BrandMasterProductDto[]> {
+    return this.http.get<BrandMasterProductDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/brand-master-products`,
+    );
+  }
+
+  getBranchOverrides(businessId: string): Observable<BranchOverrideDto[]> {
+    return this.http.get<BranchOverrideDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides`,
+    );
+  }
+
+  upsertBranchOverride(
+    businessId: string,
+    req: {
+      productId: string;
+      priceOverride?: number | null;
+      isHidden?: boolean;
+      isAvailable?: boolean;
+    },
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides`,
+      req,
+    );
+  }
+
+  deleteBranchOverride(
+    businessId: string,
+    productId: string,
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides/${productId}`,
+    );
+  }
+
   parseMenuImages(
     businessId: string,
     files: File[],
@@ -450,6 +490,29 @@ export interface BusinessProfileDto {
   gstNumber?: string;
   onboardingStatus: string;
   onboardingRejectionReason?: string;
+  menuMode: 'shared' | 'independent';
+  brandId?: string;
+}
+
+/** One brand master product with this branch's own override (if any) merged in. */
+export interface BrandMasterProductDto {
+  productId: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  categoryId?: string;
+  isPureVeg: boolean;
+  priceOverride?: number;
+  isHidden: boolean;
+  isAvailable: boolean;
+}
+
+export interface BranchOverrideDto {
+  productId: string;
+  priceOverride?: number;
+  isHidden: boolean;
+  isAvailable: boolean;
+  updatedAt: string;
 }
 
 export interface StaffDto {

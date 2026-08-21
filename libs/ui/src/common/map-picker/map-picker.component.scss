@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.map-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  color: var(--zitro-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
+}
+
+.map-status-error {
+  color: var(--zitro-error);
+}
+
+.map-container {
+  width: 100%;
+  border-radius: var(--zitro-radius-md);
+  overflow: hidden;
+}
+
+.map-hidden {
+  display: none;
+}

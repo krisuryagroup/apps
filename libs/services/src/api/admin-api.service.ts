@@ -328,11 +328,18 @@ export class AdminApiService {
     );
   }
 
+  /**
+   * Creates the business, a not-yet-usable owner account, and a single-use invite in
+   * one atomic step, then emails the owner a setup link. There is no separate
+   * "create business" call in this flow — POST /api/businesses/invite does both.
+   */
   inviteBusinessOwner(
-    businessId: string,
     req: Record<string, unknown>,
-  ): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/businesses/invite`, req);
+  ): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      `${this.baseUrl}/api/businesses/invite`,
+      req,
+    );
   }
 
   listBusinessUsers(businessId: string): Observable<BusinessUserDto[]> {
@@ -378,6 +385,23 @@ export class AdminApiService {
   getBrandBranches(brandId: string): Observable<BusinessSummaryDto[]> {
     return this.http.get<BusinessSummaryDto[]>(
       `${this.baseUrl}/api/brands/${brandId}/branches`,
+    );
+  }
+
+  /**
+   * One-time migration: reparents a branch's own products/categories to its brand's
+   * master catalog and switches it to shared menu mode. Use to retrofit an existing
+   * independent branch as the first branch of a brand.
+   */
+  promoteBranchToBrandMaster(
+    businessId: string,
+  ): Observable<{ productsPromoted: number; categoriesPromoted: number }> {
+    return this.http.post<{
+      productsPromoted: number;
+      categoriesPromoted: number;
+    }>(
+      `${this.baseUrl}/api/businesses/${businessId}/promote-to-brand-master`,
+      {},
     );
   }
 
@@ -840,6 +864,8 @@ export interface BusinessSummaryDto {
   onboardingStatus: string;
   isActive: boolean;
   createdAt: string;
+  menuMode: 'shared' | 'independent';
+  brandId?: string;
 }
 
 export interface BusinessDetailDto extends BusinessSummaryDto {
@@ -852,6 +878,8 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   commissionPercentage?: number;
   onboardingRejectionReason?: string;
   verificationDocs?: unknown[];
+  coordinatesLat?: number;
+  coordinatesLng?: number;
 }
 
 export interface BusinessUserDto {
@@ -887,12 +915,13 @@ export interface TagBusinessDto {
   isActive: boolean;
 }
 
+/** Matches GET /api/products/search's actual SearchProductDto shape exactly. */
 export interface ProductDto {
   id: string;
   name: string;
   description?: string;
-  basePrice: number;
-  isAvailable: boolean;
+  price: number;
+  isEnabledForOnlineOrders: boolean;
   categoryId?: string;
   businessId?: string;
 }

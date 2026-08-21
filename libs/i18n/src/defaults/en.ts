@@ -28,6 +28,8 @@ export const EN_DEFAULTS = {
     resetZoom: 'Reset zoom',
     loginNow: 'Login Now',
     copyCode: 'Copy Code',
+    mapLoadError:
+      'Could not load the map. You can still enter the location manually.',
     gotIt: 'Got it!',
     confirmDeleteTitle: 'Delete',
     confirmDeleteMessage: 'Delete "{name}"?',
@@ -715,6 +717,21 @@ export const EN_DEFAULTS = {
     userPhone: 'Phone',
     userEmail: 'Email',
     userRole: 'Role',
+    brand: 'Brand',
+    noBrand: '— No brand —',
+    menuMode: 'Menu Mode',
+    menuModeShared: 'Shared — inherits the brand’s master menu',
+    menuModeIndependent: 'Independent — runs its own menu',
+    promoteToBrandMaster: 'Promote Menu to Brand Master',
+    promoteConfirmTitle: 'Promote this branch’s menu?',
+    promoteConfirmMessage:
+      'This moves all of this branch’s own products and categories to the brand level, so every other branch on this brand can share them. This cannot be undone from here.',
+    promoteSuccess: 'Menu promoted to the brand master catalog.',
+    promoteError: 'Could not promote this branch’s menu.',
+    pickOnMap: '📍 Pick on Map',
+    hideMap: 'Hide Map',
+    mapHint:
+      'Drop or drag the pin to your exact location — the town field fills in automatically.',
   },
   brands: {
     name: 'Name',
@@ -724,6 +741,8 @@ export const EN_DEFAULTS = {
     viewBranches: 'View Branches',
     hideBranches: 'Hide Branches',
     noBranches: 'No branches under this brand yet.',
+    addBranch: '+ Add Branch',
+    promote: 'Promote to Master',
   },
   tags: {
     name: 'Name',
@@ -904,6 +923,12 @@ export const EN_DEFAULTS = {
     addMenuItem: 'Add Menu Item',
     rejectOrder: 'Reject Order',
     rejectReason: 'Reason for rejection',
+    sharedMenuHint:
+      'This branch shares its brand’s master menu. You can set your own price, hide an item, or mark it unavailable here — everything else is managed at the brand level.',
+    masterPrice: 'Master Price',
+    yourPrice: 'Your Price',
+    hidden: 'Hidden',
+    noMasterMenu: 'The brand hasn’t added any items to its master menu yet.',
     login: {
       phone: 'Phone number',
       password: 'Password',
@@ -928,6 +953,11 @@ export const EN_DEFAULTS = {
       invalidToken: 'This invitation link is invalid or has expired.',
       successTitle: 'Account ready! Log in to continue.',
     },
+  },
+  locationPicker: {
+    searchPlaceholder: 'Search for a location…',
+    useCurrentLocation: 'Use current location',
+    detecting: 'Detecting location…',
   },
 } as const;
 

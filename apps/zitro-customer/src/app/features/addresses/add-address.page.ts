@@ -2,9 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   inject,
-  NgZone,
   OnDestroy,
   OnInit,
   signal,
@@ -14,7 +12,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { I18nPipe } from '@zitro/i18n';
-import { AddAddressFormComponent } from '@zitro/ui';
+import { AddAddressFormComponent, MapPickerComponent } from '@zitro/ui';
 import type { AddressLocationPatch } from '@zitro/ui';
 import {
   AddressApiService,
@@ -33,20 +31,17 @@ import {
   SocietyTower,
 } from '@zitro/models';
 import { DELIVERY_PINCODE_CONFIG } from '../../core/constants/app.constants';
-import { environment } from '../../../environments/environment';
-
-declare const google: any;
 
 @Component({
   selector: 'app-add-address-page',
   standalone: true,
-  imports: [I18nPipe, AddAddressFormComponent],
+  imports: [I18nPipe, AddAddressFormComponent, MapPickerComponent],
   templateUrl: './add-address.page.html',
   styleUrl: './add-address.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('mapContainer') mapContainer!: ElementRef;
+  @ViewChild('mapPicker') mapPicker?: MapPickerComponent;
 
   private readonly addressApi = inject(AddressApiService);
   private readonly locationService = inject(LocationService);
@@ -57,14 +52,11 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly locationSelectionService = inject(LocationSelectionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly ngZone = inject(NgZone);
 
   readonly pincodeConfig = DELIVERY_PINCODE_CONFIG;
 
   readonly isSaving = signal(false);
   readonly isGettingLocation = signal(false);
-  readonly isMapLoading = signal(true);
-  readonly mapLoadError = signal(false);
   readonly errorMessage = signal('');
   readonly mapAddress = signal('');
   readonly pincodeRestricted = signal(false);
@@ -82,10 +74,7 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   readonly editingAddressId = signal<string | null>(null);
   private checkoutBusinessSlug: string | null = null;
 
-  private map: unknown = null;
-  private marker: unknown = null;
-  private static mapsApiPromise: Promise<void> | null = null;
-  private presetCoords: { lat: number; lng: number } | null = null;
+  protected presetCoords: { lat: number; lng: number } | null = null;
   private readonly destroy$ = new Subject<void>();
   private readonly search$ = new Subject<string>();
 
@@ -138,70 +127,25 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    await this.initMap();
-  }
-
-  private async loadMapsApi(): Promise<void> {
-    if (typeof google !== 'undefined' && (google as any).maps) return;
-    if (AddAddressPage.mapsApiPromise) return AddAddressPage.mapsApiPromise;
-    AddAddressPage.mapsApiPromise = new Promise<void>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.google.mapsApiKey}`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve();
-      script.onerror = () => {
-        AddAddressPage.mapsApiPromise = null;
-        reject(new Error('Failed to load Google Maps'));
-      };
-      document.head.appendChild(script);
-    });
-    return AddAddressPage.mapsApiPromise;
-  }
-
-  private async initMap(): Promise<void> {
-    try {
-      await this.loadMapsApi();
-      // Falls back to the user's already-selected delivery-area coordinates
-      // before the last-resort hardcoded point — this page used to always
-      // open centered on a fixed Lucknow-area coordinate regardless of
-      // whether the user's actual area was hundreds of km away.
-      const fallbackCenter = this.locationSelectionService.snapshot
-        .coordinates ?? { lat: 26.8467, lng: 80.9462 };
-      const center = this.presetCoords ?? fallbackCenter;
-      this.map = new (google as any).maps.Map(this.mapContainer.nativeElement, {
-        center,
-        zoom: 16,
-        disableDefaultUI: true,
-        zoomControl: true,
-        gestureHandling: 'greedy',
-      });
-      this.marker = new (google as any).maps.Marker({
-        position: center,
-        map: this.map,
-        draggable: true,
-        animation: (google as any).maps.Animation.DROP,
-      });
-      (this.marker as any).addListener('dragend', () => {
-        const pos = (this.marker as any).getPosition();
-        this.ngZone.run(() => this.onMarkerDrop(pos.lat(), pos.lng()));
-      });
-      (this.map as any).addListener('click', (event: any) => {
-        const lat = event.latLng.lat();
-        const lng = event.latLng.lng();
-        (this.marker as any).setPosition(event.latLng);
-        this.ngZone.run(() => this.onMarkerDrop(lat, lng));
-      });
-      this.isMapLoading.set(false);
-      if (this.presetCoords) {
-        await this.onMarkerDrop(this.presetCoords.lat, this.presetCoords.lng);
-      } else {
-        this.tryAutoCenter();
-      }
-    } catch {
-      this.isMapLoading.set(false);
-      this.mapLoadError.set(true);
+    // MapPickerComponent handles a preset-coordinates center itself (it emits
+    // locationPicked once loaded when [initialCoordinates] is set) — auto-centering
+    // on the device's current location only makes sense when there's no preset.
+    if (!this.presetCoords) {
+      this.tryAutoCenter();
     }
+  }
+
+  /** Falls back to the user's already-selected delivery-area coordinates before the
+   * last-resort hardcoded point — this page used to always open centered on a fixed
+   * Lucknow-area coordinate regardless of whether the user's actual area was
+   * hundreds of km away. */
+  protected get mapDefaultCenter(): { lat: number; lng: number } {
+    return (
+      this.locationSelectionService.snapshot.coordinates ?? {
+        lat: 26.8467,
+        lng: 80.9462,
+      }
+    );
   }
 
   private async tryAutoCenter(): Promise<void> {
@@ -209,17 +153,18 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       const result = await this.locationService.checkLocationPermission();
       if (result.hasLocation && result.coordinates) {
         const { lat, lng } = result.coordinates;
-        const pos = { lat, lng };
-        (this.map as any)?.panTo(pos);
-        (this.marker as any)?.setPosition(pos);
-        await this.onMarkerDrop(lat, lng);
+        this.mapPicker?.panTo(lat, lng);
       }
     } catch {
       /* silent */
     }
   }
 
-  private async onMarkerDrop(lat: number, lng: number): Promise<void> {
+  protected async onLocationPicked(coords: {
+    lat: number;
+    lng: number;
+  }): Promise<void> {
+    const { lat, lng } = coords;
     this.isGettingLocation.set(true);
     this.mapAddress.set('');
     this.locationFromMap.set(false);
@@ -282,13 +227,9 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
     this.searchQuery.set(s.name);
     this.searchSuggestions.set([]);
     this.isSearching.set(false);
-    if (this.map && this.marker) {
-      const pos = { lat: s.coordinates.lat, lng: s.coordinates.lng };
-      (this.map as any).panTo(pos);
-      (this.map as any).setZoom(16);
-      (this.marker as any).setPosition(pos);
-    }
-    await this.onMarkerDrop(s.coordinates.lat, s.coordinates.lng);
+    // panTo() itself emits locationPicked, which drives onLocationPicked — no
+    // separate call needed.
+    this.mapPicker?.panTo(s.coordinates.lat, s.coordinates.lng);
   }
 
   async useCurrentLocation(): Promise<void> {
@@ -298,11 +239,13 @@ export class AddAddressPage implements OnInit, AfterViewInit, OnDestroy {
       const result = await this.locationService.checkLocationPermission();
       if (result.hasLocation && result.coordinates) {
         const { lat, lng } = result.coordinates;
-        const pos = { lat, lng };
-        (this.map as any)?.panTo(pos);
-        (this.map as any)?.setZoom(16);
-        (this.marker as any)?.setPosition(pos);
-        await this.onMarkerDrop(lat, lng);
+        if (this.mapPicker) {
+          this.mapPicker.panTo(lat, lng);
+        } else {
+          // Map hasn't finished loading yet — resolve the address anyway so the
+          // form still fills in; the pin itself will catch up once it initializes.
+          await this.onLocationPicked({ lat, lng });
+        }
       } else {
         this.errorMessage.set(
           result.error ??

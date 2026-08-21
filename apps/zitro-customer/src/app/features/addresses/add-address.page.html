@@ -46,18 +46,13 @@
 
   <!-- Map -->
   <div class="map-container" data-testid="map-container">
-    @if (mapLoadError()) {
-    <div class="map-error" data-testid="map-error">
-      <span class="material-icons">map</span>
-      <p>Map could not be loaded. Enter address manually below.</p>
-    </div>
-    } @else {
-    <div #mapContainer class="map" data-testid="google-map"></div>
-    @if (isMapLoading()) {
-    <div class="map-loading-overlay">
-      <span class="material-icons spinning">refresh</span>
-    </div>
-    } }
+    <lib-map-picker
+      #mapPicker
+      data-testid="google-map"
+      [initialCoordinates]="presetCoords"
+      [config]="{ defaultCenter: mapDefaultCenter, zoom: 16, heightPx: 220 }"
+      (locationPicked)="onLocationPicked($event)"
+    />
   </div>
 
   <!-- Use current location -->

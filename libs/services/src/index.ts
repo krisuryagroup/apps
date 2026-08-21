@@ -36,6 +36,7 @@ export * from './firebase-otp.service';
 export * from './firebase-storage.service';
 export * from './game-2048.service';
 export * from './google-geocoding.service';
+export * from './google-maps-loader.service';
 export * from './image-cache.service';
 export * from './location-selection.service';
 export * from './location.service';

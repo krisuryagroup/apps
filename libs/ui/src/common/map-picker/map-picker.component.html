@@ -1,0 +1,17 @@
+@if (isLoading()) {
+  <div class="map-status" data-testid="map-picker-loading">
+    {{ 'common.loading' | i18n }}
+  </div>
+}
+@if (hasError()) {
+  <div class="map-status map-status-error" data-testid="map-picker-error">
+    {{ 'common.mapLoadError' | i18n }}
+  </div>
+}
+<div
+  #mapContainer
+  class="map-container"
+  [style.height.px]="config().heightPx"
+  [class.map-hidden]="isLoading() || hasError()"
+  data-testid="map-picker-canvas"
+></div>

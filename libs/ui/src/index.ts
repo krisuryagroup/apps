@@ -20,6 +20,8 @@ export * from './common/truncated-text/truncated-text.component';
 export * from './common/zoomable-image/zoomable-image.component';
 export * from './common/confirmation-dialog/confirmation-dialog.component';
 export * from './common/bottom-sheet/bottom-sheet.component';
+export * from './common/map-picker/map-picker.component';
+export * from './common/location-picker/location-picker.component';
 
 // Common (T014)
 export * from './common/theme-picker/theme-picker.component';

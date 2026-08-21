@@ -178,6 +178,14 @@ is to confirm composition/routing didn't break anything when reused in this app.
 | SA-T-210 | `/admins`                                                                   | Load (SuperAdmin only — see §8.1), create a new admin, deactivate one, reset a password.                                                                                                   | All three actions succeed; deactivated admin can no longer log in (re-test SA-T-103 style).                                                                                                |
 | SA-T-211 | Sidebar responsiveness                                                      | Resize to mobile width.                                                                                                                                                                    | `[data-testid="sidebar-mobile-toggle"]` appears and opens/closes the nav; `[data-testid="sidebar-overlay"]` dismisses it on tap-outside.                                                   |
 
+**Note (2026-08-21):** SA-T-202's shared `AdminBusinessesComponent`/`AdminBusinessEditComponent`
+gained brand-linking (Brand picker, Menu Mode, Promote to Brand Master) and a lat/lng map picker
+(`LocationPickerComponent` — search box + "use current location" + pin drop, auto-fills Town via
+reverse-geocode) since this doc's screens were last enumerated. These are full-depth-tested in
+`ADMIN-TEST-SCENARIOS.md` §3.1/§3.3/§4.1 (AD-T-318–325, AD-T-405–406) — this doc's smoke pass
+only needs to confirm the same screens still render and save correctly when reused here, per
+this section's own stated scope; it does not need its own copy of every new AD-T-\* scenario.
+
 ---
 
 ## 3. Feature Flags Management (SA-003) — real-time propagation
