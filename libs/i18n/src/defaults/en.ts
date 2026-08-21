@@ -175,6 +175,7 @@ export const EN_DEFAULTS = {
     estimatedTimeRemaining: 'Estimated time remaining',
     liveTracking: 'Live Tracking',
     billSummary: 'Bill Summary',
+    orderUpdates: 'Order Updates',
     paid: 'Paid',
     gstAndPackaging: 'GST & restaurant packaging',
     deliveryPartnerFee: 'Delivery partner fee',

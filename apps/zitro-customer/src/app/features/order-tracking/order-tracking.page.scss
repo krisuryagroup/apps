@@ -492,6 +492,20 @@
 }
 
 // ─────────────────────────────────────────
+// Status Timeline Card
+// ─────────────────────────────────────────
+.od-timeline-card {
+  .od-bill-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .od-timeline-body {
+    padding: 16px;
+  }
+}
+
+// ─────────────────────────────────────────
 // Customer Card
 // ─────────────────────────────────────────
 .od-customer-card {

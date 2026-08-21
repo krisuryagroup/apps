@@ -42,6 +42,21 @@
     <span class="od-status-text">{{ statusBannerText() }}</span>
   </div>
 
+  <!-- Status Timeline -->
+  @if (order()!.statusTimeline?.length) {
+  <div class="od-card od-timeline-card" data-testid="order-status-timeline">
+    <div class="od-bill-header">
+      <div class="od-bill-title-row">
+        <span class="material-icons od-bill-icon">history</span>
+        <h3>{{ 'order.orderUpdates' | i18n }}</h3>
+      </div>
+    </div>
+    <div class="od-timeline-body">
+      <lib-order-timeline [events]="order()!.statusTimeline!" />
+    </div>
+  </div>
+  }
+
   <!-- Restaurant Info -->
   <div class="od-card od-restaurant-card" data-testid="restaurant-info">
     <div class="od-restaurant-left">

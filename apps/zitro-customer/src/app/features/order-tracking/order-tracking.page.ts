@@ -13,11 +13,12 @@ import { I18nPipe } from '@zitro/i18n';
 import { OrderApiService, NavigationService } from '@zitro/services';
 import type { Order } from '@zitro/models';
 import { getOrderStatusClass, getOrderItemName } from '@zitro/utils';
+import { OrderTimelineComponent } from '@zitro/ui';
 
 @Component({
   selector: 'app-order-tracking-page',
   standalone: true,
-  imports: [I18nPipe, DecimalPipe, DatePipe],
+  imports: [I18nPipe, DecimalPipe, DatePipe, OrderTimelineComponent],
   templateUrl: './order-tracking.page.html',
   styleUrl: './order-tracking.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
