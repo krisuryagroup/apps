@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import type { ApiCart, CheckoutSummary } from '@zitro/models';
 import { CartMapper } from '@zitro/mappers';
@@ -89,7 +89,7 @@ export class CartApiService {
       this.http.post<CartDto>(
         `${this.baseUrl}/api/cart/items`,
         { productId, variationId: variationId ?? null, quantity: qty },
-        this.ctxFor(slug),
+        this.ctxFor(slug, this.idempotencyHeaders()),
       ),
     );
     this.setCart(slug, CartMapper.toCart(dto));
@@ -106,7 +106,7 @@ export class CartApiService {
       this.http.put<CartDto>(
         `${this.baseUrl}/api/cart/items/${cartItemId}`,
         { quantity: qty },
-        this.ctxFor(slug),
+        this.ctxFor(slug, this.idempotencyHeaders()),
       ),
     );
     const cart = CartMapper.toCart(dto);
@@ -182,8 +182,25 @@ export class CartApiService {
 
   // ── HttpContext helper ───────────────────────────────────────────────────
 
-  private ctxFor(slug: string): { context: HttpContext } {
-    return { context: new HttpContext().set(CART_BUSINESS_SLUG, slug) };
+  private ctxFor(
+    slug: string,
+    headers?: HttpHeaders,
+  ): { context: HttpContext; headers?: HttpHeaders } {
+    return {
+      context: new HttpContext().set(CART_BUSINESS_SLUG, slug),
+      headers,
+    };
+  }
+
+  /**
+   * A fresh key per logical call, generated once before the request enters the
+   * HTTP pipeline — retryInterceptor's retry() resubscribes to the same piped
+   * request, so a network-retry reuses this same key and the server replays
+   * its cached response instead of re-applying the mutation (e.g. AddItem's
+   * increment-by-delta would otherwise double the quantity on a retry).
+   */
+  private idempotencyHeaders(): HttpHeaders {
+    return new HttpHeaders({ 'Idempotency-Key': crypto.randomUUID() });
   }
 
   // ── localStorage slug tracking ───────────────────────────────────────────
