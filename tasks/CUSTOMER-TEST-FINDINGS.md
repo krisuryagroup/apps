@@ -49,10 +49,6 @@ race between `GetCartHandler` and `CheckoutHandler`.
 - **`apps/apps/zitro-customer/src/environments/environment.ts`** `apiUrl` is currently pointed at
   `http://localhost:8080` for local testing (deliberately left uncommitted). Revert to
   `https://zitro-api.onrender.com` before building for deploy, or just don't commit it.
-- Test orders `#ORD937977142239` and `#ORD965659412936` exist in local `zitro-dev` from earlier
-  testing — left in place as the evidence trail for 1.1 above. `#ORD937977142239` also now has 3
-  extra `order_status_timeline` rows (confirmed/preparing/ready) added to verify the new order
-  status timeline UI — harmless, local-only, but not real order history.
 
 ---
 
