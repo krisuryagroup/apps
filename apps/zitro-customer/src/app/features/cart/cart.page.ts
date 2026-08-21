@@ -677,14 +677,14 @@ export class CartPage implements OnDestroy {
         return;
       }
 
-      // The order is built from `summary.items` below, not from the cart
-      // exactly as last rendered on screen (`this.apiCart()`) — those can
-      // diverge (e.g. a duplicated/retried add-to-cart request landing after
-      // the page already displayed and priced an earlier, lower quantity),
-      // which would silently charge the customer for more than they saw and
-      // confirmed. Fail safe instead: if what's about to be charged doesn't
-      // match what's currently on screen, refresh the display and stop
-      // rather than place a mismatched order.
+      // Fast, cheap pre-check only — NOT the source of correctness. There's a
+      // real window between this check and the createOrder() call below (the
+      // "creating"/"processing" stage delays), so a cart mutation can still
+      // land in between and this check alone can't catch it. The actual
+      // guarantee is server-side: PlaceOrderHandler locks and re-reads the
+      // real cart at order-creation time and rejects with CART_CHANGED
+      // (handled in the catch block below) if it moved. This check just
+      // avoids the round-trip in the common case where nothing raced.
       if (this.hasCartDiverged(summary.items)) {
         await this.cartApi.loadCart(slug);
         this.orderProcessing.updateStage(
@@ -771,6 +771,17 @@ export class CartPage implements OnDestroy {
             userMessage = apiError.error;
           }
           details = apiError.error || apiError.message || details;
+
+          // The server now enforces this authoritatively (locked, atomic read
+          // of the real cart at order-creation time — see PlaceOrderHandler),
+          // closing the race the client-side hasCartDiverged() check above
+          // can't fully close on its own (there's a real window between that
+          // check and the request actually landing). Refresh the display so
+          // the user sees the cart the server just rejected against, same as
+          // the early client-side check already does.
+          if (apiError.errorCode === 'CART_CHANGED') {
+            await this.cartApi.loadCart(this.businessSlug());
+          }
         }
       } else if (err instanceof Error) {
         details = err.message;
