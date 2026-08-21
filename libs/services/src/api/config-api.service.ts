@@ -82,6 +82,12 @@ export interface AppVersionInfo {
   releaseNotes: string | null;
 }
 
+export interface AppVersionCheckResult {
+  updateRequired: boolean;
+  minimumVersion: string | null;
+  storeUrl: string | null;
+}
+
 export interface AppConfigResponse {
   auth: {
     sms: {
@@ -164,5 +170,18 @@ export class ConfigApiService {
     return this.http
       .get<AppConfigResponse>(`${this.baseUrl}/api/app-config`)
       .pipe(tap((config) => this.cache.set(cacheKey, config, { ttlHours: 1 })));
+  }
+
+  /** Records one app-version-use row per device per day; returns 426 semantics via updateRequired. */
+  postAppVersion(
+    platform: string,
+    version: string,
+    buildNumber: string | null,
+    deviceId: string,
+  ): Observable<AppVersionCheckResult> {
+    return this.http.post<AppVersionCheckResult>(
+      `${this.baseUrl}/api/app/version`,
+      { platform, version, buildNumber, deviceId },
+    );
   }
 }

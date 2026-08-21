@@ -69,22 +69,17 @@ export * from './components/cache-management/cache-management.component';
 export * from './components/call-restaurant-button/call-restaurant-button.component';
 export * from './components/cancel-order-dialog/cancel-order-dialog.component';
 export * from './components/cart-summary/cart-summary.component';
-export * from './components/category-cards/category-cards.component';
 // confirmation-dialog evolved → common/confirmation-dialog
 export * from './components/coupon-selector-cart/coupon-selector-cart.component';
 export * from './components/coupon-selector/coupon-selector.component';
 export * from './components/delivery-range-dialog.component';
 export * from './components/description-dialog/description-dialog.component';
 export * from './components/footer/footer.component';
-export * from './components/item-details-dialog/item-details-dialog.component';
-export * from './components/item-slider/item-slider.component';
 export * from './components/loader/loader.component';
 export * from './components/location-bottom-sheet/location-bottom-sheet.component';
 export * from './components/no-internet/no-internet.component';
 export * from './components/order-loading-modal/order-loading-modal.component';
 export * from './components/pricing-summary/pricing-summary.component';
-export * from './components/product-card/product-card.component';
-export * from './components/product-grid/product-grid.component';
 export * from './components/sidebar/sidebar.component';
 export * from './components/splash-screen/splash-screen.component';
 // truncated-text evolved → common/truncated-text

@@ -13,17 +13,13 @@ import { firstValueFrom } from 'rxjs';
 import { I18nPipe } from '@zitro/i18n';
 import {
   AppSettingsService,
+  DeviceTokenService,
   Game2048Service,
-  GameRewardService,
+  GameApiService,
   UserManagementService,
   UserApiService,
 } from '@zitro/services';
-import type {
-  CouponReward,
-  EligibilityStatus,
-  GameState,
-  Tile,
-} from '@zitro/services';
+import type { GameState, Tile } from '@zitro/services';
 
 @Component({
   selector: 'app-game-2048-page',
@@ -36,7 +32,8 @@ import type {
 export class Game2048Page implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly gameService = inject(Game2048Service);
-  private readonly rewardService = inject(GameRewardService);
+  private readonly gameApi = inject(GameApiService);
+  private readonly deviceTokenService = inject(DeviceTokenService);
   private readonly userMgmt = inject(UserManagementService);
   private readonly userApi = inject(UserApiService);
   private readonly appSettings = inject(AppSettingsService);
@@ -55,12 +52,9 @@ export class Game2048Page implements OnInit, OnDestroy {
   readonly rewardTileValue = signal(0);
   readonly showConfetti = signal(false);
 
-  private displayName = 'User';
-  private email = '';
-  private phoneNumber = '';
   private currentUserUid: string | null = null;
   private currentUserPhone: string | null = null;
-  private readonly awardedRewards = new Set<number>();
+  private deviceToken: string | null = null;
 
   private touchStartX = 0;
   private touchStartY = 0;
@@ -90,9 +84,6 @@ export class Game2048Page implements OnInit, OnDestroy {
           try {
             const user = await firstValueFrom(this.userApi.getProfile());
             this.currentUserUid = user.id;
-            this.displayName = user.name || 'User';
-            this.email = user.email || '';
-            this.phoneNumber = user.phone;
           } catch {
             /* ignore — game works without profile */
           }
@@ -106,17 +97,23 @@ export class Game2048Page implements OnInit, OnDestroy {
     }
   }
 
+  /** Probes reward eligibility with a no-op score (0 never crosses a reward threshold). */
   private async checkEligibilityStatus(): Promise<void> {
-    if (!this.currentUserUid) return;
     try {
-      const status: EligibilityStatus =
-        await this.rewardService.checkEligibility(this.currentUserUid);
+      this.deviceToken = await this.deviceTokenService.getDeviceToken();
+      const result = await firstValueFrom(
+        this.gameApi.submitScore(this.deviceToken, 0, 0),
+      );
       this.isEligible.set(true);
-      this.canEarnRewards.set(status.isEligible);
-      this.nextEligibleDate.set(status.nextEligibleDate);
-      if (!status.isEligible && status.nextEligibleDate) {
+      const nextEligible = result.nextEligibleAt
+        ? new Date(result.nextEligibleAt)
+        : null;
+      const isLocked = !!nextEligible && nextEligible > new Date();
+      this.canEarnRewards.set(!isLocked);
+      this.nextEligibleDate.set(isLocked ? nextEligible : null);
+      if (isLocked && nextEligible) {
         this.eligibilityMessage.set(
-          `Play for fun! Next reward available on ${this.formatDate(status.nextEligibleDate)}`,
+          `Play for fun! Next reward available on ${this.formatDate(nextEligible)}`,
         );
       }
     } catch {
@@ -129,14 +126,12 @@ export class Game2048Page implements OnInit, OnDestroy {
     if (!this.isAuthenticated() || !this.isEligible()) return;
     this.gameState.set(this.gameService.initializeGame());
     this.isPlaying.set(true);
-    this.awardedRewards.clear();
     this.saveGameState();
   }
 
   restartGame(): void {
     this.gameState.set(this.gameService.initializeGame());
     this.isPlaying.set(true);
-    if (this.canEarnRewards()) this.awardedRewards.clear();
     this.saveGameState();
   }
 
@@ -211,47 +206,42 @@ export class Game2048Page implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Submits the running score/tile to the backend on every move. The backend is
+   * authoritative on reward thresholds (score-based) and the 7-day cooldown —
+   * this just reflects whatever it decides back into the UI.
+   */
   private async checkRewardTiers(): Promise<void> {
     const gs = this.gameState();
-    if (!gs || !this.currentUserUid) return;
-    const highest = gs.highestTile;
-    if (highest >= 32768 && !this.awardedRewards.has(32768)) {
-      await this.awardReward('couponTypePizza', 32768);
-    } else if (highest >= 2048 && !this.awardedRewards.has(2048)) {
-      await this.awardReward('couponTypeBurger', 2048);
-    }
-  }
-
-  private async awardReward(
-    couponType: 'couponTypeBurger' | 'couponTypePizza',
-    tileValue: number,
-  ): Promise<void> {
-    if (!this.currentUserUid || !this.gameState()) return;
-    if (this.awardedRewards.has(tileValue) || !this.canEarnRewards()) return;
-
+    if (!gs || !this.deviceToken || !this.canEarnRewards()) return;
     try {
-      const gs = this.gameState()!;
-      const reward: CouponReward = await this.rewardService.awardCoupon(
-        this.currentUserUid,
-        this.displayName,
-        this.email,
-        this.phoneNumber,
-        gs.highestTile,
-        gs.score,
-        couponType,
+      const result = await firstValueFrom(
+        this.gameApi.submitScore(this.deviceToken, gs.score, gs.highestTile),
       );
-      this.awardedRewards.add(tileValue);
-      this.canEarnRewards.set(false);
-      this.nextEligibleDate.set(reward.nextEligibleAt);
-      this.eligibilityMessage.set(
-        `Play for fun! Next reward available on ${this.formatDate(reward.nextEligibleAt)}`,
-      );
-      this.rewardCouponCode.set(reward.couponCode);
-      this.rewardCouponType.set(couponType);
-      this.rewardTileValue.set(tileValue);
-      this.showRewardModal.set(true);
-      this.showConfetti.set(true);
-      setTimeout(() => this.showConfetti.set(false), 3000);
+      if (result.rewardEarned && result.couponCode) {
+        this.canEarnRewards.set(false);
+        const nextEligible = result.nextEligibleAt
+          ? new Date(result.nextEligibleAt)
+          : null;
+        this.nextEligibleDate.set(nextEligible);
+        if (nextEligible) {
+          this.eligibilityMessage.set(
+            `Play for fun! Next reward available on ${this.formatDate(nextEligible)}`,
+          );
+        }
+        // Backend enum serializes as PascalCase (e.g. "CouponTypePizza"); the
+        // template compares against the app's existing camelCase convention.
+        const couponType =
+          result.couponType === 'CouponTypePizza'
+            ? 'couponTypePizza'
+            : 'couponTypeBurger';
+        this.rewardCouponCode.set(result.couponCode);
+        this.rewardCouponType.set(couponType);
+        this.rewardTileValue.set(result.highestTile);
+        this.showRewardModal.set(true);
+        this.showConfetti.set(true);
+        setTimeout(() => this.showConfetti.set(false), 3000);
+      }
     } catch {
       /* ignore */
     }

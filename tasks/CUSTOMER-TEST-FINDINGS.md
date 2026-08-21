@@ -53,20 +53,28 @@ race between `GetCartHandler` and `CheckoutHandler`.
 
 ---
 
-### 1.2 — Slow Firestore call at startup (~26s) — not fixed
+### 1.2 — Slow Firestore call at startup (~26s) — root cause pinned down, not fixed
 
 `AppSettings Firestore getDocs` genuinely takes ~26 seconds to resolve. A 5s timeout (`Promise.race`)
 already lets the rest of the app proceed after 5s, so this is **not currently user-blocking**, but
 the real Firestore query keeps running orphaned in the background for the full ~26s regardless —
 the Firestore JS SDK has no way to cancel an in-flight `getDocs()` call.
 
-**Why not fixed:** the real fix is either a faster/indexed query, or — per `zitro-api/CLAUDE.md`'s
-own migration notes (`appSettings/restaurantDetails/onlineorders` is listed as "migrating to
-PostgreSQL") — retiring this Firestore path entirely. Both are bigger, already-planned
-architectural changes, not a safe surgical patch for a bug-fix pass.
+**Update (2026-08-21):** most of `appSettings/restaurantDetails/onlineorders/` has since been
+migrated off Firestore (`getCheckoutSettings()` now calls `GET /api/app-config`;
+`getCategoryConfigs()`, dead, was deleted). The exact call causing this 26s delay is the one piece
+deliberately left in place: `AppSettingsService.getAppSettings()` (private) → called from
+`performSettingsCheck()` on every app boot → feeds `handleCacheClearRequirement()` /
+`handleLoginClearRequirement()`, which back a live admin feature — the "force logout all devices /
+clear cache" button in `cache-management.component.ts` (`triggerForceLogoutAllDevices()`). There is
+**no REST equivalent for this feature in zitro-api** yet, so it can't be migrated without first
+building one (e.g. an admin-triggered `remote_settings` table + `GET /api/app/remote-settings`
+polled at boot, replacing the Firestore subcollection read). Until that exists, this stays on
+Firestore and the startup delay remains.
 
-**Where:** `apps/apps/zitro-customer/src/app/core/initializers/app-settings.initializer.ts` /
-`AppSettingsService`.
+**Where:** `apps/libs/services/src/app-settings.service.ts` (`getAppSettings`,
+`performSettingsCheck`, `triggerForceLogoutAllDevices`) and
+`apps/apps/zitro-customer/src/app/shared/components/cache-management/cache-management.component.ts`.
 
 ---
 

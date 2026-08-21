@@ -20,7 +20,6 @@ import { BottomNavComponent } from '@zitro/ui';
 import { WhatsappButtonComponent } from '@zitro/ui';
 import { FooterComponent } from '@zitro/ui';
 import { FloatingCartPreviewComponent } from '@zitro/ui';
-import { CartService } from '@zitro/services';
 import { CartApiService } from '@zitro/services';
 import { UserManagementService } from '@zitro/services';
 import type { UserAddress } from '@zitro/services';
@@ -62,7 +61,6 @@ import { BannerConfigs } from '@zitro/models';
 })
 export class MainLayoutComponent implements OnInit, OnDestroy, DoCheck {
   private router = inject(Router);
-  private cartService = inject(CartService);
   private userManagementService = inject(UserManagementService);
   private authService = inject(FirebaseAuthService);
   private navigationService = inject(NavigationService);

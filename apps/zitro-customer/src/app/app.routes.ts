@@ -25,8 +25,6 @@ import { CategoryListingComponent } from './features/category-listing/category-l
 // MT013: listing, search
 import { ListingComponent } from './features/listing/listing.component';
 import { SearchComponent } from './features/search/search.component';
-// MT014: cart (legacy \u2014 kept for reference)
-import { CartComponent } from './features/cart/cart.component';
 // T025: evolved cart page
 import { CartPage } from './features/cart/cart.page';
 // MT015: addresses (legacy)

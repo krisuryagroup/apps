@@ -44,6 +44,7 @@ export type {
   BusinessConfig,
   Banner,
   AppVersionInfo,
+  AppVersionCheckResult,
 } from './config-api.service';
 export { AuthService } from './auth.service';
 export { GeocodingApiService } from './geocoding-api.service';
@@ -54,3 +55,5 @@ export type {
 export { CartApiService } from './cart.service';
 export { PricingApiService } from './pricing.service';
 export { SocietyApiService } from './society-api.service';
+export { GameApiService } from './game-api.service';
+export type { GameScoreResult } from './game-api.service';

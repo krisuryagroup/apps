@@ -165,8 +165,13 @@ export class AppSettingsService {
   }
 
   /**
-   * Fetch delivery fee and packaging charges from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/checkout
+   * Fetch open/close time and the cancellation window from the backend config API.
+   * Migrated off Firestore (appSettings/restaurantDetails/onlineorders/checkout).
+   * deliveryFee/packagingChargesPerItem are zeroed — pricing now comes from the
+   * business pricingConfig, and this was their only remaining reader.
+   * orderCancellationMessages/orderCancellationConfig have no REST source yet —
+   * left undefined, which every downstream cancellation-message method already
+   * falls back from safely.
    */
   async getCheckoutSettings(): Promise<Checkout> {
     // Return cached value if available and not expired
@@ -180,51 +185,21 @@ export class AppSettingsService {
     }
 
     try {
-      const checkoutDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        'checkout',
-      );
-      const checkoutSnap = await getDoc(checkoutDocRef);
-      if (checkoutSnap.exists()) {
-        const data = checkoutSnap.data();
-
-        const settings = {
-          deliveryFee:
-            typeof data['deliveryFee'] === 'number' ? data['deliveryFee'] : 40,
-          packagingChargesPerItem:
-            typeof data['packagingChargesPerItem'] === 'number'
-              ? data['packagingChargesPerItem']
-              : 10,
-          openTime: data['openTime'] || '10:00',
-          closeTime: data['closeTime'] || '21:00',
-          orderCancellationTimeLimit:
-            typeof data['orderCancellationTimeLimit'] === 'number'
-              ? data['orderCancellationTimeLimit']
-              : 90,
-          orderCancellationMessages: data['orderCancellationMessages'],
-          orderCancellationConfig: data['orderCancellationConfig'],
-        } as Checkout;
-
-        // Cache the settings
-        this._checkoutSettingsCache = settings;
-        this._checkoutSettingsCacheTime = now;
-
-        return settings;
-      }
-
-      const defaultSettings = {
+      const config = await firstValueFrom(this.configApi.getAppConfig());
+      const settings = {
         deliveryFee: 0,
         packagingChargesPerItem: 0,
-        openTime: '10:00',
-        closeTime: '21:00',
-        orderCancellationTimeLimit: 90,
+        openTime: config.business.openTime || '10:00',
+        closeTime: config.business.closeTime || '21:00',
+        // Backend field is misnamed "Minutes" but its configured value (90) is
+        // actually seconds, matching this field's unit — see zitro-api ZitroOptions.cs.
+        orderCancellationTimeLimit:
+          config.orders.cancellationTimeLimitMinutes ?? 90,
       } as Checkout;
-      this._checkoutSettingsCache = defaultSettings;
+
+      this._checkoutSettingsCache = settings;
       this._checkoutSettingsCacheTime = now;
-      return defaultSettings;
+      return settings;
     } catch (error) {
       console.error('Error fetching checkout settings:', error);
       // Return cached value if available, even if expired
@@ -251,37 +226,6 @@ export class AppSettingsService {
     } catch (error) {
       console.error('Error fetching delivery time:', error);
       return 45;
-    }
-  }
-
-  /**
-   * Fetch category configs from Firestore
-   * Path: appSettings/restaurantDetails/onlineorders/appSettings
-   */
-  async getCategoryConfigs(
-    configName = 'categoryConfigs',
-  ): Promise<any | null> {
-    try {
-      const appSettingsDocRef = doc(
-        this.firestore,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-        FIREBASE_DOCUMENTS.APP_SETTINGS,
-        FIREBASE_SUBCOLLECTIONS.ONLINE_ORDERS_SETTINGS,
-        FIREBASE_COLLECTIONS.APP_SETTINGS,
-      );
-      const appSettingsSnap = await getDoc(appSettingsDocRef);
-      if (appSettingsSnap.exists()) {
-        const data = appSettingsSnap.data();
-        const categoryConfigs = data[configName];
-        if (categoryConfigs) {
-          // Return all category config fields from Firebase
-          return categoryConfigs;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching category configs:', error);
-      return null;
     }
   }
 

@@ -3,12 +3,13 @@ import { RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 // import { FcmService } from './core/services/fcm.service';
 import { FirebaseAuthService } from '@zitro/services';
 import { AnalyticsService } from '@zitro/services';
-import { AppSettingsService } from '@zitro/services';
 import { GlobalImageErrorService } from '@zitro/services';
+import { ConfigApiService, DeviceTokenService } from '@zitro/services';
 import { SplashScreenComponent } from '@zitro/ui';
 import { NoInternetComponent } from '@zitro/ui';
 import { LocationBottomSheetComponent } from '@zitro/ui';
@@ -31,8 +32,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(FirebaseAuthService);
   private analyticsService = inject(AnalyticsService);
-  private appSettingsService = inject(AppSettingsService);
   private globalImageError = inject(GlobalImageErrorService);
+  private configApi = inject(ConfigApiService);
+  private deviceTokenService = inject(DeviceTokenService);
 
   title = 'client';
   showSplash = true;
@@ -155,24 +157,7 @@ export class AppComponent implements OnInit, OnDestroy {
       await this.analyticsService.initialize();
       await this.analyticsService.logAppOpen();
 
-      // Read analyticConfigs from AppSettingsService
-      const analyticConfigs =
-        await this.appSettingsService.getAnalyticConfigs();
-
-      // Log app version only if enableLogAppVersionHistory is true
-      if (analyticConfigs?.enableLogAppVersionHistory) {
-        const appVersion = await getAppVersion();
-        await this.analyticsService.logAppVersion(
-          appVersion,
-          analyticConfigs?.enableLogAppVersionAnalytics,
-          analyticConfigs?.enableLogAppVersionFirebase,
-        );
-        console.log(`📱 App version logged: ${appVersion}`);
-      } else {
-        console.log(
-          'ℹ️ logAppVersionHistory is disabled, skipping app version logging',
-        );
-      }
+      await this.recordAppVersionUsage();
 
       // Check if this is first time app install
       this.checkFirstTimeInstall();
@@ -180,6 +165,23 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log('✅ Firebase Analytics initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing Firebase Analytics:', error);
+    }
+  }
+
+  /** Records one app-version-use row per device per day via the backend (replaces the old Firestore appVersionUses write). */
+  private async recordAppVersionUsage(): Promise<void> {
+    try {
+      const appVersion = await getAppVersion();
+      const platform = Capacitor.isNativePlatform()
+        ? Capacitor.getPlatform()
+        : 'web';
+      const deviceId = await this.deviceTokenService.getDeviceToken();
+      await firstValueFrom(
+        this.configApi.postAppVersion(platform, appVersion, null, deviceId),
+      );
+      console.log(`📱 App version logged: ${appVersion}`);
+    } catch (error) {
+      console.warn('Failed to log app version usage:', error);
     }
   }
 

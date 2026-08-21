@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://zitro-api.onrender.com',
-  // apiUrl: 'http://localhost:5132',
+  // apiUrl: 'https://zitro-api.onrender.com',
+  apiUrl: 'http://localhost:8080',
   appVersion: '1.0.0', // App version fallback for web/browser
   google: {
     mapsApiKey: 'AIzaSyDCzOAMLNb1I0_ae9j4HXWO_ASjNkZFwMk', // Maps Platform  — browser map rendering
