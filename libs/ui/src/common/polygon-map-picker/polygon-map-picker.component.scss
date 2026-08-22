@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.map-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  color: var(--zitro-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
+}
+
+.map-status-error {
+  color: var(--zitro-error);
+}
+
+.polygon-hint {
+  color: var(--zitro-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
+  margin: 0 0 var(--zitro-spacing-xs);
+}
+
+.map-container {
+  width: 100%;
+  border-radius: var(--zitro-radius-md);
+  overflow: hidden;
+}
+
+.map-hidden {
+  display: none;
+}
+
+.clear-btn {
+  margin-top: var(--zitro-spacing-sm);
+  padding: var(--zitro-spacing-xs) var(--zitro-spacing-md);
+  border-radius: var(--zitro-radius-md);
+  border: 1px solid var(--zitro-primary);
+  background: transparent;
+  color: var(--zitro-primary);
+  font-size: var(--zitro-font-size-sm);
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--zitro-primary) 10%, transparent);
+  }
+}

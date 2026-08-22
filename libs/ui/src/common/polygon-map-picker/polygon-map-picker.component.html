@@ -1,0 +1,49 @@
+@if (isLoading()) {
+  <div class="map-status" data-testid="polygon-map-picker-loading">
+    {{ 'common.loading' | i18n }}
+  </div>
+}
+@if (hasError()) {
+  <div
+    class="map-status map-status-error"
+    data-testid="polygon-map-picker-error"
+  >
+    {{ 'common.mapLoadError' | i18n }}
+  </div>
+}
+@if (!isLoading() && !hasError()) {
+  <p class="polygon-hint" data-testid="polygon-map-picker-hint">
+    {{
+      hasPolygon()
+        ? ('deliveryZones.polygonEditHint' | i18n)
+        : ('deliveryZones.polygonDrawHint' | i18n)
+    }}
+  </p>
+}
+<div
+  #mapContainer
+  class="map-container"
+  [style.height.px]="config().heightPx"
+  [class.map-hidden]="isLoading() || hasError()"
+  data-testid="polygon-map-picker-canvas"
+></div>
+@if (isDrawing() && drawnPointCount() >= 3 && !isLoading() && !hasError()) {
+  <button
+    class="clear-btn"
+    type="button"
+    data-testid="polygon-map-picker-finish-btn"
+    (click)="finishDrawing()"
+  >
+    {{ 'deliveryZones.finishDrawing' | i18n }} ({{ drawnPointCount() }})
+  </button>
+}
+@if (hasPolygon() && !isLoading() && !hasError()) {
+  <button
+    class="clear-btn"
+    type="button"
+    data-testid="polygon-map-picker-clear-btn"
+    (click)="clearPolygon()"
+  >
+    {{ 'deliveryZones.clearAndRedraw' | i18n }}
+  </button>
+}

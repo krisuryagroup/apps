@@ -6,10 +6,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AdminApiService,
+  BranchDto,
   BrandDto,
   BusinessSummaryDto,
   PagedResult,
@@ -30,6 +31,7 @@ import {
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     I18nPipe,
     DataTableComponent,
     ConfirmationDialogComponent,
@@ -74,8 +76,27 @@ import {
         >
           {{ 'brands.addBranch' | i18n }}
         </button>
+        <button
+          class="btn btn-sm btn-outline"
+          data-testid="brand-link-branch-btn"
+          (click)="openLinkPicker(row)"
+        >
+          {{ 'brands.linkExisting' | i18n }}
+        </button>
         <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
           {{ 'common.edit' | i18n }}
+        </button>
+        <button
+          class="btn btn-sm btn-outline"
+          data-testid="brand-toggle-active-btn"
+          [disabled]="togglingBrand()[row.id]"
+          (click)="toggleBrandActive(row)"
+        >
+          {{
+            row.isActive
+              ? ('businesses.deactivate' | i18n)
+              : ('businesses.activate' | i18n)
+          }}
         </button>
         <button class="btn btn-sm btn-danger" (click)="requestRemove(row)">
           {{ 'common.delete' | i18n }}
@@ -105,7 +126,7 @@ import {
                     <td>{{ branch.town }}</td>
                     <td>{{ branch.isActive ? '✓' : '✗' }}</td>
                     <td>{{ branch.menuMode }}</td>
-                    <td>
+                    <td class="branch-actions">
                       @if (branch.menuMode === 'independent') {
                         <button
                           class="btn btn-sm btn-outline"
@@ -116,6 +137,31 @@ import {
                           {{ 'brands.promote' | i18n }}
                         </button>
                       }
+                      <a
+                        class="btn btn-sm btn-outline"
+                        [routerLink]="['/businesses', branch.id, 'edit']"
+                      >
+                        {{ 'common.edit' | i18n }}
+                      </a>
+                      <button
+                        class="btn btn-sm btn-outline"
+                        data-testid="branch-toggle-active-btn"
+                        [disabled]="togglingBranch()[branch.id]"
+                        (click)="toggleBranchActive(row.id, branch)"
+                      >
+                        {{
+                          branch.isActive
+                            ? ('businesses.deactivate' | i18n)
+                            : ('businesses.activate' | i18n)
+                        }}
+                      </button>
+                      <button
+                        class="btn btn-sm btn-danger"
+                        data-testid="branch-delete-btn"
+                        (click)="requestRemoveBranch(row.id, branch)"
+                      >
+                        {{ 'common.delete' | i18n }}
+                      </button>
                     </td>
                   </tr>
                 }
@@ -136,6 +182,12 @@ import {
       [config]="promoteDialogConfig()"
       (confirmed)="confirmPromote()"
       (cancelled)="pendingPromote.set(null)"
+    />
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingDeleteBranch()"
+      [config]="deleteBranchDialogConfig()"
+      (confirmed)="confirmRemoveBranch()"
+      (cancelled)="pendingDeleteBranch.set(null)"
     />
     @if (showForm()) {
       <div class="overlay">
@@ -176,6 +228,63 @@ import {
         </div>
       </div>
     }
+    @if (linkPickerBrand(); as linkBrand) {
+      <div class="overlay">
+        <div class="panel">
+          <h2 class="panel-title">
+            {{
+              i18n.translate('brands.linkExistingTitle', {
+                name: linkBrand.name,
+              })
+            }}
+          </h2>
+          <input
+            class="input"
+            data-testid="brand-link-search-input"
+            [(ngModel)]="linkSearch"
+            (ngModelChange)="onLinkSearchChange()"
+            placeholder="{{ 'brands.searchBusinessPlaceholder' | i18n }}"
+          />
+          @if (linkSearching()) {
+            <p class="loading">{{ 'common.loading' | i18n }}</p>
+          } @else if (linkResults().length === 0) {
+            <p class="empty">{{ 'brands.noSearchResults' | i18n }}</p>
+          } @else {
+            <table class="brands-branches-table">
+              <tbody>
+                @for (biz of linkResults(); track biz.id) {
+                  <tr>
+                    <td>{{ biz.name }}</td>
+                    <td>{{ biz.town }}</td>
+                    <td>
+                      @if (biz.brandId === linkBrand.id) {
+                        <span class="empty">{{
+                          'brands.alreadyLinked' | i18n
+                        }}</span>
+                      } @else {
+                        <button
+                          class="btn btn-sm btn-primary"
+                          data-testid="brand-link-confirm-btn"
+                          [disabled]="linking()[biz.id]"
+                          (click)="confirmLink(linkBrand, biz)"
+                        >
+                          {{ 'brands.link' | i18n }}
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          <div class="panel-actions">
+            <button class="btn btn-outline" (click)="closeLinkPicker()">
+              {{ 'common.cancel' | i18n }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `
@@ -196,13 +305,19 @@ import {
           padding: var(--zitro-spacing-xs) var(--zitro-spacing-sm);
         }
       }
+
+      .branch-actions {
+        display: flex;
+        gap: var(--zitro-spacing-xs);
+        flex-wrap: wrap;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminBrandsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  private readonly i18n = inject(I18nService);
+  protected readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   protected result = signal<PagedResult<BrandDto> | null>(null);
   protected loading = signal(true);
@@ -224,9 +339,9 @@ export class AdminBrandsComponent implements OnInit {
   protected saveError = signal(false);
 
   protected expandedBrandId = signal<string | null>(null);
-  protected branchesByBrand = signal<
-    Record<string, BusinessSummaryDto[] | undefined>
-  >({});
+  protected branchesByBrand = signal<Record<string, BranchDto[] | undefined>>(
+    {},
+  );
   protected branchesLoading = signal<Record<string, boolean>>({});
 
   /** Arrow field (not a method) so `this` stays bound when passed as [isRowExpanded]. */
@@ -239,6 +354,11 @@ export class AdminBrandsComponent implements OnInit {
       key: 'description',
       labelKey: 'brands.description',
       format: (r) => r.description ?? '—',
+    },
+    {
+      key: 'isActive',
+      labelKey: 'businesses.active',
+      format: (r) => (r.isActive ? '✓' : '✗'),
     },
   ];
 
@@ -374,7 +494,7 @@ export class AdminBrandsComponent implements OnInit {
   }
 
   protected promoting = signal<Record<string, boolean>>({});
-  protected pendingPromote = signal<BusinessSummaryDto | null>(null);
+  protected pendingPromote = signal<BranchDto | null>(null);
   protected promoteDialogConfig = computed<ConfirmationDialogConfig>(() => ({
     title: this.i18n.translate('businesses.promoteConfirmTitle'),
     message: this.i18n.translate('businesses.promoteConfirmMessage'),
@@ -384,7 +504,7 @@ export class AdminBrandsComponent implements OnInit {
     closeOnBackdropClick: true,
   }));
 
-  protected requestPromote(branch: BusinessSummaryDto): void {
+  protected requestPromote(branch: BranchDto): void {
     this.pendingPromote.set(branch);
   }
 
@@ -402,6 +522,130 @@ export class AdminBrandsComponent implements OnInit {
       },
       error: () => {
         this.promoting.update((m) => ({ ...m, [branch.id]: false }));
+      },
+    });
+  }
+
+  // ── Brand active/inactive toggle ─────────────────────────────────────────
+  protected togglingBrand = signal<Record<string, boolean>>({});
+
+  protected toggleBrandActive(brand: BrandDto): void {
+    this.togglingBrand.update((m) => ({ ...m, [brand.id]: true }));
+    this.api.updateBrand(brand.id, { isActive: !brand.isActive }).subscribe({
+      next: (saved) => {
+        this.togglingBrand.update((m) => ({ ...m, [brand.id]: false }));
+        this.result.update((r) =>
+          r
+            ? {
+                ...r,
+                items: r.items.map((x) => (x.id === saved.id ? saved : x)),
+              }
+            : r,
+        );
+      },
+      error: () => {
+        this.togglingBrand.update((m) => ({ ...m, [brand.id]: false }));
+      },
+    });
+  }
+
+  // ── Branch active/inactive toggle ────────────────────────────────────────
+  protected togglingBranch = signal<Record<string, boolean>>({});
+
+  protected toggleBranchActive(brandId: string, branch: BranchDto): void {
+    this.togglingBranch.update((m) => ({ ...m, [branch.id]: true }));
+    this.api
+      .updateBusiness(branch.id, { isActive: !branch.isActive })
+      .subscribe({
+        next: () => {
+          this.togglingBranch.update((m) => ({ ...m, [branch.id]: false }));
+          this.loadBranches(brandId);
+        },
+        error: () => {
+          this.togglingBranch.update((m) => ({ ...m, [branch.id]: false }));
+        },
+      });
+  }
+
+  // ── Delete branch ────────────────────────────────────────────────────────
+  protected pendingDeleteBranch = signal<{
+    brandId: string;
+    branch: BranchDto;
+  } | null>(null);
+  protected deleteBranchDialogConfig = computed<ConfirmationDialogConfig>(
+    () => ({
+      title: this.i18n.translate('common.confirmDeleteTitle'),
+      message: this.i18n.translate('common.confirmDeleteMessage', {
+        name: this.pendingDeleteBranch()?.branch.name ?? '',
+      }),
+      confirmLabel: this.i18n.translate('common.delete'),
+      cancelLabel: this.i18n.translate('common.cancel'),
+      destructive: true,
+      closeOnBackdropClick: true,
+    }),
+  );
+
+  protected requestRemoveBranch(brandId: string, branch: BranchDto): void {
+    this.pendingDeleteBranch.set({ brandId, branch });
+  }
+
+  protected confirmRemoveBranch(): void {
+    const pending = this.pendingDeleteBranch();
+    if (!pending) return;
+    this.pendingDeleteBranch.set(null);
+    this.api.deleteBusiness(pending.branch.id).subscribe({
+      next: () => this.loadBranches(pending.brandId),
+    });
+  }
+
+  // ── Link an existing business to this brand ─────────────────────────────
+  protected linkPickerBrand = signal<BrandDto | null>(null);
+  protected linkSearch = '';
+  protected linkSearching = signal(false);
+  protected linkResults = signal<BusinessSummaryDto[]>([]);
+  protected linking = signal<Record<string, boolean>>({});
+
+  protected openLinkPicker(brand: BrandDto): void {
+    this.linkPickerBrand.set(brand);
+    this.linkSearch = '';
+    this.linkResults.set([]);
+  }
+
+  protected closeLinkPicker(): void {
+    this.linkPickerBrand.set(null);
+  }
+
+  protected onLinkSearchChange(): void {
+    const search = this.linkSearch.trim();
+    if (!search) {
+      this.linkResults.set([]);
+      return;
+    }
+    this.linkSearching.set(true);
+    this.api.listBusinesses({ search, pageSize: '10' }).subscribe({
+      next: (res) => {
+        this.linkResults.set(res.items);
+        this.linkSearching.set(false);
+      },
+      error: () => {
+        this.linkResults.set([]);
+        this.linkSearching.set(false);
+      },
+    });
+  }
+
+  protected confirmLink(brand: BrandDto, biz: BusinessSummaryDto): void {
+    this.linking.update((m) => ({ ...m, [biz.id]: true }));
+    this.api.updateBusiness(biz.id, { brandId: brand.id }).subscribe({
+      next: () => {
+        this.linking.update((m) => ({ ...m, [biz.id]: false }));
+        this.linkResults.update((items) =>
+          items.map((x) => (x.id === biz.id ? { ...x, brandId: brand.id } : x)),
+        );
+        this.loadBranches(brand.id);
+      },
+      error: () => {
+        this.linking.update((m) => ({ ...m, [biz.id]: false }));
       },
     });
   }

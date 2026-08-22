@@ -12,6 +12,7 @@ import {
   DeliveryZoneDto,
 } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+import { PolygonMapPickerComponent } from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -20,7 +21,12 @@ import {
 @Component({
   selector: 'lib-admin-delivery-zones',
   standalone: true,
-  imports: [FormsModule, I18nPipe, DataTableComponent],
+  imports: [
+    FormsModule,
+    I18nPipe,
+    DataTableComponent,
+    PolygonMapPickerComponent,
+  ],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.deliveryZones' | i18n }}</h1>
@@ -85,32 +91,21 @@ import {
               min="0"
               [(ngModel)]="f.feePerKm"
             />
-            <label for="dz-polygon" class="form-label">{{
-              'deliveryZones.polygonCoords' | i18n
-            }}</label>
-            <input
-              id="dz-polygon"
-              class="input"
-              [(ngModel)]="f.polygonCoords"
-              placeholder="{{
-                'deliveryZones.polygonCoordsPlaceholder' | i18n
-              }}"
-            />
           </div>
-          @if (f.polygonCoords && !isPolygonValid()) {
-            <p class="error-text">
-              {{ 'deliveryZones.polygonCoordsInvalid' | i18n }}
-            </p>
-          }
+
+          <p class="form-label">{{ 'deliveryZones.polygonCoords' | i18n }}</p>
+          <lib-polygon-map-picker
+            data-testid="delivery-zone-polygon-map"
+            (polygonChanged)="onPolygonChanged($event)"
+          />
+
           @if (saveError()) {
             <p class="error-text">{{ 'common.error' | i18n }}</p>
           }
           <div class="panel-actions">
             <button
               class="btn btn-primary"
-              [disabled]="
-                !f.name || !f.polygonCoords || !isPolygonValid() || saving()
-              "
+              [disabled]="!f.name || polygonPoints.length < 3 || saving()"
               (click)="save()"
             >
               {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
@@ -143,9 +138,10 @@ export class AdminDeliveryZonesComponent implements OnInit {
   protected businesses = signal<BusinessSummaryDto[]>([]);
 
   protected f = this.emptyForm();
+  protected polygonPoints: { lat: number; lng: number }[] = [];
 
   private emptyForm() {
-    return { name: '', baseFee: 0, feePerKm: 0, polygonCoords: '' };
+    return { name: '', baseFee: 0, feePerKm: 0 };
   }
 
   protected readonly columns: DataTableColumn<DeliveryZoneDto>[] = [
@@ -189,24 +185,13 @@ export class AdminDeliveryZonesComponent implements OnInit {
     });
   }
 
-  /** polygon_coords is stored as JSONB — array of {lat, lng} points — validate client-side before submit. */
-  protected isPolygonValid(): boolean {
-    try {
-      const parsed = JSON.parse(this.f.polygonCoords);
-      return (
-        Array.isArray(parsed) &&
-        parsed.length > 0 &&
-        parsed.every(
-          (p) => typeof p?.lat === 'number' && typeof p?.lng === 'number',
-        )
-      );
-    } catch {
-      return false;
-    }
+  protected onPolygonChanged(points: { lat: number; lng: number }[]): void {
+    this.polygonPoints = points;
   }
 
   protected openCreate(): void {
     this.f = this.emptyForm();
+    this.polygonPoints = [];
     this.saveError.set(false);
     this.showForm.set(true);
   }
@@ -218,7 +203,7 @@ export class AdminDeliveryZonesComponent implements OnInit {
       .createDeliveryZone({
         businessId: this.businessId,
         name: this.f.name,
-        polygonCoords: this.f.polygonCoords,
+        polygonCoords: JSON.stringify(this.polygonPoints),
         baseFee: this.f.baseFee,
         feePerKm: this.f.feePerKm,
       })

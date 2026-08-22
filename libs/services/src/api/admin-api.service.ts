@@ -348,6 +348,36 @@ export class AdminApiService {
     );
   }
 
+  createBusinessUser(
+    businessId: string,
+    req: Record<string, unknown>,
+  ): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      `${this.baseUrl}/api/businesses/${businessId}/users`,
+      req,
+    );
+  }
+
+  /** Omit any field to leave it unchanged. Set newPassword to force-reset it. Email is
+   * only applied when the account doesn't already have one — sent as a no-op otherwise. */
+  updateBusinessUser(
+    businessId: string,
+    userId: string,
+    req: Record<string, unknown>,
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.baseUrl}/api/businesses/${businessId}/users/${userId}`,
+      req,
+    );
+  }
+
+  /** Soft-delete. Refuses (400, errorCode "LAST_OWNER") if this is the business's only active owner. */
+  deleteBusinessUser(businessId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/businesses/${businessId}/users/${userId}`,
+    );
+  }
+
   // ── Brands ──────────────────────────────────────────────────────────────────
 
   listBrands(
@@ -373,7 +403,12 @@ export class AdminApiService {
 
   updateBrand(
     id: string,
-    req: { name: string; description?: string; logoUrl?: string },
+    req: {
+      name?: string;
+      description?: string;
+      logoUrl?: string;
+      isActive?: boolean;
+    },
   ): Observable<BrandDto> {
     return this.http.put<BrandDto>(`${this.baseUrl}/api/brands/${id}`, req);
   }
@@ -382,10 +417,15 @@ export class AdminApiService {
     return this.http.delete<void>(`${this.baseUrl}/api/brands/${id}`);
   }
 
-  getBrandBranches(brandId: string): Observable<BusinessSummaryDto[]> {
-    return this.http.get<BusinessSummaryDto[]>(
+  getBrandBranches(brandId: string): Observable<BranchDto[]> {
+    return this.http.get<BranchDto[]>(
       `${this.baseUrl}/api/brands/${brandId}/branches`,
     );
+  }
+
+  /** Hard-deletes (soft-delete server-side) a business — e.g. removing a brand's branch. */
+  deleteBusiness(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/businesses/${id}`);
   }
 
   /**
@@ -463,25 +503,35 @@ export class AdminApiService {
     });
   }
 
-  createProduct(req: Record<string, unknown>): Observable<ProductDto> {
-    return this.http.post<ProductDto>(
+  getProductById(id: string): Observable<ProductDetailDto> {
+    return this.http.get<ProductDetailDto>(
+      `${this.baseUrl}/api/products/${id}`,
+    );
+  }
+
+  createProduct(req: Record<string, unknown>): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
       `${this.baseUrl}/api/admin/products`,
       req,
     );
   }
 
-  updateProduct(
-    id: string,
-    req: Record<string, unknown>,
-  ): Observable<ProductDto> {
-    return this.http.put<ProductDto>(
-      `${this.baseUrl}/api/admin/products/${id}`,
-      req,
-    );
+  updateProduct(id: string, req: Record<string, unknown>): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/api/admin/products/${id}`, req);
   }
 
   deleteProduct(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/api/admin/products/${id}`);
+  }
+
+  /** Scope is exactly one of businessId or brandId, optionally narrowed to categoryId. */
+  bulkAdjustProductPrices(
+    req: Record<string, unknown>,
+  ): Observable<{ updatedCount: number }> {
+    return this.http.post<{ updatedCount: number }>(
+      `${this.baseUrl}/api/admin/products/bulk-price-adjust`,
+      req,
+    );
   }
 
   // ── Categories ──────────────────────────────────────────────────────────────
@@ -882,13 +932,17 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   coordinatesLng?: number;
 }
 
+/** Matches GET .../users' actual BusinessUserDto shape (businesses & business-portal endpoints share it). */
 export interface BusinessUserDto {
   id: string;
+  businessId: string;
   name: string;
-  phone: string;
+  phoneNumber: string;
   email?: string;
   role: string;
   isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
 }
 
 export interface BrandDto {
@@ -896,7 +950,19 @@ export interface BrandDto {
   name: string;
   description?: string;
   logoUrl?: string;
+  isActive: boolean;
   branchCount?: number;
+}
+
+export interface BranchDto {
+  id: string;
+  slug: string;
+  name: string;
+  address?: string;
+  town?: string;
+  pincode?: string;
+  isActive: boolean;
+  menuMode: 'shared' | 'independent';
 }
 
 export interface TagDto {
@@ -919,11 +985,48 @@ export interface TagBusinessDto {
 export interface ProductDto {
   id: string;
   name: string;
-  description?: string;
   price: number;
-  isEnabledForOnlineOrders: boolean;
+  imageUrl?: string;
+  description?: string;
+  isPureVeg: boolean;
+  foodType?: string;
   categoryId?: string;
   businessId?: string;
+  brandId?: string;
+  isEnabledForOnlineOrders: boolean;
+  hasVariations: boolean;
+}
+
+/** Matches GET /api/products/{id}'s actual ProductDetailDto shape exactly. */
+export interface ProductDetailDto {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  description?: string;
+  weight?: string;
+  isEnabledForOnlineOrders: boolean;
+  status: boolean;
+  isPureVeg: boolean;
+  foodType?: string;
+  isOfferDisabled: boolean;
+  isMrpItem: boolean;
+  isRecommended: boolean;
+  isBestseller: boolean;
+  isNew: boolean;
+  isSpicy: boolean;
+  dietaryPreferences?: string[];
+  allergens?: string[];
+  calories?: number;
+  priority: number;
+  sortOrderInCategory: number;
+  prepTimeMinutes?: number;
+  gstRatePercentage?: number;
+  hsnSacCode?: string;
+  categoryId?: string;
+  businessId?: string;
+  brandId?: string;
+  hasVariations: boolean;
 }
 
 /** Matches GET /api/admin/categories' actual anonymous-object shape exactly. */

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -10,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { BusinessApiService, StaffDto } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+import { PolygonMapPickerComponent } from '@zitro/ui';
 
 @Component({
   selector: 'app-restaurant-staff',
@@ -60,6 +62,13 @@ import { I18nPipe } from '@zitro/i18n';
                 >
                   {{ 'admins.resetPassword' | i18n }}
                 </button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  data-testid="staff-delete-btn"
+                  (click)="requestDelete(s)"
+                >
+                  {{ 'common.delete' | i18n }}
+                </button>
               </td>
             </tr>
           } @empty {
@@ -69,6 +78,11 @@ import { I18nPipe } from '@zitro/i18n';
           }
         </tbody>
       </table>
+      @if (deleteError()) {
+        <p class="error-text" data-testid="staff-delete-error">
+          {{ deleteError() }}
+        </p>
+      }
     }
     @if (showForm()) {
       <div class="overlay">
@@ -79,9 +93,26 @@ import { I18nPipe } from '@zitro/i18n';
           <div class="form-row">
             <label for="staff-name" class="form-label">Name</label
             ><input id="staff-name" class="input" [(ngModel)]="f.name" />
+            <label for="staff-phone" class="form-label">Phone</label
+            ><input
+              id="staff-phone"
+              class="input"
+              data-testid="staff-form-phone"
+              [readonly]="!!editingStaff()"
+              [(ngModel)]="f.phone"
+            />
+            <label for="staff-email" class="form-label">{{
+              'businesses.userEmailOptional' | i18n
+            }}</label>
+            <input
+              id="staff-email"
+              class="input"
+              type="email"
+              data-testid="staff-form-email"
+              [readonly]="emailLocked()"
+              [(ngModel)]="f.email"
+            />
             @if (!editingStaff()) {
-              <label for="staff-phone" class="form-label">Phone</label
-              ><input id="staff-phone" class="input" [(ngModel)]="f.phone" />
               <label for="staff-pass" class="form-label">Password</label
               ><input
                 id="staff-pass"
@@ -92,6 +123,7 @@ import { I18nPipe } from '@zitro/i18n';
             }
             <label for="staff-role" class="form-label">Role</label>
             <select id="staff-role" class="select" [(ngModel)]="f.role">
+              <option value="owner">owner</option>
               <option value="manager">manager</option>
               <option value="staff">staff</option>
             </select>
@@ -181,10 +213,12 @@ export class RestaurantStaffComponent implements OnInit {
   protected showForm = signal(false);
   protected saving = signal(false);
   protected editingStaff = signal<StaffDto | null>(null);
-  protected f = { name: '', phone: '', password: '', role: 'staff' };
+  protected f = { name: '', phone: '', email: '', password: '', role: 'staff' };
+  protected emailLocked = computed(() => !!this.editingStaff()?.email);
   protected resetPasswordTarget = signal<StaffDto | null>(null);
   protected resetPasswordValue = '';
   protected resetPasswordSaving = signal(false);
+  protected deleteError = signal('');
 
   ngOnInit() {
     this.reload();
@@ -201,12 +235,18 @@ export class RestaurantStaffComponent implements OnInit {
   }
   protected openAdd() {
     this.editingStaff.set(null);
-    this.f = { name: '', phone: '', password: '', role: 'staff' };
+    this.f = { name: '', phone: '', email: '', password: '', role: 'staff' };
     this.showForm.set(true);
   }
   protected openEdit(s: StaffDto) {
     this.editingStaff.set(s);
-    this.f = { name: s.name, phone: s.phoneNumber, password: '', role: s.role };
+    this.f = {
+      name: s.name,
+      phone: s.phoneNumber,
+      email: s.email ?? '',
+      password: '',
+      role: s.role,
+    };
     this.showForm.set(true);
   }
   protected save() {
@@ -222,10 +262,12 @@ export class RestaurantStaffComponent implements OnInit {
       ? this.api.updateStaff(id, editing.id, {
           name: this.f.name,
           role: this.f.role,
+          email: this.emailLocked() ? null : this.f.email || null,
         })
       : this.api.createStaff(id, {
           name: this.f.name,
           phoneNumber: this.f.phone,
+          email: this.f.email || null,
           password: this.f.password,
           role: this.f.role,
         });
@@ -260,6 +302,24 @@ export class RestaurantStaffComponent implements OnInit {
         },
         error: () => this.resetPasswordSaving.set(false),
       });
+  }
+  protected requestDelete(s: StaffDto) {
+    if (!confirm(`Remove "${s.name}"? They will no longer be able to log in.`))
+      return;
+    this.deleteError.set('');
+    const id = this.api.businessId()!;
+    this.api.deleteStaff(id, s.id).subscribe({
+      next: () => this.reload(),
+      error: (err) => {
+        this.deleteError.set(
+          err?.error?.errorCode === 'LAST_OWNER'
+            ? 'Cannot remove the only owner — this business would be left with no one able to log in as owner.'
+            : err?.error?.errorCode === 'FORBIDDEN'
+              ? 'Only an owner can remove an owner account.'
+              : 'Could not remove this user. Please try again.',
+        );
+      },
+    });
   }
 }
 
@@ -660,7 +720,7 @@ export class RestaurantPayoutsComponent implements OnInit {
 @Component({
   selector: 'app-restaurant-delivery-zones',
   standalone: true,
-  imports: [FormsModule, I18nPipe],
+  imports: [FormsModule, I18nPipe, PolygonMapPickerComponent],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.deliveryZones' | i18n }}</h1>
@@ -713,7 +773,33 @@ export class RestaurantPayoutsComponent implements OnInit {
               type="number"
               [(ngModel)]="f.baseFee"
             />
+            <label for="zone-fee-per-km" class="form-label"
+              >Fee per KM (₹)</label
+            ><input
+              id="zone-fee-per-km"
+              class="input"
+              data-testid="zone-fee-per-km"
+              type="number"
+              [(ngModel)]="f.feePerKm"
+            />
+            <label for="zone-surge" class="form-label">Surge multiplier</label
+            ><input
+              id="zone-surge"
+              class="input"
+              data-testid="zone-surge-multiplier"
+              type="number"
+              step="0.1"
+              min="0"
+              [(ngModel)]="f.surgeMultiplier"
+            />
           </div>
+
+          <p class="form-label">{{ 'deliveryZones.polygonCoords' | i18n }}</p>
+          <lib-polygon-map-picker
+            data-testid="zone-polygon-map"
+            (polygonChanged)="onPolygonChanged($event)"
+          />
+
           @if (saveError()) {
             <p class="error-text">{{ saveError() }}</p>
           }
@@ -761,8 +847,19 @@ export class RestaurantDeliveryZonesComponent implements OnInit {
   protected showForm = signal(false);
   protected saving = signal(false);
   protected saveError = signal<string | null>(null);
-  protected f = { name: '', baseFee: 0, isActive: true };
+  protected f = {
+    name: '',
+    baseFee: 0,
+    feePerKm: 0,
+    surgeMultiplier: 1,
+    isActive: true,
+  };
+  protected polygonPoints: { lat: number; lng: number }[] = [];
   ngOnInit() {
+    this.load();
+  }
+  private load() {
+    this.loading.set(true);
     const id = this.api.businessId()!;
     this.api.listDeliveryZones(id).subscribe({
       next: (z) => {
@@ -773,33 +870,46 @@ export class RestaurantDeliveryZonesComponent implements OnInit {
     });
   }
   protected openAdd() {
-    this.f = { name: '', baseFee: 0, isActive: true };
+    this.f = {
+      name: '',
+      baseFee: 0,
+      feePerKm: 0,
+      surgeMultiplier: 1,
+      isActive: true,
+    };
+    this.polygonPoints = [];
     this.saveError.set(null);
     this.showForm.set(true);
   }
+  protected onPolygonChanged(points: { lat: number; lng: number }[]) {
+    this.polygonPoints = points;
+  }
   protected save() {
+    if (this.polygonPoints.length < 3) {
+      this.saveError.set('Draw the zone boundary on the map before saving.');
+      return;
+    }
     this.saving.set(true);
     this.saveError.set(null);
+    const req = {
+      ...this.f,
+      polygonCoords: JSON.stringify(this.polygonPoints),
+    };
     this.api
       .createDeliveryZone(
         this.api.businessId()!,
-        this.f as Record<string, unknown>,
+        req as Record<string, unknown>,
       )
       .subscribe({
-        next: (z) => {
-          this.zones.update((zs) => [...zs, z]);
+        next: () => {
           this.saving.set(false);
           this.showForm.set(false);
+          this.load();
         },
         error: () => {
           this.saving.set(false);
-          // This form only collects name + base fee, but the backend also requires
-          // PolygonCoords (a zone's geographic boundary) — there's no map or radius UI
-          // anywhere in this app to define one (confirmed gap, RS-T-1305), so every save
-          // 400s here today. Surfacing a real message instead of failing silently, per
-          // RS-T-1903 — a genuine map/radius UI is a separate, larger follow-up.
           this.saveError.set(
-            'Could not save zone: this form does not yet support defining a delivery area.',
+            'Could not save the delivery zone. Please try again.',
           );
         },
       });

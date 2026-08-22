@@ -15,7 +15,11 @@ import {
   OrderSummaryDto,
   PagedResult,
 } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogConfig,
+} from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -27,7 +31,13 @@ type Tab = 'profile' | 'users' | 'orders';
 @Component({
   selector: 'lib-admin-business-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, I18nPipe, DataTableComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    I18nPipe,
+    DataTableComponent,
+    ConfirmationDialogComponent,
+  ],
   templateUrl: './admin-business-detail.component.html',
   styleUrl: './admin-business-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +46,7 @@ export class AdminBusinessDetailComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
 
   protected biz = signal<BusinessDetailDto | null>(null);
   protected loading = signal(true);
@@ -46,7 +57,7 @@ export class AdminBusinessDetailComponent implements OnInit {
   protected users = signal<BusinessUserDto[] | null>(null);
   protected readonly userColumns: DataTableColumn<BusinessUserDto>[] = [
     { key: 'name', labelKey: 'businesses.userName' },
-    { key: 'phone', labelKey: 'businesses.userPhone' },
+    { key: 'phoneNumber', labelKey: 'businesses.userPhone' },
     {
       key: 'email',
       labelKey: 'businesses.userEmail',
@@ -128,6 +139,148 @@ export class AdminBusinessDetailComponent implements OnInit {
       error: () => {
         this.usersLoading.set(false);
         this.usersError.set(true);
+      },
+    });
+  }
+
+  // ── Add / edit business user ─────────────────────────────────────────────
+  protected showUserForm = signal(false);
+  protected editingUser = signal<BusinessUserDto | null>(null);
+  protected userSaving = signal(false);
+  protected userFormError = signal('');
+  protected userForm = {
+    name: '',
+    phoneNumber: '',
+    email: '',
+    password: '',
+    role: 'staff',
+    isActive: true,
+    newPassword: '',
+  };
+  /** Email becomes read-only once an account already has one — matches the backend's
+   * UpdateBusinessUserHandler, which silently ignores an Email on an account that already
+   * has one rather than overwriting it. */
+  protected emailLocked = computed(() => !!this.editingUser()?.email);
+
+  protected openAddUser(): void {
+    this.editingUser.set(null);
+    this.userForm = {
+      name: '',
+      phoneNumber: '',
+      email: '',
+      password: '',
+      role: 'staff',
+      isActive: true,
+      newPassword: '',
+    };
+    this.userFormError.set('');
+    this.showUserForm.set(true);
+  }
+
+  protected openEditUser(user: BusinessUserDto): void {
+    this.editingUser.set(user);
+    this.userForm = {
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      email: user.email ?? '',
+      password: '',
+      role: user.role,
+      isActive: user.isActive,
+      newPassword: '',
+    };
+    this.userFormError.set('');
+    this.showUserForm.set(true);
+  }
+
+  protected canSaveUser(): boolean {
+    if (!this.userForm.name || !this.userForm.role) return false;
+    if (!this.editingUser()) {
+      return !!this.userForm.phoneNumber && !!this.userForm.password;
+    }
+    return true;
+  }
+
+  protected saveUser(): void {
+    if (!this.canSaveUser()) return;
+    const businessId = this.biz()?.id;
+    if (!businessId) return;
+    this.userSaving.set(true);
+    this.userFormError.set('');
+
+    const editing = this.editingUser();
+    const onSuccess = () => {
+      this.userSaving.set(false);
+      this.closeUserForm();
+      this.loadUsers();
+    };
+    const onError = () => {
+      this.userSaving.set(false);
+      this.userFormError.set('Could not save this user. Please try again.');
+    };
+
+    if (editing) {
+      this.api
+        .updateBusinessUser(businessId, editing.id, {
+          name: this.userForm.name,
+          role: this.userForm.role,
+          isActive: this.userForm.isActive,
+          newPassword: this.userForm.newPassword || null,
+          email: this.emailLocked() ? null : this.userForm.email || null,
+        })
+        .subscribe({ next: onSuccess, error: onError });
+    } else {
+      this.api
+        .createBusinessUser(businessId, {
+          name: this.userForm.name,
+          phoneNumber: this.userForm.phoneNumber,
+          email: this.userForm.email || null,
+          password: this.userForm.password,
+          role: this.userForm.role,
+        })
+        .subscribe({ next: onSuccess, error: onError });
+    }
+  }
+
+  protected closeUserForm(): void {
+    this.showUserForm.set(false);
+    this.editingUser.set(null);
+    this.userFormError.set('');
+  }
+
+  // ── Delete business user ─────────────────────────────────────────────────
+  protected pendingDeleteUser = signal<BusinessUserDto | null>(null);
+  protected deleteUserError = signal('');
+  protected deleteUserDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('common.confirmDeleteTitle'),
+    message: this.i18n.translate('common.confirmDeleteMessage', {
+      name: this.pendingDeleteUser()?.name ?? '',
+    }),
+    confirmLabel: this.i18n.translate('common.delete'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
+
+  protected requestDeleteUser(user: BusinessUserDto): void {
+    this.deleteUserError.set('');
+    this.pendingDeleteUser.set(user);
+  }
+
+  protected confirmDeleteUser(): void {
+    const user = this.pendingDeleteUser();
+    const businessId = this.biz()?.id;
+    if (!user || !businessId) return;
+    this.pendingDeleteUser.set(null);
+    this.api.deleteBusinessUser(businessId, user.id).subscribe({
+      next: () => {
+        this.users.update((us) => (us ?? []).filter((u) => u.id !== user.id));
+      },
+      error: (err) => {
+        this.deleteUserError.set(
+          err?.error?.errorCode === 'LAST_OWNER'
+            ? this.i18n.translate('businesses.lastOwnerError')
+            : this.i18n.translate('businesses.deleteUserError'),
+        );
       },
     });
   }

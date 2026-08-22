@@ -156,13 +156,175 @@
 
   @if (activeTab() === 'users') {
     <div class="detail-section" data-testid="business-detail-users">
+      <div class="section-actions">
+        <button
+          class="btn btn-primary btn-sm"
+          data-testid="business-user-add-btn"
+          (click)="openAddUser()"
+        >
+          + {{ 'businesses.addUser' | i18n }}
+        </button>
+      </div>
       <lib-data-table
         [columns]="userColumns"
         [rows]="users() ?? []"
         [loading]="usersLoading()"
         [error]="usersError()"
-      />
+      >
+        <ng-template #rowActions let-row>
+          <button
+            class="btn btn-sm btn-outline"
+            data-testid="business-user-edit-btn"
+            (click)="openEditUser(row)"
+          >
+            {{ 'common.edit' | i18n }}
+          </button>
+          <button
+            class="btn btn-sm btn-danger"
+            data-testid="business-user-delete-btn"
+            (click)="requestDeleteUser(row)"
+          >
+            {{ 'common.delete' | i18n }}
+          </button>
+        </ng-template>
+      </lib-data-table>
+      @if (deleteUserError()) {
+        <p class="error-text" data-testid="business-user-delete-error">
+          {{ deleteUserError() }}
+        </p>
+      }
     </div>
+
+    <lib-confirmation-dialog
+      [isVisible]="!!pendingDeleteUser()"
+      [config]="deleteUserDialogConfig()"
+      (confirmed)="confirmDeleteUser()"
+      (cancelled)="pendingDeleteUser.set(null)"
+    />
+
+    @if (showUserForm()) {
+      <div class="overlay">
+        <div class="panel">
+          <h2 class="panel-title">
+            {{
+              editingUser()
+                ? ('businesses.editUser' | i18n)
+                : ('businesses.addUser' | i18n)
+            }}
+          </h2>
+          <div class="form-grid">
+            <label for="bu-name" class="form-label">{{
+              'businesses.userName' | i18n
+            }}</label>
+            <input
+              id="bu-name"
+              class="input"
+              data-testid="business-user-form-name"
+              [(ngModel)]="userForm.name"
+            />
+
+            <label for="bu-phone" class="form-label">{{
+              'businesses.userPhone' | i18n
+            }}</label>
+            <input
+              id="bu-phone"
+              class="input"
+              data-testid="business-user-form-phone"
+              [readonly]="!!editingUser()"
+              [(ngModel)]="userForm.phoneNumber"
+            />
+
+            <label for="bu-email" class="form-label">{{
+              'businesses.userEmail' | i18n
+            }}</label>
+            <input
+              id="bu-email"
+              class="input"
+              type="email"
+              data-testid="business-user-form-email"
+              [readonly]="emailLocked()"
+              [placeholder]="
+                emailLocked() ? '' : ('businesses.userEmailOptional' | i18n)
+              "
+              [(ngModel)]="userForm.email"
+            />
+
+            @if (!editingUser()) {
+              <label for="bu-password" class="form-label">{{
+                'common.password' | i18n
+              }}</label>
+              <input
+                id="bu-password"
+                class="input"
+                type="text"
+                data-testid="business-user-form-password"
+                [(ngModel)]="userForm.password"
+              />
+            } @else {
+              <label for="bu-new-password" class="form-label">{{
+                'businesses.newPasswordOptional' | i18n
+              }}</label>
+              <input
+                id="bu-new-password"
+                class="input"
+                type="text"
+                data-testid="business-user-form-new-password"
+                [(ngModel)]="userForm.newPassword"
+              />
+            }
+
+            <label for="bu-role" class="form-label">{{
+              'businesses.userRole' | i18n
+            }}</label>
+            <select
+              id="bu-role"
+              class="select"
+              data-testid="business-user-form-role"
+              [(ngModel)]="userForm.role"
+            >
+              <option value="owner">{{ 'businesses.roleOwner' | i18n }}</option>
+              <option value="manager">
+                {{ 'businesses.roleManager' | i18n }}
+              </option>
+              <option value="staff">{{ 'businesses.roleStaff' | i18n }}</option>
+            </select>
+
+            @if (editingUser()) {
+              <label class="form-label checkbox-label">
+                <input
+                  type="checkbox"
+                  data-testid="business-user-form-active"
+                  [(ngModel)]="userForm.isActive"
+                />
+                {{ 'businesses.active' | i18n }}
+              </label>
+            }
+          </div>
+
+          @if (userFormError()) {
+            <p class="error-text" data-testid="business-user-form-error">
+              {{ userFormError() }}
+            </p>
+          }
+
+          <div class="panel-actions">
+            <button
+              class="btn btn-primary"
+              data-testid="business-user-form-save-btn"
+              [disabled]="userSaving() || !canSaveUser()"
+              (click)="saveUser()"
+            >
+              {{
+                userSaving() ? ('common.saving' | i18n) : ('common.save' | i18n)
+              }}
+            </button>
+            <button class="btn btn-outline" (click)="closeUserForm()">
+              {{ 'common.cancel' | i18n }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   @if (activeTab() === 'orders') {

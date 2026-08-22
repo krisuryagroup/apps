@@ -12,7 +12,7 @@ import {
   MenuCategoryDto,
   MenuItemDto,
 } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
+import { I18nPipe, I18nService } from '@zitro/i18n';
 import { SharedMenuComponent } from './shared-menu.component';
 
 @Component({
@@ -44,6 +44,14 @@ import { SharedMenuComponent } from './shared-menu.component';
             (click)="openAddCategory()"
           >
             + {{ 'restaurant.addCategory' | i18n }}
+          </button>
+          <button
+            class="btn btn-outline"
+            type="button"
+            data-testid="menu-bulk-adjust-btn"
+            (click)="showBulkAdjust.set(true)"
+          >
+            {{ 'products.bulkPriceAdjust' | i18n }}
           </button>
         </div>
       </div>
@@ -236,6 +244,97 @@ import { SharedMenuComponent } from './shared-menu.component';
           </div>
         </div>
       }
+      @if (showBulkAdjust()) {
+        <div class="overlay">
+          <div class="panel">
+            <h2 class="panel-title">{{ 'products.bulkPriceAdjust' | i18n }}</h2>
+            <div class="form-row">
+              <label for="menu-bulk-direction" class="form-label">{{
+                'products.bulkDirection' | i18n
+              }}</label>
+              <select
+                id="menu-bulk-direction"
+                class="select"
+                data-testid="bulk-adjust-direction"
+                [(ngModel)]="bulkIsIncrease"
+              >
+                <option [ngValue]="true">
+                  {{ 'products.bulkIncrease' | i18n }}
+                </option>
+                <option [ngValue]="false">
+                  {{ 'products.bulkDecrease' | i18n }}
+                </option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="menu-bulk-type" class="form-label">{{
+                'products.bulkType' | i18n
+              }}</label>
+              <select
+                id="menu-bulk-type"
+                class="select"
+                data-testid="bulk-adjust-type"
+                [(ngModel)]="bulkIsPercentage"
+              >
+                <option [ngValue]="true">
+                  {{ 'products.bulkPercentage' | i18n }}
+                </option>
+                <option [ngValue]="false">
+                  {{ 'products.bulkFlatAmount' | i18n }}
+                </option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="menu-bulk-value" class="form-label">{{
+                'products.bulkValue' | i18n
+              }}</label>
+              <input
+                id="menu-bulk-value"
+                class="input"
+                type="number"
+                min="0"
+                step="0.01"
+                data-testid="bulk-adjust-value"
+                [(ngModel)]="bulkValue"
+                placeholder="{{
+                  bulkIsPercentage
+                    ? ('products.bulkValuePercentPlaceholder' | i18n)
+                    : ('products.bulkValueFlatPlaceholder' | i18n)
+                }}"
+              />
+            </div>
+
+            @if (bulkResultMessage()) {
+              <p class="empty" data-testid="bulk-adjust-result">
+                {{ bulkResultMessage() }}
+              </p>
+            }
+            @if (bulkError()) {
+              <p class="error-text" data-testid="bulk-adjust-error">
+                {{ bulkError() }}
+              </p>
+            }
+
+            <div class="panel-actions">
+              <button
+                class="btn btn-primary"
+                data-testid="bulk-adjust-apply-btn"
+                [disabled]="bulkApplying() || !bulkValue || bulkValue <= 0"
+                (click)="applyBulkAdjust()"
+              >
+                {{
+                  bulkApplying()
+                    ? ('common.saving' | i18n)
+                    : ('products.bulkApply' | i18n)
+                }}
+              </button>
+              <button class="btn btn-outline" (click)="closeBulkAdjust()">
+                {{ 'common.cancel' | i18n }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     }
   `,
   styles: `
@@ -318,6 +417,7 @@ import { SharedMenuComponent } from './shared-menu.component';
 })
 export class RestaurantMenuComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly i18n = inject(I18nService);
   protected checkingMode = signal(true);
   protected menuMode = signal<'shared' | 'independent'>('independent');
   protected categories = signal<MenuCategoryDto[]>([]);
@@ -336,6 +436,15 @@ export class RestaurantMenuComponent implements OnInit {
     foodType: 'veg',
     isAvailable: true,
   };
+
+  // ── Bulk price adjust ────────────────────────────────────────────────────
+  protected showBulkAdjust = signal(false);
+  protected bulkIsIncrease = true;
+  protected bulkIsPercentage = true;
+  protected bulkValue: number | null = null;
+  protected bulkApplying = signal(false);
+  protected bulkResultMessage = signal('');
+  protected bulkError = signal('');
 
   ngOnInit(): void {
     const id = this.api.businessId()!;
@@ -458,5 +567,45 @@ export class RestaurantMenuComponent implements OnInit {
           this.selectedCategory.set(null);
       },
     });
+  }
+
+  protected applyBulkAdjust(): void {
+    if (!this.bulkValue || this.bulkValue <= 0) return;
+    const id = this.api.businessId()!;
+    this.bulkApplying.set(true);
+    this.bulkResultMessage.set('');
+    this.bulkError.set('');
+
+    this.api
+      .bulkAdjustProductPrices(id, {
+        categoryId: this.selectedCategory()?.id ?? null,
+        isPercentage: this.bulkIsPercentage,
+        isIncrease: this.bulkIsIncrease,
+        value: this.bulkValue,
+      })
+      .subscribe({
+        next: (res) => {
+          this.bulkApplying.set(false);
+          this.bulkResultMessage.set(
+            this.i18n.translate('products.bulkResult', {
+              count: String(res.updatedCount),
+            }),
+          );
+          this.loadAll();
+        },
+        error: () => {
+          this.bulkApplying.set(false);
+          this.bulkError.set(this.i18n.translate('products.bulkError'));
+        },
+      });
+  }
+
+  protected closeBulkAdjust(): void {
+    this.showBulkAdjust.set(false);
+    this.bulkIsIncrease = true;
+    this.bulkIsPercentage = true;
+    this.bulkValue = null;
+    this.bulkResultMessage.set('');
+    this.bulkError.set('');
   }
 }

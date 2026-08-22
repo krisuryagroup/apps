@@ -218,6 +218,22 @@ export class BusinessApiService {
     );
   }
 
+  /** Independent-mode only — bumps this business's own products by % or flat amount. */
+  bulkAdjustProductPrices(
+    businessId: string,
+    req: {
+      categoryId?: string | null;
+      isPercentage: boolean;
+      isIncrease: boolean;
+      value: number;
+    },
+  ): Observable<{ updatedCount: number }> {
+    return this.http.post<{ updatedCount: number }>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products/bulk-price-adjust`,
+      req,
+    );
+  }
+
   // ── Shared brand menu (menu_mode = 'shared' branches only) ────────────────────
 
   getBrandMasterProducts(
@@ -255,6 +271,23 @@ export class BusinessApiService {
   ): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides/${productId}`,
+    );
+  }
+
+  /** Shared-mode only — bumps this branch's effective price for every brand master
+   * product in scope by % or flat amount, writing/updating a branch override per product. */
+  bulkAdjustBranchOverridePrices(
+    businessId: string,
+    req: {
+      categoryId?: string | null;
+      isPercentage: boolean;
+      isIncrease: boolean;
+      value: number;
+    },
+  ): Observable<{ updatedCount: number }> {
+    return this.http.post<{ updatedCount: number }>(
+      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides/bulk-price-adjust`,
+      req,
     );
   }
 
@@ -309,13 +342,15 @@ export class BusinessApiService {
   createStaff(
     businessId: string,
     req: Record<string, unknown>,
-  ): Observable<StaffDto> {
-    return this.http.post<StaffDto>(
+  ): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
       `${this.baseUrl}/api/business-portal/${businessId}/users`,
       req,
     );
   }
 
+  /** Omit any field to leave it unchanged. Set newPassword to force-reset it. Email is
+   * only applied when the account doesn't already have one. */
   updateStaff(
     businessId: string,
     userId: string,
@@ -324,6 +359,14 @@ export class BusinessApiService {
     return this.http.put<void>(
       `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
       req,
+    );
+  }
+
+  /** Soft-delete. Refuses (400, errorCode "LAST_OWNER") if this is the business's only
+   * active owner; a non-owner caller also can't remove an owner account ("FORBIDDEN"). */
+  deleteStaff(businessId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
     );
   }
 
@@ -359,11 +402,13 @@ export class BusinessApiService {
     );
   }
 
+  /** Response is just { id } — the created row's other fields aren't echoed back,
+   * so callers should reload the list rather than append this to their own state. */
   createDeliveryZone(
     businessId: string,
     req: Record<string, unknown>,
-  ): Observable<BusinessZoneDto> {
-    return this.http.post<BusinessZoneDto>(
+  ): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
       `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`,
       req,
     );
@@ -519,6 +564,7 @@ export interface StaffDto {
   id: string;
   name: string;
   phoneNumber: string;
+  email?: string;
   role: string;
   isActive: boolean;
 }
