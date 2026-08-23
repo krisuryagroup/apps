@@ -200,13 +200,10 @@ export class RestaurantOrdersComponent implements OnInit {
   protected statusFilter = signal('pending');
   protected rejectingOrder = signal<BusinessOrderDto | null>(null);
   protected rejectReason = '';
-  protected readonly displayStatuses = [
-    'pending',
-    'confirmed',
-    'preparing',
-    'ready',
-    'shipped',
-  ];
+  // Was missing 'delivered'/'cancelled' — a restaurant partner had no tab
+  // that could ever show a fulfilled or rejected order, even though the
+  // GetBusinessOrders API already supports filtering by either status.
+  protected readonly displayStatuses = ORDER_STATUSES;
 
   protected nextStatus(s: string): string | null {
     return STATUS_NEXT[s] ?? null;

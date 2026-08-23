@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import type { Order, CartItem } from '@zitro/models';
 import { OrderMapper } from '@zitro/mappers';
 import type {
@@ -9,10 +9,7 @@ import type {
   PlaceOrderResponseDto,
   OrderListResponseDto,
 } from '@zitro/mappers';
-import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL, CART_BUSINESS_SLUG } from '../tokens';
-
-const ORDER_HISTORY_KEY = 'order:history';
 
 export interface CreateOrderOptions {
   orderType: Order['orderType'];
@@ -27,7 +24,6 @@ export interface CreateOrderOptions {
 @Injectable({ providedIn: 'root' })
 export class OrderApiService {
   private http = inject(HttpClient);
-  private cache = inject(CacheService);
   private baseUrl = inject(ZITRO_API_BASE_URL);
 
   createOrder(
@@ -43,27 +39,17 @@ export class OrderApiService {
       .post<PlaceOrderResponseDto>(`${this.baseUrl}/api/orders`, request, {
         context,
       })
-      .pipe(
-        map((dto) => ({ orderId: dto.orderId })),
-        tap(() => this.cache.invalidate(ORDER_HISTORY_KEY)),
-      );
+      .pipe(map((dto) => ({ orderId: dto.orderId })));
   }
 
+  // Order status is live, fast-changing data (restaurant/delivery updates it
+  // continuously) — never cache it. A 5-minute client cache here used to make
+  // order-tracking's 30s auto-refresh and the order-history list serve a
+  // stale status for up to 5 minutes after every status change.
   getOrder(orderId: string): Observable<Order> {
-    const cacheKey = `order:${orderId}`;
-    const cached = this.cache.get<Order>(cacheKey);
-    if (cached)
-      return of({
-        ...cached,
-        createdAt: new Date(cached.createdAt),
-        updatedAt: new Date(cached.updatedAt as unknown as string),
-      });
     return this.http
       .get<OrderDto>(`${this.baseUrl}/api/orders/${orderId}`)
-      .pipe(
-        map((dto) => OrderMapper.toOrder(dto)),
-        tap((order) => this.cache.set(cacheKey, order, { ttlHours: 1 / 12 })),
-      );
+      .pipe(map((dto) => OrderMapper.toOrder(dto)));
   }
 
   /** GET /api/orders/{orderId}/invoice — PDF blob. Serves both "Download bill" and "Invoice". */
@@ -74,20 +60,6 @@ export class OrderApiService {
   }
 
   getOrderHistory(page = 1, status?: string): Observable<Order[]> {
-    const cacheKey = ORDER_HISTORY_KEY;
-    if (!status) {
-      const cached = this.cache.get<Order[]>(cacheKey);
-      if (cached) {
-        // localStorage JSON.parse turns Date objects into strings — revive them
-        return of(
-          cached.map((o) => ({
-            ...o,
-            createdAt: new Date(o.createdAt),
-            updatedAt: new Date(o.updatedAt as unknown as string),
-          })),
-        );
-      }
-    }
     const params: Record<string, string> = {
       page: String(page),
       pageSize: '20',
@@ -95,25 +67,12 @@ export class OrderApiService {
     if (status) params['status'] = status;
     return this.http
       .get<OrderListResponseDto>(`${this.baseUrl}/api/orders`, { params })
-      .pipe(
-        map((res) => OrderMapper.toOrderListFromSummary(res.orders ?? [])),
-        tap((orders) => {
-          if (!status) {
-            this.cache.set(cacheKey, orders, { ttlHours: 1 / 12 });
-          }
-        }),
-      );
+      .pipe(map((res) => OrderMapper.toOrderListFromSummary(res.orders ?? [])));
   }
 
   cancelOrder(orderId: string): Observable<Order> {
     return this.http
       .put<OrderDto>(`${this.baseUrl}/api/orders/${orderId}/cancel`, {})
-      .pipe(
-        map((dto) => OrderMapper.toOrder(dto)),
-        tap(() => {
-          this.cache.invalidate(`order:${orderId}`);
-          this.cache.invalidate(ORDER_HISTORY_KEY);
-        }),
-      );
+      .pipe(map((dto) => OrderMapper.toOrder(dto)));
   }
 }
