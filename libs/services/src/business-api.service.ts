@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { BusinessAuthTokenService } from './business-auth-token.service';
 import { ZITRO_API_BASE_URL } from './tokens';
 
-interface BusinessOrdersPagedResult {
+export interface BusinessOrdersPagedResult {
   orders: BusinessOrderDto[];
   totalCount: number;
   page: number;
@@ -120,6 +120,26 @@ export class BusinessApiService {
         { params: p },
       )
       .pipe(map((res) => res.orders));
+  }
+
+  /**
+   * Same endpoint as listOrders(), but returns the full paginated wrapper
+   * (totalCount included) — for the "All orders" view, which needs a real
+   * page count instead of just the current page's rows.
+   */
+  listOrdersPaged(
+    businessId: string,
+    params?: Record<string, string>,
+  ): Observable<BusinessOrdersPagedResult> {
+    let p = new HttpParams();
+    if (params)
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) p = p.set(k, v);
+      });
+    return this.http.get<BusinessOrdersPagedResult>(
+      `${this.baseUrl}/api/business-portal/${businessId}/orders`,
+      { params: p },
+    );
   }
 
   getOrderDetail(
@@ -501,6 +521,16 @@ export class BusinessApiService {
       >(`${this.baseUrl}/api/business-portal/${businessId}/payouts`)
       .pipe(map((res) => res.items));
   }
+
+  /** The orders that were settled in one payout — its breakdown. */
+  getPayoutOrders(
+    businessId: string,
+    payoutId: string,
+  ): Observable<PayoutOrderDto[]> {
+    return this.http.get<PayoutOrderDto[]>(
+      `${this.baseUrl}/api/business-portal/${businessId}/payouts/${payoutId}/orders`,
+    );
+  }
 }
 
 // ── DTOs ──────────────────────────────────────────────────────────────────────
@@ -666,4 +696,13 @@ export interface PayoutDto {
   status: string;
   payoutReference?: string;
   paidAt?: string;
+}
+
+export interface PayoutOrderDto {
+  orderId: string;
+  actualDeliveryTime?: string;
+  orderType: string;
+  total: number;
+  commissionAmount: number;
+  netAmount: number;
 }

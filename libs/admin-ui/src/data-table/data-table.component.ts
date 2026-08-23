@@ -28,10 +28,44 @@ export interface DataTableSort {
   direction: 'asc' | 'desc';
 }
 
+export interface DataTableFilterOption {
+  value: string;
+  labelKey: string;
+}
+
+/**
+ * One filter control rendered in the table's filter bar.
+ * - 'select': a dropdown, e.g. status — populate `options`.
+ * - 'search': a free-text input, e.g. order ID / customer name.
+ * - 'dateRange': two date inputs (from/to), stored as { from, to } (yyyy-MM-dd,
+ *   empty string = unset).
+ */
+export interface DataTableFilterField {
+  key: string;
+  type: 'select' | 'search' | 'dateRange';
+  labelKey: string;
+  options?: DataTableFilterOption[];
+  placeholderKey?: string;
+}
+
+export type DataTableFilterDateRange = { from: string; to: string };
+export type DataTableFilterValue = Record<
+  string,
+  string | DataTableFilterDateRange
+>;
+
+const EMPTY_DATE_RANGE: DataTableFilterDateRange = { from: '', to: '' };
+const SEARCH_DEBOUNCE_MS = 300;
+
 /**
  * Generic sortable/paginated table for admin CRUD screens (AD-006…AD-018 etc.).
  * Row actions are passed as a template via `#rowActions` and projected per row —
  * see the README example in this lib for the row-actions content-projection pattern.
+ *
+ * Filtering (status dropdown, date range, search) is opt-in via the `filters`
+ * config input — pass `[]` (the default) to render no filter bar at all. The
+ * caller owns filter state and re-fetching; this component only renders the
+ * controls and emits `filterChange` with the merged value.
  */
 @Component({
   selector: 'lib-data-table',
@@ -66,9 +100,18 @@ export class DataTableComponent<T = Record<string, unknown>> {
   sort = input<DataTableSort | null>(null);
   isRowExpanded = input<(row: T) => boolean>(() => false);
 
+  /** Filter bar config — omit or pass [] for no filter bar. */
+  filters = input<DataTableFilterField[]>([]);
+  /** Current value per filter key, keyed by DataTableFilterField.key. */
+  filterValues = input<DataTableFilterValue>({});
+
   rowClick = output<T>();
   pageChange = output<number>();
   sortChange = output<DataTableSort>();
+  /** Emits the full merged filter value set whenever any filter control changes. */
+  filterChange = output<DataTableFilterValue>();
+
+  private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
   cellValue(row: T, column: DataTableColumn<T>): string {
     if (column.format) {
@@ -97,5 +140,50 @@ export class DataTableComponent<T = Record<string, unknown>> {
 
   get colspan(): number {
     return this.columns().length + (this.rowActionsTemplate ? 1 : 0);
+  }
+
+  get hasActiveFilters(): boolean {
+    return Object.values(this.filterValues()).some((v) =>
+      typeof v === 'string' ? v !== '' : v.from !== '' || v.to !== '',
+    );
+  }
+
+  selectValue(key: string): string {
+    const v = this.filterValues()[key];
+    return typeof v === 'string' ? v : '';
+  }
+
+  dateRangeValue(key: string): DataTableFilterDateRange {
+    const v = this.filterValues()[key];
+    return typeof v === 'object' && v ? v : EMPTY_DATE_RANGE;
+  }
+
+  onSelectFilterChange(key: string, value: string): void {
+    this.filterChange.emit({ ...this.filterValues(), [key]: value });
+  }
+
+  /** Debounced so a fast typist doesn't trigger a request per keystroke. */
+  onSearchFilterChange(key: string, value: string): void {
+    clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.filterChange.emit({ ...this.filterValues(), [key]: value });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  onDateRangeChange(
+    key: string,
+    part: keyof DataTableFilterDateRange,
+    value: string,
+  ): void {
+    const range = this.dateRangeValue(key);
+    this.filterChange.emit({
+      ...this.filterValues(),
+      [key]: { ...range, [part]: value },
+    });
+  }
+
+  clearFilters(): void {
+    clearTimeout(this.searchDebounceTimer);
+    this.filterChange.emit({});
   }
 }

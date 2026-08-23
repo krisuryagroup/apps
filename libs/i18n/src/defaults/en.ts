@@ -546,6 +546,9 @@ export const EN_DEFAULTS = {
     error: 'Something went wrong loading this data. Please try again.',
     previous: 'Previous',
     next: 'Next',
+    clearFilters: 'Clear filters',
+    dateFrom: 'From date',
+    dateTo: 'To date',
   },
   // ── Admin login (AD-001 / SA-001) ──────────────────────────────────────────
   login: {
@@ -835,10 +838,23 @@ export const EN_DEFAULTS = {
     status: 'Status',
     total: 'Total',
     date: 'Date',
+    createdAt: 'Placed at',
+    items: 'Items',
+    search: 'Search',
+    dateRange: 'Date range',
     phonePlaceholder: 'Search by phone\u2026',
     orderIdPlaceholder: 'Search by order ID\u2026',
     allStatuses: 'All Statuses',
     allBusinesses: 'All Businesses',
+  },
+  orderStatus: {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
   },
   users: {
     name: 'Name',

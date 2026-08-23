@@ -10,6 +10,13 @@ import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { BusinessApiService, BusinessOrderDto } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+import {
+  DataTableComponent,
+  DataTableColumn,
+  DataTableFilterField,
+  DataTableFilterValue,
+  DataTablePagination,
+} from '@zitro/admin-ui';
 
 const ORDER_STATUSES = [
   'pending',
@@ -27,28 +34,85 @@ const STATUS_NEXT: Record<string, string> = {
   ready: 'shipped',
   shipped: 'delivered',
 };
+const ALL_ORDERS_PAGE_SIZE = 20;
 
 @Component({
   selector: 'app-restaurant-orders',
   standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink, I18nPipe],
+  imports: [FormsModule, DatePipe, RouterLink, I18nPipe, DataTableComponent],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.orders' | i18n }}</h1>
     </div>
     <div class="tabs">
+      <button
+        class="tab"
+        [class.active]="statusFilter() === 'all'"
+        data-testid="order-queue-tab-all"
+        (click)="selectTab('all')"
+      >
+        All Orders
+      </button>
       @for (s of displayStatuses; track s) {
         <button
           class="tab"
           [class.active]="statusFilter() === s"
           [attr.data-testid]="'order-queue-tab-' + s"
-          (click)="statusFilter.set(s); load()"
+          (click)="selectTab(s)"
         >
           {{ s }}
         </button>
       }
     </div>
-    @if (loading()) {
+
+    @if (statusFilter() === 'all') {
+      <lib-data-table
+        data-testid="all-orders-table"
+        [columns]="allOrdersColumns"
+        [rows]="orders()"
+        [loading]="loading()"
+        [pagination]="allOrdersPagination()"
+        [filters]="allOrdersFilters"
+        [filterValues]="allOrdersFilterValues()"
+        (filterChange)="onAllOrdersFilterChange($event)"
+        (pageChange)="onAllOrdersPageChange($event)"
+        (rowClick)="goToDetail($event)"
+      >
+        <ng-template #rowActions let-order>
+          <div class="order-actions">
+            @if (order.status === 'pending') {
+              <button
+                class="btn btn-sm btn-primary"
+                data-testid="order-accept-btn"
+                (click)="advance(order)"
+              >
+                Accept
+              </button>
+              <button
+                class="btn btn-sm btn-danger"
+                data-testid="order-reject-btn"
+                (click)="openReject(order)"
+              >
+                Reject
+              </button>
+            } @else if (nextStatus(order.status)) {
+              <button
+                class="btn btn-sm btn-primary"
+                data-testid="order-advance-btn"
+                (click)="advance(order)"
+              >
+                → {{ nextStatus(order.status) }}
+              </button>
+            }
+            <a
+              class="btn btn-sm btn-outline"
+              [routerLink]="['/orders', order.orderId]"
+              >Detail</a
+            >
+          </div>
+        </ng-template>
+      </lib-data-table>
+    } @else if (loading()) {
       <p class="loading">{{ 'common.loading' | i18n }}</p>
     } @else {
       <div class="order-list">
@@ -195,6 +259,7 @@ const STATUS_NEXT: Record<string, string> = {
 })
 export class RestaurantOrdersComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+  private readonly router = inject(Router);
   protected orders = signal<BusinessOrderDto[]>([]);
   protected loading = signal(true);
   protected statusFilter = signal('pending');
@@ -205,12 +270,65 @@ export class RestaurantOrdersComponent implements OnInit {
   // GetBusinessOrders API already supports filtering by either status.
   protected readonly displayStatuses = ORDER_STATUSES;
 
+  // ── "All Orders" tab — combined view with search/status/date-range filters,
+  // backed by lib-data-table's reusable filter-bar configuration. ───────────
+  protected readonly allOrdersColumns: DataTableColumn<BusinessOrderDto>[] = [
+    { key: 'orderId', labelKey: 'orders.orderId' },
+    { key: 'status', labelKey: 'orders.status' },
+    {
+      key: 'createdAt',
+      labelKey: 'orders.createdAt',
+      format: (o) => new Date(o.createdAt).toLocaleString(),
+    },
+    { key: 'itemCount', labelKey: 'orders.items' },
+    { key: 'total', labelKey: 'orders.total', format: (o) => `₹${o.total}` },
+  ];
+  protected readonly allOrdersFilters: DataTableFilterField[] = [
+    {
+      key: 'status',
+      type: 'select',
+      labelKey: 'orders.status',
+      options: [
+        { value: '', labelKey: 'orders.allStatuses' },
+        ...ORDER_STATUSES.map((s) => ({
+          value: s,
+          labelKey: `orderStatus.${s}`,
+        })),
+      ],
+    },
+    {
+      key: 'search',
+      type: 'search',
+      labelKey: 'orders.search',
+      placeholderKey: 'orders.orderIdPlaceholder',
+    },
+    { key: 'dateRange', type: 'dateRange', labelKey: 'orders.dateRange' },
+  ];
+  protected allOrdersFilterValues = signal<DataTableFilterValue>({
+    status: '',
+  });
+  protected allOrdersPagination = signal<DataTablePagination>({
+    page: 1,
+    pageSize: ALL_ORDERS_PAGE_SIZE,
+    total: 0,
+  });
+
   protected nextStatus(s: string): string | null {
     return STATUS_NEXT[s] ?? null;
   }
 
   ngOnInit(): void {
     this.load();
+  }
+
+  protected selectTab(status: string): void {
+    this.statusFilter.set(status);
+    if (status === 'all') {
+      this.allOrdersPagination.update((p) => ({ ...p, page: 1 }));
+      this.loadAllOrders();
+    } else {
+      this.load();
+    }
   }
 
   protected load(): void {
@@ -226,13 +344,76 @@ export class RestaurantOrdersComponent implements OnInit {
     });
   }
 
+  protected onAllOrdersFilterChange(value: DataTableFilterValue): void {
+    this.allOrdersFilterValues.set(value);
+    this.allOrdersPagination.update((p) => ({ ...p, page: 1 }));
+    this.loadAllOrders();
+  }
+
+  protected onAllOrdersPageChange(page: number): void {
+    this.allOrdersPagination.update((p) => ({ ...p, page }));
+    this.loadAllOrders();
+  }
+
+  protected goToDetail(order: BusinessOrderDto): void {
+    this.router.navigate(['/orders', order.orderId]);
+  }
+
+  private loadAllOrders(): void {
+    const id = this.api.businessId();
+    if (!id) return;
+    this.loading.set(true);
+
+    const filters = this.allOrdersFilterValues();
+    const status =
+      typeof filters['status'] === 'string' ? filters['status'] : '';
+    const search =
+      typeof filters['search'] === 'string' ? filters['search'] : '';
+    const dateRange = filters['dateRange'];
+    const fromDate =
+      typeof dateRange === 'object' && dateRange ? dateRange.from : '';
+    const toDate =
+      typeof dateRange === 'object' && dateRange ? dateRange.to : '';
+
+    const { page, pageSize } = this.allOrdersPagination();
+    this.api
+      .listOrdersPaged(id, {
+        status,
+        search,
+        fromDate,
+        toDate,
+        page: String(page),
+        pageSize: String(pageSize),
+      })
+      .subscribe({
+        next: (res) => {
+          this.orders.set(res.orders);
+          this.allOrdersPagination.set({
+            page: res.page,
+            pageSize: res.pageSize,
+            total: res.totalCount,
+          });
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
   protected advance(order: BusinessOrderDto): void {
     const next = STATUS_NEXT[order.status];
     if (!next) return;
     const id = this.api.businessId()!;
     this.api.updateOrderStatus(id, order.orderId, next).subscribe({
-      next: () => this.load(),
+      next: () => this.reload(),
     });
+  }
+
+  private reload(): void {
+    if (this.statusFilter() === 'all') {
+      this.loadAllOrders();
+    } else {
+      this.load();
+    }
   }
 
   protected openReject(order: BusinessOrderDto): void {
@@ -249,7 +430,7 @@ export class RestaurantOrdersComponent implements OnInit {
         next: () => {
           this.rejectingOrder.set(null);
           this.rejectReason = '';
-          this.load();
+          this.reload();
         },
       });
   }

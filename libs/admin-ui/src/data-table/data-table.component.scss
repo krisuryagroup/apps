@@ -60,6 +60,53 @@
     padding: var(--zitro-spacing-md);
   }
 
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--zitro-spacing-md);
+    padding: var(--zitro-spacing-md);
+    border-bottom: 1px solid var(--zitro-divider);
+  }
+
+  &__filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--zitro-font-size-sm);
+    color: var(--zitro-on-surface-variant);
+
+    select,
+    input {
+      padding: 6px 10px;
+      border: 1px solid var(--zitro-divider);
+      border-radius: var(--zitro-radius-sm);
+      background: var(--zitro-surface);
+      color: var(--zitro-on-surface);
+      font-size: var(--zitro-font-size-md);
+    }
+  }
+
+  &__date-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__clear-filters {
+    padding: 6px 12px;
+    border: 1px solid var(--zitro-divider);
+    border-radius: var(--zitro-radius-sm);
+    background: var(--zitro-surface);
+    color: var(--zitro-on-surface-variant);
+    cursor: pointer;
+    height: fit-content;
+
+    &:hover {
+      background: var(--zitro-surface-variant);
+    }
+  }
+
   &__pagination {
     display: flex;
     align-items: center;

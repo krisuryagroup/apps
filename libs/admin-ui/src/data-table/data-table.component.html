@@ -1,4 +1,88 @@
 <div class="data-table" data-testid="data-table">
+  @if (filters().length > 0) {
+    <div class="data-table__filters" data-testid="data-table-filters">
+      @for (field of filters(); track field.key) {
+        @switch (field.type) {
+          @case ('select') {
+            <label class="data-table__filter">
+              <span>{{ field.labelKey | i18n }}</span>
+              <select
+                [attr.data-testid]="'data-table-filter-' + field.key"
+                [value]="selectValue(field.key)"
+                (change)="
+                  onSelectFilterChange(field.key, $any($event.target).value)
+                "
+              >
+                @for (opt of field.options ?? []; track opt.value) {
+                  <option [value]="opt.value">{{ opt.labelKey | i18n }}</option>
+                }
+              </select>
+            </label>
+          }
+          @case ('search') {
+            <label class="data-table__filter">
+              <span>{{ field.labelKey | i18n }}</span>
+              <input
+                type="search"
+                [attr.data-testid]="'data-table-filter-' + field.key"
+                [placeholder]="field.placeholderKey ?? '' | i18n"
+                [value]="selectValue(field.key)"
+                (input)="
+                  onSearchFilterChange(field.key, $any($event.target).value)
+                "
+              />
+            </label>
+          }
+          @case ('dateRange') {
+            <label class="data-table__filter data-table__filter--date-range">
+              <span>{{ field.labelKey | i18n }}</span>
+              <span class="data-table__date-range">
+                <input
+                  type="date"
+                  [attr.data-testid]="
+                    'data-table-filter-' + field.key + '-from'
+                  "
+                  [attr.aria-label]="'dataTable.dateFrom' | i18n"
+                  [value]="dateRangeValue(field.key).from"
+                  (change)="
+                    onDateRangeChange(
+                      field.key,
+                      'from',
+                      $any($event.target).value
+                    )
+                  "
+                />
+                <span>–</span>
+                <input
+                  type="date"
+                  [attr.data-testid]="'data-table-filter-' + field.key + '-to'"
+                  [attr.aria-label]="'dataTable.dateTo' | i18n"
+                  [value]="dateRangeValue(field.key).to"
+                  (change)="
+                    onDateRangeChange(
+                      field.key,
+                      'to',
+                      $any($event.target).value
+                    )
+                  "
+                />
+              </span>
+            </label>
+          }
+        }
+      }
+      @if (hasActiveFilters) {
+        <button
+          type="button"
+          class="data-table__clear-filters"
+          data-testid="data-table-clear-filters"
+          (click)="clearFilters()"
+        >
+          {{ 'dataTable.clearFilters' | i18n }}
+        </button>
+      }
+    </div>
+  }
   <table>
     <thead>
       <tr>

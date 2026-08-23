@@ -330,6 +330,7 @@ import {
   InventoryAlertDto,
   RatingDto,
   PayoutDto,
+  PayoutOrderDto,
   BusinessZoneDto,
 } from '@zitro/services';
 
@@ -649,6 +650,7 @@ export class RestaurantRatingsComponent implements OnInit {
       <table class="table" data-testid="payout-history-table">
         <thead>
           <tr>
+            <th></th>
             <th>Period</th>
             <th>Orders</th>
             <th>Gross</th>
@@ -660,7 +662,14 @@ export class RestaurantRatingsComponent implements OnInit {
         </thead>
         <tbody>
           @for (p of payouts(); track p.id) {
-            <tr>
+            <tr
+              class="payout-row"
+              [attr.data-testid]="'payout-row-' + p.id"
+              (click)="toggleBreakdown(p.id)"
+            >
+              <td class="expand-toggle">
+                {{ expandedPayoutId() === p.id ? '▾' : '▸' }}
+              </td>
               <td>{{ p.periodFrom }} – {{ p.periodTo }}</td>
               <td>{{ p.orderCount }}</td>
               <td>₹{{ p.grossAmount }}</td>
@@ -673,9 +682,57 @@ export class RestaurantRatingsComponent implements OnInit {
               </td>
               <td>{{ p.payoutReference ?? '—' }}</td>
             </tr>
+            @if (expandedPayoutId() === p.id) {
+              <tr
+                class="breakdown-row"
+                [attr.data-testid]="'payout-breakdown-' + p.id"
+              >
+                <td colspan="8">
+                  @if (loadingOrdersFor() === p.id) {
+                    <p class="loading">{{ 'common.loading' | i18n }}</p>
+                  } @else {
+                    <table class="breakdown-table">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Delivered</th>
+                          <th>Type</th>
+                          <th>Total</th>
+                          <th>Commission</th>
+                          <th>Net</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (
+                          o of payoutOrders().get(p.id) ?? [];
+                          track o.orderId
+                        ) {
+                          <tr>
+                            <td>{{ o.orderId }}</td>
+                            <td>
+                              {{ formatDeliveredAt(o.actualDeliveryTime) }}
+                            </td>
+                            <td>{{ o.orderType }}</td>
+                            <td>₹{{ o.total }}</td>
+                            <td>₹{{ o.commissionAmount }}</td>
+                            <td>₹{{ o.netAmount }}</td>
+                          </tr>
+                        } @empty {
+                          <tr>
+                            <td colspan="6" class="empty">
+                              No orders found for this payout.
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                </td>
+              </tr>
+            }
           } @empty {
             <tr>
-              <td colspan="7" class="empty">No payouts yet.</td>
+              <td colspan="8" class="empty">No payouts yet.</td>
             </tr>
           }
         </tbody>
@@ -698,6 +755,31 @@ export class RestaurantRatingsComponent implements OnInit {
         font-size: var(--zitro-font-size-sm);
       }
     }
+    .payout-row {
+      cursor: pointer;
+      &:hover {
+        background: var(--zitro-surface-variant);
+      }
+    }
+    .expand-toggle {
+      width: 1.5em;
+      color: var(--zitro-on-surface-variant);
+    }
+    .breakdown-row td {
+      background: var(--zitro-surface-variant);
+      padding: var(--zitro-spacing-md);
+    }
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      th,
+      td {
+        padding: var(--zitro-spacing-xs) var(--zitro-spacing-sm);
+        text-align: left;
+        font-size: var(--zitro-font-size-sm);
+        border-bottom: 1px solid var(--zitro-divider);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -705,6 +787,10 @@ export class RestaurantPayoutsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   protected payouts = signal<PayoutDto[]>([]);
   protected loading = signal(true);
+  protected expandedPayoutId = signal<string | null>(null);
+  protected loadingOrdersFor = signal<string | null>(null);
+  protected payoutOrders = signal<Map<string, PayoutOrderDto[]>>(new Map());
+
   ngOnInit() {
     const id = this.api.businessId()!;
     this.api.listPayouts(id).subscribe({
@@ -713,6 +799,29 @@ export class RestaurantPayoutsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  protected formatDeliveredAt(iso?: string): string {
+    return iso ? new Date(iso).toLocaleString() : '—';
+  }
+
+  protected toggleBreakdown(payoutId: string): void {
+    if (this.expandedPayoutId() === payoutId) {
+      this.expandedPayoutId.set(null);
+      return;
+    }
+    this.expandedPayoutId.set(payoutId);
+    if (this.payoutOrders().has(payoutId)) return;
+
+    const businessId = this.api.businessId()!;
+    this.loadingOrdersFor.set(payoutId);
+    this.api.getPayoutOrders(businessId, payoutId).subscribe({
+      next: (orders) => {
+        this.payoutOrders.update((m) => new Map(m).set(payoutId, orders));
+        this.loadingOrdersFor.set(null);
+      },
+      error: () => this.loadingOrdersFor.set(null),
     });
   }
 }
