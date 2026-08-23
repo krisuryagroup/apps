@@ -618,6 +618,7 @@ export interface BusinessProfileDto {
   onboardingRejectionReason?: string;
   menuMode: 'shared' | 'independent';
   brandId?: string;
+  brandName?: string;
 }
 
 /** One brand master product with this branch's own override (if any) merged in. */

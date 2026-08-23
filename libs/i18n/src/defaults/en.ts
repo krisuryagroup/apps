@@ -979,6 +979,9 @@ export const EN_DEFAULTS = {
   },
   // ── Restaurant portal keys (RS-001..RS-016) ───────────────────────────────
   restaurant: {
+    branchOfBrand: '{brand} · Branch',
+    independentBranch: 'Independent restaurant',
+    staffSummary: '{name} · {role}',
     menu: 'Menu',
     addItem: 'Add Item',
     addCategory: 'Add Category',

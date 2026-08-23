@@ -1,7 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { BusinessAuthTokenService } from '@zitro/services';
+import { BusinessApiService, BusinessAuthTokenService } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+
+function capitalize(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
 
 @Component({
   selector: 'app-restaurant-layout',
@@ -11,6 +21,28 @@ import { I18nPipe } from '@zitro/i18n';
     <nav class="sidebar">
       <div class="sidebar-header">
         <span class="app-name">{{ 'app.restaurantName' | i18n }}</span>
+        @if (businessName(); as name) {
+          <div class="account-summary" data-testid="account-summary">
+            <div class="account-summary__business">{{ name }}</div>
+            @if (brandName(); as brand) {
+              <div class="account-summary__line">
+                {{ 'restaurant.branchOfBrand' | i18n: { brand } }}
+              </div>
+            } @else {
+              <div class="account-summary__line">
+                {{ 'restaurant.independentBranch' | i18n }}
+              </div>
+            }
+            @if (staffName(); as name2) {
+              <div class="account-summary__line">
+                {{
+                  'restaurant.staffSummary'
+                    | i18n: { name: name2, role: staffRoleDisplay() }
+                }}
+              </div>
+            }
+          </div>
+        }
       </div>
       <ul class="nav-list">
         <li>
@@ -97,6 +129,16 @@ import { I18nPipe } from '@zitro/i18n';
       font-size: var(--zitro-font-size-lg);
       color: var(--zitro-primary);
     }
+    .account-summary {
+      margin-top: var(--zitro-spacing-xs);
+      font-size: 11px;
+      color: var(--zitro-on-surface-variant);
+      line-height: 1.4;
+    }
+    .account-summary__business {
+      font-weight: 500;
+      color: var(--zitro-on-surface);
+    }
     .nav-list {
       list-style: none;
       padding: 0;
@@ -157,9 +199,41 @@ import { I18nPipe } from '@zitro/i18n';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RestaurantLayoutComponent {
+export class RestaurantLayoutComponent implements OnInit {
   private readonly tokenService = inject(BusinessAuthTokenService);
+  private readonly api = inject(BusinessApiService);
   private readonly router = inject(Router);
+
+  protected businessName = signal<string | null>(null);
+  protected brandName = signal<string | null>(null);
+  protected staffName = signal<string | null>(null);
+  protected staffRoleDisplay = signal('');
+
+  ngOnInit(): void {
+    const businessId = this.api.businessId();
+    if (!businessId) return;
+
+    this.api.getProfile(businessId).subscribe({
+      next: (profile) => {
+        this.businessName.set(profile.name);
+        this.brandName.set(
+          profile.menuMode === 'shared' ? (profile.brandName ?? null) : null,
+        );
+      },
+    });
+
+    const userId = this.api.currentUserId();
+    const jwtRole = this.api.currentUser()?.role ?? '';
+    this.staffRoleDisplay.set(capitalize(jwtRole));
+    this.api.listStaff(businessId).subscribe({
+      next: (staff) => {
+        const me = staff.find((s) => s.id === userId);
+        if (!me) return;
+        this.staffName.set(me.name);
+        this.staffRoleDisplay.set(capitalize(me.role));
+      },
+    });
+  }
 
   logout(): void {
     this.tokenService.clearToken();
