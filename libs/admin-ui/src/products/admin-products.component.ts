@@ -337,7 +337,7 @@ import {
             />
 
             <label for="prod-category" class="form-label">{{
-              'categories.name' | i18n
+              'products.category' | i18n
             }}</label>
             <select
               id="prod-category"

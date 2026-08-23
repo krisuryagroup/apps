@@ -17,4 +17,9 @@ npx nx build zitro-customer --configuration=production;
 firebase use zitro-customer;
 firebase deploy --only hosting;
 
+##
+
+to kill all processes running in background:
+lsof -tiTCP:4201 -sTCP:LISTEN | xargs kill -9 2>/dev/null; echo done
+
 #

@@ -122,6 +122,20 @@ export class CartApiService {
     this.removeSlugFromStorage(slug);
   }
 
+  /**
+   * Drops local cart state only — no DELETE /api/cart call. Use this after a
+   * successful PlaceOrder, which already atomically flips the server-side cart
+   * to CheckedOut (see PlaceOrderHandler). Calling clearCart() at that point
+   * always 400s with CART_NOT_FOUND, since GET-style "Status == Active" lookup
+   * can no longer find the just-consumed cart — that used to throw inside
+   * placeOrder() and strand the user on the "Order Completed" progress modal
+   * instead of navigating to order-confirmation.
+   */
+  clearLocalCart(slug: string): void {
+    this.deleteCart(slug);
+    this.removeSlugFromStorage(slug);
+  }
+
   async applyCoupon(
     slug: string,
     code: string,

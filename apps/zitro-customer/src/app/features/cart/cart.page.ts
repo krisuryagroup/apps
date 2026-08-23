@@ -739,7 +739,7 @@ export class CartPage implements OnDestroy {
 
       await new Promise((r) => setTimeout(r, 2000));
 
-      await this.cartApi.clearCart(slug);
+      this.cartApi.clearLocalCart(slug);
       this.router.navigate(['/order-confirmation'], {
         queryParams: { orderId: order.orderId },
       });

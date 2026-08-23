@@ -1,0 +1,109 @@
+<div class="excel-grid">
+  <table class="excel-grid__table">
+    <thead>
+      <tr>
+        @for (col of columns(); track col.key) {
+          <th [style.width]="col.width">{{ col.label }}</th>
+        }
+        <th class="excel-grid__status-col">{{ 'excelGrid.status' | i18n }}</th>
+        <th class="excel-grid__actions-col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track $index; let i = $index) {
+        <tr [class.excel-grid__row--error]="statusFor(i)?.state === 'error'">
+          @for (col of columns(); track col.key) {
+            <td>
+              @switch (col.type) {
+                @case ('text') {
+                  <input
+                    class="excel-grid__input"
+                    type="text"
+                    [ngModel]="row[col.key]"
+                    (ngModelChange)="updateCell(i, col.key, $event)"
+                    (keydown.enter)="onEnterInLastRow(i, $event)"
+                  />
+                }
+                @case ('number') {
+                  <input
+                    class="excel-grid__input"
+                    type="number"
+                    [ngModel]="row[col.key]"
+                    (ngModelChange)="updateCell(i, col.key, $event)"
+                    (keydown.enter)="onEnterInLastRow(i, $event)"
+                  />
+                }
+                @case ('select') {
+                  <select
+                    class="excel-grid__input"
+                    [ngModel]="row[col.key]"
+                    (ngModelChange)="updateCell(i, col.key, $event)"
+                  >
+                    <option [ngValue]="null"></option>
+                    @for (opt of col.options?.(); track opt.value) {
+                      <option [value]="opt.value">{{ opt.label }}</option>
+                    }
+                  </select>
+                }
+                @case ('checkbox') {
+                  <input
+                    class="excel-grid__checkbox"
+                    type="checkbox"
+                    [ngModel]="row[col.key]"
+                    (ngModelChange)="updateCell(i, col.key, $event)"
+                  />
+                }
+                @case ('image') {
+                  <div class="excel-grid__image-cell">
+                    @if (row[col.key]; as url) {
+                      <img class="excel-grid__thumb" [src]="url" alt="" />
+                    }
+                    @if (uploadingRows().has(i)) {
+                      <span class="excel-grid__spinner"></span>
+                    } @else {
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        (change)="onFileSelected(i, col.key, $event)"
+                      />
+                    }
+                  </div>
+                }
+              }
+            </td>
+          }
+          <td class="excel-grid__status-col">
+            @if (statusFor(i); as status) {
+              @switch (status.state) {
+                @case ('saving') {
+                  <span class="excel-grid__spinner"></span>
+                }
+                @case ('saved') {
+                  <span class="excel-grid__status-ok">✓</span>
+                }
+                @case ('error') {
+                  <span class="excel-grid__status-error" [title]="status.error"
+                    >✗</span
+                  >
+                }
+              }
+            }
+          </td>
+          <td class="excel-grid__actions-col">
+            <button
+              type="button"
+              class="excel-grid__delete-btn"
+              [attr.aria-label]="'excelGrid.deleteRow' | i18n"
+              (click)="requestDeleteRow(i)"
+            >
+              ×
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <button type="button" class="excel-grid__add-row-btn" (click)="addRow.emit()">
+    + {{ 'excelGrid.addRow' | i18n }}
+  </button>
+</div>

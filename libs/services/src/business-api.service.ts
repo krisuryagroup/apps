@@ -218,6 +218,57 @@ export class BusinessApiService {
     );
   }
 
+  /**
+   * Independent-mode only — creates many products in one call (bulk menu-item grid).
+   * Partial-failure tolerant: one bad row doesn't block the rest, each row's outcome is
+   * reported back by its index in the request array.
+   */
+  createProductsBulk(
+    businessId: string,
+    items: {
+      name: string;
+      basePrice: number;
+      categoryId?: string | null;
+      foodType?: string | null;
+      isAvailable: boolean;
+      imageUrl?: string | null;
+    }[],
+  ): Observable<{
+    items: {
+      index: number;
+      success: boolean;
+      productId?: string;
+      error?: string;
+      errorCode?: string;
+    }[];
+  }> {
+    return this.http.post<{
+      items: {
+        index: number;
+        success: boolean;
+        productId?: string;
+        error?: string;
+        errorCode?: string;
+      }[];
+    }>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products/bulk`,
+      items,
+    );
+  }
+
+  /** Uploads an image for a menu item and returns its public URL. */
+  uploadProductMedia(
+    businessId: string,
+    file: File,
+  ): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string }>(
+      `${this.baseUrl}/api/business-portal/${businessId}/products/media`,
+      formData,
+    );
+  }
+
   /** Independent-mode only — bumps this business's own products by % or flat amount. */
   bulkAdjustProductPrices(
     businessId: string,

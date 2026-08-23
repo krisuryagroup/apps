@@ -1,0 +1,88 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ 'restaurant.bulkAddTitle' | i18n }}</h1>
+    <p class="page-hint">{{ 'restaurant.bulkAddHint' | i18n }}</p>
+  </div>
+  <a class="btn btn-outline" routerLink="/menu"
+    >← {{ 'restaurant.menu' | i18n }}</a
+  >
+</div>
+
+<div class="toolbar">
+  <button
+    class="btn btn-outline"
+    data-testid="bulk-add-category-btn"
+    (click)="openAddCategory()"
+  >
+    + {{ 'restaurant.addCategory' | i18n }}
+  </button>
+</div>
+
+<lib-excel-grid
+  data-testid="bulk-menu-grid"
+  [columns]="columns"
+  [(rows)]="rows"
+  [newRow]="newRow"
+  [statuses]="statuses()"
+  [uploadingRows]="uploadingRows()"
+  (addRow)="onAddRow()"
+  (deleteRow)="onDeleteRow($event)"
+  (imageUpload)="onImageUpload($event)"
+/>
+
+@if (imageUploadError()) {
+  <p class="error-text">{{ imageUploadError()! | i18n }}</p>
+}
+@if (nothingToSaveError()) {
+  <p class="error-text">{{ 'restaurant.bulkAddNothingToSave' | i18n }}</p>
+}
+@if (resultMessage()) {
+  <p class="result-text">{{ resultMessage() }}</p>
+}
+
+<div class="save-bar">
+  <button
+    class="btn btn-primary"
+    data-testid="bulk-add-save-btn"
+    [disabled]="saving()"
+    (click)="saveAll()"
+  >
+    {{
+      saving()
+        ? ('restaurant.bulkAddSaving' | i18n)
+        : ('restaurant.bulkAddSaveAll' | i18n)
+    }}
+  </button>
+</div>
+
+@if (showCatForm()) {
+  <div class="overlay">
+    <div class="panel">
+      <h2 class="panel-title">{{ 'restaurant.addCategory' | i18n }}</h2>
+      <div class="form-row">
+        <label for="bulk-cat-name" class="form-label">{{
+          'categories.name' | i18n
+        }}</label>
+        <input
+          id="bulk-cat-name"
+          class="input"
+          data-testid="bulk-add-category-name"
+          [(ngModel)]="catFormName"
+        />
+      </div>
+      <div class="panel-actions">
+        <button
+          class="btn btn-primary"
+          data-testid="bulk-add-category-save"
+          [disabled]="!catFormName || catSaving()"
+          (click)="saveCategory()"
+        >
+          {{ catSaving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
+        </button>
+        <button class="btn btn-outline" (click)="showCatForm.set(false)">
+          {{ 'common.cancel' | i18n }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

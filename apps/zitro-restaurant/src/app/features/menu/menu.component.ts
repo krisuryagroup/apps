@@ -32,6 +32,13 @@ import { SharedMenuComponent } from './shared-menu.component';
             {{ 'restaurant.menuImport' | i18n }}
           </button>
           <button
+            class="btn btn-outline"
+            data-testid="bulk-add-btn"
+            routerLink="/menu/bulk-add"
+          >
+            {{ 'restaurant.bulkAdd' | i18n }}
+          </button>
+          <button
             class="btn btn-primary"
             data-testid="item-add-btn"
             (click)="openAddItem()"
@@ -110,7 +117,23 @@ import { SharedMenuComponent } from './shared-menu.component';
                     <td>{{ item.name }}</td>
                     <td>₹{{ item.basePrice }}</td>
                     <td>{{ getCategoryName(item.categoryId) }}</td>
-                    <td>{{ item.isAvailable ? '✓' : '✗' }}</td>
+                    <td>
+                      <button
+                        type="button"
+                        class="availability-toggle"
+                        [class.availability-toggle--on]="item.isAvailable"
+                        [disabled]="togglingItemId() === item.id"
+                        [attr.aria-pressed]="item.isAvailable"
+                        [attr.aria-label]="
+                          item.isAvailable
+                            ? ('restaurant.markUnavailable' | i18n)
+                            : ('restaurant.markAvailable' | i18n)
+                        "
+                        (click)="toggleAvailable(item)"
+                      >
+                        <span class="availability-toggle__knob"></span>
+                      </button>
+                    </td>
                     <td>
                       <button
                         class="btn btn-sm btn-outline"
@@ -170,7 +193,7 @@ import { SharedMenuComponent } from './shared-menu.component';
                 [(ngModel)]="itemForm.basePrice"
               />
               <label for="item-cat" class="form-label">{{
-                'categories.name' | i18n
+                'products.category' | i18n
               }}</label>
               <select
                 id="item-cat"
@@ -412,6 +435,39 @@ import { SharedMenuComponent } from './shared-menu.component';
       gap: 8px;
       grid-column: 1/-1;
     }
+    .availability-toggle {
+      position: relative;
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      border: none;
+      background: var(--zitro-divider);
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      &--on {
+        background: var(--zitro-primary);
+      }
+    }
+    .availability-toggle__knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease;
+      .availability-toggle--on & {
+        transform: translateX(16px);
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -517,13 +573,33 @@ export class RestaurantMenuComponent implements OnInit {
   protected saveItem(): void {
     this.saving.set(true);
     const id = this.api.businessId()!;
-    const call$ = this.editingItem()
-      ? this.api.updateProduct(
-          id,
-          this.editingItem()!.id,
-          this.itemForm as Record<string, unknown>,
-        )
-      : this.api.createProduct(id, this.itemForm as Record<string, unknown>);
+    // Backend's IsEnabledForOnlineOrders is what actually gates customer-facing menu
+    // visibility (see GetBusinessMenuHandler) — this form has no separate toggle for it,
+    // so "Available" drives both fields. Without this, created items silently never show
+    // up for customers even with Available checked (isEnabledForOnlineOrders defaults to
+    // false server-side when omitted from a create request).
+    const editing = this.editingItem();
+    // CreateBusinessProductRequest's fields are `basePrice`/`isAvailable`;
+    // UpdateBusinessProductRequest's equivalents are named `price`/`status` instead —
+    // sending the create-shaped keys on an update left both fields absent from what the
+    // backend actually reads, which it treats as "no change", so price AND availability
+    // edits were both silently dropped.
+    const req = editing
+      ? {
+          name: this.itemForm.name,
+          price: this.itemForm.basePrice,
+          categoryId: this.itemForm.categoryId,
+          foodType: this.itemForm.foodType,
+          status: this.itemForm.isAvailable,
+          isEnabledForOnlineOrders: this.itemForm.isAvailable,
+        }
+      : {
+          ...this.itemForm,
+          isEnabledForOnlineOrders: this.itemForm.isAvailable,
+        };
+    const call$ = editing
+      ? this.api.updateProduct(id, editing.id, req as Record<string, unknown>)
+      : this.api.createProduct(id, req as Record<string, unknown>);
     call$.subscribe({
       next: () => {
         this.saving.set(false);
@@ -556,6 +632,30 @@ export class RestaurantMenuComponent implements OnInit {
     this.api.deleteProduct(this.api.businessId()!, i.id).subscribe({
       next: () => this.items.update((is) => is.filter((x) => x.id !== i.id)),
     });
+  }
+
+  // ── One-click availability toggle ─────────────────────────────────────────
+  protected togglingItemId = signal<string | null>(null);
+
+  protected toggleAvailable(i: MenuItemDto): void {
+    const next = !i.isAvailable;
+    this.togglingItemId.set(i.id);
+    const id = this.api.businessId()!;
+    // UpdateBusinessProductRequest names this field `status` (and separately
+    // `isEnabledForOnlineOrders`, which gates customer-facing visibility) — see saveItem().
+    this.api
+      .updateProduct(id, i.id, { status: next, isEnabledForOnlineOrders: next })
+      .subscribe({
+        next: () => {
+          this.togglingItemId.set(null);
+          this.items.update((items) =>
+            items.map((item) =>
+              item.id === i.id ? { ...item, isAvailable: next } : item,
+            ),
+          );
+        },
+        error: () => this.togglingItemId.set(null),
+      });
   }
 
   protected deleteCategory(c: MenuCategoryDto): void {

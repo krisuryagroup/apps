@@ -1,0 +1,21 @@
+@use '../../_restaurant-shared' as *;
+
+.page-hint {
+  margin: var(--zitro-spacing-xs) 0 0;
+  color: var(--zitro-on-surface-variant);
+  font-size: var(--zitro-font-size-sm);
+  max-width: 640px;
+}
+
+.toolbar {
+  margin-bottom: var(--zitro-spacing-md);
+}
+
+.save-bar {
+  margin-top: var(--zitro-spacing-lg);
+}
+
+.result-text {
+  color: var(--zitro-primary);
+  font-weight: 500;
+}
