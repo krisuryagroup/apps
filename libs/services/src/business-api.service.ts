@@ -474,6 +474,18 @@ export class BusinessApiService {
     );
   }
 
+  // ── Commission terms ──────────────────────────────────────────────────────────
+
+  /** Owner explicitly accepts the platform's current commission rate — required
+   * before Admin can approve the business for go-live. Owner-only (backend
+   * enforces the role check too). */
+  acceptCommissionTerms(businessId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${RestaurantEndpoints.commission.accept(businessId)}`,
+      {},
+    );
+  }
+
   // ── Staff ───────────────────────────────────────────────────────────────────
 
   listStaff(businessId: string): Observable<StaffDto[]> {
@@ -692,6 +704,8 @@ export interface BusinessProfileDto {
   coverImageUrl?: string;
   cuisineTypes?: string[];
   restaurantCategory?: string;
+  commissionPercentage?: number;
+  commissionAcceptedAt?: string;
   onboardingStatus: string;
   onboardingRejectionReason?: string;
   menuMode: 'shared' | 'independent';

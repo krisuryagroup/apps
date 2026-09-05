@@ -145,7 +145,14 @@
       @if (biz()!.commissionPercentage !== undefined) {
         <div class="info-row">
           <span class="info-label">Commission</span
-          ><span class="info-value">{{ biz()!.commissionPercentage }}%</span>
+          ><span class="info-value"
+            >{{ biz()!.commissionPercentage }}%
+            @if (biz()!.commissionAcceptedAt) {
+              <span class="doc-badge doc-badge--verified">accepted</span>
+            } @else {
+              <span class="doc-badge doc-badge--missing">not accepted</span>
+            }
+          </span>
         </div>
       }
       @if (biz()!.restaurantCategory) {

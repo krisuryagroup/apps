@@ -188,6 +188,30 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           </p>
         }
       </div>
+
+      <div class="kyc-section">
+        <h2 class="kyc-title">Commission terms</h2>
+        <p class="kyc-hint">
+          Required before your business can go live, alongside the cover photo
+          and menu.
+        </p>
+        <p class="payout-value">
+          Platform commission: {{ profile()!.commissionPercentage ?? 0 }}%
+        </p>
+        @if (profile()!.commissionAcceptedAt) {
+          <span class="kyc-badge kyc-badge--verified">accepted</span>
+        } @else {
+          <button
+            class="btn btn-primary btn-sm"
+            [disabled]="acceptingCommission()"
+            (click)="acceptCommission()"
+          >
+            {{
+              acceptingCommission() ? 'Accepting…' : 'Accept commission rate'
+            }}
+          </button>
+        }
+      </div>
     }
   `,
   styles: `
@@ -316,6 +340,7 @@ export class RestaurantProfileComponent implements OnInit {
     Partial<Record<BusinessDocumentType, boolean>>
   >({});
   protected uploadingCover = signal(false);
+  protected acceptingCommission = signal(false);
 
   protected isOwner(): boolean {
     return this.api.currentUser()?.role === 'owner';
@@ -459,6 +484,20 @@ export class RestaurantProfileComponent implements OnInit {
         this.uploadingCover.set(false);
         input.value = '';
       },
+    });
+  }
+
+  protected acceptCommission(): void {
+    this.acceptingCommission.set(true);
+    const id = this.api.businessId()!;
+    this.api.acceptCommissionTerms(id).subscribe({
+      next: () => {
+        this.profile.update((p) =>
+          p ? { ...p, commissionAcceptedAt: new Date().toISOString() } : p,
+        );
+        this.acceptingCommission.set(false);
+      },
+      error: () => this.acceptingCommission.set(false),
     });
   }
 }

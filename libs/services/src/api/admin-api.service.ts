@@ -1005,6 +1005,7 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   panNumber?: string;
   payoutAccountId?: string;
   commissionPercentage?: number;
+  commissionAcceptedAt?: string;
   onboardingRejectionReason?: string;
   verificationDocs?: VerificationDocDto[];
   coverImageUrl?: string;

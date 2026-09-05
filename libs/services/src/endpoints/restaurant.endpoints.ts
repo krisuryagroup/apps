@@ -83,6 +83,11 @@ export const RestaurantEndpoints = {
       `/api/business-portal/${businessId}/cover-photo`,
   },
 
+  commission: {
+    accept: (businessId: string) =>
+      `/api/business-portal/${businessId}/accept-commission`,
+  },
+
   staff: {
     list: (businessId: string) => `/api/business-portal/${businessId}/users`,
     byId: (businessId: string, userId: string) =>
