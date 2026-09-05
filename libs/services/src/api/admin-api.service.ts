@@ -448,6 +448,14 @@ export class AdminApiService {
     );
   }
 
+  /** Restores a deactivated business — the undo for deleteBusiness(). */
+  reactivateBusiness(id: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.reactivate(id)}`,
+      {},
+    );
+  }
+
   /**
    * One-time migration: reparents a branch's own products/categories to its brand's
    * master catalog and switches it to shared menu mode. Use to retrofit an existing

@@ -67,6 +67,10 @@ export const RestaurantEndpoints = {
 
   profile: {
     get: (businessId: string) => `/api/business-portal/${businessId}`,
+    deactivate: (businessId: string) =>
+      `/api/business-portal/${businessId}/deactivate`,
+    reactivate: (businessId: string) =>
+      `/api/business-portal/${businessId}/reactivate`,
   },
 
   staff: {

@@ -711,6 +711,9 @@ export const EN_DEFAULTS = {
     allTypes: 'All Types',
     approve: 'Approve',
     reject: 'Reject',
+    confirmDeactivateTitle: 'Deactivate business',
+    confirmDeactivateMessage:
+      'Deactivate "{name}"? It will be hidden from customers immediately. You can reactivate it at any time.',
     selectReason: 'Select reason\u2026',
     customReason: 'Describe reason\u2026',
     approveSuccess: 'Approved.',

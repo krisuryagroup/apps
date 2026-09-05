@@ -16,8 +16,12 @@ import {
   GoogleGeocodingService,
   PagedResult,
 } from '@zitro/services';
-import { I18nPipe } from '@zitro/i18n';
-import { LocationPickerComponent } from '@zitro/ui';
+import { I18nPipe, I18nService } from '@zitro/i18n';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogConfig,
+  LocationPickerComponent,
+} from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
@@ -34,6 +38,7 @@ import {
     DecimalPipe,
     DataTableComponent,
     LocationPickerComponent,
+    ConfirmationDialogComponent,
   ],
   templateUrl: './admin-businesses.component.html',
   styleUrl: './admin-businesses.component.scss',
@@ -44,6 +49,7 @@ export class AdminBusinessesComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly geocoding = inject(GoogleGeocodingService);
+  private readonly i18n = inject(I18nService);
 
   protected result = signal<PagedResult<BusinessSummaryDto> | null>(null);
   protected loading = signal(true);
@@ -94,6 +100,23 @@ export class AdminBusinessesComponent implements OnInit {
       format: (r) => (r.isActive ? '✓' : '✗'),
     },
   ];
+
+  /** Greys out a deactivated business's row — see the confirm/reactivate actions below. */
+  protected rowClassFor = (row: BusinessSummaryDto): string =>
+    row.isActive ? '' : 'data-table__row--inactive';
+
+  protected togglingActive = signal<Record<string, boolean>>({});
+  protected pendingDeactivate = signal<BusinessSummaryDto | null>(null);
+  protected deactivateDialogConfig = computed<ConfirmationDialogConfig>(() => ({
+    title: this.i18n.translate('businesses.confirmDeactivateTitle'),
+    message: this.i18n.translate('businesses.confirmDeactivateMessage', {
+      name: this.pendingDeactivate()?.name ?? '',
+    }),
+    confirmLabel: this.i18n.translate('businesses.deactivate'),
+    cancelLabel: this.i18n.translate('common.cancel'),
+    destructive: true,
+    closeOnBackdropClick: true,
+  }));
 
   ngOnInit(): void {
     this.load();
@@ -193,6 +216,48 @@ export class AdminBusinessesComponent implements OnInit {
       },
       error: () => this.inviting.set(false),
     });
+  }
+
+  protected requestDeactivate(row: BusinessSummaryDto): void {
+    this.pendingDeactivate.set(row);
+  }
+
+  protected confirmDeactivate(): void {
+    const row = this.pendingDeactivate();
+    if (!row) return;
+    this.pendingDeactivate.set(null);
+    this.togglingActive.update((m) => ({ ...m, [row.id]: true }));
+    this.api.deleteBusiness(row.id).subscribe({
+      next: () => {
+        this.togglingActive.update((m) => ({ ...m, [row.id]: false }));
+        this.patchRowActive(row.id, false);
+      },
+      error: () =>
+        this.togglingActive.update((m) => ({ ...m, [row.id]: false })),
+    });
+  }
+
+  protected reactivate(row: BusinessSummaryDto): void {
+    this.togglingActive.update((m) => ({ ...m, [row.id]: true }));
+    this.api.reactivateBusiness(row.id).subscribe({
+      next: () => {
+        this.togglingActive.update((m) => ({ ...m, [row.id]: false }));
+        this.patchRowActive(row.id, true);
+      },
+      error: () =>
+        this.togglingActive.update((m) => ({ ...m, [row.id]: false })),
+    });
+  }
+
+  private patchRowActive(id: string, isActive: boolean): void {
+    this.result.update((r) =>
+      r
+        ? {
+            ...r,
+            items: r.items.map((b) => (b.id === id ? { ...b, isActive } : b)),
+          }
+        : r,
+    );
   }
 
   private resetInviteForm(): void {

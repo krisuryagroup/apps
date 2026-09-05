@@ -49,8 +49,40 @@
   [loading]="loading()"
   [error]="error()"
   [pagination]="pagination()"
+  [rowClass]="rowClassFor"
   (rowClick)="onRowClick($event)"
   (pageChange)="onPageChange($event)"
+>
+  <ng-template #rowActions let-row>
+    @if (row.isActive) {
+      <button
+        class="btn btn-sm btn-outline"
+        type="button"
+        data-testid="business-deactivate-btn"
+        [disabled]="togglingActive()[row.id]"
+        (click)="requestDeactivate(row)"
+      >
+        {{ 'businesses.deactivate' | i18n }}
+      </button>
+    } @else {
+      <button
+        class="btn btn-sm btn-primary"
+        type="button"
+        data-testid="business-activate-btn"
+        [disabled]="togglingActive()[row.id]"
+        (click)="reactivate(row)"
+      >
+        {{ 'businesses.activate' | i18n }}
+      </button>
+    }
+  </ng-template>
+</lib-data-table>
+
+<lib-confirmation-dialog
+  [isVisible]="!!pendingDeactivate()"
+  [config]="deactivateDialogConfig()"
+  (confirmed)="confirmDeactivate()"
+  (cancelled)="pendingDeactivate.set(null)"
 />
 
 @if (showInviteForm()) {

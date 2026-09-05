@@ -33,6 +33,14 @@
     }
   }
 
+  &__row--inactive {
+    opacity: 0.55;
+
+    td {
+      color: var(--zitro-on-surface-variant);
+    }
+  }
+
   &__sortable {
     cursor: pointer;
     user-select: none;

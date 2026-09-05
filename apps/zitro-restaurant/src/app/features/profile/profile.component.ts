@@ -28,6 +28,33 @@ import { I18nPipe } from '@zitro/i18n';
           }
         </div>
       }
+      @if (!profile()!.isActive) {
+        <div class="status-banner inactive-banner">
+          This business is <strong>deactivated</strong> — it's hidden from
+          customers and the portal is locked to profile/reactivation only.
+          @if (isOwner()) {
+            <button
+              class="btn btn-primary btn-sm"
+              type="button"
+              [disabled]="togglingActive()"
+              (click)="reactivate()"
+            >
+              {{ togglingActive() ? 'Reactivating…' : 'Reactivate business' }}
+            </button>
+          }
+        </div>
+      } @else if (isOwner()) {
+        <div class="deactivate-row">
+          <button
+            class="btn btn-sm btn-outline"
+            type="button"
+            [disabled]="togglingActive()"
+            (click)="deactivate()"
+          >
+            {{ togglingActive() ? 'Deactivating…' : 'Deactivate business' }}
+          </button>
+        </div>
+      }
       <form class="profile-form" (ngSubmit)="save()">
         <div class="form-row">
           <label for="prof-name" class="form-label">{{
@@ -86,6 +113,15 @@ import { I18nPipe } from '@zitro/i18n';
       margin-bottom: var(--zitro-spacing-lg);
       font-size: var(--zitro-font-size-sm);
     }
+    .inactive-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--zitro-spacing-md);
+      flex-wrap: wrap;
+    }
+    .deactivate-row {
+      margin-bottom: var(--zitro-spacing-lg);
+    }
     .success-text {
       color: var(--zitro-primary);
       font-size: var(--zitro-font-size-sm);
@@ -100,7 +136,12 @@ export class RestaurantProfileComponent implements OnInit {
   protected loading = signal(true);
   protected saving = signal(false);
   protected saveSuccess = signal(false);
+  protected togglingActive = signal(false);
   protected f = { name: '', description: '', phone: '', fssai: '', gst: '' };
+
+  protected isOwner(): boolean {
+    return this.api.currentUser()?.role === 'owner';
+  }
 
   ngOnInit(): void {
     const id = this.api.businessId()!;
@@ -154,5 +195,36 @@ export class RestaurantProfileComponent implements OnInit {
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  protected deactivate(): void {
+    if (
+      !confirm(
+        'Deactivate this business? It will be hidden from customers immediately and the portal will be locked to profile/reactivation only until you turn it back on.',
+      )
+    )
+      return;
+
+    this.togglingActive.set(true);
+    const id = this.api.businessId()!;
+    this.api.deactivateBusiness(id).subscribe({
+      next: () => {
+        this.profile.update((p) => (p ? { ...p, isActive: false } : p));
+        this.togglingActive.set(false);
+      },
+      error: () => this.togglingActive.set(false),
+    });
+  }
+
+  protected reactivate(): void {
+    this.togglingActive.set(true);
+    const id = this.api.businessId()!;
+    this.api.reactivateBusiness(id).subscribe({
+      next: () => {
+        this.profile.update((p) => (p ? { ...p, isActive: true } : p));
+        this.togglingActive.set(false);
+      },
+      error: () => this.togglingActive.set(false),
+    });
   }
 }

@@ -99,6 +99,8 @@ export class DataTableComponent<T = Record<string, unknown>> {
   pagination = input<DataTablePagination | null>(null);
   sort = input<DataTableSort | null>(null);
   isRowExpanded = input<(row: T) => boolean>(() => false);
+  /** Optional per-row CSS class, e.g. to grey out a deactivated row. */
+  rowClass = input<(row: T) => string>(() => '');
 
   /** Filter bar config — omit or pass [] for no filter bar. */
   filters = input<DataTableFilterField[]>([]);

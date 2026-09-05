@@ -43,6 +43,7 @@ export const AdminSuperadminEndpoints = {
     list: () => `/api/businesses`,
     byId: (id: string) => `/api/businesses/${id}`,
     approve: (id: string) => `/api/businesses/${id}/approve`,
+    reactivate: (id: string) => `/api/businesses/${id}/reactivate`,
     invite: () => `/api/businesses/invite`,
     users: (businessId: string) => `/api/businesses/${businessId}/users`,
     userById: (businessId: string, userId: string) =>

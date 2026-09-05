@@ -403,6 +403,22 @@ export class BusinessApiService {
     );
   }
 
+  /** Self-service deactivate — Owner-only (backend enforces the role check too). */
+  deactivateBusiness(businessId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${RestaurantEndpoints.profile.deactivate(businessId)}`,
+      {},
+    );
+  }
+
+  /** Restores a self-deactivated business — Owner-only (backend enforces the role check too). */
+  reactivateBusiness(businessId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${RestaurantEndpoints.profile.reactivate(businessId)}`,
+      {},
+    );
+  }
+
   // ── Staff ───────────────────────────────────────────────────────────────────
 
   listStaff(businessId: string): Observable<StaffDto[]> {
@@ -620,6 +636,7 @@ export interface BusinessProfileDto {
   menuMode: 'shared' | 'independent';
   brandId?: string;
   brandName?: string;
+  isActive: boolean;
 }
 
 /** One brand master product with this branch's own override (if any) merged in. */
