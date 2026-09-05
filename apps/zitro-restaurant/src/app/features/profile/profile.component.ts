@@ -72,171 +72,183 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           </button>
         </div>
       }
-      <form class="profile-form" (ngSubmit)="save()">
-        <div class="form-row">
-          <label for="prof-name" class="form-label">{{
-            'businesses.name' | i18n
-          }}</label>
-          <input
-            id="prof-name"
-            class="input"
-            [(ngModel)]="f.name"
-            name="name"
-          />
-          <label for="prof-desc" class="form-label">Description</label>
-          <input
-            id="prof-desc"
-            class="input"
-            [(ngModel)]="f.description"
-            name="description"
-          />
-          <label for="prof-phone" class="form-label">{{
-            'restaurant.login.phone' | i18n
-          }}</label>
-          <input
-            id="prof-phone"
-            class="input"
-            [(ngModel)]="f.phone"
-            name="phone"
-          />
-          <label for="prof-fssai" class="form-label">FSSAI</label>
-          <input
-            id="prof-fssai"
-            class="input"
-            [(ngModel)]="f.fssai"
-            name="fssai"
-          />
-          <label for="prof-gst" class="form-label">GST</label>
-          <input id="prof-gst" class="input" [(ngModel)]="f.gst" name="gst" />
-          <label for="prof-pan" class="form-label">PAN</label>
-          <input id="prof-pan" class="input" [(ngModel)]="f.pan" name="pan" />
+      @if (!isOwner()) {
+        <div class="kyc-section" data-testid="profile-staff-view">
+          <h2 class="kyc-title">Your account</h2>
+          <p class="payout-value">{{ profile()!.name }}</p>
+          <p class="kyc-hint">
+            Role: {{ role() }}. Full business details — legal/compliance
+            documents, cover photo, payout account, and commission terms — are
+            only visible to the business owner. Contact your owner for changes.
+          </p>
         </div>
-        @if (saveSuccess()) {
-          <p class="success-text">{{ 'common.saved' | i18n }}</p>
-        }
-        <button class="btn btn-primary" type="submit" [disabled]="saving()">
-          {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
-        </button>
-      </form>
-
-      <div class="kyc-section">
-        <h2 class="kyc-title">Cover photo</h2>
-        <p class="kyc-hint">
-          Your restaurant's listing image. Required before your business can go
-          live.
-        </p>
-        @if (profile()!.coverImageUrl) {
-          <img
-            [src]="profile()!.coverImageUrl"
-            alt=""
-            class="cover-preview"
-            data-testid="profile-cover-photo-preview"
-          />
-        }
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          [disabled]="uploadingCover()"
-          (change)="onCoverPhotoSelected($event)"
-          data-testid="profile-cover-photo-input"
-        />
-      </div>
-
-      <div class="kyc-section">
-        <h2 class="kyc-title">Verification documents</h2>
-        <p class="kyc-hint">
-          Upload each document once — re-uploading replaces the previous file
-          and resets its review status to pending.
-        </p>
-        @for (slot of documentSlots; track slot.type) {
-          <div class="kyc-row">
-            <div class="kyc-info">
-              <span class="kyc-label">{{ slot.label }}</span>
-              @if (docFor(slot.type); as doc) {
-                <span
-                  class="kyc-badge"
-                  [class]="'kyc-badge--' + doc.status"
-                  [attr.data-testid]="'profile-document-status-' + slot.type"
-                >
-                  {{ doc.status }}
-                </span>
-                @if (doc.status === 'rejected' && doc.rejectionReason) {
-                  <span class="kyc-reason">{{ doc.rejectionReason }}</span>
-                }
-                <a
-                  [href]="doc.url"
-                  target="_blank"
-                  rel="noopener"
-                  class="kyc-view-link"
-                  >View current file</a
-                >
-              } @else {
-                <span
-                  class="kyc-badge kyc-badge--missing"
-                  [attr.data-testid]="'profile-document-status-' + slot.type"
-                  >not uploaded</span
-                >
-              }
-            </div>
+      } @else {
+        <form class="profile-form" (ngSubmit)="save()">
+          <div class="form-row">
+            <label for="prof-name" class="form-label">{{
+              'businesses.name' | i18n
+            }}</label>
             <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              [disabled]="uploadingDoc()[slot.type]"
-              (change)="onDocumentFileSelected($event, slot.type)"
-              [attr.data-testid]="'profile-document-input-' + slot.type"
+              id="prof-name"
+              class="input"
+              [(ngModel)]="f.name"
+              name="name"
             />
+            <label for="prof-desc" class="form-label">Description</label>
+            <input
+              id="prof-desc"
+              class="input"
+              [(ngModel)]="f.description"
+              name="description"
+            />
+            <label for="prof-phone" class="form-label">{{
+              'restaurant.login.phone' | i18n
+            }}</label>
+            <input
+              id="prof-phone"
+              class="input"
+              [(ngModel)]="f.phone"
+              name="phone"
+            />
+            <label for="prof-fssai" class="form-label">FSSAI</label>
+            <input
+              id="prof-fssai"
+              class="input"
+              [(ngModel)]="f.fssai"
+              name="fssai"
+            />
+            <label for="prof-gst" class="form-label">GST</label>
+            <input id="prof-gst" class="input" [(ngModel)]="f.gst" name="gst" />
+            <label for="prof-pan" class="form-label">PAN</label>
+            <input id="prof-pan" class="input" [(ngModel)]="f.pan" name="pan" />
           </div>
-        }
-      </div>
-
-      <div class="kyc-section">
-        <h2 class="kyc-title">Payout account</h2>
-        <p class="kyc-hint">
-          Set by our team after reviewing your bank proof document above — not
-          self-editable.
-        </p>
-        @if (profile()!.payoutAccountId) {
-          <p class="payout-value" data-testid="profile-payout-account">
-            {{ profile()!.payoutAccountId }}
-          </p>
-        } @else {
-          <p
-            class="payout-value payout-value--pending"
-            data-testid="profile-payout-account"
-          >
-            Not set yet — upload your bank proof above if you haven't already.
-          </p>
-        }
-      </div>
-
-      <div class="kyc-section">
-        <h2 class="kyc-title">Commission terms</h2>
-        <p class="kyc-hint">
-          Required before your business can go live, alongside the cover photo
-          and menu.
-        </p>
-        <p class="payout-value" data-testid="profile-commission-rate">
-          Platform commission: {{ profile()!.commissionPercentage ?? 0 }}%
-        </p>
-        @if (profile()!.commissionAcceptedAt) {
-          <span
-            class="kyc-badge kyc-badge--verified"
-            data-testid="profile-commission-accepted-badge"
-            >accepted</span
-          >
-        } @else {
-          <button
-            class="btn btn-primary btn-sm"
-            [disabled]="acceptingCommission()"
-            (click)="acceptCommission()"
-            data-testid="profile-accept-commission-btn"
-          >
-            {{
-              acceptingCommission() ? 'Accepting…' : 'Accept commission rate'
-            }}
+          @if (saveSuccess()) {
+            <p class="success-text">{{ 'common.saved' | i18n }}</p>
+          }
+          <button class="btn btn-primary" type="submit" [disabled]="saving()">
+            {{ saving() ? ('common.saving' | i18n) : ('common.save' | i18n) }}
           </button>
-        }
-      </div>
+        </form>
+
+        <div class="kyc-section">
+          <h2 class="kyc-title">Cover photo</h2>
+          <p class="kyc-hint">
+            Your restaurant's listing image. Required before your business can
+            go live.
+          </p>
+          @if (profile()!.coverImageUrl) {
+            <img
+              [src]="profile()!.coverImageUrl"
+              alt=""
+              class="cover-preview"
+              data-testid="profile-cover-photo-preview"
+            />
+          }
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            [disabled]="uploadingCover()"
+            (change)="onCoverPhotoSelected($event)"
+            data-testid="profile-cover-photo-input"
+          />
+        </div>
+
+        <div class="kyc-section">
+          <h2 class="kyc-title">Verification documents</h2>
+          <p class="kyc-hint">
+            Upload each document once — re-uploading replaces the previous file
+            and resets its review status to pending.
+          </p>
+          @for (slot of documentSlots; track slot.type) {
+            <div class="kyc-row">
+              <div class="kyc-info">
+                <span class="kyc-label">{{ slot.label }}</span>
+                @if (docFor(slot.type); as doc) {
+                  <span
+                    class="kyc-badge"
+                    [class]="'kyc-badge--' + doc.status"
+                    [attr.data-testid]="'profile-document-status-' + slot.type"
+                  >
+                    {{ doc.status }}
+                  </span>
+                  @if (doc.status === 'rejected' && doc.rejectionReason) {
+                    <span class="kyc-reason">{{ doc.rejectionReason }}</span>
+                  }
+                  <a
+                    [href]="doc.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="kyc-view-link"
+                    >View current file</a
+                  >
+                } @else {
+                  <span
+                    class="kyc-badge kyc-badge--missing"
+                    [attr.data-testid]="'profile-document-status-' + slot.type"
+                    >not uploaded</span
+                  >
+                }
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                [disabled]="uploadingDoc()[slot.type]"
+                (change)="onDocumentFileSelected($event, slot.type)"
+                [attr.data-testid]="'profile-document-input-' + slot.type"
+              />
+            </div>
+          }
+        </div>
+
+        <div class="kyc-section">
+          <h2 class="kyc-title">Payout account</h2>
+          <p class="kyc-hint">
+            Set by our team after reviewing your bank proof document above — not
+            self-editable.
+          </p>
+          @if (profile()!.payoutAccountId) {
+            <p class="payout-value" data-testid="profile-payout-account">
+              {{ profile()!.payoutAccountId }}
+            </p>
+          } @else {
+            <p
+              class="payout-value payout-value--pending"
+              data-testid="profile-payout-account"
+            >
+              Not set yet — upload your bank proof above if you haven't already.
+            </p>
+          }
+        </div>
+
+        <div class="kyc-section">
+          <h2 class="kyc-title">Commission terms</h2>
+          <p class="kyc-hint">
+            Required before your business can go live, alongside the cover photo
+            and menu.
+          </p>
+          <p class="payout-value" data-testid="profile-commission-rate">
+            Platform commission: {{ profile()!.commissionPercentage ?? 0 }}%
+          </p>
+          @if (profile()!.commissionAcceptedAt) {
+            <span
+              class="kyc-badge kyc-badge--verified"
+              data-testid="profile-commission-accepted-badge"
+              >accepted</span
+            >
+          } @else {
+            <button
+              class="btn btn-primary btn-sm"
+              [disabled]="acceptingCommission()"
+              (click)="acceptCommission()"
+              data-testid="profile-accept-commission-btn"
+            >
+              {{
+                acceptingCommission() ? 'Accepting…' : 'Accept commission rate'
+              }}
+            </button>
+          }
+        </div>
+      }
     }
   `,
   styles: `
@@ -369,6 +381,10 @@ export class RestaurantProfileComponent implements OnInit {
 
   protected isOwner(): boolean {
     return this.api.currentUser()?.role === 'owner';
+  }
+
+  protected role(): string {
+    return this.api.currentUser()?.role ?? '';
   }
 
   protected docFor(type: BusinessDocumentType): VerificationDocDto | undefined {
