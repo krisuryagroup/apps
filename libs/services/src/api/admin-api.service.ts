@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
 import { AdminAuthTokenService } from '../admin-auth-token.service';
 import { AdminSuperadminEndpoints } from '../endpoints';
+import type { VerificationDocDto } from '../business-document.model';
 
 interface AdminJwtPayload {
   sub: string;
@@ -1004,7 +1005,7 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   panNumber?: string;
   commissionPercentage?: number;
   onboardingRejectionReason?: string;
-  verificationDocs?: unknown[];
+  verificationDocs?: VerificationDocDto[];
   coordinatesLat?: number;
   coordinatesLng?: number;
 }

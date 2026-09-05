@@ -1,6 +1,9 @@
 // T010 — API services
 export * from './api';
 
+// Shared KYC document types (AdminApiService document review, BusinessApiService upload)
+export * from './business-document.model';
+
 // Centralized per-app backend API path builders
 export * from './endpoints';
 

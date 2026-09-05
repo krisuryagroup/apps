@@ -4,7 +4,11 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BusinessAuthTokenService } from './business-auth-token.service';
 import { ZITRO_API_BASE_URL } from './tokens';
-import { RestaurantEndpoints } from './endpoints';
+import { RestaurantEndpoints, SharedEndpoints } from './endpoints';
+import type {
+  BusinessDocumentType,
+  VerificationDocDto,
+} from './business-document.model';
 
 export interface BusinessOrdersPagedResult {
   orders: BusinessOrderDto[];
@@ -87,6 +91,22 @@ export class BusinessApiService {
     return this.http.post<void>(
       `${this.baseUrl}${RestaurantEndpoints.applications.acceptInvite(token)}`,
       { password },
+    );
+  }
+
+  /** Identity verification for the self-apply flow — no application is accepted server-side
+   * until the owner phone has a recently-verified OTP session (see submitApplication()). */
+  requestApplicantOtp(phone: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${SharedEndpoints.auth.otpRequest()}`,
+      { phone },
+    );
+  }
+
+  verifyApplicantOtp(phone: string, otp: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}${SharedEndpoints.auth.otpVerify()}`,
+      { phone, otp },
     );
   }
 
@@ -419,6 +439,24 @@ export class BusinessApiService {
     );
   }
 
+  // ── KYC documents ─────────────────────────────────────────────────────────────
+
+  /** Uploads one KYC document (PAN/FSSAI/GST/bank proof). Always lands as
+   * Status: 'pending' — only Admin can move it to verified/rejected. */
+  uploadDocument(
+    businessId: string,
+    documentType: BusinessDocumentType,
+    file: File,
+  ): Observable<VerificationDocDto> {
+    const formData = new FormData();
+    formData.append('documentType', documentType);
+    formData.append('file', file);
+    return this.http.post<VerificationDocDto>(
+      `${this.baseUrl}${RestaurantEndpoints.documents.upload(businessId)}`,
+      formData,
+    );
+  }
+
   // ── Staff ───────────────────────────────────────────────────────────────────
 
   listStaff(businessId: string): Observable<StaffDto[]> {
@@ -631,6 +669,9 @@ export interface BusinessProfileDto {
   address?: string;
   fssaiLicenseNumber?: string;
   gstNumber?: string;
+  panNumber?: string;
+  payoutAccountId?: string;
+  verificationDocs?: VerificationDocDto[];
   onboardingStatus: string;
   onboardingRejectionReason?: string;
   menuMode: 'shared' | 'independent';

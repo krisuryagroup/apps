@@ -11,9 +11,11 @@ import { FormsModule } from '@angular/forms';
 import {
   AdminApiService,
   BusinessDetailDto,
+  BusinessDocumentType,
   BusinessUserDto,
   OrderSummaryDto,
   PagedResult,
+  VerificationDocDto,
 } from '@zitro/services';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 import {
@@ -26,7 +28,20 @@ import {
   DataTablePagination,
 } from '../data-table/data-table.component';
 
-type Tab = 'profile' | 'users' | 'orders';
+type Tab = 'profile' | 'users' | 'orders' | 'documents';
+
+const DOCUMENT_TYPES: BusinessDocumentType[] = [
+  'pan',
+  'fssai',
+  'gst',
+  'bank-proof',
+];
+const DOCUMENT_LABELS: Record<BusinessDocumentType, string> = {
+  pan: 'PAN card',
+  fssai: 'FSSAI license',
+  gst: 'GST certificate',
+  'bank-proof': 'Bank proof (cancelled cheque / passbook)',
+};
 
 @Component({
   selector: 'lib-admin-business-detail',
@@ -105,6 +120,55 @@ export class AdminBusinessDetailComponent implements OnInit {
     'Duplicate listing',
     'Other',
   ];
+
+  // ── Documents ─────────────────────────────────────────────────────────────
+  protected readonly documentTypes = DOCUMENT_TYPES;
+  protected reviewingDoc = signal<
+    Partial<Record<BusinessDocumentType, boolean>>
+  >({});
+
+  protected documentLabel(type: BusinessDocumentType): string {
+    return DOCUMENT_LABELS[type];
+  }
+
+  protected docFor(type: BusinessDocumentType): VerificationDocDto | undefined {
+    return this.biz()?.verificationDocs?.find((d) => d.type === type);
+  }
+
+  protected verifyDocument(type: BusinessDocumentType): void {
+    this.reviewDocument(type, 'verified');
+  }
+
+  protected rejectDocument(type: BusinessDocumentType): void {
+    const reason = prompt('Reason for rejecting this document:');
+    if (reason === null) return; // cancelled
+    this.reviewDocument(type, 'rejected', reason || undefined);
+  }
+
+  private reviewDocument(
+    type: BusinessDocumentType,
+    status: 'verified' | 'rejected',
+    rejectionReason?: string,
+  ): void {
+    const biz = this.biz();
+    if (!biz) return;
+    this.reviewingDoc.update((m) => ({ ...m, [type]: true }));
+
+    const updatedDocs = (biz.verificationDocs ?? []).map((d) =>
+      d.type === type ? { ...d, status, rejectionReason } : d,
+    );
+    this.api
+      .updateBusiness(biz.id, { verificationDocs: updatedDocs })
+      .subscribe({
+        next: () => {
+          this.biz.update((b) =>
+            b ? { ...b, verificationDocs: updatedDocs } : b,
+          );
+          this.reviewingDoc.update((m) => ({ ...m, [type]: false }));
+        },
+        error: () => this.reviewingDoc.update((m) => ({ ...m, [type]: false })),
+      });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;

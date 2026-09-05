@@ -18,7 +18,7 @@ import { firstValueFrom } from 'rxjs';
 import { inject } from '@angular/core';
 import { ZITRO_API_BASE_URL } from './tokens';
 import { CacheService } from './cache.service';
-import { CustomerEndpoints } from './endpoints';
+import { CustomerEndpoints, SharedEndpoints } from './endpoints';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
@@ -94,7 +94,7 @@ export class FirebaseAuthService {
   async sendOtp(phone: string): Promise<void> {
     await firstValueFrom(
       this.http.post<void>(
-        `${this.baseUrl}${CustomerEndpoints.auth.otpRequest()}`,
+        `${this.baseUrl}${SharedEndpoints.auth.otpRequest()}`,
         { phone },
       ),
     );
@@ -114,7 +114,7 @@ export class FirebaseAuthService {
     // 1. Verify OTP with backend → Firebase custom token
     const verifyResponse = await firstValueFrom(
       this.http.post<{ firebaseCustomToken: string }>(
-        `${this.baseUrl}${CustomerEndpoints.auth.otpVerify()}`,
+        `${this.baseUrl}${SharedEndpoints.auth.otpVerify()}`,
         { phone, otp },
       ),
     );

@@ -95,6 +95,13 @@
     >
       {{ 'businesses.tabOrders' | i18n }}
     </button>
+    <button
+      class="tab"
+      [class.active]="activeTab() === 'documents'"
+      (click)="activeTab.set('documents')"
+    >
+      {{ 'businesses.tabDocuments' | i18n }}
+    </button>
   </div>
 
   @if (activeTab() === 'profile') {
@@ -142,16 +149,55 @@
         </div>
       }
     </div>
-    @if (biz()!.verificationDocs?.length) {
-      <div data-testid="business-detail-docs" class="detail-section">
-        <p class="detail-title">{{ 'businesses.docs' | i18n }}</p>
-        @for (doc of $any(biz()!.verificationDocs); track doc.url) {
-          <a [href]="doc.url" target="_blank" class="btn btn-outline btn-sm">{{
-            doc.type
-          }}</a>
-        }
-      </div>
-    }
+  }
+
+  @if (activeTab() === 'documents') {
+    <div class="detail-section" data-testid="business-detail-documents">
+      @for (type of documentTypes; track type) {
+        <div class="doc-row">
+          <div class="doc-info">
+            <span class="doc-label">{{ documentLabel(type) }}</span>
+            @if (docFor(type); as doc) {
+              <span class="doc-badge" [class]="'doc-badge--' + doc.status">{{
+                doc.status
+              }}</span>
+              @if (doc.status === 'rejected' && doc.rejectionReason) {
+                <span class="error-text">{{ doc.rejectionReason }}</span>
+              }
+              <a
+                [href]="doc.url"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-sm btn-outline"
+                >View</a
+              >
+              @if (doc.status !== 'verified') {
+                <button
+                  class="btn btn-sm btn-primary"
+                  [disabled]="reviewingDoc()[type]"
+                  (click)="verifyDocument(type)"
+                >
+                  {{ 'businesses.verify' | i18n }}
+                </button>
+              }
+              @if (doc.status !== 'rejected') {
+                <button
+                  class="btn btn-sm btn-danger"
+                  [disabled]="reviewingDoc()[type]"
+                  (click)="rejectDocument(type)"
+                >
+                  {{ 'businesses.reject' | i18n }}
+                </button>
+              }
+            } @else {
+              <span class="doc-badge doc-badge--missing">{{
+                'businesses.notUploaded' | i18n
+              }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (activeTab() === 'users') {

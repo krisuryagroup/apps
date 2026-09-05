@@ -83,8 +83,6 @@ export const CustomerEndpoints = {
   },
 
   auth: {
-    otpRequest: () => `/api/auth/otp/request`,
-    otpVerify: () => `/api/auth/otp/verify`,
     verify: () => `/api/auth/verify`,
   },
 };

@@ -10,7 +10,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BusinessApiService } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 
-type Step = 'business' | 'address' | 'account' | 'success';
+type Step = 'business' | 'address' | 'account' | 'otp' | 'success';
 
 @Component({
   selector: 'app-restaurant-apply',
@@ -36,6 +36,7 @@ type Step = 'business' | 'address' | 'account' | 'success';
             <span [class.active]="step() === 'business'">1</span>
             <span [class.active]="step() === 'address'">2</span>
             <span [class.active]="step() === 'account'">3</span>
+            <span [class.active]="step() === 'otp'">4</span>
           </div>
 
           @if (step() === 'business') {
@@ -138,19 +139,88 @@ type Step = 'business' | 'address' | 'account' | 'success';
                 [(ngModel)]="f.password"
               />
             </div>
-            @if (errorKey()) {
-              <p class="error-text">{{ errorKey()! | i18n }}</p>
-            }
             <div class="btn-row">
               <button class="btn btn-outline" (click)="step.set('address')">
                 ← {{ 'common.back' | i18n }}
               </button>
               <button
                 class="btn btn-primary"
+                data-testid="apply-account-next-btn"
+                [disabled]="!f.ownerName || !f.ownerPhone || !f.password"
+                (click)="step.set('otp')"
+              >
+                {{ 'common.next' | i18n }}
+              </button>
+            </div>
+          }
+
+          @if (step() === 'otp') {
+            <div class="form-group">
+              <p class="otp-hint">
+                We need to confirm this phone number belongs to you before
+                submitting your application:
+                <strong>{{ f.ownerPhone }}</strong>
+              </p>
+              @if (!otpSent()) {
+                <button
+                  class="btn btn-primary"
+                  data-testid="apply-send-otp-btn"
+                  [disabled]="sendingOtp()"
+                  (click)="sendOtp()"
+                >
+                  {{
+                    sendingOtp()
+                      ? ('common.saving' | i18n)
+                      : ('restaurant.apply.sendOtp' | i18n)
+                  }}
+                </button>
+              } @else if (!otpVerified()) {
+                <label for="otp-code" class="form-label">{{
+                  'restaurant.apply.enterOtp' | i18n
+                }}</label>
+                <input
+                  id="otp-code"
+                  class="input"
+                  data-testid="apply-otp-input"
+                  inputmode="numeric"
+                  [(ngModel)]="otpCode"
+                  name="otpCode"
+                />
+                <button
+                  class="btn btn-primary"
+                  data-testid="apply-verify-otp-btn"
+                  [disabled]="!otpCode || verifyingOtp()"
+                  (click)="verifyOtp()"
+                >
+                  {{
+                    verifyingOtp()
+                      ? ('common.saving' | i18n)
+                      : ('restaurant.apply.verifyOtp' | i18n)
+                  }}
+                </button>
+                <button
+                  class="btn btn-outline btn-sm"
+                  type="button"
+                  [disabled]="sendingOtp()"
+                  (click)="sendOtp()"
+                >
+                  {{ 'restaurant.apply.resendOtp' | i18n }}
+                </button>
+              } @else {
+                <p class="otp-verified">✅ Phone number verified.</p>
+              }
+            </div>
+            @if (errorKey()) {
+              <p class="error-text">{{ errorKey()! | i18n }}</p>
+            }
+            <div class="btn-row">
+              <button class="btn btn-outline" (click)="step.set('account')">
+                ← {{ 'common.back' | i18n }}
+              </button>
+              <button
+                class="btn btn-primary"
                 data-testid="apply-submit-btn"
-                [disabled]="
-                  !f.ownerName || !f.ownerPhone || !f.password || submitting()
-                "
+                [disabled]="!otpVerified() || submitting()"
                 (click)="submit()"
               >
                 {{
@@ -254,10 +324,23 @@ type Step = 'business' | 'address' | 'account' | 'success';
       color: var(--zitro-primary);
       border-color: var(--zitro-primary);
     }
+    .btn-sm {
+      padding: var(--zitro-spacing-xs) var(--zitro-spacing-md);
+      font-size: var(--zitro-font-size-sm);
+    }
     .btn-row {
       display: flex;
       gap: var(--zitro-spacing-sm);
       justify-content: space-between;
+    }
+    .otp-hint {
+      color: var(--zitro-on-surface-variant);
+      font-size: var(--zitro-font-size-sm);
+      margin: 0 0 var(--zitro-spacing-md);
+    }
+    .otp-verified {
+      color: var(--zitro-primary);
+      font-weight: 500;
     }
     .error-text {
       color: var(--zitro-error);
@@ -294,6 +377,42 @@ export class RestaurantApplyComponent {
     password: '',
   };
 
+  protected otpSent = signal(false);
+  protected otpVerified = signal(false);
+  protected sendingOtp = signal(false);
+  protected verifyingOtp = signal(false);
+  protected otpCode = '';
+
+  protected sendOtp(): void {
+    this.sendingOtp.set(true);
+    this.errorKey.set(null);
+    this.api.requestApplicantOtp(this.f.ownerPhone).subscribe({
+      next: () => {
+        this.otpSent.set(true);
+        this.sendingOtp.set(false);
+      },
+      error: () => {
+        this.sendingOtp.set(false);
+        this.errorKey.set('common.error');
+      },
+    });
+  }
+
+  protected verifyOtp(): void {
+    this.verifyingOtp.set(true);
+    this.errorKey.set(null);
+    this.api.verifyApplicantOtp(this.f.ownerPhone, this.otpCode).subscribe({
+      next: () => {
+        this.otpVerified.set(true);
+        this.verifyingOtp.set(false);
+      },
+      error: () => {
+        this.verifyingOtp.set(false);
+        this.errorKey.set('restaurant.apply.otpInvalid');
+      },
+    });
+  }
+
   protected submit(): void {
     this.submitting.set(true);
     this.errorKey.set(null);
@@ -315,10 +434,18 @@ export class RestaurantApplyComponent {
         error: (err) => {
           this.submitting.set(false);
           const code: string = err?.error?.errorCode ?? '';
+          if (code === 'PHONE_NOT_VERIFIED') {
+            // Verified OTP session expired between verify and submit — send them back
+            // to re-verify rather than showing a dead-end error.
+            this.otpVerified.set(false);
+            this.otpSent.set(false);
+          }
           this.errorKey.set(
             code === 'DUPLICATE_PHONE' || code === 'DUPLICATE_SLUG'
               ? 'restaurant.apply.errorConflict'
-              : 'common.error',
+              : code === 'PHONE_NOT_VERIFIED'
+                ? 'restaurant.apply.otpExpired'
+                : 'common.error',
           );
         },
       });

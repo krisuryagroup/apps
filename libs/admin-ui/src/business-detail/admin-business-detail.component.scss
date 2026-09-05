@@ -17,3 +17,47 @@
   gap: var(--zitro-spacing-xs);
   font-size: var(--zitro-font-size-sm);
 }
+
+.doc-row {
+  padding: var(--zitro-spacing-md) 0;
+  border-bottom: 1px solid var(--zitro-divider);
+}
+
+.doc-info {
+  display: flex;
+  align-items: center;
+  gap: var(--zitro-spacing-sm);
+  flex-wrap: wrap;
+}
+
+.doc-label {
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.doc-badge {
+  font-size: var(--zitro-font-size-sm);
+  padding: 2px 8px;
+  border-radius: var(--zitro-radius-sm);
+  text-transform: capitalize;
+}
+
+.doc-badge--pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.doc-badge--verified {
+  background: #d4edda;
+  color: #155724;
+}
+
+.doc-badge--rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.doc-badge--missing {
+  background: var(--zitro-surface-variant);
+  color: var(--zitro-on-surface-variant);
+}

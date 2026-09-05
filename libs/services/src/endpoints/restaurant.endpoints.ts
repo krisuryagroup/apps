@@ -73,6 +73,11 @@ export const RestaurantEndpoints = {
       `/api/business-portal/${businessId}/reactivate`,
   },
 
+  documents: {
+    upload: (businessId: string) =>
+      `/api/business-portal/${businessId}/documents`,
+  },
+
   staff: {
     list: (businessId: string) => `/api/business-portal/${businessId}/users`,
     byId: (businessId: string, userId: string) =>

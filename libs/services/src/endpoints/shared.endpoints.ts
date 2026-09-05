@@ -12,4 +12,12 @@ export const SharedEndpoints = {
     forceLogout: () => `/api/admin/remote-settings/force-logout`,
     cacheClear: () => `/api/admin/remote-settings/cache-clear`,
   },
+
+  // Phone OTP — used by zitro-customer (FirebaseAuthService, phone sign-in) and by
+  // zitro-restaurant (self-apply flow's identity-verification step before any
+  // business/owner details are saved).
+  auth: {
+    otpRequest: () => `/api/auth/otp/request`,
+    otpVerify: () => `/api/auth/otp/verify`,
+  },
 };
