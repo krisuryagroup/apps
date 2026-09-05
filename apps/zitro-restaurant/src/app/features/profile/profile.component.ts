@@ -126,13 +126,19 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           live.
         </p>
         @if (profile()!.coverImageUrl) {
-          <img [src]="profile()!.coverImageUrl" alt="" class="cover-preview" />
+          <img
+            [src]="profile()!.coverImageUrl"
+            alt=""
+            class="cover-preview"
+            data-testid="profile-cover-photo-preview"
+          />
         }
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp"
           [disabled]="uploadingCover()"
           (change)="onCoverPhotoSelected($event)"
+          data-testid="profile-cover-photo-input"
         />
       </div>
 
@@ -147,7 +153,11 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
             <div class="kyc-info">
               <span class="kyc-label">{{ slot.label }}</span>
               @if (docFor(slot.type); as doc) {
-                <span class="kyc-badge" [class]="'kyc-badge--' + doc.status">
+                <span
+                  class="kyc-badge"
+                  [class]="'kyc-badge--' + doc.status"
+                  [attr.data-testid]="'profile-document-status-' + slot.type"
+                >
                   {{ doc.status }}
                 </span>
                 @if (doc.status === 'rejected' && doc.rejectionReason) {
@@ -161,7 +171,11 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
                   >View current file</a
                 >
               } @else {
-                <span class="kyc-badge kyc-badge--missing">not uploaded</span>
+                <span
+                  class="kyc-badge kyc-badge--missing"
+                  [attr.data-testid]="'profile-document-status-' + slot.type"
+                  >not uploaded</span
+                >
               }
             </div>
             <input
@@ -169,6 +183,7 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
               accept="image/jpeg,image/png,image/webp,application/pdf"
               [disabled]="uploadingDoc()[slot.type]"
               (change)="onDocumentFileSelected($event, slot.type)"
+              [attr.data-testid]="'profile-document-input-' + slot.type"
             />
           </div>
         }
@@ -181,9 +196,14 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           self-editable.
         </p>
         @if (profile()!.payoutAccountId) {
-          <p class="payout-value">{{ profile()!.payoutAccountId }}</p>
+          <p class="payout-value" data-testid="profile-payout-account">
+            {{ profile()!.payoutAccountId }}
+          </p>
         } @else {
-          <p class="payout-value payout-value--pending">
+          <p
+            class="payout-value payout-value--pending"
+            data-testid="profile-payout-account"
+          >
             Not set yet — upload your bank proof above if you haven't already.
           </p>
         }
@@ -195,16 +215,21 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           Required before your business can go live, alongside the cover photo
           and menu.
         </p>
-        <p class="payout-value">
+        <p class="payout-value" data-testid="profile-commission-rate">
           Platform commission: {{ profile()!.commissionPercentage ?? 0 }}%
         </p>
         @if (profile()!.commissionAcceptedAt) {
-          <span class="kyc-badge kyc-badge--verified">accepted</span>
+          <span
+            class="kyc-badge kyc-badge--verified"
+            data-testid="profile-commission-accepted-badge"
+            >accepted</span
+          >
         } @else {
           <button
             class="btn btn-primary btn-sm"
             [disabled]="acceptingCommission()"
             (click)="acceptCommission()"
+            data-testid="profile-accept-commission-btn"
           >
             {{
               acceptingCommission() ? 'Accepting…' : 'Accept commission rate'

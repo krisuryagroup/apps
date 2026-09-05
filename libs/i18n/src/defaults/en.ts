@@ -9,6 +9,7 @@ export const EN_DEFAULTS = {
     save: 'Save',
     delete: 'Delete',
     back: 'Back',
+    next: 'Next',
     done: 'Done',
     noInternet: 'No internet connection',
     saveChanges: 'Save Changes',
