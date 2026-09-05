@@ -156,6 +156,21 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
           </div>
         }
       </div>
+
+      <div class="kyc-section">
+        <h2 class="kyc-title">Payout account</h2>
+        <p class="kyc-hint">
+          Set by our team after reviewing your bank proof document above — not
+          self-editable.
+        </p>
+        @if (profile()!.payoutAccountId) {
+          <p class="payout-value">{{ profile()!.payoutAccountId }}</p>
+        } @else {
+          <p class="payout-value payout-value--pending">
+            Not set yet — upload your bank proof above if you haven't already.
+          </p>
+        }
+      </div>
     }
   `,
   styles: `
@@ -244,6 +259,14 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
       color: var(--zitro-error);
     }
     .kyc-view-link {
+      font-size: var(--zitro-font-size-sm);
+    }
+    .payout-value {
+      font-weight: 500;
+    }
+    .payout-value--pending {
+      font-weight: 400;
+      color: var(--zitro-on-surface-variant);
       font-size: var(--zitro-font-size-sm);
     }
   `,

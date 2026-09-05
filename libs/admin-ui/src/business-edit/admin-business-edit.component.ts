@@ -86,6 +86,25 @@ import { FormFieldComponent } from '../form-field/form-field.component';
             data-testid="business-edit-commission-rate"
           />
         </lib-form-field>
+        <lib-form-field labelKey="businesses.payoutAccountId" [error]="null">
+          <input
+            class="input"
+            id="edit-payout-account"
+            [(ngModel)]="form.payoutAccountId"
+            name="payoutAccountId"
+            placeholder="{{ 'businesses.payoutAccountIdHint' | i18n }}"
+            data-testid="business-edit-payout-account"
+          />
+          @if (bankProofUrl(); as url) {
+            <a
+              [href]="url"
+              target="_blank"
+              rel="noopener"
+              class="bank-proof-link"
+              >{{ 'businesses.viewBankProof' | i18n }}</a
+            >
+          }
+        </lib-form-field>
         <label class="checkbox-label" for="edit-featured">
           <input
             id="edit-featured"
@@ -228,6 +247,11 @@ import { FormFieldComponent } from '../form-field/form-field.component';
         font-size: var(--zitro-font-size-sm);
         color: var(--zitro-on-surface-variant);
       }
+      .bank-proof-link {
+        display: block;
+        margin-top: var(--zitro-spacing-xs);
+        font-size: var(--zitro-font-size-sm);
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -251,6 +275,7 @@ export class AdminBusinessEditComponent implements OnInit {
     phone: '',
     town: '',
     commissionPercentage: 0,
+    payoutAccountId: '',
     isFeatured: false,
     brandId: '',
     menuMode: 'independent' as 'independent' | 'shared',
@@ -280,6 +305,11 @@ export class AdminBusinessEditComponent implements OnInit {
     () => !!this.form.brandId && this.form.menuMode === 'independent',
   );
 
+  protected bankProofUrl = computed(
+    () =>
+      this.biz()?.verificationDocs?.find((d) => d.type === 'bank-proof')?.url,
+  );
+
   protected confirmingPromote = signal(false);
   protected promoting = signal(false);
   protected promoteResult = signal<string | null>(null);
@@ -305,6 +335,7 @@ export class AdminBusinessEditComponent implements OnInit {
           phone: b.phone ?? '',
           town: b.town ?? '',
           commissionPercentage: b.commissionPercentage ?? 0,
+          payoutAccountId: b.payoutAccountId ?? '',
           isFeatured: false,
           brandId: b.brandId ?? '',
           menuMode: b.menuMode ?? 'independent',

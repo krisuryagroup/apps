@@ -1003,6 +1003,7 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   fssaiLicenseNumber?: string;
   gstNumber?: string;
   panNumber?: string;
+  payoutAccountId?: string;
   commissionPercentage?: number;
   onboardingRejectionReason?: string;
   verificationDocs?: VerificationDocDto[];
