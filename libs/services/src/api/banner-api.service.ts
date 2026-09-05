@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import type { Banner } from '@zitro/models';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 /** Shape returned by GET /api/businesses/{slug}/banners */
 interface BannerDto {
@@ -64,7 +65,9 @@ export class BannerApiService {
     if (segment) params['segment'] = segment;
 
     return this.http
-      .get<BannerDto[]>(`${this.baseUrl}/api/banners`, { params })
+      .get<
+        BannerDto[]
+      >(`${this.baseUrl}${CustomerEndpoints.banners.global()}`, { params })
       .pipe(
         map((dtos) => dtos.map(mapDto)),
         tap((banners) =>
@@ -84,7 +87,7 @@ export class BannerApiService {
     return this.http
       .get<
         BannerDto[]
-      >(`${this.baseUrl}/api/businesses/${businessSlug}/banners`, { params })
+      >(`${this.baseUrl}${CustomerEndpoints.banners.forBusiness(businessSlug)}`, { params })
       .pipe(
         map((dtos) => dtos.map(mapDto)),
         tap((banners) =>
@@ -96,7 +99,7 @@ export class BannerApiService {
   recordImpression(businessSlug: string, bannerId: string): void {
     this.http
       .post(
-        `${this.baseUrl}/api/businesses/${businessSlug}/banners/${bannerId}/impression`,
+        `${this.baseUrl}${CustomerEndpoints.banners.impression(businessSlug, bannerId)}`,
         {},
       )
       .subscribe({
@@ -109,7 +112,7 @@ export class BannerApiService {
   recordClick(businessSlug: string, bannerId: string): void {
     this.http
       .post(
-        `${this.baseUrl}/api/businesses/${businessSlug}/banners/${bannerId}/click`,
+        `${this.baseUrl}${CustomerEndpoints.banners.click(businessSlug, bannerId)}`,
         {},
       )
       .subscribe({

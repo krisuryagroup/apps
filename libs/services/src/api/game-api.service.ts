@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 export interface GameScoreResult {
   highestTile: number;
@@ -23,10 +24,13 @@ export class GameApiService {
     score: number,
     gameLevel: number,
   ): Observable<GameScoreResult> {
-    return this.http.post<GameScoreResult>(`${this.baseUrl}/api/game/score`, {
-      deviceToken,
-      score,
-      gameLevel,
-    });
+    return this.http.post<GameScoreResult>(
+      `${this.baseUrl}${CustomerEndpoints.game.submitScore()}`,
+      {
+        deviceToken,
+        score,
+        gameLevel,
+      },
+    );
   }
 }

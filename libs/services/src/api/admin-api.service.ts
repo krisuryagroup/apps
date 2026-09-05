@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
 import { AdminAuthTokenService } from '../admin-auth-token.service';
+import { AdminSuperadminEndpoints } from '../endpoints';
 
 interface AdminJwtPayload {
   sub: string;
@@ -138,7 +139,7 @@ export class AdminApiService {
 
   login(req: AdminLoginRequest): Observable<AdminLoginResponse> {
     return this.http.post<AdminLoginResponse>(
-      `${this.baseUrl}/api/admin/auth/login`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.auth.login()}`,
       req,
     );
   }
@@ -155,21 +156,21 @@ export class AdminApiService {
       .set('platform', platform)
       .set('lang', lang);
     return this.http.get<AppConfigResponse>(
-      `${this.baseUrl}/api/app-config/bundle`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.appConfig.bundle()}`,
       { params },
     );
   }
 
   getSupportedLanguages(): Observable<SupportedLanguage[]> {
     return this.http.get<SupportedLanguage[]>(
-      `${this.baseUrl}/api/app-config/supported-languages`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.appConfig.supportedLanguages()}`,
     );
   }
 
   getTranslations(lang: string, app: string): Observable<TranslationsResponse> {
     const params = new HttpParams().set('lang', lang).set('app', app);
     return this.http.get<TranslationsResponse>(
-      `${this.baseUrl}/api/translations`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.appConfig.translations()}`,
       { params },
     );
   }
@@ -180,7 +181,7 @@ export class AdminApiService {
     let params = new HttpParams().set('lang', lang);
     if (app) params = params.set('app', app);
     return this.http.get<TranslationDto[]>(
-      `${this.baseUrl}/api/admin/translations`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.translationsAdmin.list()}`,
       { params },
     );
   }
@@ -192,7 +193,7 @@ export class AdminApiService {
     value: string;
   }): Observable<TranslationDto> {
     return this.http.post<TranslationDto>(
-      `${this.baseUrl}/api/admin/translations`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.translationsAdmin.list()}`,
       req,
     );
   }
@@ -200,7 +201,7 @@ export class AdminApiService {
   deleteTranslation(key: string, lang: string, app: string): Observable<void> {
     const params = new HttpParams().set('lang', lang).set('app', app);
     return this.http.delete<void>(
-      `${this.baseUrl}/api/admin/translations/${encodeURIComponent(key)}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.translationsAdmin.byKey(key)}`,
       { params },
     );
   }
@@ -209,7 +210,7 @@ export class AdminApiService {
 
   listAppFeatureFlags(appSlug: string): Observable<AppFeatureFlagDto[]> {
     return this.http.get<AppFeatureFlagDto[]>(
-      `${this.baseUrl}/api/admin/app-feature-flags/${appSlug}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.featureFlagsAdmin.byApp(appSlug)}`,
     );
   }
 
@@ -223,7 +224,7 @@ export class AdminApiService {
     },
   ): Observable<AppFeatureFlagDto> {
     return this.http.put<AppFeatureFlagDto>(
-      `${this.baseUrl}/api/admin/app-feature-flags/${appSlug}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.featureFlagsAdmin.byApp(appSlug)}`,
       req,
     );
   }
@@ -232,9 +233,12 @@ export class AdminApiService {
 
   getAdminThemes(app?: string): Observable<AppThemeDto[]> {
     const params = app ? new HttpParams().set('app', app) : undefined;
-    return this.http.get<AppThemeDto[]>(`${this.baseUrl}/api/admin/themes`, {
-      params,
-    });
+    return this.http.get<AppThemeDto[]>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.themesAdmin.list()}`,
+      {
+        params,
+      },
+    );
   }
 
   createTheme(req: {
@@ -243,7 +247,10 @@ export class AdminApiService {
     tokensJson: string;
     apps?: string[];
   }): Observable<AppThemeDto> {
-    return this.http.post<AppThemeDto>(`${this.baseUrl}/api/admin/themes`, req);
+    return this.http.post<AppThemeDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.themesAdmin.list()}`,
+      req,
+    );
   }
 
   updateTheme(
@@ -256,7 +263,7 @@ export class AdminApiService {
     },
   ): Observable<AppThemeDto> {
     return this.http.put<AppThemeDto>(
-      `${this.baseUrl}/api/admin/themes/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.themesAdmin.byId(id)}`,
       req,
     );
   }
@@ -265,7 +272,7 @@ export class AdminApiService {
 
   updateUiConfig(app: string, configJson: string): Observable<UiConfigDto> {
     return this.http.put<UiConfigDto>(
-      `${this.baseUrl}/api/admin/ui-config/${app}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.uiConfigAdmin.byApp(app)}`,
       { configJson },
     );
   }
@@ -274,7 +281,7 @@ export class AdminApiService {
 
   getDashboard(): Observable<AdminDashboardDto> {
     return this.http.get<AdminDashboardDto>(
-      `${this.baseUrl}/api/admin/dashboard`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.dashboard.get()}`,
     );
   }
 
@@ -289,20 +296,20 @@ export class AdminApiService {
         if (v) p = p.set(k, v);
       });
     return this.http.get<PagedResult<BusinessSummaryDto>>(
-      `${this.baseUrl}/api/businesses`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.list()}`,
       { params: p },
     );
   }
 
   getBusinessById(id: string): Observable<BusinessDetailDto> {
     return this.http.get<BusinessDetailDto>(
-      `${this.baseUrl}/api/businesses/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.byId(id)}`,
     );
   }
 
   createBusiness(req: Record<string, unknown>): Observable<BusinessDetailDto> {
     return this.http.post<BusinessDetailDto>(
-      `${this.baseUrl}/api/businesses`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.list()}`,
       req,
     );
   }
@@ -312,7 +319,7 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<BusinessDetailDto> {
     return this.http.put<BusinessDetailDto>(
-      `${this.baseUrl}/api/businesses/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.byId(id)}`,
       req,
     );
   }
@@ -323,7 +330,7 @@ export class AdminApiService {
     rejectionReason?: string,
   ): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/businesses/${id}/approve`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.approve(id)}`,
       { approved, rejectionReason },
     );
   }
@@ -337,14 +344,14 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/businesses/invite`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.invite()}`,
       req,
     );
   }
 
   listBusinessUsers(businessId: string): Observable<BusinessUserDto[]> {
     return this.http.get<BusinessUserDto[]>(
-      `${this.baseUrl}/api/businesses/${businessId}/users`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.users(businessId)}`,
     );
   }
 
@@ -353,7 +360,7 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/businesses/${businessId}/users`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.users(businessId)}`,
       req,
     );
   }
@@ -366,7 +373,7 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/businesses/${businessId}/users/${userId}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.userById(businessId, userId)}`,
       req,
     );
   }
@@ -374,7 +381,7 @@ export class AdminApiService {
   /** Soft-delete. Refuses (400, errorCode "LAST_OWNER") if this is the business's only active owner. */
   deleteBusinessUser(businessId: string, userId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/businesses/${businessId}/users/${userId}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.userById(businessId, userId)}`,
     );
   }
 
@@ -388,9 +395,12 @@ export class AdminApiService {
       Object.entries(params).forEach(([k, v]) => {
         if (v) p = p.set(k, v);
       });
-    return this.http.get<PagedResult<BrandDto>>(`${this.baseUrl}/api/brands`, {
-      params: p,
-    });
+    return this.http.get<PagedResult<BrandDto>>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.brands.list()}`,
+      {
+        params: p,
+      },
+    );
   }
 
   createBrand(req: {
@@ -398,7 +408,10 @@ export class AdminApiService {
     description?: string;
     logoUrl?: string;
   }): Observable<BrandDto> {
-    return this.http.post<BrandDto>(`${this.baseUrl}/api/brands`, req);
+    return this.http.post<BrandDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.brands.list()}`,
+      req,
+    );
   }
 
   updateBrand(
@@ -410,22 +423,29 @@ export class AdminApiService {
       isActive?: boolean;
     },
   ): Observable<BrandDto> {
-    return this.http.put<BrandDto>(`${this.baseUrl}/api/brands/${id}`, req);
+    return this.http.put<BrandDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.brands.byId(id)}`,
+      req,
+    );
   }
 
   deleteBrand(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/brands/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.brands.byId(id)}`,
+    );
   }
 
   getBrandBranches(brandId: string): Observable<BranchDto[]> {
     return this.http.get<BranchDto[]>(
-      `${this.baseUrl}/api/brands/${brandId}/branches`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.brands.branches(brandId)}`,
     );
   }
 
   /** Hard-deletes (soft-delete server-side) a business — e.g. removing a brand's branch. */
   deleteBusiness(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/businesses/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.byId(id)}`,
+    );
   }
 
   /**
@@ -440,7 +460,7 @@ export class AdminApiService {
       productsPromoted: number;
       categoriesPromoted: number;
     }>(
-      `${this.baseUrl}/api/businesses/${businessId}/promote-to-brand-master`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.businesses.promoteToBrandMaster(businessId)}`,
       {},
     );
   }
@@ -448,7 +468,9 @@ export class AdminApiService {
   // ── Tags ────────────────────────────────────────────────────────────────────
 
   listAdminTags(): Observable<TagDto[]> {
-    return this.http.get<TagDto[]>(`${this.baseUrl}/api/admin/tags`);
+    return this.http.get<TagDto[]>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.list()}`,
+    );
   }
 
   createTag(req: {
@@ -456,37 +478,45 @@ export class AdminApiService {
     iconUrl?: string;
     priority?: number;
   }): Observable<TagDto> {
-    return this.http.post<TagDto>(`${this.baseUrl}/api/admin/tags`, req);
+    return this.http.post<TagDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.list()}`,
+      req,
+    );
   }
 
   updateTag(
     id: string,
     req: { name: string; iconUrl?: string; priority?: number },
   ): Observable<TagDto> {
-    return this.http.put<TagDto>(`${this.baseUrl}/api/admin/tags/${id}`, req);
+    return this.http.put<TagDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.byId(id)}`,
+      req,
+    );
   }
 
   deactivateTag(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/admin/tags/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.byId(id)}`,
+    );
   }
 
   listTagBusinesses(tagId: string): Observable<TagBusinessDto[]> {
     return this.http.get<TagBusinessDto[]>(
-      `${this.baseUrl}/api/admin/tags/${tagId}/businesses`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.businesses(tagId)}`,
     );
   }
 
   /** Adds this tag to a business without removing its existing tags. */
   addBusinessTag(businessId: string, tagId: string): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/admin/businesses/${businessId}/tags`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.businessTags(businessId)}`,
       { tagIds: [tagId] },
     );
   }
 
   removeBusinessTag(businessId: string, tagId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/admin/businesses/${businessId}/tags/${tagId}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.tagsAdmin.businessTagById(businessId, tagId)}`,
     );
   }
 
@@ -498,30 +528,38 @@ export class AdminApiService {
       Object.entries(params).forEach(([k, v]) => {
         if (v) p = p.set(k, v);
       });
-    return this.http.get<ProductDto[]>(`${this.baseUrl}/api/products/search`, {
-      params: p,
-    });
+    return this.http.get<ProductDto[]>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.search()}`,
+      {
+        params: p,
+      },
+    );
   }
 
   getProductById(id: string): Observable<ProductDetailDto> {
     return this.http.get<ProductDetailDto>(
-      `${this.baseUrl}/api/products/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.byId(id)}`,
     );
   }
 
   createProduct(req: Record<string, unknown>): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/admin/products`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.createAdmin()}`,
       req,
     );
   }
 
   updateProduct(id: string, req: Record<string, unknown>): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/api/admin/products/${id}`, req);
+    return this.http.put<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.updateAdmin(id)}`,
+      req,
+    );
   }
 
   deleteProduct(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/admin/products/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.deleteAdmin(id)}`,
+    );
   }
 
   /** Scope is exactly one of businessId or brandId, optionally narrowed to categoryId. */
@@ -529,7 +567,7 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<{ updatedCount: number }> {
     return this.http.post<{ updatedCount: number }>(
-      `${this.baseUrl}/api/admin/products/bulk-price-adjust`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.products.bulkPriceAdjust()}`,
       req,
     );
   }
@@ -540,13 +578,15 @@ export class AdminApiService {
     // Use admin endpoint for global listing (no businessSlug required).
     // GET /api/categories requires businessSlug (business-specific); the admin
     // global catalog uses GET /api/admin/categories instead.
-    return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/admin/categories`);
+    return this.http.get<CategoryDto[]>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.categoriesAdmin.list()}`,
+    );
   }
 
   /** Backend only returns `{ id }` on create, not a full CategoryDto — refetch the list to display it. */
   createCategory(req: Record<string, unknown>): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/admin/categories`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.categoriesAdmin.list()}`,
       req,
     );
   }
@@ -556,13 +596,15 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<CategoryDto> {
     return this.http.put<CategoryDto>(
-      `${this.baseUrl}/api/admin/categories/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.categoriesAdmin.byId(id)}`,
       req,
     );
   }
 
   deleteCategory(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/admin/categories/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.categoriesAdmin.byId(id)}`,
+    );
   }
 
   // ── Orders ──────────────────────────────────────────────────────────────────
@@ -587,7 +629,9 @@ export class AdminApiService {
         totalCount: number;
         page: number;
         pageSize: number;
-      }>(`${this.baseUrl}/api/admin/orders`, { params: p })
+      }>(`${this.baseUrl}${AdminSuperadminEndpoints.ordersAdmin.list()}`, {
+        params: p,
+      })
       .pipe(
         map((r) => ({
           items: r.orders,
@@ -609,15 +653,18 @@ export class AdminApiService {
         if (v) p = p.set(k, v);
       });
     return this.http.get<PagedResult<CustomerDto>>(
-      `${this.baseUrl}/api/admin/users`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.customersAdmin.list()}`,
       { params: p },
     );
   }
 
   updateCustomerStatus(id: string, isActive: boolean): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/api/admin/users/${id}/status`, {
-      isActive,
-    });
+    return this.http.put<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.customersAdmin.status(id)}`,
+      {
+        isActive,
+      },
+    );
   }
 
   // ── Coupons ─────────────────────────────────────────────────────────────────
@@ -640,7 +687,9 @@ export class AdminApiService {
         totalCount: number;
         page: number;
         pageSize: number;
-      }>(`${this.baseUrl}/api/admin/coupons`, { params: p })
+      }>(`${this.baseUrl}${AdminSuperadminEndpoints.couponsAdmin.list()}`, {
+        params: p,
+      })
       .pipe(
         map((r) => ({
           items: r.items,
@@ -652,7 +701,10 @@ export class AdminApiService {
   }
 
   createCoupon(req: Record<string, unknown>): Observable<CouponDto> {
-    return this.http.post<CouponDto>(`${this.baseUrl}/api/admin/coupons`, req);
+    return this.http.post<CouponDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.couponsAdmin.list()}`,
+      req,
+    );
   }
 
   updateCoupon(
@@ -660,13 +712,15 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<CouponDto> {
     return this.http.put<CouponDto>(
-      `${this.baseUrl}/api/admin/coupons/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.couponsAdmin.byId(id)}`,
       req,
     );
   }
 
   deleteCoupon(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/admin/coupons/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.couponsAdmin.byId(id)}`,
+    );
   }
 
   // ── Delivery partners ───────────────────────────────────────────────────────
@@ -690,7 +744,10 @@ export class AdminApiService {
       .get<{
         items: DeliveryPartnerDto[];
         total: number;
-      }>(`${this.baseUrl}/api/admin/delivery/partners`, { params: p })
+      }>(
+        `${this.baseUrl}${AdminSuperadminEndpoints.deliveryPartnersAdmin.list()}`,
+        { params: p },
+      )
       .pipe(
         map((r) => ({ items: r.items, totalCount: r.total, page, pageSize })),
       );
@@ -698,7 +755,7 @@ export class AdminApiService {
 
   updateDeliveryPartnerStatus(id: string, status: string): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/admin/delivery/partners/${id}/status`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.deliveryPartnersAdmin.status(id)}`,
       { status },
     );
   }
@@ -709,7 +766,7 @@ export class AdminApiService {
   listDeliveryZones(businessId: string): Observable<DeliveryZoneDto[]> {
     const params = new HttpParams().set('businessId', businessId);
     return this.http.get<DeliveryZoneDto[]>(
-      `${this.baseUrl}/api/admin/delivery/zones`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.deliveryZonesAdmin.list()}`,
       { params },
     );
   }
@@ -723,7 +780,7 @@ export class AdminApiService {
     surgeMultiplier?: number;
   }): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/admin/delivery/zones`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.deliveryZonesAdmin.list()}`,
       req,
     );
   }
@@ -739,7 +796,7 @@ export class AdminApiService {
         if (v) p = p.set(k, v);
       });
     return this.http.get<PagedResult<AdminPayoutDto>>(
-      `${this.baseUrl}/api/admin/payouts`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.payoutsAdmin.list()}`,
       { params: p },
     );
   }
@@ -754,7 +811,7 @@ export class AdminApiService {
     toDate: string,
   ): Observable<GeneratedPayoutDto[]> {
     return this.http.post<GeneratedPayoutDto[]>(
-      `${this.baseUrl}/api/admin/payouts/generate`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.payoutsAdmin.generate()}`,
       { from: fromDate, to: toDate },
     );
   }
@@ -764,7 +821,7 @@ export class AdminApiService {
     payoutReference: string,
   ): Observable<MarkPayoutPaidDto> {
     return this.http.put<MarkPayoutPaidDto>(
-      `${this.baseUrl}/api/admin/payouts/${id}/mark-paid`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.payoutsAdmin.markPaid(id)}`,
       { payoutReference },
     );
   }
@@ -772,11 +829,16 @@ export class AdminApiService {
   // ── Banners ─────────────────────────────────────────────────────────────────
 
   listBanners(): Observable<BannerAdminDto[]> {
-    return this.http.get<BannerAdminDto[]>(`${this.baseUrl}/api/banners`);
+    return this.http.get<BannerAdminDto[]>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.bannersAdmin.list()}`,
+    );
   }
 
   createBanner(req: Record<string, unknown>): Observable<BannerAdminDto> {
-    return this.http.post<BannerAdminDto>(`${this.baseUrl}/api/banners`, req);
+    return this.http.post<BannerAdminDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.bannersAdmin.list()}`,
+      req,
+    );
   }
 
   /** Uploads an image file to Firebase Storage and returns its public URL. */
@@ -784,7 +846,7 @@ export class AdminApiService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string }>(
-      `${this.baseUrl}/api/banners/media`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.bannersAdmin.media()}`,
       formData,
     );
   }
@@ -794,13 +856,15 @@ export class AdminApiService {
     req: Record<string, unknown>,
   ): Observable<BannerAdminDto> {
     return this.http.put<BannerAdminDto>(
-      `${this.baseUrl}/api/banners/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.bannersAdmin.byId(id)}`,
       req,
     );
   }
 
   deleteBanner(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/api/banners/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.bannersAdmin.byId(id)}`,
+    );
   }
 
   // ── Admin users (SuperAdmin) ────────────────────────────────────────────────
@@ -814,7 +878,7 @@ export class AdminApiService {
         if (v) p = p.set(k, v);
       });
     return this.http.get<PagedResult<AdminUserDto>>(
-      `${this.baseUrl}/api/admin/admins`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.list()}`,
       { params: p },
     );
   }
@@ -827,7 +891,7 @@ export class AdminApiService {
     permissions: string[];
   }): Observable<AdminUserDto> {
     return this.http.post<AdminUserDto>(
-      `${this.baseUrl}/api/admin/admins`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.list()}`,
       req,
     );
   }
@@ -837,7 +901,7 @@ export class AdminApiService {
     req: { name: string; role: string; permissions?: string[] },
   ): Observable<AdminUserDto> {
     return this.http.put<AdminUserDto>(
-      `${this.baseUrl}/api/admin/admins/${id}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.byId(id)}`,
       req,
     );
   }
@@ -845,30 +909,35 @@ export class AdminApiService {
   setAdminStatus(id: string, activate: boolean): Observable<void> {
     const action = activate ? 'activate' : 'deactivate';
     return this.http.post<void>(
-      `${this.baseUrl}/api/admin/admins/${id}/${action}`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.statusAction(id, action)}`,
       {},
     );
   }
 
   resetAdminPassword(id: string, newPassword: string): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/admin/admins/${id}/reset-password`,
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.resetPassword(id)}`,
       { newPassword },
     );
   }
 
   getMyProfile(): Observable<MyProfileDto> {
-    return this.http.get<MyProfileDto>(`${this.baseUrl}/api/admin/admins/me`);
+    return this.http.get<MyProfileDto>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.me()}`,
+    );
   }
 
   changeMyPassword(
     currentPassword: string,
     newPassword: string,
   ): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/api/admin/admins/me/password`, {
-      currentPassword,
-      newPassword,
-    });
+    return this.http.put<void>(
+      `${this.baseUrl}${AdminSuperadminEndpoints.adminsSuperAdmin.mePassword()}`,
+      {
+        currentPassword,
+        newPassword,
+      },
+    );
   }
 }
 

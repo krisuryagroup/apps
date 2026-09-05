@@ -4,6 +4,7 @@ import { Observable, of, tap } from 'rxjs';
 import type { PlatformTag } from '@zitro/models';
 import { CacheService } from './cache.service';
 import { ZITRO_API_BASE_URL } from './tokens';
+import { CustomerEndpoints } from './endpoints';
 
 const TAGS_CACHE_KEY = 'platform_tags';
 
@@ -18,12 +19,14 @@ export class TagsService {
     if (cached) return of(cached);
 
     return this.http
-      .get<PlatformTag[]>(`${this.baseUrl}/api/tags`)
-      .pipe(tap(tags => this.cache.set(TAGS_CACHE_KEY, tags, { ttlHours: 1 })));
+      .get<PlatformTag[]>(`${this.baseUrl}${CustomerEndpoints.tags.list()}`)
+      .pipe(
+        tap((tags) => this.cache.set(TAGS_CACHE_KEY, tags, { ttlHours: 1 })),
+      );
   }
 
   getTagsForSlugs(slugs: string[], allTags: PlatformTag[]): PlatformTag[] {
     const slugSet = new Set(slugs);
-    return allTags.filter(tag => slugSet.has(tag.slug));
+    return allTags.filter((tag) => slugSet.has(tag.slug));
   }
 }

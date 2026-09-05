@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 // Matches BusinessConfigDto returned by GET /api/businesses/{slug}/config
 export interface BusinessConfig {
@@ -147,7 +148,9 @@ export class ConfigApiService {
     const cached = this.cache.get<BusinessDetail>(cacheKey);
     if (cached) return of(cached);
     return this.http
-      .get<BusinessDetail>(`${this.baseUrl}/api/businesses/${businessSlug}`)
+      .get<BusinessDetail>(
+        `${this.baseUrl}${CustomerEndpoints.business.detail(businessSlug)}`,
+      )
       .pipe(tap((detail) => this.cache.set(cacheKey, detail, { ttlHours: 1 })));
   }
 
@@ -157,7 +160,7 @@ export class ConfigApiService {
     if (cached) return of(cached);
     return this.http
       .get<BusinessConfig>(
-        `${this.baseUrl}/api/businesses/${businessSlug}/config`,
+        `${this.baseUrl}${CustomerEndpoints.business.config(businessSlug)}`,
       )
       .pipe(
         tap((config) => this.cache.set(cacheKey, config, { ttlHours: 1 / 6 })),
@@ -169,7 +172,9 @@ export class ConfigApiService {
     const cached = this.cache.get<Banner[]>(cacheKey);
     if (cached) return of(cached);
     return this.http
-      .get<Banner[]>(`${this.baseUrl}/api/businesses/${businessSlug}/banners`)
+      .get<
+        Banner[]
+      >(`${this.baseUrl}${CustomerEndpoints.business.banners(businessSlug)}`)
       .pipe(
         tap((banners) => this.cache.set(cacheKey, banners, { ttlHours: 1 })),
       );
@@ -180,7 +185,7 @@ export class ConfigApiService {
     const cached = this.cache.get<AppVersionInfo>(cacheKey);
     if (cached) return of(cached);
     return this.http
-      .get<AppVersionInfo>(`${this.baseUrl}/api/app/version`)
+      .get<AppVersionInfo>(`${this.baseUrl}${CustomerEndpoints.app.version()}`)
       .pipe(tap((info) => this.cache.set(cacheKey, info, { ttlHours: 1 })));
   }
 
@@ -189,7 +194,9 @@ export class ConfigApiService {
     const cached = this.cache.get<AppConfigResponse>(cacheKey);
     if (cached) return of(cached);
     return this.http
-      .get<AppConfigResponse>(`${this.baseUrl}/api/app-config`)
+      .get<AppConfigResponse>(
+        `${this.baseUrl}${CustomerEndpoints.app.config()}`,
+      )
       .pipe(tap((config) => this.cache.set(cacheKey, config, { ttlHours: 1 })));
   }
 
@@ -201,7 +208,7 @@ export class ConfigApiService {
     deviceId: string,
   ): Observable<AppVersionCheckResult> {
     return this.http.post<AppVersionCheckResult>(
-      `${this.baseUrl}/api/app/version`,
+      `${this.baseUrl}${CustomerEndpoints.app.version()}`,
       { platform, version, buildNumber, deviceId },
     );
   }

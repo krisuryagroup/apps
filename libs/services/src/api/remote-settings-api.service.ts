@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ZITRO_API_BASE_URL } from '../tokens';
 import { AdminAuthTokenService } from '../admin-auth-token.service';
+import { SharedEndpoints } from '../endpoints';
 
 export interface RemoteSettingsResponse {
   isClearCacheMandatory: boolean;
@@ -32,13 +33,13 @@ export class RemoteSettingsApiService {
 
   getRemoteSettings(): Observable<RemoteSettingsResponse> {
     return this.http.get<RemoteSettingsResponse>(
-      `${this.baseUrl}/api/app-config/remote-settings`,
+      `${this.baseUrl}${SharedEndpoints.remoteSettings.get()}`,
     );
   }
 
   triggerForceLogout(): Observable<RemoteSettingsTriggerResult> {
     return this.http.post<RemoteSettingsTriggerResult>(
-      `${this.baseUrl}/api/admin/remote-settings/force-logout`,
+      `${this.baseUrl}${SharedEndpoints.remoteSettings.forceLogout()}`,
       {},
       { headers: this.adminHeaders() },
     );
@@ -48,7 +49,7 @@ export class RemoteSettingsApiService {
     cacheManagementJson?: string,
   ): Observable<RemoteSettingsTriggerResult> {
     return this.http.post<RemoteSettingsTriggerResult>(
-      `${this.baseUrl}/api/admin/remote-settings/cache-clear`,
+      `${this.baseUrl}${SharedEndpoints.remoteSettings.cacheClear()}`,
       { cacheManagementJson: cacheManagementJson ?? null },
       { headers: this.adminHeaders() },
     );

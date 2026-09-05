@@ -10,6 +10,7 @@ import type {
   OrderListResponseDto,
 } from '@zitro/mappers';
 import { ZITRO_API_BASE_URL, CART_BUSINESS_SLUG } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 export interface CreateOrderOptions {
   orderType: Order['orderType'];
@@ -36,9 +37,13 @@ export class OrderApiService {
       ? new HttpContext().set(CART_BUSINESS_SLUG, businessSlug)
       : undefined;
     return this.http
-      .post<PlaceOrderResponseDto>(`${this.baseUrl}/api/orders`, request, {
-        context,
-      })
+      .post<PlaceOrderResponseDto>(
+        `${this.baseUrl}${CustomerEndpoints.orders.create()}`,
+        request,
+        {
+          context,
+        },
+      )
       .pipe(map((dto) => ({ orderId: dto.orderId })));
   }
 
@@ -48,15 +53,18 @@ export class OrderApiService {
   // stale status for up to 5 minutes after every status change.
   getOrder(orderId: string): Observable<Order> {
     return this.http
-      .get<OrderDto>(`${this.baseUrl}/api/orders/${orderId}`)
+      .get<OrderDto>(`${this.baseUrl}${CustomerEndpoints.orders.byId(orderId)}`)
       .pipe(map((dto) => OrderMapper.toOrder(dto)));
   }
 
   /** GET /api/orders/{orderId}/invoice — PDF blob. Serves both "Download bill" and "Invoice". */
   getInvoicePdf(orderId: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/api/orders/${orderId}/invoice`, {
-      responseType: 'blob',
-    });
+    return this.http.get(
+      `${this.baseUrl}${CustomerEndpoints.orders.invoice(orderId)}`,
+      {
+        responseType: 'blob',
+      },
+    );
   }
 
   getOrderHistory(page = 1, status?: string): Observable<Order[]> {
@@ -66,13 +74,19 @@ export class OrderApiService {
     };
     if (status) params['status'] = status;
     return this.http
-      .get<OrderListResponseDto>(`${this.baseUrl}/api/orders`, { params })
+      .get<OrderListResponseDto>(
+        `${this.baseUrl}${CustomerEndpoints.orders.list()}`,
+        { params },
+      )
       .pipe(map((res) => OrderMapper.toOrderListFromSummary(res.orders ?? [])));
   }
 
   cancelOrder(orderId: string): Observable<Order> {
     return this.http
-      .put<OrderDto>(`${this.baseUrl}/api/orders/${orderId}/cancel`, {})
+      .put<OrderDto>(
+        `${this.baseUrl}${CustomerEndpoints.orders.cancel(orderId)}`,
+        {},
+      )
       .pipe(map((dto) => OrderMapper.toOrder(dto)));
   }
 }

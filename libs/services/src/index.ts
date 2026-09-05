@@ -1,6 +1,9 @@
 // T010 — API services
 export * from './api';
 
+// Centralized per-app backend API path builders
+export * from './endpoints';
+
 // T009 — HTTP infrastructure
 export * from './tokens';
 export * from './business-context.service';

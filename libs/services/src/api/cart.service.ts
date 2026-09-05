@@ -5,6 +5,7 @@ import type { ApiCart, CheckoutSummary } from '@zitro/models';
 import { CartMapper } from '@zitro/mappers';
 import type { CartDto, CheckoutSummaryDto } from '@zitro/mappers';
 import { ZITRO_API_BASE_URL, CART_BUSINESS_SLUG } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 const ACTIVE_SLUGS_KEY = 'zitro_active_cart_businesses';
 
@@ -72,7 +73,10 @@ export class CartApiService {
 
   async loadCart(slug: string): Promise<void> {
     const dto = await firstValueFrom(
-      this.http.get<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug)),
+      this.http.get<CartDto>(
+        `${this.baseUrl}${CustomerEndpoints.cart.get()}`,
+        this.ctxFor(slug),
+      ),
     );
     const cart = CartMapper.toCart(dto);
     this.setCart(slug, cart);
@@ -87,7 +91,7 @@ export class CartApiService {
   ): Promise<void> {
     const dto = await firstValueFrom(
       this.http.post<CartDto>(
-        `${this.baseUrl}/api/cart/items`,
+        `${this.baseUrl}${CustomerEndpoints.cart.addItem()}`,
         { productId, variationId: variationId ?? null, quantity: qty },
         this.ctxFor(slug, this.idempotencyHeaders()),
       ),
@@ -104,7 +108,7 @@ export class CartApiService {
   ): Promise<void> {
     const dto = await firstValueFrom(
       this.http.put<CartDto>(
-        `${this.baseUrl}/api/cart/items/${cartItemId}`,
+        `${this.baseUrl}${CustomerEndpoints.cart.updateItem(cartItemId)}`,
         { quantity: qty },
         this.ctxFor(slug, this.idempotencyHeaders()),
       ),
@@ -116,7 +120,10 @@ export class CartApiService {
 
   async clearCart(slug: string): Promise<void> {
     await firstValueFrom(
-      this.http.delete<CartDto>(`${this.baseUrl}/api/cart`, this.ctxFor(slug)),
+      this.http.delete<CartDto>(
+        `${this.baseUrl}${CustomerEndpoints.cart.get()}`,
+        this.ctxFor(slug),
+      ),
     );
     this.deleteCart(slug);
     this.removeSlugFromStorage(slug);
@@ -143,7 +150,7 @@ export class CartApiService {
     try {
       const dto = await firstValueFrom(
         this.http.post<CartDto>(
-          `${this.baseUrl}/api/cart/coupon`,
+          `${this.baseUrl}${CustomerEndpoints.cart.coupon()}`,
           { couponCode: code },
           this.ctxFor(slug),
         ),
@@ -161,7 +168,7 @@ export class CartApiService {
   async removeCoupon(slug: string): Promise<void> {
     const dto = await firstValueFrom(
       this.http.post<CartDto>(
-        `${this.baseUrl}/api/cart/coupon`,
+        `${this.baseUrl}${CustomerEndpoints.cart.coupon()}`,
         { couponCode: null },
         this.ctxFor(slug),
       ),
@@ -172,7 +179,7 @@ export class CartApiService {
   async getCheckoutSummary(slug: string): Promise<CheckoutSummary> {
     const dto = await firstValueFrom(
       this.http.post<CheckoutSummaryDto>(
-        `${this.baseUrl}/api/cart/checkout`,
+        `${this.baseUrl}${CustomerEndpoints.cart.checkout()}`,
         {},
         this.ctxFor(slug),
       ),

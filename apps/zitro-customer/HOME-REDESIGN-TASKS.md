@@ -17,14 +17,14 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 
 ## Task Status
 
-| Task | Title | Status |
-|------|-------|--------|
-| HRD-001 | Location Gate | `done` |
+| Task    | Title                           | Status |
+| ------- | ------------------------------- | ------ |
+| HRD-001 | Location Gate                   | `done` |
 | HRD-002 | Environment Config + Data Layer | `done` |
-| HRD-003 | Business Card Component | `done` |
-| HRD-004 | Home Page Redesign | `done` |
-| HRD-005 | Per-Business-Type Theming | `done` |
-| HRD-006 | Cleanup + Routing | `done` |
+| HRD-003 | Business Card Component         | `done` |
+| HRD-004 | Home Page Redesign              | `done` |
+| HRD-005 | Per-Business-Type Theming       | `done` |
+| HRD-006 | Cleanup + Routing               | `done` |
 
 ---
 
@@ -33,16 +33,19 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 **Goal:** Force location selection before showing home. Show Zepto-style UI if no location is set.
 
 ### New files
+
 - `src/app/features/location-selection/location-selection.component.ts`
 - `src/app/features/location-selection/location-selection.component.html`
 - `src/app/features/location-selection/location-selection.component.scss`
 - `src/app/core/guards/location.guard.ts`
 
 ### Modified files
+
 - `src/app/app.routes.ts` — add `/location-selection` route + `LocationGuard` on MainLayout
 - `src/app/core/constants/app.constants.ts` — add `LOCATION_STORAGE_KEY = 'zitro_user_location'`
 
 ### LocationGuard logic
+
 ```typescript
 // Check localStorage for 'zitro_user_location'
 // If missing → redirect to /location-selection
@@ -50,6 +53,7 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 ```
 
 ### Location Selection UI (Zepto-style)
+
 - Full-screen white page with location pin illustration at top
 - Title: "Your device location is off" / "Set your delivery location"
 - **Use my Current Location** row with `Enable` button → calls `LocationService.getCurrentLocation()`
@@ -58,16 +62,18 @@ The current home page loads Firebase-based product data for a hardcoded restaura
 - On location selected → save as `zitro_user_location` in localStorage → navigate to `/home`
 
 ### Stored location shape
+
 ```typescript
 interface UserLocation {
   lat: number;
   lng: number;
-  label: string;    // "Home", "Current Location", etc.
-  address: string;  // Display address string
+  label: string; // "Home", "Current Location", etc.
+  address: string; // Display address string
 }
 ```
 
 ### Acceptance criteria
+
 - [ ] Fresh app open with no saved location → redirected to `/location-selection`
 - [ ] Tapping Enable → GPS prompt appears
 - [ ] GPS granted → location saved → navigated to `/home`
@@ -83,21 +89,26 @@ interface UserLocation {
 ### Environment files (`src/environments/`)
 
 **`environment.ts`** (dev default — add `apiUrl`):
+
 ```typescript
-apiUrl: 'http://localhost:8080',   // local dev API
+apiUrl: 'https://zitro-api.onrender.com',   // local dev API
 ```
 
 **`environment.prod.ts`** (new file):
+
 ```typescript
 export const environment = {
   production: true,
   apiUrl: 'https://api.zitroapp.in',
   appVersion: '1.0.0',
-  google: { /* same keys */ }
+  google: {
+    /* same keys */
+  },
 };
 ```
 
 **`project.json`** — add `fileReplacements` in production build:
+
 ```json
 "fileReplacements": [
   {
@@ -110,12 +121,13 @@ export const environment = {
 ### New model files (`libs/models/src/`)
 
 **`nearby-business.model.ts`:**
+
 ```typescript
 export interface NearbyBusiness {
   id: string;
   slug: string;
   name: string;
-  businessType: string;        // "restaurant" | "grocery" | etc.
+  businessType: string; // "restaurant" | "grocery" | etc.
   rating: number;
   deliveryTimeDisplay: string | null;
   deliveryFee: number;
@@ -123,11 +135,12 @@ export interface NearbyBusiness {
   isActive: boolean;
   isFeatured: boolean;
   distanceMetres: number;
-  tags: string[];              // tag slugs e.g. ["pizza", "biryani"]
+  tags: string[]; // tag slugs e.g. ["pizza", "biryani"]
 }
 ```
 
 **`platform-tag.model.ts`:**
+
 ```typescript
 export interface PlatformTag {
   id: string;
@@ -140,6 +153,7 @@ export interface PlatformTag {
 ### New service files (`libs/services/src/`)
 
 **`nearby-businesses.service.ts`:**
+
 ```typescript
 // GET {environment.apiUrl}/api/businesses/nearby?lat=X&lng=Y&radiusKm=10
 // HttpClient-based; cache result in memory per session
@@ -148,6 +162,7 @@ getByType(businesses: NearbyBusiness[], type: string): NearbyBusiness[]
 ```
 
 **`tags.service.ts`:**
+
 ```typescript
 // GET {environment.apiUrl}/api/tags
 // Cache in localStorage for 1 hour (key: 'zitro_tags_cache')
@@ -156,6 +171,7 @@ getTagsForSlugs(slugs: string[], allTags: PlatformTag[]): PlatformTag[]
 ```
 
 ### Constants to add (`src/app/core/constants/app.constants.ts`)
+
 ```typescript
 LOCATION_STORAGE_KEY: 'zitro_user_location',
 
@@ -181,11 +197,13 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 ```
 
 ### Also modify
+
 - `libs/models/src/index.ts` — export new models
 - `libs/services/src/index.ts` — export new services
 - `src/app/app.config.ts` — ensure `provideHttpClient()` is present
 
 ### Acceptance criteria
+
 - [ ] `environment.ts` has `apiUrl: 'http://localhost:8080'`
 - [ ] `environment.prod.ts` created with production URL
 - [ ] `NearbyBusiness` and `PlatformTag` exported from `@zitro/models`
@@ -199,11 +217,13 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 **Goal:** New reusable `BusinessCardComponent` in `@zitro/ui` for displaying a nearby business.
 
 ### New files (`libs/ui/src/components/business-card/`)
+
 - `business-card.component.ts`
 - `business-card.component.html`
 - `business-card.component.scss`
 
 ### Component API
+
 ```typescript
 @Input() business!: NearbyBusiness;
 @Input() tags: PlatformTag[] = [];   // full tag objects to resolve slugs to names
@@ -212,6 +232,7 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 ```
 
 ### Card UI
+
 - Full-width card, rounded corners, `--zitro-shadow-card`
 - **Image area** — cover image (placeholder if no image) with overlay badges:
   - Top-left: "Featured" badge if `isFeatured`
@@ -223,9 +244,11 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 - Uses `--zitro-*` CSS tokens only (no hardcoded colors)
 
 ### Also modify
+
 - `libs/ui/src/index.ts` — export `BusinessCardComponent`
 
 ### Acceptance criteria
+
 - [ ] Component renders with mock `NearbyBusiness` input
 - [ ] Tag names resolve correctly from slugs
 - [ ] `businessClick` emits on card tap
@@ -238,6 +261,7 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 **Goal:** Replace Firebase product-based home with new API-driven Swiggy-style layout.
 
 ### Modified files
+
 - `src/app/features/home/home.component.ts`
 - `src/app/features/home/home.component.html`
 - `src/app/features/home/home.component.scss`
@@ -263,6 +287,7 @@ NEARBY_CACHE_KEY: 'zitro_nearby_cache',
 ```
 
 ### Component state
+
 ```typescript
 userLocation: UserLocation | null       // from localStorage
 nearbyBusinesses: NearbyBusiness[]      // from API
@@ -278,24 +303,28 @@ displayBusinesses: NearbyBusiness[]     // filteredByTab further filtered by act
 ```
 
 ### Services injected
+
 - `NearbyBusinessesService` (new)
 - `TagsService` (new)
 - `ThemeService` (existing — for tab switch theming)
 - `Router` (existing — for location header click)
 
 ### Remove from home component
+
 - `CategoriesService`, `ProductsService`, `AppSettingsService` injections
 - Firebase product/category loading calls
 - `category-cards` section
 - Recommended / popular product sliders (move to business menu page later)
 
 ### Keep in home component
+
 - Banner carousel
 - Search bar + VEG toggle
 - Cart summary bar (bottom)
 - Analytics logging
 
 ### Acceptance criteria
+
 - [ ] Location header shows `userLocation.label` and `userLocation.address`
 - [ ] Clicking location header navigates to `/location-selection`
 - [ ] Tabs render from `businessTypeTabs` in correct order
@@ -312,9 +341,11 @@ displayBusinesses: NearbyBusiness[]     // filteredByTab further filtered by act
 **Goal:** Switch app theme when the user switches business type tab.
 
 ### Modified file
+
 `libs/theme/src/theme.service.ts`
 
 ### New method
+
 ```typescript
 applyBusinessTypeTheme(businessType: string): void {
   const themeMap: Record<string, ThemeName> = {
@@ -330,9 +361,11 @@ applyBusinessTypeTheme(businessType: string): void {
 **No new colors.** Only the four existing themes are used: `default`, `dark`, `nature`, `ocean`.
 
 ### Trigger
+
 Called in `HomeComponent.onTabChange(type: string)`.
 
 ### Acceptance criteria
+
 - [ ] Switching to Grocery tab → `data-theme="nature"` on `<html>`
 - [ ] Switching to Pharmacy tab → `data-theme="ocean"` on `<html>`
 - [ ] Switching back to Food tab → `data-theme="default"` on `<html>`
@@ -347,15 +380,18 @@ Called in `HomeComponent.onTabChange(type: string)`.
 ### Modified files
 
 **`src/app/app.routes.ts`:**
+
 - Add `{ path: 'location-selection', component: LocationSelectionComponent }`
 - Add `LocationGuard` to `MainLayout` route's `canActivate`
 - Remove `/business-selection` route (superseded by `/location-selection`)
 
 **`src/app/features/home/home.component.ts`:**
+
 - Confirm unused Firebase service injections are removed
 - Confirm `NearbyBusinessesService` and `TagsService` are injected
 
 ### Acceptance criteria
+
 - [ ] `/business-selection` route no longer exists
 - [ ] `/location-selection` route is accessible
 - [ ] `MainLayout` has `canActivate: [LocationGuard]`
@@ -366,12 +402,13 @@ Called in `HomeComponent.onTabChange(type: string)`.
 
 ## API Reference
 
-| Endpoint | Called By | Cache |
-|----------|-----------|-------|
-| `GET /api/businesses/nearby?lat=X&lng=Y&radiusKm=10` | `NearbyBusinessesService` | Memory (session) |
-| `GET /api/tags` | `TagsService` | localStorage 1 hr |
+| Endpoint                                             | Called By                 | Cache             |
+| ---------------------------------------------------- | ------------------------- | ----------------- |
+| `GET /api/businesses/nearby?lat=X&lng=Y&radiusKm=10` | `NearbyBusinessesService` | Memory (session)  |
+| `GET /api/tags`                                      | `TagsService`             | localStorage 1 hr |
 
 ### Nearby businesses response shape
+
 ```json
 [
   {
@@ -392,9 +429,15 @@ Called in `HomeComponent.onTabChange(type: string)`.
 ```
 
 ### Tags response shape
+
 ```json
 [
   { "id": "uuid", "slug": "pizza", "name": "Pizza", "iconUrl": "https://..." },
-  { "id": "uuid", "slug": "biryani", "name": "Biryani", "iconUrl": "https://..." }
+  {
+    "id": "uuid",
+    "slug": "biryani",
+    "name": "Biryani",
+    "iconUrl": "https://..."
+  }
 ]
 ```

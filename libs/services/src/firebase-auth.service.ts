@@ -18,6 +18,7 @@ import { firstValueFrom } from 'rxjs';
 import { inject } from '@angular/core';
 import { ZITRO_API_BASE_URL } from './tokens';
 import { CacheService } from './cache.service';
+import { CustomerEndpoints } from './endpoints';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseAuthService {
@@ -92,7 +93,10 @@ export class FirebaseAuthService {
   // Send OTP to phone number via backend API (POST /api/auth/otp/request)
   async sendOtp(phone: string): Promise<void> {
     await firstValueFrom(
-      this.http.post<void>(`${this.baseUrl}/api/auth/otp/request`, { phone }),
+      this.http.post<void>(
+        `${this.baseUrl}${CustomerEndpoints.auth.otpRequest()}`,
+        { phone },
+      ),
     );
   }
 
@@ -110,7 +114,7 @@ export class FirebaseAuthService {
     // 1. Verify OTP with backend → Firebase custom token
     const verifyResponse = await firstValueFrom(
       this.http.post<{ firebaseCustomToken: string }>(
-        `${this.baseUrl}/api/auth/otp/verify`,
+        `${this.baseUrl}${CustomerEndpoints.auth.otpVerify()}`,
         { phone, otp },
       ),
     );
@@ -127,9 +131,12 @@ export class FirebaseAuthService {
 
     // 4. Exchange Firebase ID token for app JWT
     const appResponse = await firstValueFrom(
-      this.http.post<{ appToken: string }>(`${this.baseUrl}/api/auth/verify`, {
-        FirebaseIdToken: firebaseIdToken,
-      }),
+      this.http.post<{ appToken: string }>(
+        `${this.baseUrl}${CustomerEndpoints.auth.verify()}`,
+        {
+          FirebaseIdToken: firebaseIdToken,
+        },
+      ),
     );
 
     // 5. Persist session
@@ -153,9 +160,12 @@ export class FirebaseAuthService {
   ): Promise<void> {
     const firebaseIdToken = await credential.user.getIdToken();
     const appResponse = await firstValueFrom(
-      this.http.post<{ appToken: string }>(`${this.baseUrl}/api/auth/verify`, {
-        FirebaseIdToken: firebaseIdToken,
-      }),
+      this.http.post<{ appToken: string }>(
+        `${this.baseUrl}${CustomerEndpoints.auth.verify()}`,
+        {
+          FirebaseIdToken: firebaseIdToken,
+        },
+      ),
     );
     localStorage.setItem(AUTH_KEYS.TOKEN, appResponse.appToken);
     localStorage.setItem(AUTH_KEYS.IS_GUEST, 'false');

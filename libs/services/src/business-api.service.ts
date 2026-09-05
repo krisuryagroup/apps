@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BusinessAuthTokenService } from './business-auth-token.service';
 import { ZITRO_API_BASE_URL } from './tokens';
+import { RestaurantEndpoints } from './endpoints';
 
 export interface BusinessOrdersPagedResult {
   orders: BusinessOrderDto[];
@@ -62,7 +63,7 @@ export class BusinessApiService {
 
   login(phone: string, password: string): Observable<BusinessLoginResponse> {
     return this.http.post<BusinessLoginResponse>(
-      `${this.baseUrl}/api/business-auth/login`,
+      `${this.baseUrl}${RestaurantEndpoints.auth.login()}`,
       { phoneNumber: phone, password },
     );
   }
@@ -71,20 +72,20 @@ export class BusinessApiService {
 
   submitApplication(req: Record<string, unknown>): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/business-applications`,
+      `${this.baseUrl}${RestaurantEndpoints.applications.submit()}`,
       req,
     );
   }
 
   validateInviteToken(token: string): Observable<{ businessName: string }> {
     return this.http.get<{ businessName: string }>(
-      `${this.baseUrl}/api/business-invite/${token}`,
+      `${this.baseUrl}${RestaurantEndpoints.applications.validateInvite(token)}`,
     );
   }
 
   acceptInvite(token: string, password: string): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/business-invite/${token}/accept`,
+      `${this.baseUrl}${RestaurantEndpoints.applications.acceptInvite(token)}`,
       { password },
     );
   }
@@ -93,7 +94,7 @@ export class BusinessApiService {
 
   getDashboard(businessId: string): Observable<BusinessDashboardDto> {
     return this.http.get<BusinessDashboardDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/dashboard`,
+      `${this.baseUrl}${RestaurantEndpoints.dashboard.get(businessId)}`,
     );
   }
 
@@ -116,7 +117,7 @@ export class BusinessApiService {
     // the dashboard correctly showing a non-zero pending count from a different endpoint.
     return this.http
       .get<BusinessOrdersPagedResult>(
-        `${this.baseUrl}/api/business-portal/${businessId}/orders`,
+        `${this.baseUrl}${RestaurantEndpoints.orders.list(businessId)}`,
         { params: p },
       )
       .pipe(map((res) => res.orders));
@@ -137,7 +138,7 @@ export class BusinessApiService {
         if (v) p = p.set(k, v);
       });
     return this.http.get<BusinessOrdersPagedResult>(
-      `${this.baseUrl}/api/business-portal/${businessId}/orders`,
+      `${this.baseUrl}${RestaurantEndpoints.orders.list(businessId)}`,
       { params: p },
     );
   }
@@ -147,7 +148,7 @@ export class BusinessApiService {
     orderId: string,
   ): Observable<BusinessOrderDetailDto> {
     return this.http.get<BusinessOrderDetailDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}`,
+      `${this.baseUrl}${RestaurantEndpoints.orders.byId(businessId, orderId)}`,
     );
   }
 
@@ -158,7 +159,7 @@ export class BusinessApiService {
     note?: string,
   ): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/orders/${orderId}/status`,
+      `${this.baseUrl}${RestaurantEndpoints.orders.updateStatus(businessId, orderId)}`,
       { status, note },
     );
   }
@@ -167,7 +168,7 @@ export class BusinessApiService {
 
   listCategories(businessId: string): Observable<MenuCategoryDto[]> {
     return this.http.get<MenuCategoryDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/categories`,
+      `${this.baseUrl}${RestaurantEndpoints.categories.list(businessId)}`,
     );
   }
 
@@ -176,7 +177,7 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<MenuCategoryDto> {
     return this.http.post<MenuCategoryDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/categories`,
+      `${this.baseUrl}${RestaurantEndpoints.categories.list(businessId)}`,
       req,
     );
   }
@@ -187,14 +188,14 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<MenuCategoryDto> {
     return this.http.put<MenuCategoryDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`,
+      `${this.baseUrl}${RestaurantEndpoints.categories.byId(businessId, categoryId)}`,
       req,
     );
   }
 
   deleteCategory(businessId: string, categoryId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/categories/${categoryId}`,
+      `${this.baseUrl}${RestaurantEndpoints.categories.byId(businessId, categoryId)}`,
     );
   }
 
@@ -206,7 +207,7 @@ export class BusinessApiService {
       ? new HttpParams().set('categoryId', categoryId)
       : undefined;
     return this.http.get<MenuItemDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products`,
+      `${this.baseUrl}${RestaurantEndpoints.products.list(businessId)}`,
       { params },
     );
   }
@@ -216,7 +217,7 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<MenuItemDto> {
     return this.http.post<MenuItemDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products`,
+      `${this.baseUrl}${RestaurantEndpoints.products.list(businessId)}`,
       req,
     );
   }
@@ -227,14 +228,14 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<MenuItemDto> {
     return this.http.put<MenuItemDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`,
+      `${this.baseUrl}${RestaurantEndpoints.products.byId(businessId, productId)}`,
       req,
     );
   }
 
   deleteProduct(businessId: string, productId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products/${productId}`,
+      `${this.baseUrl}${RestaurantEndpoints.products.byId(businessId, productId)}`,
     );
   }
 
@@ -271,7 +272,7 @@ export class BusinessApiService {
         errorCode?: string;
       }[];
     }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products/bulk`,
+      `${this.baseUrl}${RestaurantEndpoints.products.bulk(businessId)}`,
       items,
     );
   }
@@ -284,7 +285,7 @@ export class BusinessApiService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products/media`,
+      `${this.baseUrl}${RestaurantEndpoints.products.media(businessId)}`,
       formData,
     );
   }
@@ -300,7 +301,7 @@ export class BusinessApiService {
     },
   ): Observable<{ updatedCount: number }> {
     return this.http.post<{ updatedCount: number }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/products/bulk-price-adjust`,
+      `${this.baseUrl}${RestaurantEndpoints.products.bulkPriceAdjust(businessId)}`,
       req,
     );
   }
@@ -311,13 +312,13 @@ export class BusinessApiService {
     businessId: string,
   ): Observable<BrandMasterProductDto[]> {
     return this.http.get<BrandMasterProductDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/brand-master-products`,
+      `${this.baseUrl}${RestaurantEndpoints.sharedBrandMenu.brandMasterProducts(businessId)}`,
     );
   }
 
   getBranchOverrides(businessId: string): Observable<BranchOverrideDto[]> {
     return this.http.get<BranchOverrideDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides`,
+      `${this.baseUrl}${RestaurantEndpoints.sharedBrandMenu.branchOverrides(businessId)}`,
     );
   }
 
@@ -331,7 +332,7 @@ export class BusinessApiService {
     },
   ): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides`,
+      `${this.baseUrl}${RestaurantEndpoints.sharedBrandMenu.branchOverrides(businessId)}`,
       req,
     );
   }
@@ -341,7 +342,7 @@ export class BusinessApiService {
     productId: string,
   ): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides/${productId}`,
+      `${this.baseUrl}${RestaurantEndpoints.sharedBrandMenu.branchOverrideById(businessId, productId)}`,
     );
   }
 
@@ -357,7 +358,7 @@ export class BusinessApiService {
     },
   ): Observable<{ updatedCount: number }> {
     return this.http.post<{ updatedCount: number }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/branch-overrides/bulk-price-adjust`,
+      `${this.baseUrl}${RestaurantEndpoints.sharedBrandMenu.branchOverridesBulkPriceAdjust(businessId)}`,
       req,
     );
   }
@@ -369,7 +370,7 @@ export class BusinessApiService {
     const formData = new FormData();
     files.forEach((f) => formData.append('files', f));
     return this.http.post<MenuImportParseResult>(
-      `${this.baseUrl}/api/business-portal/${businessId}/menu-import/parse`,
+      `${this.baseUrl}${RestaurantEndpoints.menuImport.parse(businessId)}`,
       formData,
     );
   }
@@ -379,7 +380,7 @@ export class BusinessApiService {
     categories: unknown[],
   ): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/menu-import/commit`,
+      `${this.baseUrl}${RestaurantEndpoints.menuImport.commit(businessId)}`,
       { categories },
     );
   }
@@ -388,7 +389,7 @@ export class BusinessApiService {
 
   getProfile(businessId: string): Observable<BusinessProfileDto> {
     return this.http.get<BusinessProfileDto>(
-      `${this.baseUrl}/api/business-portal/${businessId}`,
+      `${this.baseUrl}${RestaurantEndpoints.profile.get(businessId)}`,
     );
   }
 
@@ -397,7 +398,7 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}`,
+      `${this.baseUrl}${RestaurantEndpoints.profile.get(businessId)}`,
       req,
     );
   }
@@ -406,7 +407,7 @@ export class BusinessApiService {
 
   listStaff(businessId: string): Observable<StaffDto[]> {
     return this.http.get<StaffDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/users`,
+      `${this.baseUrl}${RestaurantEndpoints.staff.list(businessId)}`,
     );
   }
 
@@ -415,7 +416,7 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/users`,
+      `${this.baseUrl}${RestaurantEndpoints.staff.list(businessId)}`,
       req,
     );
   }
@@ -428,7 +429,7 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<void> {
     return this.http.put<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
+      `${this.baseUrl}${RestaurantEndpoints.staff.byId(businessId, userId)}`,
       req,
     );
   }
@@ -437,7 +438,7 @@ export class BusinessApiService {
    * active owner; a non-owner caller also can't remove an owner account ("FORBIDDEN"). */
   deleteStaff(businessId: string, userId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/users/${userId}`,
+      `${this.baseUrl}${RestaurantEndpoints.staff.byId(businessId, userId)}`,
     );
   }
 
@@ -445,7 +446,7 @@ export class BusinessApiService {
 
   getInventory(businessId: string): Observable<InventoryItemDto[]> {
     return this.http.get<InventoryItemDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/inventory`,
+      `${this.baseUrl}${RestaurantEndpoints.inventory.list(businessId)}`,
     );
   }
 
@@ -454,14 +455,14 @@ export class BusinessApiService {
     req: { productId: string; quantity: number; reason: string },
   ): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/inventory/adjust`,
+      `${this.baseUrl}${RestaurantEndpoints.inventory.adjust(businessId)}`,
       req,
     );
   }
 
   getInventoryAlerts(businessId: string): Observable<InventoryAlertDto[]> {
     return this.http.get<InventoryAlertDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/inventory/alerts`,
+      `${this.baseUrl}${RestaurantEndpoints.inventory.alerts(businessId)}`,
     );
   }
 
@@ -469,7 +470,7 @@ export class BusinessApiService {
 
   listDeliveryZones(businessId: string): Observable<BusinessZoneDto[]> {
     return this.http.get<BusinessZoneDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`,
+      `${this.baseUrl}${RestaurantEndpoints.deliveryZones.list(businessId)}`,
     );
   }
 
@@ -480,14 +481,14 @@ export class BusinessApiService {
     req: Record<string, unknown>,
   ): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
-      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones`,
+      `${this.baseUrl}${RestaurantEndpoints.deliveryZones.list(businessId)}`,
       req,
     );
   }
 
   deleteDeliveryZone(businessId: string, zoneId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/delivery-zones/${zoneId}`,
+      `${this.baseUrl}${RestaurantEndpoints.deliveryZones.byId(businessId, zoneId)}`,
     );
   }
 
@@ -497,7 +498,7 @@ export class BusinessApiService {
     return this.http
       .get<
         ItemsPagedResult<RatingDto>
-      >(`${this.baseUrl}/api/business-portal/${businessId}/ratings`)
+      >(`${this.baseUrl}${RestaurantEndpoints.ratings.list(businessId)}`)
       .pipe(map((res) => res.items));
   }
 
@@ -507,7 +508,7 @@ export class BusinessApiService {
     replyText: string,
   ): Observable<void> {
     return this.http.post<void>(
-      `${this.baseUrl}/api/business-portal/${businessId}/ratings/${ratingId}/reply`,
+      `${this.baseUrl}${RestaurantEndpoints.ratings.reply(businessId, ratingId)}`,
       { replyText, repliedByUserId: this.currentUserId() },
     );
   }
@@ -518,7 +519,7 @@ export class BusinessApiService {
     return this.http
       .get<
         ItemsPagedResult<PayoutDto>
-      >(`${this.baseUrl}/api/business-portal/${businessId}/payouts`)
+      >(`${this.baseUrl}${RestaurantEndpoints.payouts.list(businessId)}`)
       .pipe(map((res) => res.items));
   }
 
@@ -528,7 +529,7 @@ export class BusinessApiService {
     payoutId: string,
   ): Observable<PayoutOrderDto[]> {
     return this.http.get<PayoutOrderDto[]>(
-      `${this.baseUrl}/api/business-portal/${businessId}/payouts/${payoutId}/orders`,
+      `${this.baseUrl}${RestaurantEndpoints.payouts.orders(businessId, payoutId)}`,
     );
   }
 }

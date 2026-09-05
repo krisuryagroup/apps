@@ -5,9 +5,14 @@ import { map, tap } from 'rxjs/operators';
 import type { Product } from '@zitro/models';
 import type { Category } from '@zitro/models';
 import { CatalogMapper } from '@zitro/mappers';
-import type { ProductDto, CategoryDto, BusinessMenuResponseDto } from '@zitro/mappers';
+import type {
+  ProductDto,
+  CategoryDto,
+  BusinessMenuResponseDto,
+} from '@zitro/mappers';
 import { CacheService } from '../cache.service';
 import { ZITRO_API_BASE_URL } from '../tokens';
+import { CustomerEndpoints } from '../endpoints';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
@@ -19,22 +24,33 @@ export class CatalogApiService {
     const cacheKey = `products:${businessSlug}`;
     const cached = this.cache.get<Product[]>(cacheKey);
     if (cached) return of(cached);
-    return this.http.get<ProductDto[]>(`${this.baseUrl}/api/businesses/${businessSlug}/products`).pipe(
-      map(dtos => CatalogMapper.toProductList(dtos)),
-      tap(products => this.cache.set(cacheKey, products, { ttlHours: 1 })),
-    );
+    return this.http
+      .get<
+        ProductDto[]
+      >(`${this.baseUrl}${CustomerEndpoints.catalog.products(businessSlug)}`)
+      .pipe(
+        map((dtos) => CatalogMapper.toProductList(dtos)),
+        tap((products) => this.cache.set(cacheKey, products, { ttlHours: 1 })),
+      );
   }
 
   getCategories(businessSlug: string): Observable<Category[]> {
     const cacheKey = `categories:${businessSlug}`;
     const cached = this.cache.get<Category[]>(cacheKey);
     if (cached) return of(cached);
-    return this.http.get<CategoryDto[]>(`${this.baseUrl}/api/categories`, {
-      params: { businessSlug },
-    }).pipe(
-      map(dtos => CatalogMapper.toCategoryList(dtos)),
-      tap(categories => this.cache.set(cacheKey, categories, { ttlHours: 1 })),
-    );
+    return this.http
+      .get<CategoryDto[]>(
+        `${this.baseUrl}${CustomerEndpoints.catalog.categories()}`,
+        {
+          params: { businessSlug },
+        },
+      )
+      .pipe(
+        map((dtos) => CatalogMapper.toCategoryList(dtos)),
+        tap((categories) =>
+          this.cache.set(cacheKey, categories, { ttlHours: 1 }),
+        ),
+      );
   }
 
   getMenu(businessSlug: string, categoryId?: string): Observable<Product[]> {
@@ -43,20 +59,28 @@ export class CatalogApiService {
     if (cached) return of(cached);
     const params: Record<string, string> = {};
     if (categoryId) params['categoryId'] = categoryId;
-    return this.http.get<ProductDto[]>(`${this.baseUrl}/api/businesses/${businessSlug}/menu`, {
-      params,
-    }).pipe(
-      map(dtos => CatalogMapper.toProductList(dtos)),
-      tap(products => this.cache.set(cacheKey, products, { ttlHours: 1 })),
-    );
+    return this.http
+      .get<ProductDto[]>(
+        `${this.baseUrl}${CustomerEndpoints.catalog.menu(businessSlug)}`,
+        {
+          params,
+        },
+      )
+      .pipe(
+        map((dtos) => CatalogMapper.toProductList(dtos)),
+        tap((products) => this.cache.set(cacheKey, products, { ttlHours: 1 })),
+      );
   }
 
   searchProducts(businessSlug: string, query: string): Observable<Product[]> {
-    return this.http.get<ProductDto[]>(`${this.baseUrl}/api/products/search`, {
-      params: { q: query, businessSlug },
-    }).pipe(
-      map(dtos => CatalogMapper.toProductList(dtos)),
-    );
+    return this.http
+      .get<ProductDto[]>(
+        `${this.baseUrl}${CustomerEndpoints.catalog.searchProducts()}`,
+        {
+          params: { q: query, businessSlug },
+        },
+      )
+      .pipe(map((dtos) => CatalogMapper.toProductList(dtos)));
   }
 
   invalidateProductCache(businessSlug: string): void {
@@ -69,15 +93,22 @@ export class CatalogApiService {
    * Extracts both products and categories from the response
    * (categories are embedded in each product's `category` field).
    */
-  getBusinessMenu(businessSlug: string): Observable<{ products: Product[]; categories: Category[] }> {
+  getBusinessMenu(
+    businessSlug: string,
+  ): Observable<{ products: Product[]; categories: Category[] }> {
     const cacheKey = `businessMenu:${businessSlug}`;
-    const cached = this.cache.get<{ products: Product[]; categories: Category[] }>(cacheKey);
+    const cached = this.cache.get<{
+      products: Product[];
+      categories: Category[];
+    }>(cacheKey);
     if (cached) return of(cached);
     return this.http
-      .get<BusinessMenuResponseDto>(`${this.baseUrl}/api/businesses/${businessSlug}/menu`)
+      .get<BusinessMenuResponseDto>(
+        `${this.baseUrl}${CustomerEndpoints.catalog.menu(businessSlug)}`,
+      )
       .pipe(
-        map(dto => CatalogMapper.toBusinessMenuProductsAndCategories(dto)),
-        tap(menu => this.cache.set(cacheKey, menu, { ttlHours: 1 })),
+        map((dto) => CatalogMapper.toBusinessMenuProductsAndCategories(dto)),
+        tap((menu) => this.cache.set(cacheKey, menu, { ttlHours: 1 })),
       );
   }
 }
