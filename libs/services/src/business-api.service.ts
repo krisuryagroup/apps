@@ -457,6 +457,23 @@ export class BusinessApiService {
     );
   }
 
+  // ── Cover photo ───────────────────────────────────────────────────────────────
+
+  /** Uploads the business's single cover photo (its listing image) — required before
+   * Admin can approve the business for go-live, but uploaded post-registration, not
+   * collected on the self-apply form. */
+  uploadCoverPhoto(
+    businessId: string,
+    file: File,
+  ): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string }>(
+      `${this.baseUrl}${RestaurantEndpoints.coverPhoto.upload(businessId)}`,
+      formData,
+    );
+  }
+
   // ── Staff ───────────────────────────────────────────────────────────────────
 
   listStaff(businessId: string): Observable<StaffDto[]> {
@@ -672,6 +689,9 @@ export interface BusinessProfileDto {
   panNumber?: string;
   payoutAccountId?: string;
   verificationDocs?: VerificationDocDto[];
+  coverImageUrl?: string;
+  cuisineTypes?: string[];
+  restaurantCategory?: string;
   onboardingStatus: string;
   onboardingRejectionReason?: string;
   menuMode: 'shared' | 'independent';

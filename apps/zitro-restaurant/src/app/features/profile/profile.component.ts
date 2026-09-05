@@ -120,6 +120,23 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
       </form>
 
       <div class="kyc-section">
+        <h2 class="kyc-title">Cover photo</h2>
+        <p class="kyc-hint">
+          Your restaurant's listing image. Required before your business can go
+          live.
+        </p>
+        @if (profile()!.coverImageUrl) {
+          <img [src]="profile()!.coverImageUrl" alt="" class="cover-preview" />
+        }
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          [disabled]="uploadingCover()"
+          (change)="onCoverPhotoSelected($event)"
+        />
+      </div>
+
+      <div class="kyc-section">
         <h2 class="kyc-title">Verification documents</h2>
         <p class="kyc-hint">
           Upload each document once — re-uploading replaces the previous file
@@ -269,6 +286,13 @@ const DOCUMENT_SLOTS: DocumentSlot[] = [
       color: var(--zitro-on-surface-variant);
       font-size: var(--zitro-font-size-sm);
     }
+    .cover-preview {
+      display: block;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: var(--zitro-radius-md);
+      margin-bottom: var(--zitro-spacing-sm);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -291,6 +315,7 @@ export class RestaurantProfileComponent implements OnInit {
   protected uploadingDoc = signal<
     Partial<Record<BusinessDocumentType, boolean>>
   >({});
+  protected uploadingCover = signal(false);
 
   protected isOwner(): boolean {
     return this.api.currentUser()?.role === 'owner';
@@ -412,6 +437,26 @@ export class RestaurantProfileComponent implements OnInit {
       },
       error: () => {
         this.uploadingDoc.update((m) => ({ ...m, [type]: false }));
+        input.value = '';
+      },
+    });
+  }
+
+  protected onCoverPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadingCover.set(true);
+    const id = this.api.businessId()!;
+    this.api.uploadCoverPhoto(id, file).subscribe({
+      next: ({ url }) => {
+        this.profile.update((p) => (p ? { ...p, coverImageUrl: url } : p));
+        this.uploadingCover.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.uploadingCover.set(false);
         input.value = '';
       },
     });

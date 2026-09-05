@@ -1065,6 +1065,12 @@ export const EN_DEFAULTS = {
       resendOtp: 'Resend OTP',
       otpInvalid: 'That code is incorrect. Please try again.',
       otpExpired: 'Your phone verification expired — please verify again.',
+      category: 'Restaurant Category',
+      cuisines: 'Cuisines',
+      cuisinesPlaceholder: 'e.g. North Indian, Chinese, Fast Food',
+      openTime: 'Opening Time',
+      closeTime: 'Closing Time',
+      is24Hours: 'Open 24 hours',
     },
     invite: {
       title: 'Set up your account',

@@ -63,7 +63,7 @@
         {{ 'businesses.reject' | i18n }}
       </button>
       @if (approveError()) {
-        <span class="error-text">{{ approveError()! | i18n }}</span>
+        <span class="error-text">{{ approveError() }}</span>
       }
       @if (approveSuccess()) {
         <span class="success-text">{{
@@ -146,6 +146,28 @@
         <div class="info-row">
           <span class="info-label">Commission</span
           ><span class="info-value">{{ biz()!.commissionPercentage }}%</span>
+        </div>
+      }
+      @if (biz()!.restaurantCategory) {
+        <div class="info-row">
+          <span class="info-label">Category</span
+          ><span class="info-value">{{ biz()!.restaurantCategory }}</span>
+        </div>
+      }
+      @if (biz()!.cuisineTypes?.length) {
+        <div class="info-row">
+          <span class="info-label">Cuisines</span
+          ><span class="info-value">{{ biz()!.cuisineTypes!.join(', ') }}</span>
+        </div>
+      }
+      @if (biz()!.coverImageUrl) {
+        <div class="info-row">
+          <span class="info-label">Cover photo</span>
+          <img
+            class="cover-preview"
+            [src]="biz()!.coverImageUrl"
+            alt="Cover photo"
+          />
         </div>
       }
     </div>

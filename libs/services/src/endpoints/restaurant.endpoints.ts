@@ -78,6 +78,11 @@ export const RestaurantEndpoints = {
       `/api/business-portal/${businessId}/documents`,
   },
 
+  coverPhoto: {
+    upload: (businessId: string) =>
+      `/api/business-portal/${businessId}/cover-photo`,
+  },
+
   staff: {
     list: (businessId: string) => `/api/business-portal/${businessId}/users`,
     byId: (businessId: string, userId: string) =>

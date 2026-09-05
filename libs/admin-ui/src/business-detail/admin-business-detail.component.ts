@@ -388,8 +388,12 @@ export class AdminBusinessDetailComponent implements OnInit {
         this.approveSuccess.set(true);
         this.approving.set(false);
       },
-      error: () => {
-        this.approveError.set('common.error');
+      error: (err: { error?: { error?: string; errorCode?: string } }) => {
+        this.approveError.set(
+          err.error?.errorCode === 'INCOMPLETE_LISTING'
+            ? (err.error?.error ?? this.i18n.translate('common.error'))
+            : this.i18n.translate('common.error'),
+        );
         this.approving.set(false);
       },
     });
@@ -411,7 +415,7 @@ export class AdminBusinessDetailComponent implements OnInit {
         this.approving.set(false);
       },
       error: () => {
-        this.approveError.set('common.error');
+        this.approveError.set(this.i18n.translate('common.error'));
         this.approving.set(false);
       },
     });

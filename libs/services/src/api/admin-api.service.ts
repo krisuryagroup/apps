@@ -1007,6 +1007,9 @@ export interface BusinessDetailDto extends BusinessSummaryDto {
   commissionPercentage?: number;
   onboardingRejectionReason?: string;
   verificationDocs?: VerificationDocDto[];
+  coverImageUrl?: string;
+  cuisineTypes?: string[];
+  restaurantCategory?: string;
   coordinatesLat?: number;
   coordinatesLng?: number;
 }

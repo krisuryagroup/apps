@@ -62,6 +62,66 @@ type Step = 'business' | 'address' | 'account' | 'otp' | 'success';
                 <option value="restaurant">restaurant</option>
                 <option value="grocery">grocery</option>
               </select>
+              @if (f.businessType === 'restaurant') {
+                <label for="biz-category" class="form-label">{{
+                  'restaurant.apply.category' | i18n
+                }}</label>
+                <select
+                  id="biz-category"
+                  class="select"
+                  data-testid="apply-restaurant-category"
+                  [(ngModel)]="f.restaurantCategory"
+                >
+                  <option value="qsr">QSR</option>
+                  <option value="casual_dining">Casual Dining</option>
+                  <option value="cafe">Cafe</option>
+                  <option value="cloud_kitchen">Cloud Kitchen</option>
+                  <option value="other">Other</option>
+                </select>
+                <label for="biz-cuisines" class="form-label">{{
+                  'restaurant.apply.cuisines' | i18n
+                }}</label>
+                <input
+                  id="biz-cuisines"
+                  class="input"
+                  data-testid="apply-cuisine-types"
+                  placeholder="{{
+                    'restaurant.apply.cuisinesPlaceholder' | i18n
+                  }}"
+                  [(ngModel)]="f.cuisineTypes"
+                />
+              }
+              <label for="biz-open" class="form-label">{{
+                'restaurant.apply.openTime' | i18n
+              }}</label>
+              <input
+                id="biz-open"
+                class="input"
+                type="time"
+                data-testid="apply-open-time"
+                [disabled]="f.is24Hours"
+                [(ngModel)]="f.openTime"
+              />
+              <label for="biz-close" class="form-label">{{
+                'restaurant.apply.closeTime' | i18n
+              }}</label>
+              <input
+                id="biz-close"
+                class="input"
+                type="time"
+                data-testid="apply-close-time"
+                [disabled]="f.is24Hours"
+                [(ngModel)]="f.closeTime"
+              />
+              <label class="checkbox-label" for="biz-24h">
+                <input
+                  id="biz-24h"
+                  type="checkbox"
+                  data-testid="apply-is-24-hours"
+                  [(ngModel)]="f.is24Hours"
+                />
+                {{ 'restaurant.apply.is24Hours' | i18n }}
+              </label>
             </div>
             <button
               class="btn btn-primary"
@@ -292,6 +352,12 @@ type Step = 'business' | 'address' | 'account' | 'otp' | 'success';
       font-size: var(--zitro-font-size-sm);
       font-weight: 500;
     }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--zitro-spacing-xs);
+      font-size: var(--zitro-font-size-sm);
+    }
     .input,
     .select {
       padding: var(--zitro-spacing-sm) var(--zitro-spacing-md);
@@ -370,6 +436,11 @@ export class RestaurantApplyComponent {
   protected f = {
     name: '',
     businessType: 'restaurant',
+    restaurantCategory: 'casual_dining',
+    cuisineTypes: '',
+    openTime: '',
+    closeTime: '',
+    is24Hours: false,
     town: '',
     phone: '',
     ownerName: '',
@@ -425,6 +496,17 @@ export class RestaurantApplyComponent {
         ownerName: this.f.ownerName,
         ownerPhone: this.f.ownerPhone,
         ownerPassword: this.f.password,
+        cuisineTypes:
+          this.f.businessType === 'restaurant' && this.f.cuisineTypes
+            ? this.f.cuisineTypes.split(',').map((c) => c.trim())
+            : null,
+        restaurantCategory:
+          this.f.businessType === 'restaurant'
+            ? this.f.restaurantCategory
+            : null,
+        openTime: this.f.is24Hours ? null : this.f.openTime || null,
+        closeTime: this.f.is24Hours ? null : this.f.closeTime || null,
+        is24Hours: this.f.is24Hours,
       })
       .subscribe({
         next: () => {

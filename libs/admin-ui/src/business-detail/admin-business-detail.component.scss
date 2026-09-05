@@ -61,3 +61,10 @@
   background: var(--zitro-surface-variant);
   color: var(--zitro-on-surface-variant);
 }
+
+.cover-preview {
+  max-width: 240px;
+  max-height: 135px;
+  border-radius: var(--zitro-radius-sm);
+  object-fit: cover;
+}
