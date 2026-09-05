@@ -6,7 +6,11 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { BusinessApiService, BusinessAuthTokenService } from '@zitro/services';
+import {
+  BusinessApiService,
+  BusinessAuthTokenService,
+  hasRole,
+} from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 
 function capitalize(s: string): string {
@@ -70,24 +74,26 @@ function capitalize(s: string): string {
             >⭐ {{ 'restaurant.ratings' | i18n }}</a
           >
         </li>
-        <li>
-          <a class="nav-item" routerLink="/payouts" routerLinkActive="active"
-            >💸 {{ 'nav.payouts' | i18n }}</a
-          >
-        </li>
-        <li>
-          <a
-            class="nav-item"
-            routerLink="/delivery-zones"
-            routerLinkActive="active"
-            >🗺️ {{ 'nav.deliveryZones' | i18n }}</a
-          >
-        </li>
-        <li>
-          <a class="nav-item" routerLink="/staff" routerLinkActive="active"
-            >👥 {{ 'restaurant.staff' | i18n }}</a
-          >
-        </li>
+        @if (canManage()) {
+          <li>
+            <a class="nav-item" routerLink="/payouts" routerLinkActive="active"
+              >💸 {{ 'nav.payouts' | i18n }}</a
+            >
+          </li>
+          <li>
+            <a
+              class="nav-item"
+              routerLink="/delivery-zones"
+              routerLinkActive="active"
+              >🗺️ {{ 'nav.deliveryZones' | i18n }}</a
+            >
+          </li>
+          <li>
+            <a class="nav-item" routerLink="/staff" routerLinkActive="active"
+              >👥 {{ 'restaurant.staff' | i18n }}</a
+            >
+          </li>
+        }
         <li>
           <a class="nav-item" routerLink="/profile" routerLinkActive="active"
             >⚙️ {{ 'restaurant.profile' | i18n }}</a
@@ -208,6 +214,12 @@ export class RestaurantLayoutComponent implements OnInit {
   protected brandName = signal<string | null>(null);
   protected staffName = signal<string | null>(null);
   protected staffRoleDisplay = signal('');
+
+  /** Hides Payouts/Delivery Zones/Staff nav links for a staff account — matches the
+   * route-level businessRoleGuard, see restaurant-permissions.config.ts. */
+  protected canManage(): boolean {
+    return hasRole(this.api.currentUser()?.role, 'manager');
+  }
 
   ngOnInit(): void {
     const businessId = this.api.businessId();

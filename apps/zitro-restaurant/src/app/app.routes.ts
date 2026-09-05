@@ -3,6 +3,7 @@ import {
   businessAuthGuard,
   guestOnlyGuard,
 } from './core/guards/business-auth.guard';
+import { businessRoleGuard } from './core/guards/business-role.guard';
 import { RestaurantLayoutComponent } from './layout/restaurant-layout.component';
 import { RestaurantLoginComponent } from './features/login/login.component';
 import {
@@ -56,14 +57,34 @@ export const routes: Routes = [
       { path: 'orders', component: RestaurantOrdersComponent },
       { path: 'orders/:orderId', component: RestaurantOrderDetailComponent },
       { path: 'menu', component: RestaurantMenuComponent },
-      { path: 'menu/import', component: RestaurantMenuImportComponent },
-      { path: 'menu/bulk-add', component: RestaurantMenuBulkAddComponent },
+      {
+        path: 'menu/import',
+        component: RestaurantMenuImportComponent,
+        canActivate: [businessRoleGuard],
+      },
+      {
+        path: 'menu/bulk-add',
+        component: RestaurantMenuBulkAddComponent,
+        canActivate: [businessRoleGuard],
+      },
       { path: 'inventory', component: RestaurantInventoryComponent },
-      { path: 'delivery-zones', component: RestaurantDeliveryZonesComponent },
+      {
+        path: 'delivery-zones',
+        component: RestaurantDeliveryZonesComponent,
+        canActivate: [businessRoleGuard],
+      },
       { path: 'ratings', component: RestaurantRatingsComponent },
-      { path: 'payouts', component: RestaurantPayoutsComponent },
+      {
+        path: 'payouts',
+        component: RestaurantPayoutsComponent,
+        canActivate: [businessRoleGuard],
+      },
       { path: 'profile', component: RestaurantProfileComponent },
-      { path: 'staff', component: RestaurantStaffComponent },
+      {
+        path: 'staff',
+        component: RestaurantStaffComponent,
+        canActivate: [businessRoleGuard],
+      },
     ],
   },
 

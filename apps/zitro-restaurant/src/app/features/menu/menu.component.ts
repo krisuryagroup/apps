@@ -11,6 +11,7 @@ import {
   BusinessApiService,
   MenuCategoryDto,
   MenuItemDto,
+  hasRole,
 } from '@zitro/services';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 import { SharedMenuComponent } from './shared-menu.component';
@@ -27,40 +28,42 @@ import { SharedMenuComponent } from './shared-menu.component';
     } @else {
       <div class="page-header">
         <h1 class="page-title">{{ 'restaurant.menu' | i18n }}</h1>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-outline" routerLink="/menu/import">
-            {{ 'restaurant.menuImport' | i18n }}
-          </button>
-          <button
-            class="btn btn-outline"
-            data-testid="bulk-add-btn"
-            routerLink="/menu/bulk-add"
-          >
-            {{ 'restaurant.bulkAdd' | i18n }}
-          </button>
-          <button
-            class="btn btn-primary"
-            data-testid="item-add-btn"
-            (click)="openAddItem()"
-          >
-            + {{ 'restaurant.addItem' | i18n }}
-          </button>
-          <button
-            class="btn btn-outline"
-            data-testid="category-add-btn"
-            (click)="openAddCategory()"
-          >
-            + {{ 'restaurant.addCategory' | i18n }}
-          </button>
-          <button
-            class="btn btn-outline"
-            type="button"
-            data-testid="menu-bulk-adjust-btn"
-            (click)="showBulkAdjust.set(true)"
-          >
-            {{ 'products.bulkPriceAdjust' | i18n }}
-          </button>
-        </div>
+        @if (canManage()) {
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" routerLink="/menu/import">
+              {{ 'restaurant.menuImport' | i18n }}
+            </button>
+            <button
+              class="btn btn-outline"
+              data-testid="bulk-add-btn"
+              routerLink="/menu/bulk-add"
+            >
+              {{ 'restaurant.bulkAdd' | i18n }}
+            </button>
+            <button
+              class="btn btn-primary"
+              data-testid="item-add-btn"
+              (click)="openAddItem()"
+            >
+              + {{ 'restaurant.addItem' | i18n }}
+            </button>
+            <button
+              class="btn btn-outline"
+              data-testid="category-add-btn"
+              (click)="openAddCategory()"
+            >
+              + {{ 'restaurant.addCategory' | i18n }}
+            </button>
+            <button
+              class="btn btn-outline"
+              type="button"
+              data-testid="menu-bulk-adjust-btn"
+              (click)="showBulkAdjust.set(true)"
+            >
+              {{ 'products.bulkPriceAdjust' | i18n }}
+            </button>
+          </div>
+        }
       </div>
 
       <div class="menu-layout">
@@ -84,13 +87,15 @@ import { SharedMenuComponent } from './shared-menu.component';
                   (click)="selectCategory(cat)"
                 >
                   {{ cat.name }}
-                  <button
-                    class="btn-icon"
-                    type="button"
-                    (click)="deleteCategory(cat); $event.stopPropagation()"
-                  >
-                    ✕
-                  </button>
+                  @if (canManage()) {
+                    <button
+                      class="btn-icon"
+                      type="button"
+                      (click)="deleteCategory(cat); $event.stopPropagation()"
+                    >
+                      ✕
+                    </button>
+                  }
                 </button>
               </li>
             }
@@ -135,18 +140,20 @@ import { SharedMenuComponent } from './shared-menu.component';
                       </button>
                     </td>
                     <td>
-                      <button
-                        class="btn btn-sm btn-outline"
-                        (click)="openEditItem(item)"
-                      >
-                        {{ 'common.edit' | i18n }}
-                      </button>
-                      <button
-                        class="btn btn-sm btn-danger"
-                        (click)="deleteItem(item)"
-                      >
-                        {{ 'common.delete' | i18n }}
-                      </button>
+                      @if (canManage()) {
+                        <button
+                          class="btn btn-sm btn-outline"
+                          (click)="openEditItem(item)"
+                        >
+                          {{ 'common.edit' | i18n }}
+                        </button>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          (click)="deleteItem(item)"
+                        >
+                          {{ 'common.delete' | i18n }}
+                        </button>
+                      }
                     </td>
                   </tr>
                 } @empty {
@@ -474,6 +481,13 @@ import { SharedMenuComponent } from './shared-menu.component';
 export class RestaurantMenuComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly i18n = inject(I18nService);
+
+  /** Manager+ can create/edit/delete categories and items; staff keeps only the
+   * availability toggle per row (RESTAURANT-RBAC-PLAN.md). */
+  protected canManage(): boolean {
+    return hasRole(this.api.currentUser()?.role, 'manager');
+  }
+
   protected checkingMode = signal(true);
   protected menuMode = signal<'shared' | 'independent'>('independent');
   protected categories = signal<MenuCategoryDto[]>([]);

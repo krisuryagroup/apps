@@ -4,6 +4,9 @@ export * from './api';
 // Shared KYC document types (AdminApiService document review, BusinessApiService upload)
 export * from './business-document.model';
 
+// Centralized zitro-restaurant role-based access control (RESTAURANT-RBAC-PLAN.md)
+export * from './restaurant-permissions.config';
+
 // Centralized per-app backend API path builders
 export * from './endpoints';
 

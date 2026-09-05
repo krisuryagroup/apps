@@ -9,7 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
-import { BusinessApiService, StaffDto } from '@zitro/services';
+import { BusinessApiService, StaffDto, hasRole } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
 import { PolygonMapPickerComponent } from '@zitro/ui';
 
@@ -43,32 +43,34 @@ import { PolygonMapPickerComponent } from '@zitro/ui';
               <td>{{ s.role }}</td>
               <td>{{ s.isActive ? '✓' : '✗' }}</td>
               <td class="row-actions">
-                <button class="btn btn-sm btn-outline" (click)="openEdit(s)">
-                  {{ 'common.edit' | i18n }}
-                </button>
-                <button
-                  class="btn btn-sm btn-outline"
-                  (click)="toggleActive(s)"
-                >
-                  {{
-                    s.isActive
-                      ? ('admins.deactivate' | i18n)
-                      : ('admins.activate' | i18n)
-                  }}
-                </button>
-                <button
-                  class="btn btn-sm btn-outline"
-                  (click)="openResetPassword(s)"
-                >
-                  {{ 'admins.resetPassword' | i18n }}
-                </button>
-                <button
-                  class="btn btn-sm btn-danger"
-                  data-testid="staff-delete-btn"
-                  (click)="requestDelete(s)"
-                >
-                  {{ 'common.delete' | i18n }}
-                </button>
+                @if (canManageRow(s)) {
+                  <button class="btn btn-sm btn-outline" (click)="openEdit(s)">
+                    {{ 'common.edit' | i18n }}
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline"
+                    (click)="toggleActive(s)"
+                  >
+                    {{
+                      s.isActive
+                        ? ('admins.deactivate' | i18n)
+                        : ('admins.activate' | i18n)
+                    }}
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline"
+                    (click)="openResetPassword(s)"
+                  >
+                    {{ 'admins.resetPassword' | i18n }}
+                  </button>
+                  <button
+                    class="btn btn-sm btn-danger"
+                    data-testid="staff-delete-btn"
+                    (click)="requestDelete(s)"
+                  >
+                    {{ 'common.delete' | i18n }}
+                  </button>
+                }
               </td>
             </tr>
           } @empty {
@@ -123,8 +125,10 @@ import { PolygonMapPickerComponent } from '@zitro/ui';
             }
             <label for="staff-role" class="form-label">Role</label>
             <select id="staff-role" class="select" [(ngModel)]="f.role">
-              <option value="owner">owner</option>
-              <option value="manager">manager</option>
+              @if (isOwner()) {
+                <option value="owner">owner</option>
+                <option value="manager">manager</option>
+              }
               <option value="staff">staff</option>
             </select>
           </div>
@@ -208,6 +212,18 @@ import { PolygonMapPickerComponent } from '@zitro/ui';
 })
 export class RestaurantStaffComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+
+  /** Only an owner can grant owner/manager roles or touch an owner/peer-manager row —
+   * mirrors the backend's RestrictManagerRoleAssignment/RestrictToStaffTargets checks
+   * (RESTAURANT-RBAC-PLAN.md). A manager can fully manage staff-role rows only. */
+  protected isOwner(): boolean {
+    return this.api.currentUser()?.role === 'owner';
+  }
+
+  protected canManageRow(target: StaffDto): boolean {
+    return this.isOwner() || target.role === 'staff';
+  }
+
   protected staff = signal<StaffDto[]>([]);
   protected loading = signal(true);
   protected showForm = signal(false);
@@ -369,13 +385,15 @@ import {
               </td>
               <td>{{ item.lowStockThreshold }}</td>
               <td>
-                <button
-                  class="btn btn-sm btn-outline"
-                  data-testid="inventory-adjust-btn"
-                  (click)="openAdjust(item)"
-                >
-                  Adjust
-                </button>
+                @if (canAdjust()) {
+                  <button
+                    class="btn btn-sm btn-outline"
+                    data-testid="inventory-adjust-btn"
+                    (click)="openAdjust(item)"
+                  >
+                    Adjust
+                  </button>
+                }
               </td>
             </tr>
           }
@@ -462,6 +480,12 @@ import {
 })
 export class RestaurantInventoryComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+
+  /** Manager+ only — see RESTAURANT-RBAC-PLAN.md. */
+  protected canAdjust(): boolean {
+    return hasRole(this.api.currentUser()?.role, 'manager');
+  }
+
   protected inventory = signal<InventoryItemDto[]>([]);
   protected alerts = signal<InventoryAlertDto[]>([]);
   protected loading = signal(true);
@@ -540,7 +564,7 @@ export class RestaurantInventoryComponent implements OnInit {
             }
             @if (r.replyText) {
               <div class="rating-reply">📩 {{ r.replyText }}</div>
-            } @else {
+            } @else if (canReply()) {
               <div class="reply-form">
                 <input
                   class="input"
@@ -609,6 +633,12 @@ export class RestaurantInventoryComponent implements OnInit {
 })
 export class RestaurantRatingsComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
+
+  /** Manager+ only — see RESTAURANT-RBAC-PLAN.md. */
+  protected canReply(): boolean {
+    return hasRole(this.api.currentUser()?.role, 'manager');
+  }
+
   protected ratings = signal<RatingDto[]>([]);
   protected loading = signal(true);
   protected replies: Record<string, string> = {};

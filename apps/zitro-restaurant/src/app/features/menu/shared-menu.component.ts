@@ -6,7 +6,11 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BusinessApiService, BrandMasterProductDto } from '@zitro/services';
+import {
+  BusinessApiService,
+  BrandMasterProductDto,
+  hasRole,
+} from '@zitro/services';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 
 /**
@@ -23,14 +27,16 @@ import { I18nPipe, I18nService } from '@zitro/i18n';
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'restaurant.menu' | i18n }}</h1>
-      <button
-        class="btn btn-outline"
-        type="button"
-        data-testid="shared-menu-bulk-adjust-btn"
-        (click)="showBulkAdjust.set(true)"
-      >
-        {{ 'products.bulkPriceAdjust' | i18n }}
-      </button>
+      @if (canManage()) {
+        <button
+          class="btn btn-outline"
+          type="button"
+          data-testid="shared-menu-bulk-adjust-btn"
+          (click)="showBulkAdjust.set(true)"
+        >
+          {{ 'products.bulkPriceAdjust' | i18n }}
+        </button>
+      }
     </div>
     <p class="shared-menu-hint">{{ 'restaurant.sharedMenuHint' | i18n }}</p>
 
@@ -148,43 +154,52 @@ import { I18nPipe, I18nService } from '@zitro/i18n';
             <tr [class.row-hidden]="row.isHidden">
               <td>{{ row.name }}</td>
               <td>₹{{ row.price }}</td>
-              <td>
-                <input
-                  class="input input-sm"
-                  type="number"
-                  [placeholder]="'₹' + row.price"
-                  [(ngModel)]="row.draftPriceOverride"
-                  [attr.data-testid]="'shared-menu-price-' + row.productId"
-                />
-              </td>
-              <td>
-                <input
-                  type="checkbox"
-                  [(ngModel)]="row.draftIsHidden"
-                  [attr.data-testid]="'shared-menu-hidden-' + row.productId"
-                />
-              </td>
-              <td>
-                <input
-                  type="checkbox"
-                  [(ngModel)]="row.draftIsAvailable"
-                  [attr.data-testid]="'shared-menu-available-' + row.productId"
-                />
-              </td>
-              <td>
-                <button
-                  class="btn btn-sm btn-outline"
-                  [disabled]="saving()[row.productId]"
-                  [attr.data-testid]="'shared-menu-save-' + row.productId"
-                  (click)="saveRow(row)"
-                >
-                  {{
-                    saving()[row.productId]
-                      ? ('common.saving' | i18n)
-                      : ('common.save' | i18n)
-                  }}
-                </button>
-              </td>
+              @if (canManage()) {
+                <td>
+                  <input
+                    class="input input-sm"
+                    type="number"
+                    [placeholder]="'₹' + row.price"
+                    [(ngModel)]="row.draftPriceOverride"
+                    [attr.data-testid]="'shared-menu-price-' + row.productId"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="row.draftIsHidden"
+                    [attr.data-testid]="'shared-menu-hidden-' + row.productId"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="row.draftIsAvailable"
+                    [attr.data-testid]="
+                      'shared-menu-available-' + row.productId
+                    "
+                  />
+                </td>
+                <td>
+                  <button
+                    class="btn btn-sm btn-outline"
+                    [disabled]="saving()[row.productId]"
+                    [attr.data-testid]="'shared-menu-save-' + row.productId"
+                    (click)="saveRow(row)"
+                  >
+                    {{
+                      saving()[row.productId]
+                        ? ('common.saving' | i18n)
+                        : ('common.save' | i18n)
+                    }}
+                  </button>
+                </td>
+              } @else {
+                <td>{{ row.priceOverride ? '₹' + row.priceOverride : '—' }}</td>
+                <td>{{ row.isHidden ? '✓' : '—' }}</td>
+                <td>{{ row.isAvailable ? '✓' : '—' }}</td>
+                <td></td>
+              }
             </tr>
           } @empty {
             <tr>
@@ -236,6 +251,13 @@ import { I18nPipe, I18nService } from '@zitro/i18n';
 export class SharedMenuComponent implements OnInit {
   private readonly api = inject(BusinessApiService);
   private readonly i18n = inject(I18nService);
+
+  /** Manager+ only — see RESTAURANT-RBAC-PLAN.md. Unlike the independent-menu screen,
+   * this screen has no separate availability-only toggle (price/hidden/available are
+   * one combined save), so staff gets a read-only table rather than a partial control. */
+  protected canManage(): boolean {
+    return hasRole(this.api.currentUser()?.role, 'manager');
+  }
 
   protected loading = signal(true);
   protected saving = signal<Record<string, boolean>>({});
