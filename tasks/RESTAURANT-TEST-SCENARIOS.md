@@ -164,6 +164,15 @@ for the rest of this working session, not reverted.**
 | Admin login                              | `admin@zitroapp.in`, password reset locally to `AdminTest@2026` (bcrypt hash written directly to `admins.password_hash`)          | Same reset-via-SQL pattern used in `ADMIN-TEST-SCENARIOS.md` — no known password existed for this local DB copy.                                                                                               |
 | Test cover photo / KYC file              | A trivial 1×1 JPEG generated locally (`/tmp/test-cover.jpg`)                                                                      | Uploaded via curl (see below) rather than through the Browser tool's file input, which cannot attach local files — see note under "Testing method" below.                                                      |
 
+**Credentials used this session (local dev DB only — not real/production values):**
+
+| Role                            | Identifier           | Password         | Notes                                                                                                                                                                                                                  |
+| ------------------------------- | -------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Restaurant owner (EFC Pizza)    | `+917890000000`      | `Partner@123`    | Pre-existing test account, unchanged this session (see the 2026-08-19 log above for its original setup).                                                                                                               |
+| Restaurant owner (new test biz) | `+919000022233`      | `TestPass@123`   | Created this session via the real apply-form UI for "Test Cuisine Restaurant 2" — left in place, now approved/active.                                                                                                  |
+| Super admin                     | `admin@zitroapp.in`  | `AdminTest@2026` | **Password reset this session** — bcrypt hash written directly to `admins.password_hash` via `psql` (no prior known password existed for this local DB copy). Same reset-via-SQL pattern as `ADMIN-TEST-SCENARIOS.md`. |
+| OTP dev-bypass code             | _(any phone number)_ | `123456`         | Not a real OTP — `Otp.BypassOtp` from `appsettings.Development.json`, only accepted when `Otp.BypassForDevelopment=true` (local dev only, never production).                                                           |
+
 **Testing method:** most of §2 (apply form incl. OTP) and the commission-accept button (§16)
 were driven through the actual rendered UI via JS-dispatched DOM events (the Browser tool's
 `computer` click/type actions require the pane to be visibly on-screen and repeatedly failed
