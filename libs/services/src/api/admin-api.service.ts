@@ -356,9 +356,13 @@ export class AdminApiService {
     );
   }
 
-  listBusinessUsers(businessId: string): Observable<BusinessUserDto[]> {
+  listBusinessUsers(
+    businessId: string,
+    archived = false,
+  ): Observable<BusinessUserDto[]> {
     return this.http.get<BusinessUserDto[]>(
       `${this.baseUrl}${AdminSuperadminEndpoints.businesses.users(businessId)}`,
+      { params: new HttpParams().set('archived', archived) },
     );
   }
 
@@ -442,9 +446,10 @@ export class AdminApiService {
     );
   }
 
-  getBrandBranches(brandId: string): Observable<BranchDto[]> {
+  getBrandBranches(brandId: string, archived = false): Observable<BranchDto[]> {
     return this.http.get<BranchDto[]>(
       `${this.baseUrl}${AdminSuperadminEndpoints.brands.branches(brandId)}`,
+      { params: new HttpParams().set('archived', archived) },
     );
   }
 
@@ -1040,7 +1045,8 @@ export interface BrandDto {
   description?: string;
   logoUrl?: string;
   isActive: boolean;
-  branchCount?: number;
+  totalBranches: number;
+  activeBranches: number;
 }
 
 export interface BranchDto {

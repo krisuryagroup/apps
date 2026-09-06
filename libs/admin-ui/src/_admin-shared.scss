@@ -6,6 +6,12 @@
   justify-content: space-between;
   margin-bottom: var(--zitro-spacing-xl);
 }
+/** A page whose only "action" is a back button reads better with the back arrow
+ * immediately to the left of the title than pushed to the far right of the page. */
+.page-header--with-back {
+  justify-content: flex-start;
+  gap: var(--zitro-spacing-sm);
+}
 .page-title {
   font-size: var(--zitro-font-size-xl);
   font-weight: 700;
@@ -33,17 +39,29 @@ textarea {
     outline: none;
     border-color: var(--zitro-primary);
   }
+  // Explicit, high-contrast treatment for a read-only/disabled field — the browser
+  // default (a faint opacity dip) wasn't distinct enough from a normal editable
+  // field at a glance, especially side-by-side in a form with a dozen other inputs.
+  &:disabled,
+  &:read-only {
+    background: var(--zitro-surface-variant);
+    color: var(--zitro-on-surface-variant);
+    border-style: dashed;
+    cursor: not-allowed;
+  }
 }
 .input {
   min-width: 200px;
 }
 
 .btn {
+  display: inline-block;
   padding: var(--zitro-spacing-sm) var(--zitro-spacing-lg);
   border: 1px solid transparent;
   border-radius: var(--zitro-radius-md);
   font-size: var(--zitro-font-size-md);
   font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
   &:disabled {
@@ -135,6 +153,7 @@ textarea {
   border-radius: 20px;
   font-size: var(--zitro-font-size-sm);
   font-weight: 500;
+  text-transform: capitalize;
 }
 .badge-pending {
   background: #fff3cd;

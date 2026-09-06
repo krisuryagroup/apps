@@ -1,25 +1,13 @@
 @if (loading()) {
   <p class="loading">{{ 'common.loading' | i18n }}</p>
 } @else if (biz()) {
-  <div class="page-header">
+  <div class="page-header page-header--with-back">
+    <lib-back-button to="/businesses" ariaLabel="Back" />
     <div>
       <h1 class="page-title">{{ biz()!.name }}</h1>
       <span class="badge" [class]="'badge-' + biz()!.onboardingStatus">{{
         biz()!.onboardingStatus
       }}</span>
-    </div>
-    <div class="header-actions">
-      @if (canEdit()) {
-        <a
-          class="btn btn-primary"
-          data-testid="business-edit-link"
-          [routerLink]="['/businesses', biz()!.id, 'edit']"
-          >{{ 'common.edit' | i18n }}</a
-        >
-      }
-      <a class="btn btn-outline" routerLink="/businesses"
-        >← {{ 'common.back' | i18n }}</a
-      >
     </div>
   </div>
 
@@ -108,76 +96,91 @@
 
   @if (activeTab() === 'profile') {
     <div class="detail-section" data-testid="business-detail-profile">
-      <div class="info-row">
-        <span class="info-label">Slug</span
-        ><span class="info-value">{{ biz()!.slug }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Type</span
-        ><span class="info-value">{{ biz()!.businessType }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Town</span
-        ><span class="info-value">{{ biz()!.town }}</span>
-      </div>
-      @if (biz()!.phone) {
+      @if (canEdit()) {
+        <lib-admin-business-edit-form
+          [business]="biz()!"
+          (saved)="biz.set($event)"
+        />
+      } @else {
         <div class="info-row">
-          <span class="info-label">Phone</span
-          ><span class="info-value">{{ biz()!.phone }}</span>
+          <span class="info-label">{{ 'businesses.slug' | i18n }}</span
+          ><span class="info-value">{{ biz()!.slug }}</span>
         </div>
-      }
-      @if (biz()!.fssaiLicenseNumber) {
         <div class="info-row">
-          <span class="info-label">FSSAI</span
-          ><span class="info-value">{{ biz()!.fssaiLicenseNumber }}</span>
+          <span class="info-label">{{ 'businesses.type' | i18n }}</span
+          ><span class="info-value">{{ biz()!.businessType }}</span>
         </div>
-      }
-      @if (biz()!.gstNumber) {
         <div class="info-row">
-          <span class="info-label">GST</span
-          ><span class="info-value">{{ biz()!.gstNumber }}</span>
+          <span class="info-label">{{ 'businesses.town' | i18n }}</span
+          ><span class="info-value">{{ biz()!.town }}</span>
         </div>
-      }
-      @if (biz()!.panNumber) {
-        <div class="info-row">
-          <span class="info-label">PAN</span
-          ><span class="info-value">{{ biz()!.panNumber }}</span>
-        </div>
-      }
-      @if (biz()!.commissionPercentage !== undefined) {
-        <div class="info-row">
-          <span class="info-label">Commission</span
-          ><span class="info-value"
-            >{{ biz()!.commissionPercentage }}%
-            @if (biz()!.commissionAcceptedAt) {
-              <span class="doc-badge doc-badge--verified">accepted</span>
-            } @else {
-              <span class="doc-badge doc-badge--missing">not accepted</span>
-            }
-          </span>
-        </div>
-      }
-      @if (biz()!.restaurantCategory) {
-        <div class="info-row">
-          <span class="info-label">Category</span
-          ><span class="info-value">{{ biz()!.restaurantCategory }}</span>
-        </div>
-      }
-      @if (biz()!.cuisineTypes?.length) {
-        <div class="info-row">
-          <span class="info-label">Cuisines</span
-          ><span class="info-value">{{ biz()!.cuisineTypes!.join(', ') }}</span>
-        </div>
-      }
-      @if (biz()!.coverImageUrl) {
-        <div class="info-row">
-          <span class="info-label">Cover photo</span>
-          <img
-            class="cover-preview"
-            [src]="biz()!.coverImageUrl"
-            alt="Cover photo"
-          />
-        </div>
+        @if (biz()!.phone) {
+          <div class="info-row">
+            <span class="info-label">{{ 'businesses.phone' | i18n }}</span
+            ><span class="info-value">{{ biz()!.phone }}</span>
+          </div>
+        }
+        @if (biz()!.fssaiLicenseNumber) {
+          <div class="info-row">
+            <span class="info-label">{{ 'businesses.fssai' | i18n }}</span
+            ><span class="info-value">{{ biz()!.fssaiLicenseNumber }}</span>
+          </div>
+        }
+        @if (biz()!.gstNumber) {
+          <div class="info-row">
+            <span class="info-label">{{ 'businesses.gst' | i18n }}</span
+            ><span class="info-value">{{ biz()!.gstNumber }}</span>
+          </div>
+        }
+        @if (biz()!.panNumber) {
+          <div class="info-row">
+            <span class="info-label">{{ 'businesses.pan' | i18n }}</span
+            ><span class="info-value">{{ biz()!.panNumber }}</span>
+          </div>
+        }
+        @if (biz()!.commissionPercentage !== undefined) {
+          <div class="info-row">
+            <span class="info-label">{{
+              'businesses.commissionRate' | i18n
+            }}</span
+            ><span class="info-value"
+              >{{ biz()!.commissionPercentage }}%
+              @if (biz()!.commissionAcceptedAt) {
+                <span class="doc-badge doc-badge--verified">{{
+                  'businesses.commissionAccepted' | i18n
+                }}</span>
+              } @else {
+                <span class="doc-badge doc-badge--missing">{{
+                  'businesses.commissionNotAccepted' | i18n
+                }}</span>
+              }
+            </span>
+          </div>
+        }
+        @if (biz()!.restaurantCategory) {
+          <div class="info-row">
+            <span class="info-label">Category</span
+            ><span class="info-value">{{ biz()!.restaurantCategory }}</span>
+          </div>
+        }
+        @if (biz()!.cuisineTypes?.length) {
+          <div class="info-row">
+            <span class="info-label">Cuisines</span
+            ><span class="info-value">{{
+              biz()!.cuisineTypes!.join(', ')
+            }}</span>
+          </div>
+        }
+        @if (biz()!.coverImageUrl) {
+          <div class="info-row">
+            <span class="info-label">{{ 'businesses.coverPhoto' | i18n }}</span>
+            <img
+              class="cover-preview"
+              [src]="biz()!.coverImageUrl"
+              alt="Cover photo"
+            />
+          </div>
+        }
       }
     </div>
   }
@@ -189,19 +192,16 @@
           <div class="doc-info">
             <span class="doc-label">{{ documentLabel(type) }}</span>
             @if (docFor(type); as doc) {
+              <lib-document-viewer
+                [url]="doc.url"
+                [label]="documentLabel(type)"
+              />
               <span class="doc-badge" [class]="'doc-badge--' + doc.status">{{
                 doc.status
               }}</span>
               @if (doc.status === 'rejected' && doc.rejectionReason) {
                 <span class="error-text">{{ doc.rejectionReason }}</span>
               }
-              <a
-                [href]="doc.url"
-                target="_blank"
-                rel="noopener"
-                class="btn btn-sm btn-outline"
-                >View</a
-              >
               @if (doc.status !== 'verified') {
                 <button
                   class="btn btn-sm btn-primary"
@@ -233,15 +233,35 @@
 
   @if (activeTab() === 'users') {
     <div class="detail-section" data-testid="business-detail-users">
-      <div class="section-actions">
+      <div class="tabs">
         <button
-          class="btn btn-primary btn-sm"
-          data-testid="business-user-add-btn"
-          (click)="openAddUser()"
+          class="tab"
+          [class.active]="usersViewMode() === 'active'"
+          data-testid="users-view-active-tab"
+          (click)="setUsersViewMode('active')"
         >
-          + {{ 'businesses.addUser' | i18n }}
+          {{ 'common.active' | i18n }}
+        </button>
+        <button
+          class="tab"
+          [class.active]="usersViewMode() === 'archived'"
+          data-testid="users-view-archived-tab"
+          (click)="setUsersViewMode('archived')"
+        >
+          {{ 'common.archived' | i18n }}
         </button>
       </div>
+      @if (usersViewMode() === 'active') {
+        <div class="section-actions">
+          <button
+            class="btn btn-primary btn-sm"
+            data-testid="business-user-add-btn"
+            (click)="openAddUser()"
+          >
+            + {{ 'businesses.addUser' | i18n }}
+          </button>
+        </div>
+      }
       <lib-data-table
         [columns]="userColumns"
         [rows]="users() ?? []"
@@ -249,20 +269,24 @@
         [error]="usersError()"
       >
         <ng-template #rowActions let-row>
-          <button
-            class="btn btn-sm btn-outline"
-            data-testid="business-user-edit-btn"
-            (click)="openEditUser(row)"
-          >
-            {{ 'common.edit' | i18n }}
-          </button>
-          <button
-            class="btn btn-sm btn-danger"
-            data-testid="business-user-delete-btn"
-            (click)="requestDeleteUser(row)"
-          >
-            {{ 'common.delete' | i18n }}
-          </button>
+          @if (usersViewMode() === 'active') {
+            <button
+              class="btn btn-sm btn-outline"
+              data-testid="business-user-edit-btn"
+              (click)="openEditUser(row)"
+            >
+              {{ 'common.edit' | i18n }}
+            </button>
+            <button
+              class="btn btn-sm btn-danger"
+              data-testid="business-user-delete-btn"
+              (click)="requestDeleteUser(row)"
+            >
+              {{ 'common.delete' | i18n }}
+            </button>
+          } @else {
+            <span class="empty">{{ 'common.archived' | i18n }}</span>
+          }
         </ng-template>
       </lib-data-table>
       @if (deleteUserError()) {

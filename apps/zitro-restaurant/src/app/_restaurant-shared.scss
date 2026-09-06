@@ -5,6 +5,12 @@
   justify-content: space-between;
   margin-bottom: var(--zitro-spacing-xl);
 }
+/** A page whose only "action" is a back button reads better with the back arrow
+ * immediately to the left of the title than pushed to the far right of the page. */
+.page-header--with-back {
+  justify-content: flex-start;
+  gap: var(--zitro-spacing-sm);
+}
 .page-title {
   font-size: var(--zitro-font-size-xl);
   font-weight: 700;

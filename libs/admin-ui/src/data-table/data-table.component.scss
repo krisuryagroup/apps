@@ -58,8 +58,11 @@
   }
 
   &__actions {
-    text-align: right;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--zitro-spacing-xs);
   }
 
   &__expanded {

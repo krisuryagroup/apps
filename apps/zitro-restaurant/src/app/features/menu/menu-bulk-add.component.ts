@@ -7,10 +7,10 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { BusinessApiService, MenuCategoryDto } from '@zitro/services';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 import {
+  BackButtonComponent,
   ExcelGridColumn,
   ExcelGridComponent,
   ExcelGridRowStatus,
@@ -43,7 +43,7 @@ const INITIAL_ROW_COUNT = 5;
 @Component({
   selector: 'app-restaurant-menu-bulk-add',
   standalone: true,
-  imports: [FormsModule, RouterLink, I18nPipe, ExcelGridComponent],
+  imports: [FormsModule, BackButtonComponent, I18nPipe, ExcelGridComponent],
   templateUrl: './menu-bulk-add.component.html',
   styleUrl: './menu-bulk-add.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

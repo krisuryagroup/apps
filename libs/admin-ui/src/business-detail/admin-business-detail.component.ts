@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AdminApiService,
@@ -19,14 +19,17 @@ import {
 } from '@zitro/services';
 import { I18nPipe, I18nService } from '@zitro/i18n';
 import {
+  BackButtonComponent,
   ConfirmationDialogComponent,
   ConfirmationDialogConfig,
+  DocumentViewerComponent,
 } from '@zitro/ui';
 import {
   DataTableComponent,
   DataTableColumn,
   DataTablePagination,
 } from '../data-table/data-table.component';
+import { AdminBusinessEditFormComponent } from '../business-edit/admin-business-edit-form.component';
 
 type Tab = 'profile' | 'users' | 'orders' | 'documents';
 
@@ -48,10 +51,12 @@ const DOCUMENT_LABELS: Record<BusinessDocumentType, string> = {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     I18nPipe,
     DataTableComponent,
     ConfirmationDialogComponent,
+    AdminBusinessEditFormComponent,
+    BackButtonComponent,
+    DocumentViewerComponent,
   ],
   templateUrl: './admin-business-detail.component.html',
   styleUrl: './admin-business-detail.component.scss',
@@ -77,6 +82,13 @@ export class AdminBusinessDetailComponent implements OnInit {
   protected usersLoading = signal(false);
   protected usersError = signal(false);
   protected users = signal<BusinessUserDto[] | null>(null);
+  protected usersViewMode = signal<'active' | 'archived'>('active');
+
+  protected setUsersViewMode(mode: 'active' | 'archived'): void {
+    if (this.usersViewMode() === mode) return;
+    this.usersViewMode.set(mode);
+    this.loadUsers();
+  }
   protected readonly userColumns: DataTableColumn<BusinessUserDto>[] = [
     { key: 'name', labelKey: 'businesses.userName' },
     { key: 'phoneNumber', labelKey: 'businesses.userPhone' },
@@ -202,16 +214,18 @@ export class AdminBusinessDetailComponent implements OnInit {
     if (!id) return;
     this.usersLoading.set(true);
     this.usersError.set(false);
-    this.api.listBusinessUsers(id).subscribe({
-      next: (u) => {
-        this.users.set(u);
-        this.usersLoading.set(false);
-      },
-      error: () => {
-        this.usersLoading.set(false);
-        this.usersError.set(true);
-      },
-    });
+    this.api
+      .listBusinessUsers(id, this.usersViewMode() === 'archived')
+      .subscribe({
+        next: (u) => {
+          this.users.set(u);
+          this.usersLoading.set(false);
+        },
+        error: () => {
+          this.usersLoading.set(false);
+          this.usersError.set(true);
+        },
+      });
   }
 
   // ── Add / edit business user ─────────────────────────────────────────────

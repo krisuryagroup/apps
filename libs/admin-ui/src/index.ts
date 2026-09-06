@@ -1,4 +1,5 @@
 export * from './stat-card/stat-card.component';
+export * from './toggle-switch/toggle-switch.component';
 export * from './sidebar-nav/sidebar-nav.component';
 export * from './data-table/data-table.component';
 export * from './form-field/form-field.component';
@@ -7,6 +8,7 @@ export * from './dashboard/admin-dashboard.component';
 export * from './businesses/admin-businesses.component';
 export * from './business-detail/admin-business-detail.component';
 export * from './business-edit/admin-business-edit.component';
+export * from './business-edit/admin-business-edit-form.component';
 export * from './brands/admin-brands.component';
 export * from './tags/admin-tags.component';
 export * from './products/admin-products.component';

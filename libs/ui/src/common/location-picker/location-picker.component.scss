@@ -65,7 +65,25 @@
 }
 
 .current-location-btn {
+  display: inline-block;
   margin-bottom: var(--zitro-spacing-xs);
+  padding: var(--zitro-spacing-xs) var(--zitro-spacing-md);
+  border: 1px solid var(--zitro-primary);
+  border-radius: var(--zitro-radius-md);
+  background: transparent;
+  color: var(--zitro-primary);
+  font-size: var(--zitro-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--zitro-primary) 8%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .location-error {

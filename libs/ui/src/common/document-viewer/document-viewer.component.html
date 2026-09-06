@@ -1,0 +1,64 @@
+@if (url(); as docUrl) {
+  <button
+    type="button"
+    class="doc-viewer-thumb"
+    data-testid="document-viewer-thumb"
+    (click)="open()"
+    [attr.aria-label]="label()"
+  >
+    @if (isPdf()) {
+      <span class="doc-viewer-thumb__pdf" aria-hidden="true">PDF</span>
+    } @else {
+      <img [src]="docUrl" [alt]="label()" />
+    }
+  </button>
+} @else {
+  <span class="doc-viewer-empty" data-testid="document-viewer-empty">{{
+    'documentViewer.notUploaded' | i18n
+  }}</span>
+}
+
+@if (isOpen()) {
+  <div
+    class="doc-viewer-overlay"
+    data-testid="document-viewer-overlay"
+    (click)="close()"
+  >
+    <div class="doc-viewer-modal" (click)="$event.stopPropagation()">
+      <div class="doc-viewer-modal__header">
+        <span class="doc-viewer-modal__title">{{ label() }}</span>
+        <div class="doc-viewer-modal__actions">
+          <a
+            [href]="url()"
+            target="_blank"
+            rel="noopener"
+            class="doc-viewer-modal__link"
+            data-testid="document-viewer-open-new-window"
+          >
+            {{ 'documentViewer.openInNewWindow' | i18n }}
+          </a>
+          <button
+            type="button"
+            class="doc-viewer-modal__close"
+            data-testid="document-viewer-close"
+            aria-label="Close"
+            (click)="close()"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      <div class="doc-viewer-modal__body">
+        @if (isPdf()) {
+          <iframe
+            [src]="safeUrl()"
+            class="doc-viewer-modal__pdf"
+            title="Document preview"
+          ></iframe>
+        } @else if (url(); as docUrl) {
+          <lib-zoomable-image [src]="docUrl" [config]="zoomConfig" />
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -25,6 +25,7 @@ import {
   DataTableColumn,
   DataTablePagination,
 } from '../data-table/data-table.component';
+import { ToggleSwitchComponent } from '../toggle-switch/toggle-switch.component';
 
 @Component({
   selector: 'lib-admin-brands',
@@ -35,16 +36,37 @@ import {
     I18nPipe,
     DataTableComponent,
     ConfirmationDialogComponent,
+    ToggleSwitchComponent,
   ],
   template: `
     <div class="page-header">
       <h1 class="page-title">{{ 'nav.brands' | i18n }}</h1>
+      @if (viewMode() === 'active') {
+        <button
+          class="btn btn-primary"
+          data-testid="brand-add-btn"
+          (click)="openCreate()"
+        >
+          + {{ 'brands.add' | i18n }}
+        </button>
+      }
+    </div>
+    <div class="tabs">
       <button
-        class="btn btn-primary"
-        data-testid="brand-add-btn"
-        (click)="openCreate()"
+        class="tab"
+        [class.active]="viewMode() === 'active'"
+        data-testid="brand-view-active-tab"
+        (click)="setViewMode('active')"
       >
-        + {{ 'brands.add' | i18n }}
+        {{ 'common.active' | i18n }}
+      </button>
+      <button
+        class="tab"
+        [class.active]="viewMode() === 'archived'"
+        data-testid="brand-view-archived-tab"
+        (click)="setViewMode('archived')"
+      >
+        {{ 'common.archived' | i18n }}
       </button>
     </div>
     <lib-data-table
@@ -58,52 +80,74 @@ import {
       (pageChange)="onPageChange($event)"
     >
       <ng-template #rowActions let-row>
-        <button
-          class="btn btn-sm btn-outline"
-          data-testid="brand-view-branches-btn"
-          (click)="toggleBranches(row)"
-        >
-          {{
-            expandedBrandId() === row.id
-              ? ('brands.hideBranches' | i18n)
-              : ('brands.viewBranches' | i18n)
-          }}
-        </button>
-        <button
-          class="btn btn-sm btn-outline"
-          data-testid="brand-add-branch-btn"
-          (click)="addBranch(row)"
-        >
-          {{ 'brands.addBranch' | i18n }}
-        </button>
-        <button
-          class="btn btn-sm btn-outline"
-          data-testid="brand-link-branch-btn"
-          (click)="openLinkPicker(row)"
-        >
-          {{ 'brands.linkExisting' | i18n }}
-        </button>
-        <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
-          {{ 'common.edit' | i18n }}
-        </button>
-        <button
-          class="btn btn-sm btn-outline"
-          data-testid="brand-toggle-active-btn"
-          [disabled]="togglingBrand()[row.id]"
-          (click)="toggleBrandActive(row)"
-        >
-          {{
-            row.isActive
-              ? ('businesses.deactivate' | i18n)
-              : ('businesses.activate' | i18n)
-          }}
-        </button>
-        <button class="btn btn-sm btn-danger" (click)="requestRemove(row)">
-          {{ 'common.delete' | i18n }}
-        </button>
+        @if (viewMode() === 'active') {
+          <lib-toggle-switch
+            data-testid="brand-toggle-active-btn"
+            [checked]="row.isActive"
+            [disabled]="togglingBrand()[row.id]"
+            [ariaLabel]="
+              row.isActive
+                ? i18n.translate('businesses.deactivate')
+                : i18n.translate('businesses.activate')
+            "
+            (toggled)="toggleBrandActive(row)"
+          />
+          <button
+            class="btn btn-sm btn-outline"
+            data-testid="brand-view-branches-btn"
+            (click)="toggleBranches(row)"
+          >
+            {{
+              expandedBrandId() === row.id
+                ? ('brands.hideBranches' | i18n)
+                : ('brands.viewBranches' | i18n)
+            }}
+            {{ branchCountLabel(row) }}
+          </button>
+          <button
+            class="btn btn-sm btn-outline"
+            data-testid="brand-add-branch-btn"
+            (click)="addBranch(row)"
+          >
+            {{ 'brands.addBranch' | i18n }}
+          </button>
+          <button
+            class="btn btn-sm btn-outline"
+            data-testid="brand-link-branch-btn"
+            (click)="openLinkPicker(row)"
+          >
+            {{ 'brands.linkExisting' | i18n }}
+          </button>
+          <button class="btn btn-sm btn-outline" (click)="openEdit(row)">
+            {{ 'common.edit' | i18n }}
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="requestRemove(row)">
+            {{ 'common.delete' | i18n }}
+          </button>
+        } @else {
+          <span class="empty">{{ 'common.archived' | i18n }}</span>
+        }
       </ng-template>
       <ng-template #expandedRow let-row>
         <div data-testid="brand-branches-panel">
+          <div class="tabs branches-tabs">
+            <button
+              class="tab"
+              [class.active]="branchViewMode()[row.id] !== 'archived'"
+              data-testid="branch-view-active-tab"
+              (click)="setBranchViewMode(row.id, 'active')"
+            >
+              {{ 'common.active' | i18n }}
+            </button>
+            <button
+              class="tab"
+              [class.active]="branchViewMode()[row.id] === 'archived'"
+              data-testid="branch-view-archived-tab"
+              (click)="setBranchViewMode(row.id, 'archived')"
+            >
+              {{ 'common.archived' | i18n }}
+            </button>
+          </div>
           @if (branchesLoading()[row.id]) {
             <p class="loading">{{ 'common.loading' | i18n }}</p>
           } @else if ((branchesByBrand()[row.id] ?? []).length === 0) {
@@ -124,44 +168,64 @@ import {
                   <tr>
                     <td>{{ branch.name }}</td>
                     <td>{{ branch.town }}</td>
-                    <td>{{ branch.isActive ? '✓' : '✗' }}</td>
-                    <td>{{ branch.menuMode }}</td>
-                    <td class="branch-actions">
-                      @if (branch.menuMode === 'independent') {
-                        <button
-                          class="btn btn-sm btn-outline"
-                          data-testid="branch-promote-btn"
-                          [disabled]="promoting()[branch.id]"
-                          (click)="requestPromote(branch)"
-                        >
-                          {{ 'brands.promote' | i18n }}
-                        </button>
+                    <td>
+                      @if (branchViewMode()[row.id] !== 'archived') {
+                        <lib-toggle-switch
+                          data-testid="branch-toggle-active-btn"
+                          [checked]="branch.isActive"
+                          [disabled]="togglingBranch()[branch.id]"
+                          [ariaLabel]="
+                            branch.isActive
+                              ? i18n.translate('businesses.deactivate')
+                              : i18n.translate('businesses.activate')
+                          "
+                          (toggled)="toggleBranchActive(row.id, branch)"
+                        />
+                      } @else {
+                        <span class="empty">{{
+                          'common.archived' | i18n
+                        }}</span>
                       }
-                      <a
-                        class="btn btn-sm btn-outline"
-                        [routerLink]="['/businesses', branch.id, 'edit']"
+                    </td>
+                    <td>
+                      <span
+                        class="menu-mode-badge"
+                        [class.menu-mode-badge--shared]="
+                          branch.menuMode === 'shared'
+                        "
+                        >{{ branch.menuMode }}</span
                       >
-                        {{ 'common.edit' | i18n }}
-                      </a>
-                      <button
-                        class="btn btn-sm btn-outline"
-                        data-testid="branch-toggle-active-btn"
-                        [disabled]="togglingBranch()[branch.id]"
-                        (click)="toggleBranchActive(row.id, branch)"
-                      >
-                        {{
-                          branch.isActive
-                            ? ('businesses.deactivate' | i18n)
-                            : ('businesses.activate' | i18n)
-                        }}
-                      </button>
-                      <button
-                        class="btn btn-sm btn-danger"
-                        data-testid="branch-delete-btn"
-                        (click)="requestRemoveBranch(row.id, branch)"
-                      >
-                        {{ 'common.delete' | i18n }}
-                      </button>
+                    </td>
+                    <td class="branch-actions">
+                      @if (branchViewMode()[row.id] !== 'archived') {
+                        @if (branch.menuMode === 'independent') {
+                          <button
+                            class="btn btn-sm btn-outline"
+                            data-testid="branch-promote-btn"
+                            [disabled]="promoting()[branch.id]"
+                            (click)="requestPromote(branch)"
+                          >
+                            {{ 'brands.promote' | i18n }}
+                          </button>
+                        }
+                        <a
+                          class="btn btn-sm btn-outline"
+                          [routerLink]="['/businesses', branch.id, 'edit']"
+                        >
+                          {{ 'common.edit' | i18n }}
+                        </a>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          data-testid="branch-delete-btn"
+                          (click)="requestRemoveBranch(row.id, branch)"
+                        >
+                          {{ 'common.delete' | i18n }}
+                        </button>
+                      } @else {
+                        <span class="empty">{{
+                          'common.archived' | i18n
+                        }}</span>
+                      }
                     </td>
                   </tr>
                 }
@@ -311,6 +375,25 @@ import {
         gap: var(--zitro-spacing-xs);
         flex-wrap: wrap;
       }
+
+      .menu-mode-badge {
+        display: inline-block;
+        padding: 2px var(--zitro-spacing-xs);
+        border-radius: var(--zitro-radius-sm);
+        font-size: var(--zitro-font-size-sm);
+        background: var(--zitro-surface-variant);
+        color: var(--zitro-on-surface-variant);
+        text-transform: capitalize;
+
+        &--shared {
+          background: color-mix(in srgb, var(--zitro-primary) 15%, transparent);
+          color: var(--zitro-primary);
+        }
+      }
+
+      .branches-tabs {
+        margin-bottom: var(--zitro-spacing-sm);
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -325,6 +408,15 @@ export class AdminBrandsComponent implements OnInit {
   protected page = signal(1);
   protected readonly pageSize = 20;
   protected showForm = signal(false);
+  protected viewMode = signal<'active' | 'archived'>('active');
+
+  protected setViewMode(mode: 'active' | 'archived'): void {
+    if (this.viewMode() === mode) return;
+    this.viewMode.set(mode);
+    this.page.set(1);
+    this.expandedBrandId.set(null);
+    this.fetch();
+  }
 
   protected pagination = computed<DataTablePagination | null>(() => {
     const r = this.result();
@@ -343,10 +435,25 @@ export class AdminBrandsComponent implements OnInit {
     {},
   );
   protected branchesLoading = signal<Record<string, boolean>>({});
+  protected branchViewMode = signal<Record<string, 'active' | 'archived'>>({});
 
   /** Arrow field (not a method) so `this` stays bound when passed as [isRowExpanded]. */
   protected isBrandExpanded = (row: BrandDto): boolean =>
     row.id === this.expandedBrandId();
+
+  /** Active(total) branch count for the "View Branches" button. Prefers the live
+   * branches list (loaded once the row has ever been expanded, and re-fetched after
+   * every branch mutation) over the brand list's own snapshot — the snapshot only
+   * reflects counts as of the last full brand-list fetch, so relying on it after a
+   * branch toggle/delete/link would drift from the real, current state. */
+  protected branchCountLabel(brand: BrandDto): string {
+    const branches = this.branchesByBrand()[brand.id];
+    if (branches) {
+      const active = branches.filter((b) => b.isActive).length;
+      return `${active}(${branches.length})`;
+    }
+    return `${brand.activeBranches}(${brand.totalBranches})`;
+  }
 
   protected readonly columns: DataTableColumn<BrandDto>[] = [
     { key: 'name', labelKey: 'brands.name' },
@@ -354,11 +461,6 @@ export class AdminBrandsComponent implements OnInit {
       key: 'description',
       labelKey: 'brands.description',
       format: (r) => r.description ?? '—',
-    },
-    {
-      key: 'isActive',
-      labelKey: 'businesses.active',
-      format: (r) => (r.isActive ? '✓' : '✗'),
     },
   ];
 
@@ -378,6 +480,7 @@ export class AdminBrandsComponent implements OnInit {
       .listBrands({
         page: String(this.page()),
         pageSize: String(this.pageSize),
+        archived: this.viewMode() === 'archived' ? 'true' : '',
       })
       .subscribe({
         next: (res) => {
@@ -415,9 +518,19 @@ export class AdminBrandsComponent implements OnInit {
     this.loadBranches(brand.id);
   }
 
+  protected setBranchViewMode(
+    brandId: string,
+    mode: 'active' | 'archived',
+  ): void {
+    if ((this.branchViewMode()[brandId] ?? 'active') === mode) return;
+    this.branchViewMode.update((m) => ({ ...m, [brandId]: mode }));
+    this.loadBranches(brandId);
+  }
+
   private loadBranches(brandId: string): void {
+    const archived = this.branchViewMode()[brandId] === 'archived';
     this.branchesLoading.update((m) => ({ ...m, [brandId]: true }));
-    this.api.getBrandBranches(brandId).subscribe({
+    this.api.getBrandBranches(brandId, archived).subscribe({
       next: (branches) => {
         this.branchesByBrand.update((m) => ({ ...m, [brandId]: branches }));
         this.branchesLoading.update((m) => ({ ...m, [brandId]: false }));

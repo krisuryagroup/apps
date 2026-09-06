@@ -16,6 +16,8 @@ export type { SplashScreenConfig } from './common/splash-screen/splash-screen.co
 export { CachedImageDirective } from './directives/cached-image.directive';
 
 // Common (T013)
+export * from './common/back-button/back-button.component';
+export * from './common/document-viewer/document-viewer.component';
 export * from './common/truncated-text/truncated-text.component';
 export * from './common/zoomable-image/zoomable-image.component';
 export * from './common/confirmation-dialog/confirmation-dialog.component';

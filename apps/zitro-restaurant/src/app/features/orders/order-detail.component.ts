@@ -5,19 +5,20 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { BusinessApiService, BusinessOrderDetailDto } from '@zitro/services';
 import { I18nPipe } from '@zitro/i18n';
+import { BackButtonComponent } from '@zitro/ui';
 
 @Component({
   selector: 'app-restaurant-order-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, I18nPipe],
+  imports: [BackButtonComponent, DatePipe, I18nPipe],
   template: `
-    <div class="page-header">
+    <div class="page-header page-header--with-back">
+      <lib-back-button to="/orders" ariaLabel="Back to orders" />
       <h1 class="page-title">{{ order()?.orderId ?? '' }}</h1>
-      <a class="btn btn-outline" routerLink="/orders">← Orders</a>
     </div>
     @if (loading()) {
       <p class="loading">{{ 'common.loading' | i18n }}</p>
