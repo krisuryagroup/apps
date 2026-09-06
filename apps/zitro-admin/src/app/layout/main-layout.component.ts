@@ -8,22 +8,93 @@ import { Router, RouterOutlet } from '@angular/router';
 import { SidebarNavComponent, SidebarNavItem } from '@zitro/admin-ui';
 import { AdminApiService, AdminAuthTokenService } from '@zitro/services';
 
+// Permission tags mirror the backend gating added for the admin/superadmin RBAC audit
+// (RequirePermissionAttribute + AdminRolePermissions.cs) — every domain below now has a
+// real permission check server-side, so the nav should hide what a role can't use rather
+// than showing a link that 403s. Dashboard/Orders(view-only via search)/My Profile have
+// no backend gate (dashboard is intentionally open — see AdminDashboardController's own
+// doc comment; my-profile is self-service) so they carry no permission tag.
 const NAV_ITEMS: SidebarNavItem[] = [
   { labelKey: 'nav.dashboard', icon: '📊', route: '/dashboard' },
-  { labelKey: 'nav.businesses', icon: '🏬', route: '/businesses' },
-  { labelKey: 'nav.brands', icon: '🏷️', route: '/brands' },
-  { labelKey: 'nav.tags', icon: '🔖', route: '/tags' },
-  { labelKey: 'nav.products', icon: '🍔', route: '/products' },
-  { labelKey: 'nav.categories', icon: '📁', route: '/categories' },
-  { labelKey: 'nav.orders', icon: '🧾', route: '/orders' },
-  { labelKey: 'nav.users', icon: '👤', route: '/users' },
-  { labelKey: 'nav.coupons', icon: '🎟️', route: '/coupons' },
-  { labelKey: 'nav.cashback', icon: '💰', route: '/cashback-rules' },
-  { labelKey: 'nav.delivery', icon: '🛵', route: '/delivery-partners' },
-  { labelKey: 'nav.deliveryZones', icon: '🗺️', route: '/delivery-zones' },
-  { labelKey: 'nav.payouts', icon: '💸', route: '/payouts' },
-  { labelKey: 'nav.subscriptions', icon: '⭐', route: '/subscriptions' },
-  { labelKey: 'nav.banners', icon: '🖼️', route: '/banners' },
+  {
+    labelKey: 'nav.businesses',
+    icon: '🏬',
+    route: '/businesses',
+    permission: 'businesses:read',
+  },
+  {
+    labelKey: 'nav.brands',
+    icon: '🏷️',
+    route: '/brands',
+    permission: 'brands:read',
+  },
+  { labelKey: 'nav.tags', icon: '🔖', route: '/tags', permission: 'tags:read' },
+  {
+    labelKey: 'nav.products',
+    icon: '🍔',
+    route: '/products',
+    permission: 'products:read',
+  },
+  {
+    labelKey: 'nav.categories',
+    icon: '📁',
+    route: '/categories',
+    permission: 'categories:read',
+  },
+  {
+    labelKey: 'nav.orders',
+    icon: '🧾',
+    route: '/orders',
+    permission: 'orders:read',
+  },
+  {
+    labelKey: 'nav.users',
+    icon: '👤',
+    route: '/users',
+    permission: 'users:read',
+  },
+  {
+    labelKey: 'nav.coupons',
+    icon: '🎟️',
+    route: '/coupons',
+    permission: 'coupons:read',
+  },
+  {
+    labelKey: 'nav.cashback',
+    icon: '💰',
+    route: '/cashback-rules',
+    permission: 'cashback:read',
+  },
+  {
+    labelKey: 'nav.delivery',
+    icon: '🛵',
+    route: '/delivery-partners',
+    permission: 'delivery:read',
+  },
+  {
+    labelKey: 'nav.deliveryZones',
+    icon: '🗺️',
+    route: '/delivery-zones',
+    permission: 'delivery:read',
+  },
+  {
+    labelKey: 'nav.payouts',
+    icon: '💸',
+    route: '/payouts',
+    permission: 'payouts:read',
+  },
+  {
+    labelKey: 'nav.subscriptions',
+    icon: '⭐',
+    route: '/subscriptions',
+    permission: 'subscriptions:read',
+  },
+  {
+    labelKey: 'nav.banners',
+    icon: '🖼️',
+    route: '/banners',
+    permission: 'banners:read',
+  },
   {
     labelKey: 'nav.admins',
     icon: '🛡️',

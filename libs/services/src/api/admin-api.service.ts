@@ -5,6 +5,7 @@ import { ZITRO_API_BASE_URL } from '../tokens';
 import { AdminAuthTokenService } from '../admin-auth-token.service';
 import { AdminSuperadminEndpoints } from '../endpoints';
 import type { VerificationDocDto } from '../business-document.model';
+import { hasRoleDefaultPermission } from '../admin-permissions.config';
 
 interface AdminJwtPayload {
   sub: string;
@@ -129,10 +130,15 @@ export class AdminApiService {
     return Array.isArray(p) ? p : [p];
   });
 
-  /** SuperAdmin bypasses all permission checks server-side too — see RequirePermissionAttribute. */
+  /** SuperAdmin bypasses all permission checks server-side too — see RequirePermissionAttribute.
+   * Role-default permissions (hasRoleDefaultPermission) mirror AdminRolePermissions.cs — an
+   * Ops/Support/Finance admin with zero explicitly-granted permissions still gets their
+   * role's baseline access, both here and on the backend. */
   hasPermission(permission: string): boolean {
     return (
-      this.isSuperAdmin() || this.currentPermissions().includes(permission)
+      this.isSuperAdmin() ||
+      this.currentPermissions().includes(permission) ||
+      hasRoleDefaultPermission(this.currentAdmin()?.role, permission)
     );
   }
 

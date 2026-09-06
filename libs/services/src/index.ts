@@ -7,6 +7,9 @@ export * from './business-document.model';
 // Centralized zitro-restaurant role-based access control (RESTAURANT-RBAC-PLAN.md)
 export * from './restaurant-permissions.config';
 
+// Frontend mirror of zitro-api's AdminRolePermissions (zitro-admin/zitro-superadmin RBAC)
+export * from './admin-permissions.config';
+
 // Centralized per-app backend API path builders
 export * from './endpoints';
 

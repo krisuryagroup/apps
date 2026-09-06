@@ -25,6 +25,7 @@ import {
   adminAuthGuard,
   guestOnlyGuard,
   requirePermissionGuard,
+  superAdminOnlyGuard,
 } from './core/guards/admin-auth.guard';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { FeatureFlagsComponent } from './features/feature-flags/feature-flags.component';
@@ -44,7 +45,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    canActivate: [adminAuthGuard],
+    canActivate: [adminAuthGuard, superAdminOnlyGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: AdminDashboardComponent },
