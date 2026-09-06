@@ -25,6 +25,12 @@
   @if (titleKey()) {
     <div class="sidebar-nav__title">{{ titleKey()! | i18n }}</div>
   }
+  @if (accountSummary(); as acc) {
+    <div class="sidebar-nav__account" data-testid="sidebar-account-summary">
+      <div class="sidebar-nav__account-name">{{ acc.name }}</div>
+      <div class="sidebar-nav__account-role">{{ acc.role }}</div>
+    </div>
+  }
 
   <ul class="sidebar-nav__list">
     @for (item of items(); track item.route) {

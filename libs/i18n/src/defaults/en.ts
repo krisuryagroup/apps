@@ -560,6 +560,7 @@ export const EN_DEFAULTS = {
     errorInvalidCredentials: 'Invalid email or password.',
     errorDeactivated:
       'This account has been deactivated. Contact your administrator.',
+    errorNotAuthorized: 'This account does not have access to this portal.',
   },
   // ── SA-003 — Feature Flags ──────────────────────────────────────────────────
   featureFlags: {
@@ -991,7 +992,6 @@ export const EN_DEFAULTS = {
   restaurant: {
     branchOfBrand: '{brand} · Branch',
     independentBranch: 'Independent restaurant',
-    staffSummary: '{name} · {role}',
     menu: 'Menu',
     addItem: 'Add Item',
     addCategory: 'Add Category',

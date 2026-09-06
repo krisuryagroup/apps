@@ -1,12 +1,28 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { SidebarNavComponent, SidebarNavItem } from '@zitro/admin-ui';
+import {
+  SidebarAccountSummary,
+  SidebarNavComponent,
+  SidebarNavItem,
+} from '@zitro/admin-ui';
 import { AdminApiService, AdminAuthTokenService } from '@zitro/services';
+
+/** GetMyProfileHandler returns `admin.Role.ToString().ToLowerInvariant()` — no
+ * underscore for SuperAdmin ("superadmin"), unlike the JWT's "super_admin" claim. */
+function formatRole(role: string): string {
+  if (role === 'superadmin') return 'Super Admin';
+  return role
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 // Permission tags mirror the backend gating added for the admin/superadmin RBAC audit
 // (RequirePermissionAttribute + AdminRolePermissions.cs) — every domain below now has a
@@ -112,6 +128,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
     <lib-sidebar-nav
       [items]="navItems()"
       titleKey="app.name"
+      [accountSummary]="accountSummary()"
       (logoutClicked)="logout()"
     />
     <main class="main-content">
@@ -129,7 +146,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
   private readonly tokenService = inject(AdminAuthTokenService);
   private readonly api = inject(AdminApiService);
   private readonly router = inject(Router);
@@ -143,6 +160,17 @@ export class MainLayoutComponent {
       (item) => !item.permission || this.api.hasPermission(item.permission),
     ),
   );
+
+  protected readonly accountSummary = signal<SidebarAccountSummary | null>(
+    null,
+  );
+
+  ngOnInit(): void {
+    this.api.getMyProfile().subscribe({
+      next: (p) =>
+        this.accountSummary.set({ name: p.name, role: formatRole(p.role) }),
+    });
+  }
 
   logout(): void {
     this.tokenService.clearToken();

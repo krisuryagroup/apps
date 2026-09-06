@@ -67,6 +67,13 @@ export class AdminBusinessDetailComponent implements OnInit {
   protected loading = signal(true);
   protected activeTab = signal<Tab>('profile');
 
+  /** Mirrors the `businesses:write` guard on the /businesses/:id/edit route — without
+   * this the Edit link was shown to every role, and a Support/read-only admin clicking
+   * it would get silently bounced back to the dashboard by the route guard. */
+  protected canEdit(): boolean {
+    return this.api.hasPermission('businesses:write');
+  }
+
   protected usersLoading = signal(false);
   protected usersError = signal(false);
   protected users = signal<BusinessUserDto[] | null>(null);

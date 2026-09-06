@@ -75,6 +75,23 @@
   color: var(--zitro-primary);
 }
 
+.sidebar-nav__account {
+  padding: 0 var(--zitro-spacing-md) var(--zitro-spacing-md);
+  margin-bottom: var(--zitro-spacing-md);
+  border-bottom: 1px solid var(--zitro-divider);
+}
+
+.sidebar-nav__account-name {
+  font-size: var(--zitro-font-size-sm);
+  color: var(--zitro-on-surface);
+}
+
+.sidebar-nav__account-role {
+  font-size: var(--zitro-font-size-md);
+  font-weight: 700;
+  color: var(--zitro-primary);
+}
+
 .sidebar-nav__list {
   list-style: none;
   margin: 0;

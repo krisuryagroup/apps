@@ -38,11 +38,11 @@ function capitalize(s: string): string {
               </div>
             }
             @if (staffName(); as name2) {
-              <div class="account-summary__line">
-                {{
-                  'restaurant.staffSummary'
-                    | i18n: { name: name2, role: staffRoleDisplay() }
-                }}
+              <div class="account-summary__line account-summary__user">
+                <span>{{ name2 }}</span>
+                <span class="account-summary__role">{{
+                  staffRoleDisplay()
+                }}</span>
               </div>
             }
           </div>
@@ -144,6 +144,17 @@ function capitalize(s: string): string {
     .account-summary__business {
       font-weight: 500;
       color: var(--zitro-on-surface);
+    }
+    .account-summary__role {
+      font-size: var(--zitro-font-size-md);
+      font-weight: 700;
+      color: var(--zitro-primary);
+      &::before {
+        content: ' · ';
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--zitro-on-surface-variant);
+      }
     }
     .nav-list {
       list-style: none;

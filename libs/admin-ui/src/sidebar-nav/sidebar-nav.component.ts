@@ -16,6 +16,11 @@ export interface SidebarNavItem {
   permission?: string;
 }
 
+export interface SidebarAccountSummary {
+  name: string;
+  role: string;
+}
+
 /**
  * App-shell sidebar navigation — desktop fixed sidebar, collapses to an off-canvas
  * drawer with a hamburger toggle below the tablet breakpoint. Used by zitro-admin
@@ -37,6 +42,9 @@ export class SidebarNavComponent {
   items = input.required<SidebarNavItem[]>();
   /** i18n key shown at the top of the sidebar, e.g. app name. */
   titleKey = input<string | null>(null);
+  /** Logged-in admin's name + role, shown below the title — mirrors the account
+   * summary block in the zitro-restaurant sidebar. */
+  accountSummary = input<SidebarAccountSummary | null>(null);
 
   logoutClicked = output<void>();
 

@@ -52,7 +52,17 @@ export class AdminLoginComponent {
       .subscribe({
         next: (res) => {
           this.tokenService.setToken(res.token);
-          this.router.navigate(['/dashboard']);
+          // A guard rejecting this account (e.g. zitro-superadmin's superAdminOnlyGuard)
+          // redirects to a UrlTree, which the Router treats as a successful navigation —
+          // this.router.navigate() resolves `true` either way. Checking the settled URL
+          // is what actually tells success apart from a silent guard bounce; without it
+          // the button was left stuck on "Signing in..." forever with no explanation.
+          this.router.navigate(['/dashboard']).then(() => {
+            if (this.router.url.startsWith('/login')) {
+              this.loading.set(false);
+              this.errorKey.set('login.errorNotAuthorized');
+            }
+          });
         },
         error: (err) => {
           this.loading.set(false);

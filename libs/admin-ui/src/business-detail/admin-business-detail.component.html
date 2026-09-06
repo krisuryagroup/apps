@@ -9,12 +9,14 @@
       }}</span>
     </div>
     <div class="header-actions">
-      <a
-        class="btn btn-primary"
-        data-testid="business-edit-link"
-        [routerLink]="['/businesses', biz()!.id, 'edit']"
-        >{{ 'common.edit' | i18n }}</a
-      >
+      @if (canEdit()) {
+        <a
+          class="btn btn-primary"
+          data-testid="business-edit-link"
+          [routerLink]="['/businesses', biz()!.id, 'edit']"
+          >{{ 'common.edit' | i18n }}</a
+        >
+      }
       <a class="btn btn-outline" routerLink="/businesses"
         >← {{ 'common.back' | i18n }}</a
       >

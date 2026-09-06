@@ -1,7 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { SidebarNavComponent, SidebarNavItem } from '@zitro/admin-ui';
-import { AdminAuthTokenService } from '@zitro/services';
+import {
+  SidebarAccountSummary,
+  SidebarNavComponent,
+  SidebarNavItem,
+} from '@zitro/admin-ui';
+import { AdminApiService, AdminAuthTokenService } from '@zitro/services';
+
+/** GetMyProfileHandler returns `admin.Role.ToString().ToLowerInvariant()` — no
+ * underscore for SuperAdmin ("superadmin"), unlike the JWT's "super_admin" claim. */
+function formatRole(role: string): string {
+  if (role === 'superadmin') return 'Super Admin';
+  return role
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 // Same items as zitro-admin (SA-002 composes those screens here too) plus the
 // superadmin-only config screens (SA-003..SA-006) at the end.
@@ -38,6 +58,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
     <lib-sidebar-nav
       [items]="navItems"
       titleKey="app.superadminName"
+      [accountSummary]="accountSummary()"
       (logoutClicked)="logout()"
     />
     <main class="main-content">
@@ -55,11 +76,22 @@ const NAV_ITEMS: SidebarNavItem[] = [
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
   private readonly tokenService = inject(AdminAuthTokenService);
+  private readonly api = inject(AdminApiService);
   private readonly router = inject(Router);
 
   protected readonly navItems = NAV_ITEMS;
+  protected readonly accountSummary = signal<SidebarAccountSummary | null>(
+    null,
+  );
+
+  ngOnInit(): void {
+    this.api.getMyProfile().subscribe({
+      next: (p) =>
+        this.accountSummary.set({ name: p.name, role: formatRole(p.role) }),
+    });
+  }
 
   logout(): void {
     this.tokenService.clearToken();

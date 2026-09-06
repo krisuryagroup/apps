@@ -74,7 +74,7 @@ import { SharedMenuComponent } from './shared-menu.component';
               <button
                 class="cat-item-btn"
                 [class.active]="!selectedCategory()"
-                (click)="selectedCategory.set(null)"
+                (click)="selectAllItems()"
               >
                 {{ 'restaurant.allItems' | i18n }}
               </button>
@@ -551,6 +551,12 @@ export class RestaurantMenuComponent implements OnInit {
     this.api
       .listProducts(id, cat.id)
       .subscribe({ next: (p) => this.items.set(p) });
+  }
+
+  protected selectAllItems(): void {
+    this.selectedCategory.set(null);
+    const id = this.api.businessId()!;
+    this.api.listProducts(id).subscribe({ next: (p) => this.items.set(p) });
   }
 
   protected getCategoryName(id: string): string {
